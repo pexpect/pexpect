@@ -16,7 +16,7 @@ class ExpectTestCase(unittest.TestCase):
         p.sendeof () 
         p.expect (pexpect.EOF)
 
-    def off_test_expect (self):
+    def test_expect (self):
         the_old_way = commands.getoutput('ls -l /bin')
         p = pexpect.spawn('ls -l /bin')
         the_new_way = ''
@@ -29,7 +29,7 @@ class ExpectTestCase(unittest.TestCase):
         the_new_way = the_new_way.replace('\r','\n')
         assert the_old_way == the_new_way
 
-    def off_test_expect_exact (self):
+    def test_expect_exact (self):
         the_old_way = commands.getoutput('ls -l /bin')
 
         p = pexpect.spawn('ls -l /bin')
@@ -44,7 +44,7 @@ class ExpectTestCase(unittest.TestCase):
 
         assert the_old_way == the_new_way
 
-    def off_test_expect_eof (self):
+    def test_expect_eof (self):
         the_old_way = commands.getoutput('ls -l /bin')
 
         p = pexpect.spawn('ls -l /bin')

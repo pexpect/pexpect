@@ -371,12 +371,13 @@ class spawn:
     def readline (self, size = -1):    # File-like object.
         """This reads and returns one entire line. A trailing newline is kept in
         the string, but may be absent when a file ends with an incomplete line. 
-        Note: This readline() looks for a \r\n pair even on UNIX because this is 
+        Note: This readline() looks for a \\r\\n pair even on UNIX because this is 
         what the pseudo tty device returns. So contrary to what you may be used to
-        you will get a newline as \r\n.
+        you will receive a newline as \\r\\n.
         An empty string is returned when EOF is hit immediately.
         Currently, the size agument is mostly ignored, so this behavior is not
-        standard for a file-like object.
+        standard for a file-like object. If size is 0 then an empty string is
+        returned.
         """
         if size == 0:
             return ''
@@ -618,6 +619,9 @@ class spawn:
                 p = pexpect.spawn('/bin/ls')
                 p.expect (pexpect.EOF)
                 print p.before
+
+        If you are trying to optimize for speed then see
+        expect_list() and expect_exact().
         """
         compiled_pattern_list = self.compile_pattern_list(pattern)
         return self.expect_list(compiled_pattern_list, timeout)
@@ -625,12 +629,13 @@ class spawn:
     def expect_exact (self, pattern_list, timeout = -1):
         """This is similar to expect() except that it takes
         list of plain strings instead of regular expressions.
-        The idea is that this should be much faster. It could also be
+        This should be much faster than expect(). It could also be
         useful when you don't want to have to worry about escaping
         regular expression characters that you want to match.
-        You may also pass just a string without a list and the single
-        string will be converted to a list.
+        You may also pass just a string without a list and the string
+        will be automatically converted to a list with a single string element.
         If timeout is -1 then timeout will be set to the self.timeout value.
+        See also expect_list() for speed optimization.
         """
         ### This is dumb. It shares most of the code with expect_list.
         ### The only different is the comparison method and that
@@ -692,9 +697,12 @@ class spawn:
         This takes a list of compiled regular expressions and returns 
         the index into the pattern_list that matched the child's output.
         This is called by expect(). It is similar to the expect() method
-        except that expect_list() is not overloaded. You must not pass
+        except that expect_list() is not overloaded and it does not have to
+        compile the pattern list on every call. This will help if you are
+        trying to optimize for speed. You must not pass
         anything except a list of compiled regular expressions.
         If timeout is -1 then timeout will be set to the self.timeout value.
+        See also expect_exact() for speed optimization.
         """
 
         if timeout == -1:
@@ -772,7 +780,6 @@ class spawn:
         # yet other platforms like OpenBSD have a large negative value for
         # TIOCSWINSZ and they don't have a truncate problem.
         # Newer versions of Linux have totally different values for TIOCSWINSZ.
-        #
         # Note that this fix is a hack.
         TIOCSWINSZ = termios.TIOCSWINSZ
         if TIOCSWINSZ == 2148037735L: # L is not required in Python >= 2.2.

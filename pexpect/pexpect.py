@@ -193,11 +193,12 @@ class spawn:
         return self.child_fd
 
     def close (self):   # File-like object.
-        """This is experimental.
-        This closes the file descriptor of the child application.
+        """ This closes the file descriptor of the child application.
         It makes no attempt to actually kill the child or wait for its status.
+        If the child file descriptor was opened outside of this spawned class
+        (passed to the constructor) then this does not close the file descritor.
         """
-        if self.child_fd != -1:
+        if self.child_fd != -1 and not self.nofork:
             self.flush()
             os.close (self.child_fd)
             self.child_fd = -1
@@ -208,9 +209,10 @@ class spawn:
         pass
 
     def isatty (self):   # File-like object.
-        """This always returns 1.
+        """This returns 1 if the file descriptor is open and
+        connected to a tty(-like) device, else 0.
         """
-        return 1
+        return os.isatty(child_fd)
 
     def setecho (self, on):
         """This sets the terminal echo-mode on or off."""

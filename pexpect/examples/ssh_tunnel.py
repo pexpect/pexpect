@@ -6,7 +6,7 @@ tunnel_command = 'ssh -C -n -L 25:%(host)s:25 -L 110:%(host)s:110 %(user)s@%(hos
 nothing_script = """#!/bin/sh
 while true; do sleep 53; done
 """
-host = 'example.com'
+host = 'spruce.he.net' #'example.com'
 user = raw_input('Username: ')
 X = getpass.getpass('Password: ')
 
@@ -15,6 +15,7 @@ def start_tunnel ():
     ssh_tunnel.expect ('password:')
     time.sleep (0.1)
     ssh_tunnel.sendline (X)
+    time.sleep (60)
     ssh_tunnel.expect (pexpect.EOF)
 
 while 1:

@@ -92,6 +92,14 @@ class spawn:
 
         self.__spawn()
 
+    def __del__(self):
+        '''This makes sure that no system resources are left open.
+        Python only garbage collects Python objects. Since OS file descriptors
+        are not Python objects, so they must be handled manually.
+        '''
+        if self.child_fd is not -1:
+            os.close (self.child_fd)
+
     def __spawn(self):
         '''This starts the given command in a child process. This does
         all the fork/exec type of stuff for a pty. This is called by

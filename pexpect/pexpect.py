@@ -80,7 +80,7 @@ class spawn:
     """
 
     def __init__(self, command, args=[], timeout=30):
-        """This is the constructor. The command parameter is a string
+        """This is the constructor. The command parameter may be a string
         that includes a command and any arguments to the command. For example:
             p = pexpect.spawn ('/usr/bin/ftp')
             p = pexpect.spawn ('/usr/bin/ssh user@example.com')
@@ -90,14 +90,17 @@ class spawn:
             p = pexpect.spawn ('/usr/bin/ssh', ['user@example.com'])
             p = pexpect.spawn ('ls', ['-latr', '/tmp'])
         After this the child application will be created and
-        will be ready for action. For normal use, see expect() and 
+        will be ready to talk to. For normal use, see expect() and 
         send() and sendline().
-        
-        >>> import pexpect
-        >>> p = pexpect.spawn ('ls -la /tmp')
-        >>> p.expect (pexpect.EOF)
-        0
 
+        If the command parameter is an integer AND a valid file descriptor
+        then spawn will talk to the file descriptor instead. This can be
+        used to act expect features to any file descriptor. For example:
+            fd = os.open ('somefile.txt', os.O_RDONLY)
+            s = pexpect.spawn (fd)
+        The original creator of the file descriptor is responsible
+        for closing it. Spawn will not try to close it and spawn will
+        raise an exception if you try to call spawn.close().
         """
 
         self.STDIN_FILENO = sys.stdin.fileno()
@@ -127,9 +130,9 @@ class spawn:
                 os.fstat(command)
             except OSError:
                 raise ExceptionPexpect, 'Command is an int type, yet is not a valid file descriptor.'
-            self.__child_fd_owner = 0
             self.pid = -1 
             self.child_fd = command
+            self.__child_fd_owner = 0 # Sets who is reponsible for the child_fd
             self.args = None
             self.command = None
             self.name = '<file descriptor>'
@@ -152,9 +155,9 @@ class spawn:
     def __del__(self):
         """This makes sure that no system resources are left open.
         Python only garbage collects Python objects. OS file descriptors
-        are not Python objects, so they must be handled manually.
-        If the child file descriptor was opened outside of this spawned class
-        (passed to the constructor) then this does not close the file descritor.
+        are not Python objects, so they must be handled explicitly.
+        If the child file descriptor was opened outside of this class
+        (passed to the constructor) then this does not close it.
         """
         if self.__child_fd_owner:
             self.close()
@@ -202,7 +205,6 @@ class spawn:
                     pass
 
             os.execvp(self.command, self.args)
-            raise ExceptionPexpect ('Reached an unexpected state in __spawn().')
 
         # Parent
         self.__child_fd_owner = 1
@@ -214,14 +216,19 @@ class spawn:
     def close (self):   # File-like object.
         """ This closes the file descriptor of the child application.
         It makes no attempt to actually kill the child or wait for its status.
+	If the file descriptor was set by passing a file descriptor
+        to the constructor then this method raises an exception.
         """
         if self.child_fd != -1:
+            if not self.__child_fd_owner:
+                raise ExceptionPexpect ('This file descriptor cannot be closed because it was not created by spawn. The original creator is responsible for closing it.')
             self.flush()
             os.close (self.child_fd)
             self.child_fd = -1
+            self.__child_fd_owner = None
 
     def flush (self):   # File-like object.
-        """This currently does nothing.
+        """This does nothing.
         """
         pass
 
@@ -232,7 +239,7 @@ class spawn:
         return os.isatty(self.child_fd)
 
     def setecho (self, on):
-        """This sets the terminal echo-mode on or off."""
+        """This sets the terminal echo mode on or off."""
         new = termios.tcgetattr(self.child_fd)
         if on:
             new[3] = new[3] | termios.ECHO # lflags

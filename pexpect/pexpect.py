@@ -316,6 +316,8 @@ class spawn:
                 self.before = incoming
                 self.match = EOF
                 return pattern_list.index(EOF)
+            else:
+                raise
         except Exception, e:
             self.before = incoming
             self.match = None

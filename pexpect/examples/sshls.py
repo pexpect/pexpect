@@ -14,7 +14,7 @@ child = pexpect.spawn("/usr/bin/ssh -l %s %s /bin/ls -l"%(user, host))
 child.expect('password:')
 child.sendline(password)
 
-child.expect_eof()
+child.expect(pexpect.EOF)
 
 print child.before
 

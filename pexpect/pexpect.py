@@ -192,8 +192,9 @@ class spawn:
             raise ExceptionPexpect('Pexpect: pty.fork() failed: ' + str(e))
 
         if self.pid == 0: # Child
-            try: # Some platforms do not like _setwinsize (for example, Cygwin).
-                _setwinsize(24, 80)
+            try: # Some platforms do not like setwinsize (Cygwin).
+                self.child_fd = sys.stdout.fileno()
+                self.setwinsize(24, 80)
             except:
                 pass
             # Do not allow child to inherit open file descriptors from parent.
@@ -644,7 +645,8 @@ class spawn:
             raise
             
     def expect_list(self, pattern_list, timeout = -1):
-        """This takes a list of compiled regular expressions and returns 
+        """
+        This takes a list of compiled regular expressions and returns 
         the index into the pattern_list that matched the child's output.
         This is called by expect(). It is similar to the expect() method
         except that expect_list() is not overloaded. You must not pass
@@ -692,6 +694,41 @@ class spawn:
             self.after = None
             self.match = None
             raise
+
+    def getwinsize(self):
+        """
+        This returns the window size of the child tty.
+        The return value is a tuple of (rows, cols).
+        """
+
+        s = struct.pack('HHHH', 0, 0, 0, 0)
+        x = fcntl.ioctl(self.fileno(), termios.TIOCGWINSZ, s)
+        return struct.unpack('HHHH', x)[0:2]
+
+    def setwinsize(self, r, c):
+        """
+        This sets the windowsize of the child tty.
+        This will cause a SIGWINCH signal to be sent to the child.
+        This does not change the physical window size.
+        It changes the size reported to TTY-aware applications like
+        vi or curses -- applications that respond to the SIGWINCH signal.
+        """
+        # Check for buggy platforms. Some Python versions on some platforms
+        # (notably OSF1 Alpha and RedHat 7.1) truncate the value for
+        # termios.TIOCSWINSZ. It is not clear why this happens.
+        # These platforms don't seem to handle the signed int very well;
+        # yet other platforms like OpenBSD have a large negative value for
+        # TIOCSWINSZ and they don't have a truncate problem.
+        # Newer versions of Linux have totally different values for TIOCSWINSZ.
+        #
+        # Note that this fix is a hack.
+        TIOCSWINSZ = termios.TIOCSWINSZ
+        if TIOCSWINSZ == 2148037735L: # L is not required in Python >= 2.2.
+            TIOCSWINSZ = -2146929561 # Same bits, but with sign.
+
+        # Note, assume ws_xpixel and ws_ypixel are zero.
+        s = struct.pack('HHHH', r, c, 0, 0)
+        fcntl.ioctl(self.fileno(), TIOCSWINSZ, s)
 
     def interact(self, escape_character = chr(29)):
         """This gives control of the child process to the interactive user
@@ -763,35 +800,6 @@ def _which (filename):
         if os.access(f, os.X_OK):
             return f
     return None
-
-def _setwinsize(r, c):
-    """This sets the windowsize of the tty for stdout.
-    This does not change the physical window size.
-    It changes the size reported to TTY-aware applications like
-    vi or curses -- applications that respond to the SIGWINCH signal.
-    This is used by __spawn to set the tty window size of the child.
-    """
-    # Check for buggy platforms. Some Pythons on some platforms
-    # (notably OSF1 Alpha and RedHat 7.1) truncate the value for
-    # termios.TIOCSWINSZ. It is not clear why this happens.
-    # These platforms don't seem to handle the signed int very well;
-    # yet other platforms like OpenBSD have a large negative value for
-    # TIOCSWINSZ and they don't truncate.
-    # Newer versions of Linux have totally different values for TIOCSWINSZ.
-    #
-    # Note that this fix is a hack.
-    TIOCSWINSZ = termios.TIOCSWINSZ
-    if TIOCSWINSZ == 2148037735L: # L is not required in Python 2.2.
-        TIOCSWINSZ = -2146929561 # Same number in binary, but with sign.
-
-    # Assume ws_xpixel and ws_ypixel are zero.
-    s = struct.pack("HHHH", r, c, 0, 0)
-    fcntl.ioctl(sys.stdout.fileno(), TIOCSWINSZ, s)
-
-def _getwinsize():
-    s = struct.pack("HHHH", 0, 0, 0, 0)
-    x = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, s)
-    return struct.unpack("HHHH", x)
 
 def _split_command_line(command_line):
     """This splits a command line into a list of arguments.
@@ -950,4 +958,33 @@ def _split_command_line(command_line):
 ##    def pushback(self, data):
 ##        self.buffer = piece+self.buffer
 
+
+#def _setwinsize(r, c):
+#    """This sets the windowsize of the tty for stdout.
+#    This does not change the physical window size.
+#    It changes the size reported to TTY-aware applications like
+#    vi or curses -- applications that respond to the SIGWINCH signal.
+#    This is used by __spawn to set the tty window size of the child.
+#    """
+#    # Check for buggy platforms. Some Pythons on some platforms
+#    # (notably OSF1 Alpha and RedHat 7.1) truncate the value for
+#    # termios.TIOCSWINSZ. It is not clear why this happens.
+#    # These platforms don't seem to handle the signed int very well;
+#    # yet other platforms like OpenBSD have a large negative value for
+#    # TIOCSWINSZ and they don't truncate.
+#    # Newer versions of Linux have totally different values for TIOCSWINSZ.
+#    #
+#    # Note that this fix is a hack.
+#    TIOCSWINSZ = termios.TIOCSWINSZ
+#    if TIOCSWINSZ == 2148037735L: # L is not required in Python 2.2.
+#        TIOCSWINSZ = -2146929561 # Same number in binary, but with sign.
+#
+#    # Assume ws_xpixel and ws_ypixel are zero.
+#    s = struct.pack("HHHH", r, c, 0, 0)
+#    fcntl.ioctl(sys.stdout.fileno(), TIOCSWINSZ, s)
+#
+#def _getwinsize():
+#    s = struct.pack("HHHH", 0, 0, 0, 0)
+#    x = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, s)
+#    return struct.unpack("HHHH", x)
 

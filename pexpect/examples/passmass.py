@@ -12,7 +12,6 @@ SHELL_PROMPT = '[#\$] '
 
 def login(host, user, password):
     child = pexpect.spawn('ssh %s@%s'%(user, host))
-    child.log_open('LOG')
     child.expect('password:')
     child.sendline(password)
     i = child.expect(['Permission denied', SHELL_PROMPT, 'Terminal type'])
@@ -26,16 +25,17 @@ def login(host, user, password):
 
 def change_password(child, user, oldpassword, newpassword):
     child.sendline('passwd %s'%user)
-    i = child.expect(['Old password', 'New password'])
+    i = child.expect(['Old [Pp]assword', 'New [Pp]assword'])
     # Root does not require old password, so it gets to bypass the next step.
     if i == 0:
         child.sendline(oldpassword)
-        child.expect('New password')
+        child.expect('New [Pp]assword')
     child.sendline(newpassword)
-    i = child.expect(['New password', 'Retype new password'])
+    i = child.expect(['New [Pp]assword', 'Retype', 'Re-enter'])
     if i == 0:
         print 'Host did not like new password. Here is what it said...'
         print child.before
+	child.send (chr(3)) # Ctrl-C
         child.sendline('') # This should tell remote passwd command to quit.
         return
     child.sendline(newpassword)

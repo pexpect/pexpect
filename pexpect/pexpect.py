@@ -541,10 +541,7 @@ class spawn:
     def __interact_writen(self, fd, data):
         """This is used by the interact() method.
         """
-        ### This is stupid. It's a deadlock waiting to happen.
-        ### I can't check isAlive due to problems with OpenBSD handling.
-        ### I can't think of a safe way to handle this.
-        while data != '':
+        while data != '' and self.isalive():
             n = os.write(fd, data)
             data = data[n:]
     def __interact_read(self, fd):
@@ -554,7 +551,7 @@ class spawn:
     def __interact_copy(self, escape_character = None):
         """This is used by the interact() method.
         """
-        while self.isAlive():
+        while self.isalive():
             r, w, e = select.select([self.child_fd, self.STDIN_FILENO], [], [])
             if self.child_fd in r:
                 data = self.__interact_read(self.child_fd)

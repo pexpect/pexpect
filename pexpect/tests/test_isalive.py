@@ -29,6 +29,21 @@ class IsAliveTestCase(unittest.TestCase):
         if p.isalive():
             self.fail ('Child process is not dead. It should be.')
 
+    def test_expect_isalive4 (self):
+        """This tests that multiple calls to isalive() return same value.
+	"""
+        p = pexpect.spawn('cat')
+        if not p.isalive():
+            self.fail ('Child process is not alive. It should be.')
+        if not p.isalive():
+            self.fail ('Second call. Child process is not alive. It should be.')
+        p.kill(9)
+        p.expect(pexpect.EOF)
+        if p.isalive():
+            self.fail ('Child process is not dead. It should be.')
+        if p.isalive():
+            self.fail ('Second call. Child process is not dead. It should be.')
+
 if __name__ == '__main__':
     unittest.main()
 

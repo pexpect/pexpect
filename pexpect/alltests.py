@@ -9,6 +9,7 @@ modules_to_test = (
 'test_ansi',
 'test_command_list_split',
 'test_destructor',
+'test_constructor',
 'test_missing_command',
 'test_run_out_of_pty',
 'test_screen'

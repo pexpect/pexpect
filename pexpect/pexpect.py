@@ -57,13 +57,16 @@ class spawn:
     start and control child applications.
     """
 
-    def __init__(self, command):
+    def __init__(self, command, args=None):
         """This is the constructor. The command parameter is a string
-        that includes the path and any arguments to the command. For
-        example:
+        that includes the path and any arguments to the command. For example:
             p = pexpect.spawn ('/usr/bin/ftp')
-            p = pexpect.spawn ('/bin/ls -latr /tmp')
             p = pexpect.spawn ('/usr/bin/ssh some@host.com')
+            p = pexpect.spawn ('/bin/ls -latr /tmp')
+	You may also construct it with a list of arguments like so:
+            p = pexpect.spawn ('/usr/bin/ftp', [])
+            p = pexpect.spawn ('/usr/bin/ssh', ['some@host.com'])
+            p = pexpect.spawn ('/bin/ls', ['-latr', '/tmp'])
         After this the child application will be created and
         will be ready for action. See expect() and send()/sendline().
         """
@@ -73,9 +76,9 @@ class spawn:
         self.STDERR_FILENO = sys.stderr.fileno()
 
         ### IMPLEMENT THIS FEATURE!!!
-        self.maxbuffersize = 10000
+        #self.maxbuffersize = 10000
         # anything before maxsearchsize point is preserved, but not searched.
-        self.maxsearchsize = 1000
+        #self.maxsearchsize = 1000
 
         self.timeout = 30.0 # Seconds
         self.child_fd = -1
@@ -86,9 +89,14 @@ class spawn:
         self.after = None
         self.match = None
 
-        self.args = split_command_line(command)
-        self.command = self.args[0]
-            
+        if args is None:
+            self.args = split_command_line(command)
+            self.command = self.args[0]
+        else:
+	    args.insert (0, command)
+            self.args = args
+            self.command = command
+
         self.__spawn()
 
     def __del__(self):

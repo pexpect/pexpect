@@ -88,8 +88,9 @@ class spawn:
         self.before = None
         self.matched = None
 
-        self.command = command
-
+        self.args = split_command_line(command)
+        self.command = self.args[0]
+            
         self.__spawn()
 
     def __del__(self):
@@ -121,8 +122,7 @@ class spawn:
         assert self.pid == None, 'The pid member is not None.'
         assert self.command != None, 'The command member is None.'
 
-        command_line = split_command_line(self.command)
-        if which(command_line[0]) == None:
+        if which(self.command) == None:
             raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
 
         # This is necessary for isAlive() to work. Without this there is
@@ -147,7 +147,7 @@ class spawn:
 
         if self.pid == 0: # Child
             setwinsize(24, 80)
-            os.execvp(command_line[0], command_line)
+            os.execvp(self.command, self.args)
             raise ExceptionPexpect ('Reached an unexpected state in __spawn().')
 
         # Parent
@@ -309,9 +309,12 @@ class spawn:
     def expect_list(self, re_list, local_timeout = None):
         """This is called by expect(). This takes a list of compiled
         regular expressions. This returns the matched index into the
-        re_list. If there is an exception it will set matched to ''
-        and before to the data that was read so far.
-        This raises EOF and TIMEOUT exceptions.
+        re_list.
+
+        Special: A list entry may be None instead of 
+        a compiled regular expression. This will catch EOF exceptions and 
+        return the index of this entry; otherwise, an exception is raised. 
+        After an EOF 'matched' and 'match' will be None.
         """
         # if partial=='': ### self.flag_eof:
         # flag_eof = 1 ### Should not need this if self.flag_eof is used.
@@ -714,4 +717,5 @@ def split_command_line(command_line):
 ##
 ##    def pushback(self, data):
 ##        self.buffer = piece+self.buffer
+
 

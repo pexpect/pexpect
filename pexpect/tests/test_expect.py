@@ -48,6 +48,15 @@ class ExpectTestCase(unittest.TestCase):
 
         assert the_old_way == the_new_way
 
+    def test_unexpected_eof (self):
+        p = pexpect.spawn('/bin/ls -l')
+        try:
+            p.expect('ZXYXZ') # Probably never see this in ls output.
+        except pexpect.EOF, e:
+            pass
+        else:
+            fail ('Expected an EOF exception.')
+
 if __name__ == '__main__':
     unittest.main()
 

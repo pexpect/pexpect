@@ -11,6 +11,7 @@ class TestCaseDotall(unittest.TestCase):
 	p = pexpect.spawn('echo "%s"' % testdata)
 	i = p.expect (['BEGIN(.*)END', pexpect.EOF])
 	assert i==0, 'DOTALL does not seem to be working.'
+
     def test_precompiled (self):
 	p = pexpect.spawn('echo "%s"' % testdata)
         pat = re.compile('BEGIN(.*)END') # This overrides the default DOTALL.

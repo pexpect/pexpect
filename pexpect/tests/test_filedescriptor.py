@@ -7,12 +7,24 @@ import os
 class ExpectTestCase(unittest.TestCase):
 
     def test_fd (self):
-
 	fd = os.open ('README.txt', os.O_RDONLY)
 	s = pexpect.spawn (fd)
 	s.expect ('License:')
 	s.expect (pexpect.EOF)
 	assert s.before == ' Python Software Foundation License\n\nNoah Spurrier\nhttp://pexpect.sourceforge.net/\n\n\n'
+
+    def test_fd_isalive (self):
+	fd = os.open ('README.txt', os.O_RDONLY)
+	s = pexpect.spawn (fd)
+	assert s.isalive()
+	os.close (fd)
+	assert not s.isalive()
+
+    def test_fd_isatty (self):
+	s = pexpect.spawn ('ls -l')
+	assert s.isatty()
+	s.close()
+	assert not s.isatty()
 
 if __name__ == '__main__':
     unittest.main()

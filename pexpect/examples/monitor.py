@@ -15,14 +15,14 @@ import pexpect
 import getpass
 
 #
-# Some constants
+# Some constants. These are regular expressions.
 #
-                # This is the prompt we get if SSH does not have the remote host's
-                # public key stored in the cache yet.
-SSH_NEWKEY = 'Are you sure you want to continue connecting (yes/no)?'
 TERMINAL_PROMPT = 'Terminal type?'
 TERMINAL_TYPE = 'vt100'
 COMMAND_PROMPT = '[$#] ' ### This is way too simple for industrial use :-) ...
+              # This is the prompt we get if SSH does not have 
+              # the remote host's public key stored in the cache.
+SSH_NEWKEY = 'Are you sure you want to continue connecting (yes/no)?'
 
 
 print 'Enter the host that you wish to monitor.'
@@ -51,8 +51,9 @@ if i == 1:
         child.sendline (TERMINAL_TYPE)
         child.expect (COMMAND_PROMPT)
 
-# Now we should be at the command prompt and
-# ready to run some commands.
+#
+# Now we should be at the command prompt and ready to run some commands.
+#
 print
 print '---------------------------------------'
 print 'Report of commands run on remote host.'
@@ -87,4 +88,5 @@ print child.before
 # Now exit the remote host.
 child.sendline ('exit')
 child.expect(pexpect.EOF)
+
 

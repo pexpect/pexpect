@@ -1,6 +1,6 @@
 SHELL = /bin/sh
 
-VERSION= 0.97
+VERSION= 0.98
 #DOCGENERATOR= happydoc
 DOCGENERATOR= pydoc -w
 # This is for GNU Make. This does not work on BSD Make.

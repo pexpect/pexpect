@@ -42,7 +42,7 @@ Currently pexpect is intended for UNIX operating systems."""
 
 
 
-__version__ = '0.97'
+__version__ = '0.98'
 __revision__ = '$Revision$'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run',
     '__version__', '__revision__']

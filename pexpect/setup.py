@@ -4,7 +4,7 @@ $Date$
 '''
 from distutils.core import setup
 setup (name='pexpect',
-    version='0.97',
+    version='0.98',
     py_modules=['pexpect'],
     description='Pexpect is a pure Python Expect. It allows easy control of other applications.',
     author='Noah Spurrier',

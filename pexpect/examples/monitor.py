@@ -7,6 +7,7 @@
         Run and parse 'uptime'.
         Run 'iostat'.
         Run 'vmstat'.
+	Run 'netstat'
         Run 'free'.
         Exit the remote host.
 
@@ -76,6 +77,12 @@ print child.before
 
 # Run vmstat.
 child.sendline ('vmstat')
+child.expect (COMMAND_PROMPT)
+print
+print child.before
+
+# Run netstat
+child.sendline ('netstat')
 child.expect (COMMAND_PROMPT)
 print
 print child.before

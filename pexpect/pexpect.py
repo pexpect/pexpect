@@ -324,6 +324,10 @@ class spawn:
         r, w, e = select.select([self.child_fd], [], [], timeout)
         if not r:
             raise TIMEOUT('Timeout exceeded in read().')
+#            if not self.isalive():
+#                raise EOF ('End of File (EOF) in read(). Really dumb platform.')
+#            else:
+#                raise TIMEOUT('Timeout exceeded in read().')
 
         if self.child_fd in r:
             try:

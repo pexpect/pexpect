@@ -109,6 +109,9 @@ def Log (fsm):
         fout.close()
 
 class term (screen.screen):
+    '''This is a placeholder. 
+    In theory I might want to add other terminal types.
+    '''
     def __init__ (self, r=24, c=80):
         screen.screen.__init__(self, r,c)
 

@@ -18,20 +18,11 @@ class TestCaseDestructor(unittest.TestCase):
         p3.expect(pexpect.EOF)
         p4.expect(pexpect.EOF)
         #print p1.before, p2.before, p3.before, p4.before
-        print fd_t1
         p1.kill(9)
         p2.kill(9)
         p3.kill(9)
         p4.kill(9)
         time.sleep(1) # Some platforms are slow at gc... Solaris!
-	p1.close()
-	p2.close()
-	p3.close()
-	p4.close()
-	p1.isalive()
-	p2.isalive()
-	p3.isalive()
-	p4.isalive()
         p1 = None
         p2 = None
         p3 = None
@@ -43,20 +34,11 @@ class TestCaseDestructor(unittest.TestCase):
         p3 = pexpect.spawn('ls -l')
         p4 = pexpect.spawn('ls -l')
         fd_t2 = (p1.child_fd,p2.child_fd,p3.child_fd,p4.child_fd)
-        print fd_t2
         p1.kill(9)
         p2.kill(9)
         p3.kill(9)
         p4.kill(9)
         time.sleep(1) # Some platforms are slow at gc... Solaris!
-	p1.close()
-	p2.close()
-	p3.close()
-	p4.close()
-	p1.isalive()
-	p2.isalive()
-	p3.isalive()
-	p4.isalive()
         del (p1)
         del (p2)
         del (p3)
@@ -68,7 +50,6 @@ class TestCaseDestructor(unittest.TestCase):
         p3 = pexpect.spawn('ls -l')
         p4 = pexpect.spawn('ls -l')
         fd_t3 = (p1.child_fd,p2.child_fd,p3.child_fd,p4.child_fd)
-        print fd_t3
 
         assert (fd_t1 == fd_t2 == fd_t3)
 

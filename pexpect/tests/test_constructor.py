@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import pexpect
 import unittest
+import time
 
 class TestCaseConstructor(unittest.TestCase):
         

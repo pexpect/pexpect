@@ -5,13 +5,10 @@ import commands
 import sys
 
 class ExpectTestCase(unittest.TestCase):
-    #def runTest (self):
-        
     def test_expect (self):
         the_old_way = commands.getoutput('ls -l /bin')
-
         p = pexpect.spawn('ls -l /bin')
-        the_new_way = ''
+	the_new_way = ''
 	while 1:
 		i = p.expect (['\n', pexpect.EOF])
 		the_new_way = the_new_way + p.before

@@ -27,6 +27,7 @@ import select
 import traceback
 import re
 import struct
+import resource
 from types import *
 try:
     import pty
@@ -103,8 +104,7 @@ class spawn:
         Python only garbage collects Python objects. Since OS file descriptors
         are not Python objects, so they must be handled manually.
         """
-        if self.child_fd != -1:
-            os.close (self.child_fd)
+	self.close()
 
     def __spawn(self):
         """This starts the given command in a child process. This does
@@ -153,6 +153,14 @@ class spawn:
 
         if self.pid == 0: # Child
             setwinsize(24, 80)
+            # Do not allow child to inherit open file descriptors from parent.
+            max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
+            for i in range (3, max_fd):
+                try:
+                    os.close (i)
+                except OSError:
+                    pass
+
             os.execvp(self.command, self.args)
             raise ExceptionPexpect ('Reached an unexpected state in __spawn().')
 
@@ -161,6 +169,15 @@ class spawn:
     def fileno (self):
         """This returns the file descriptor of the pty for the child."""
         return self.child_fd
+
+    def close (self):
+        """This is experimental.
+	This closes the file descriptor of the child application.
+	It makes no attempt to actually kill the child or wait for its status.
+	"""
+	if self.child_fd != -1:
+	    os.close (self.child_fd)
+	    self.child_fd = -1
 
     def set_echo (self, on):
         """This sets the terminal echo-mode on or off."""

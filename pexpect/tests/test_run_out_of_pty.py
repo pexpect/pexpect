@@ -15,6 +15,8 @@ class ExpectTestCase(unittest.TestCase):
 		try:
 			plist.append (pexpect.spawn('ls -l'))
 		except pexpect.ExceptionPexpect, e:
+		        for c in range (0,count):
+			    plist[c].close()
 			return
 		except Exception, e:
 			self.fail ('Expected ExceptionPexpect. ' + str(e))

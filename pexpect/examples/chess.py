@@ -4,6 +4,7 @@ It starts two instances of gnuchess and then pits them against each other.
 '''
 import pexpect
 import string
+import ANSI
 
 REGEX_MOVE = '(?:[a-z]|\x1b\[C)(?:[0-9]|\x1b\[C)(?:[a-z]|\x1b\[C)(?:[0-9]|\x1b\[C)'
 REGEX_MOVE_PART = '(?:[0-9]|\x1b\[C)(?:[a-z]|\x1b\[C)(?:[0-9]|\x1b\[C)'
@@ -12,21 +13,33 @@ class Chess:
 
 	def __init__(self, engine = "/usr/local/bin/gnuchess -a -h 1"):
 		self.child = pexpect.spawn (engine)
+                self.term = ANSI.ANSI ()
+             
 		self.child.expect ('Chess')
 		if self.child.matched != 'Chess':
 			raise IOError, 'incompatible chess program'
+                self.term.process_list (self.before)
+                self.term.process_list (self.matched)
 		self.last_computer_move = ''
+        def read_until_cursor (self, r,c)
+            while 1:
+                self.child.read(1, 60)
+                self.term.process (c)
+                if self.term.cur_r == r and self.term.cur_c == c:
+                    return 1
 
 	def do_first_move (self, move):
 		self.child.expect ('Your move is')
 		self.child.sendline (move)
-#		print '', self.child.matched
+                self.term.process_list (self.before)
+                self.term.process_list (self.matched)
 		return move
 
 	def do_move (self, move):
-		self.child.expect ('\[19;60H')
+                read_until_cursor (19,60)
+		#self.child.expect ('\[19;60H')
 		self.child.sendline (move)
-		print 'do_move', self.child.matched, move
+		print 'do_move' move
 		return move
 
 	def get_first_computer_move (self):

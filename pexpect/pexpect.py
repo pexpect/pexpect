@@ -504,7 +504,10 @@ class spawn:
 
         # I have to do this twice for Solaris.
         # I can't even believe that I figured this out...
-        if pid == 0 and status == 0:
+	# If waitpid() returns 0 it means that no child process wishes to
+	# report, and the value of status is undefined.
+#	if pid == 0 and status == 0:
+        if pid == 0:
             try:
                 pid, status = os.waitpid(self.pid, os.WNOHANG)
                 #print 'Solaris sucks'
@@ -512,7 +515,8 @@ class spawn:
                 return 0
             # If pid and status is still 0 after two calls to waitpid() then
             # the process really is alive. This seems to work on all platforms.
-            if pid == 0 and status == 0:
+#            if pid == 0 and status == 0:
+            if pid == 0:
                 return 1
 
         # I do not OR this together because I want hooks for debugging.
@@ -880,41 +884,52 @@ def _split_command_line(command_line):
     """
     arg_list = []
     arg = ''
-    state_quote = 0
-    state_doublequote = 0
-    state_esc = 0
+
+    # Constants to name the states we can be in.
+    state_basic = 0
+    state_esc = 1
+    state_singlequote = 2
+    state_doublequote = 3
+    state_whitespace = 4 # The state of consuming whitespace between commands.
+    state = state_basic
+
     for c in command_line:
-        if c == '\\': # Escape the next character
-            state_esc = 1
-        elif c == r"'": # Handle single quote
-            if state_esc:
-                state_esc = 0
-            elif not state_quote:
-                state_quote = 1
+        if state == state_basic or state == state_whitespace:
+            if c == '\\': # Escape the next character
+                state = state_esc
+            elif c == r"'": # Handle single quote
+                state = state_singlequote
+            elif c == r'"': # Handle double quote
+                state = state_doublequote
+            elif c.isspace():
+                # Add arg to arg_list if we aren't in the middle of
+                # whitespace.
+                if state == state_whitespace:
+                    None # Do nothing.
+                else:
+                    arg_list.append(arg)
+                    arg = ''
+                    state = state_whitespace
             else:
-                state_quote = 0
-        elif c == r'"': # Handle double quote
-            if state_esc:
-                state_esc = 0
-            elif not state_doublequote:
-                state_doublequote = 1
-            else:
-                state_doublequote = 0
-
-        # Add arg to arg_list unless in some other state.
-        elif c == ' 'and not state_quote and not state_doublequote and not state_esc:
-            arg_list.append(arg)
-            arg = ''
-        else:
+                arg = arg + c
+                state = state_basic
+        elif state == state_esc:
             arg = arg + c
-            if c != '\\'and state_esc: # escape mode lasts for one character.
-                state_esc = 0
+            state = state_basic
+        elif state == state_singlequote:
+            if c == r"'":
+                state = state_basic
+            else:
+                arg = arg + c
+        elif state == state_doublequote:
+            if c == r'"':
+                state = state_basic
+            else:
+                arg = arg + c
 
-    # Handle last argument.        
     if arg != '':
         arg_list.append(arg)
     return arg_list
-
 
 
 ####################

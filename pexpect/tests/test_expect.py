@@ -55,7 +55,6 @@ class ExpectTestCase(unittest.TestCase):
 
         assert the_old_way == the_new_way
 
-<<<<<<< test_expect.py
     def test_expect_timeout (self):
         the_old_way = commands.getoutput('ls -l /bin')
 
@@ -65,15 +64,6 @@ class ExpectTestCase(unittest.TestCase):
 
         assert the_old_way == the_new_way
 
-=======
-    def test_expect_timeout (self):
-        the_old_way = commands.getoutput('ls -l /bin')
-
-        p = pexpect.spawn('cat')
-        i = p.expect(pexpect.TIMEOUT) 
-	assert p.after == pexpect.TIMEOUT
-
->>>>>>> 1.17
     def test_unexpected_eof (self):
         p = pexpect.spawn('ls -l /bin')
         try:

@@ -63,7 +63,7 @@ class spawn:
             p = pexpect.spawn ('/usr/bin/ftp')
             p = pexpect.spawn ('/usr/bin/ssh some@host.com')
             p = pexpect.spawn ('/bin/ls -latr /tmp')
-	You may also construct it with a list of arguments like so:
+        You may also construct it with a list of arguments like so:
             p = pexpect.spawn ('/usr/bin/ftp', [])
             p = pexpect.spawn ('/usr/bin/ssh', ['some@host.com'])
             p = pexpect.spawn ('/bin/ls', ['-latr', '/tmp'])
@@ -93,7 +93,7 @@ class spawn:
             self.args = split_command_line(command)
             self.command = self.args[0]
         else:
-	    args.insert (0, command)
+            args.insert (0, command)
             self.args = args
             self.command = command
 
@@ -406,30 +406,30 @@ class spawn:
 
     def write(self, text):
         """This is an alias for send().
-	This return the number of bytes actually written.
-	"""
+        This return the number of bytes actually written.
+        """
         return self.send (text)
 
     def writelines (self, sequence):
-	"""This calls write() for each element in the sequence.
-	This return the number of bytes actually written.
-	"""
-	total_n = 0
+        """This calls write() for each element in the sequence.
+        This return the number of bytes actually written.
+        """
+        total_n = 0
         for str in sequence:
             total_n = total_n + self.write (str)
-	return total_n
+        return total_n
 
     def send(self, text):
         """This sends a string to the child process.
-	This return the number of bytes actually written.
+        This return the number of bytes actually written.
         """
         return os.write(self.child_fd, text)
 
     def sendline(self, text=''):
         """This is like send(), but it adds a line separator.
-	This return the number of bytes actually written.
+        This return the number of bytes actually written.
         """
-	n = self.send(text)
+        n = self.send(text)
         return n + self.send(os.linesep)
 
     def send_eof(self):
@@ -462,13 +462,24 @@ class spawn:
             termios.tcsetattr(fd, termios.TCSADRAIN, old) # restore state
         
     def isAlive(self):
-        status = os.waitpid (self.pid, os.WNOHANG)[1]
-	print 'status:', status
-        print 'WTERMSIG:'
-	print os.WTERMSIG(status)
-	return os.WIFEXITED(status)
+        """This tests if the child process is running or not.
+        It returns 1 if the child process appears to be running or
+        0 if not.
+        """
+        status = os.waitpid (self.pid, os.WNOHANG)
+        if status[0] == 0:
+            return 1
 
-    def isAlive2(self):
+        if os.WIFEXITED (status[1]):
+            return 0
+        elif os.WIFSTOPPED (status[1]):
+            return 0
+        elif os.WIFSIGNALED (status[1]):
+            return 0
+        else:
+            return 1
+
+    def isAliveOld(self):
         """This tests if the child process is running or not.
         It returns 1 if the child process appears to be running or
         0 if not. This checks the process list to see if the pid is
@@ -480,19 +491,19 @@ class spawn:
         running or not. By convention most modern UNIX systems will
         respond to signal 0.
         """
-	old_signal = signal.getsignal (signal.SIGCHLD)
-	if old_signal is None:
-	    raise ExceptionPexpect ('Existing signal handler is non-Python')
+        old_signal = signal.getsignal (signal.SIGCHLD)
+        if old_signal is None:
+            raise ExceptionPexpect ('Existing signal handler is non-Python')
         #signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         try:
-	    print "stuff2"
-	    os.kill (self.pid, 0)
-	    print "stuff3"
-	    signal.signal(signal.SIGCHLD, old_signal)
+            print "stuff2"
+            os.kill (self.pid, 0)
+            print "stuff3"
+            signal.signal(signal.SIGCHLD, old_signal)
             return 1
         except OSError, e:
-	    print str(e)
-	    signal.signal(signal.SIGCHLD, old_signal)
+            print str(e)
+            signal.signal(signal.SIGCHLD, old_signal)
             return 0
             ###return e.errno == errno.EPERM
             ### For some reason I got this exception printed even though

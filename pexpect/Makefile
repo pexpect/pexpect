@@ -1,6 +1,6 @@
 SHELL = /bin/sh
 
-VERSION= 0.8
+VERSION= 0.9
 #DOCGENERATOR= happydoc
 DOCGENERATOR= pydoc -w
 MANIFEST_LINES != cat MANIFEST

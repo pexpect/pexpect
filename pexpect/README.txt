@@ -1,5 +1,5 @@
 Pexpect
--- a Pure Python "Expect like" module
+a Pure Python "Expect like" module
 
 The purpose of the Pexpect module is to make Python be a better glue.
 
@@ -25,4 +25,5 @@ License: Python Software Foundation License
 
 Noah Spurrier
 http://pexpect.sourceforge.net/
+
 

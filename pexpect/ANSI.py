@@ -179,6 +179,10 @@ class ANSI (term):
         self.state.add_transition ('f', 'NUMBER_2', DoHome, 'INIT')
     def process (self, c):
         self.state.process(c)
+    def process_list (self, l):
+        for c in l:
+            self.process (c)
+
     def test (self):
         dump = file('dump').read()
         for c in dump:
@@ -196,14 +200,14 @@ class ANSI (term):
         ch = ch[0]
 
         if ch == '\r':
-            self.crlr()
+            self.crlf()
             return
         if ch == '\n':
             self.crlf()
             return
         if ch == chr(screen.BS):
             self.cursor_back()
-            self.put(self.cur_r, self.cur_c, ' ')
+            self.put_abs(self.cur_r, self.cur_c, ' ')
             return
 
         if ch not in string.printable:

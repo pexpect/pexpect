@@ -487,14 +487,12 @@ def split_command_line(command_line):
 #
 ####################
 
-# If you just want the object then
-# import pexpect
 # If you want the static mathods too then
 # from pexpect import *
 #
 
 # Reason for double fork:
-#http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC15
+# http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC15
 # Reason for ptys:
 # http://www.erlenstar.demon.co.uk/unix/faq_4.html#SEC52
 
@@ -539,7 +537,12 @@ def split_command_line(command_line):
 # the child did not echo the data. This is particularly a problem if
 # you send a password.
 
-
+# This was previously used to implement a look-ahead in reads.
+# if the lookahead failed then Pexpect would "push-back" the data
+# that was read. The idea was to allow read() to read blocks of data.
+# What I do now is just read one character at a time and then try a
+# match. This is not as efficient, but it works well enough for the
+# output of most applications and it makes program logic much simpler.
 ##class PushbackReader:
 ##    '''This class is a wrapper around os.read. It adds the features of buffering
 ##        to allow push-back of data and to provide a timeout on a read.

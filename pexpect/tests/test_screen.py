@@ -54,6 +54,7 @@ insert_target = 'ZXZZZZZZXZ\n' +\
 '.........8\n' +\
 '9.........\n' +\
 'ZZ/2.4.6ZZ\n'
+get_region_target = ['......', '.\\/...', './\\...', '......']
 
 class screenTestCase (unittest.TestCase):
 
@@ -101,7 +102,9 @@ class screenTestCase (unittest.TestCase):
         s = self.make_screen_with_put()
         assert str(s) == put_target
     def test_get_region (self):
-        assert 0, 'The get_region test is not implemented yet.'
+        s = self.make_screen_with_put()
+        r = s.get_region (4,4,7,9)
+        assert r == get_region_target
 
     def test_cursor_save (self):
         s = self.make_screen_with_put()

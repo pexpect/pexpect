@@ -41,7 +41,7 @@ class ExpectTestCase(unittest.TestCase):
         the_old_way = commands.getoutput('/bin/ls -l')
 
         p = pexpect.spawn('/bin/ls -l')
-        p.expect_eof ()
+        p.expect(pexpect.EOF) # This basically tells it to read everything.
         the_new_way = p.before
         the_new_way = the_new_way.replace('\r','')
         the_new_way = the_new_way[:-1]

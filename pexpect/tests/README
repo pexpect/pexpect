@@ -1,0 +1,6 @@
+
+Stuff left to test:
+    setwinsize()
+    getwinsize()
+    mix of patterns and EOF in an expected list.
+

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import pexpect
 import unittest
-import sys, os
+import sys, os, time
 
 class IsAliveTestCase(unittest.TestCase):
         
@@ -16,6 +16,10 @@ class IsAliveTestCase(unittest.TestCase):
         if not p.isalive():
             self.fail ('Child process is not alive. It should be.')
         p.kill(1)
+	# Solaris is kind of slow.
+	# Without this delay then p.expect(...) will not see
+	# that the process is dead and it will timeout.
+        time.sleep(1)
         p.expect(pexpect.EOF)
         if p.isalive():
             self.fail ('Child process is not dead. It should be.')
@@ -25,6 +29,10 @@ class IsAliveTestCase(unittest.TestCase):
         if not p.isalive():
             self.fail ('Child process is not alive. It should be.')
         p.kill(9)
+	# Solaris is kind of slow.
+	# Without this delay then p.expect(...) will not see
+	# that the process is dead and it will timeout.
+        time.sleep(1)
         p.expect(pexpect.EOF)
         if p.isalive():
 #            pid, sts = os.waitpid(p.pid, 0)#, os.WNOHANG)

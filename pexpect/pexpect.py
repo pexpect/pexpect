@@ -24,6 +24,7 @@ $Date$
 import os, sys
 import select
 import traceback
+import string
 import re
 import struct
 import resource
@@ -658,7 +659,8 @@ def which (filename):
     else:
         p = os.environ['PATH']
 
-    pathlist = p.split (os.pathsep)
+    #pathlist = p.split (os.pathsep)
+    pathlist = string.split (p, os.pathsep)
 
     for path in pathlist:
         f = os.path.join(path, filename)

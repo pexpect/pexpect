@@ -66,7 +66,10 @@ class TIMEOUT(ExceptionPexpect):
 
 
 def run (command, args=[], timeout=30):
-    """This runs a command; waits for it to finish; then returns all output as a string. This is a utility interface around the spawn class."""
+    """This runs a command; waits for it to finish; then returns
+        all output as a string. This is a utility interface around
+        the spawn class.
+    """
     child = spawn(command, args, timeout)
     child.expect (EOF)
     return child.before
@@ -80,15 +83,21 @@ class spawn:
         """This is the constructor. The command parameter is a string
         that includes a command and any arguments to the command. For example:
             p = pexpect.spawn ('/usr/bin/ftp')
-            p = pexpect.spawn ('/usr/bin/ssh some@host.com')
+            p = pexpect.spawn ('/usr/bin/ssh user@example.com')
             p = pexpect.spawn ('ls -latr /tmp')
         You may also construct it with a list of arguments like so:
             p = pexpect.spawn ('/usr/bin/ftp', [])
-            p = pexpect.spawn ('/usr/bin/ssh', ['some@host.com'])
+            p = pexpect.spawn ('/usr/bin/ssh', ['user@example.com'])
             p = pexpect.spawn ('ls', ['-latr', '/tmp'])
         After this the child application will be created and
         will be ready for action. For normal use, see expect() and 
         send() and sendline().
+        
+        >>> import pexpect
+        >>> p = pexpect.spawn ('ls -la /tmp')
+        >>> p.expect (pexpect.EOF)
+        0
+
         """
 
         self.STDIN_FILENO = sys.stdin.fileno()

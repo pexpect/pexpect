@@ -437,16 +437,12 @@ class spawn:
     def isalive(self):
         """This tests if the child process is running or not.
         This returns 1 if the child process appears to be running or 0 if not.
-        I can't figure out how to check if a process is alive on Solaris.
-        This is what is wrong. Apparently the call:
-            os.waitpid(self.pid, os.WNOHANG)
-        does not work. It always returns with (0,0) whether the process
-        is running or defunct. This works:
-            os.waitpid(self.pid, 0)
-        but it blocks if the process IS alive, so it's useless for me.
-        I don't want to use signals. Signals on UNIX suck and they
-        mess up Python pipes (setting SIGCHLD to SIGIGNORE).
+        This also sets the exitstatus attribute.
+        It can take literally SECONDS for Solaris to return the right status.
         """
+        # I don't want to use signals. Signals on UNIX suck and they
+        # mess up Python pipes (setting SIGCHLD to SIGIGNORE).
+
         # If this class was created from an existing file descriptor then
         # I just check to see if the file descriptor is still valid.
         if self.pid == -1 and not self.__child_fd_owner: 
@@ -465,22 +461,16 @@ class spawn:
         # I can't even believe that I figured this out...
         try:
             pid, status = os.waitpid(self.pid, os.WNOHANG)
+            #print 'Solaris sucks'
         except OSError, e:
-            # Non-Solaris platforms raise an exception.
-            # This is harmless... I think :-)
-            print 'XCEPT'
+            # Non-Solaris platforms raise an exception that is
+            # quietly ignored here.  This is harmless... I think :-)
             pass
 
         # If status is still 0 after two calls to waitpid() then
         # the process really is alive. This seems to work on all platforms.
         if status == 0:
             return 1
-
-#        if pid == 0 and status == 0: # This happens on Solaris...
-#            # This means (I think) that the Solaris process is "defunct"
-#            # and a second wait must be called without the WNOHANG.
-#            # This is dangerous because if I am wrong then this could block.
-#            pid, status = os.waitpid (self.pid, 0)
 
         # I didn't OR this together because I want hooks for debugging.
         if os.WIFEXITED (status):

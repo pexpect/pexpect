@@ -33,6 +33,7 @@ class TestCaseDestructor(unittest.TestCase):
         p2 = pexpect.spawn('ls -l')
         p3 = pexpect.spawn('ls -l')
         p4 = pexpect.spawn('ls -l')
+        time.sleep(1) # Some platforms are slow at gc... Solaris!
         fd_t2 = (p1.child_fd,p2.child_fd,p3.child_fd,p4.child_fd)
         p1.kill(9)
         p2.kill(9)

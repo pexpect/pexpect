@@ -2,5 +2,5 @@
 int main ()
 {
 	printf ("Hello world!\n");
-	exit(667);
+	exit(7);
 }

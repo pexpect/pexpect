@@ -95,8 +95,8 @@ class spawn:
         self.softspace = 0 # File-like object.
         self.name = '' # File-like object.
 
-        if type (args) != type([])
-            raise TypeError, 'The second argument, args, must be a list. %s' % str(type(p))
+        if type (args) != type([]):
+            raise TypeError, 'The second argument, args, must be a list.'
 
         if args == []:
             self.args = split_command_line(command)
@@ -549,8 +549,16 @@ class spawn:
             pid, status = os.waitpid(self.pid, os.WNOHANG)
         except OSError, e:
             return 0
-### This does not work on Solaris. Grrr!!!
-#        if pid == self.pid and status == 0:
+            
+        # I have to do this twice for Solaris.
+        # I can't even believe that I figured this out...
+        try:
+            pid, status = os.waitpid(self.pid, os.WNOHANG)
+        except OSError, e:
+            return 0
+
+        # If status is still 0 after two calls to waitpid() then
+        # the process really is alive. This seems to work on all platforms.
         if status == 0:
             return 1
 

@@ -17,18 +17,7 @@
 #include "structseq.h"
 
 #if defined(__VMS)
-#    include <ctype.h>			/* tolower() */
-#    include <descrip.h>		/* string descriptors */
-#    include <dvidef.h>			/* DVI$_name */
-#    include <file.h>			/* -> O_RDWR */
-#    include <jpidef.h>			/* JPI$_name */
-#    include <lib$routines.h>		/* LIB$name */
-#    include <ots$routines.h>		/* OTS$name */
-#    include <ssdef.h>			/* SS$_name */
 #    include <unixio.h>
-#    include <unixlib.h>
-#    include <stat.h>
-#    include <wait.h>			/* define wait() */
 #endif /* defined(__VMS) */
 
 PyDoc_STRVAR(posix__doc__,
@@ -325,63 +314,6 @@ static char **environ;
 extern char **environ;
 #endif /* !_MSC_VER */
 
-#if defined(__VMS)
-/* add some values to provide a similar environment like POSIX */
-static
-void
-vms_add_posix_env(PyObject *d)
-{
-	PyObject *o;
-	char* str;
-
-	str = getenv("LINES");
-	o = Py_BuildValue("s", str);
-	if (o != NULL) {
-		(void)PyDict_SetItemString(d, "LINES", o);
-		Py_DECREF(o);
-	}
-
-	str = getenv("COLUMNS");
-	o = Py_BuildValue("s", str);
-	if (o != NULL) {
-		(void)PyDict_SetItemString(d, "COLUMNS", o);
-		Py_DECREF(o);
-	}
-
-	str = getenv("USER");
-	o = Py_BuildValue("s", str);
-	if (o != NULL) {
-		(void)PyDict_SetItemString(d, "USERNAME", o);
-		Py_DECREF(o);
-	}
-	o = Py_BuildValue("s", str);
-	if (o != NULL) {
-		(void)PyDict_SetItemString(d, "LOGNAME", o);
-		Py_DECREF(o);
-	}
-
-	str = getenv("HOME");
-	o = Py_BuildValue("s", str);
-	if (o != NULL) {
-		(void)PyDict_SetItemString(d, "HOME", o);
-		Py_DECREF(o);
-	}
-
-	str = getenv("PATH");
-	o = Py_BuildValue("s", str);
-	if (o != NULL) {
-		(void)PyDict_SetItemString(d, "PATH", o);
-		Py_DECREF(o);
-	}
-	/* OS = "OpenVMS" */
-	o = PyString_FromString ("OpenVMS");
-	if (o != NULL) {
-		(void)PyDict_SetItemString(d, "OS", o);
-		Py_DECREF(o);
-	}
-}
-#endif /* __VMS */
-
 static PyObject *
 convertenviron(void)
 {
@@ -421,9 +353,7 @@ convertenviron(void)
 		Py_DECREF(k);
 		Py_DECREF(v);
 	}
-#if defined(__VMS)
-        vms_add_posix_env(d);
-#elif defined(PYOS_OS2)
+#if defined(PYOS_OS2)
     {
         APIRET rc;
         char   buffer[1024]; /* OS/2 Provides a Documented Max of 1024 Chars */
@@ -1133,7 +1063,7 @@ posix_ttyname(PyObject *self, PyObject *args)
 		return NULL;
 
 #if defined(__VMS)
-	/* DECC V5.0 - only about FD= 0 @@ try getname()+$getdvi(dvi$_devnam) */
+        /* file descriptor 0 only, the default input device (stdin) */
 	if (id == 0) {
 		ret = ttyname();
 	}
@@ -1339,9 +1269,6 @@ posix_getcwd(PyObject *self, PyObject *noargs)
 	Py_BEGIN_ALLOW_THREADS
 #if defined(PYOS_OS2) && defined(PYCC_GCC)
 	res = _getcwd2(buf, sizeof buf);
-#elif defined(__VMS)
-	/* 0 = force Unix-style path if in the VMS DCL environment! */
-	res = getcwd(buf, sizeof buf, 0);
 #else
 	res = getcwd(buf, sizeof buf);
 #endif
@@ -1378,9 +1305,6 @@ posix_getcwdu(PyObject *self, PyObject *noargs)
 	Py_BEGIN_ALLOW_THREADS
 #if defined(PYOS_OS2) && defined(PYCC_GCC)
 	res = _getcwd2(buf, sizeof buf);
-#elif defined(__VMS)
-	/* 0 = force Unix-style path if in the VMS DCL environment! */
-	res = getcwd(buf, sizeof buf, 0);
 #else
 	res = getcwd(buf, sizeof buf);
 #endif
@@ -2597,8 +2521,12 @@ posix_fork(PyObject *self, PyObject *noargs)
 #endif /* defined(HAVE_OPENPTY) || defined(HAVE_FORKPTY) || defined(HAVE_DEV_PTMX */
 
 #if defined(HAVE_OPENPTY) || defined(HAVE__GETPTY) || defined(HAVE_DEV_PTMX)
+PyDoc_STRVAR(posix_openpty__doc__,
+"openpty() -> (master_fd, slave_fd)\n\n\
+Open a pseudo-terminal, returning open fd's for both master and slave end.\n");
+
 static PyObject *
-__shared_openpty (int * out_master_fd, int * out_slave_fd)
+posix_openpty(PyObject *self, PyObject *noargs)
 {
 	int master_fd, slave_fd;
 #ifndef HAVE_OPENPTY
@@ -2624,9 +2552,8 @@ __shared_openpty (int * out_master_fd, int * out_slave_fd)
 		return posix_error();
 #else
 	master_fd = open(DEV_PTY_FILE, O_RDWR | O_NOCTTY); /* open master */
-	if (master_fd < 0){
+	if (master_fd < 0)
 		return posix_error();
-	}
 	sig_saved = signal(SIGCHLD, SIG_DFL);
 	/* change permission of slave */
 	if (grantpt(master_fd) < 0) {
@@ -2640,13 +2567,11 @@ __shared_openpty (int * out_master_fd, int * out_slave_fd)
 	}
 	signal(SIGCHLD, sig_saved);
 	slave_name = ptsname(master_fd); /* get name of slave */
-	if (slave_name == NULL){
+	if (slave_name == NULL)
 		return posix_error();
-	}
 	slave_fd = open(slave_name, O_RDWR | O_NOCTTY); /* open slave */
-	if (slave_fd < 0){
+	if (slave_fd < 0)
 		return posix_error();
-	}
 #if !defined(__CYGWIN__) && !defined(HAVE_DEV_PTC)
 	ioctl(slave_fd, I_PUSH, "ptem"); /* push ptem */
 	ioctl(slave_fd, I_PUSH, "ldterm"); /* push ldterm */
@@ -2656,158 +2581,117 @@ __shared_openpty (int * out_master_fd, int * out_slave_fd)
 #endif /* HAVE_CYGWIN */
 #endif /* HAVE_OPENPTY */
 
-	*out_master_fd = master_fd;
-	*out_slave_fd = slave_fd;
 	return Py_BuildValue("(ii)", master_fd, slave_fd);
-}
 
-PyDoc_STRVAR(posix_openpty__doc__,
-"openpty() -> (master_fd, slave_fd)\n\n\
-Open a pseudo-terminal, returning open fd's for both master and slave end.\n");
-static PyObject *
-posix_openpty(PyObject *self, PyObject *noargs)
-{
-	int master_fd;
-	int slave_fd;
-
-	return __shared_openpty (& master_fd, & slave_fd);
-
-	/* return Py_BuildValue("(ii)", master_fd, slave_fd);*/
 }
 #endif /* defined(HAVE_OPENPTY) || defined(HAVE__GETPTY) || defined(HAVE_DEV_PTMX) */
 
-
-#if HAVE_FORKPTY
-#warning "HAVE_FORKPTY"
-#else
-#warning "NOT HAVE_FORKPTY"
-#endif
-
-#if HAVE_FORK
-#warning "HAVE_FORK"
-#else
-#warning "NOT HAVE_FORK"
-#endif
-
-#if HAVE_OPENPTY
-#warning "HAVE_OPENPTY"
-#else
-#warning "NOT HAVE_OPENPTY"
-#endif
-
-#if HAVE__GETPTY
-#warning "HAVE__GETPTY"
-#else
-#warning "NOT HAVE__GETPTY"
-#endif
-
-#if HAVE_DEV_PTMX
-#warning "HAVE_DEV_PTMX"
-#else
-#warning "NOT HAVE_DEV_PTMX"
-#endif
-
-
-/* Uses forkpty if available or for platform that don't have it, but have openpty this will define it. */
 #if defined(HAVE_FORKPTY) || (defined(HAVE_FORK) && (defined(HAVE_OPENPTY) || defined(HAVE__GETPTY) || defined(HAVE_DEV_PTMX)))
-#warning "Building forkpty"
 PyDoc_STRVAR(posix_forkpty__doc__,
 "forkpty() -> (pid, master_fd)\n\n\
 Fork a new process with a new pseudo-terminal as controlling tty.\n\n\
-Like fork(), return 0 as pid to child process, and PID of child to parent.\n\
-To both, return fd of newly opened pseudo-terminal.\n");
+Like fork(), return 0 as PID to child process, and return PID of child to parent.\n\
+Return fd of newly opened pseudo-terminal to both parent and child.\n");
 
 static PyObject *
 posix_forkpty(PyObject *self, PyObject *noargs)
 {
-#ifdef HAVE_FORKPTY		/* The easy one */
-	int master_fd, pid;
-	pid = forkpty(&master_fd, NULL, NULL, NULL);
-#else					/* The hard one */
-	int master_fd, pid;
-	int slave_fd;
-	char * slave_name;
-	int fd;
+#ifdef HAVE_FORKPTY      /* Use it if available. */
+    int master_fd, pid;
 
-	__shared_openpty (& master_fd, & slave_fd);
-	if (master_fd < 0 || slave_fd < 0)
-	{
-		return posix_error();
-	}
-	slave_name = ptsname(master_fd);
+    pid = forkpty(&master_fd, NULL, NULL, NULL);
+#else                    /* Else use our own. */
+    int master_fd, pid;
+    int slave_fd;
+    char * slave_name;
+    int fd;
+    PyObject * pty_tuple;
+    PyIntObject * Py_master_fd;
+    PyIntObject * Py_slave_fd;
 
-	pid = fork();
-	switch (pid) {
-	case -1:
+    /* Call python function to open pty */
+    pty_tuple = posix_openpty(self, noargs);
+    if (pty_tuple == NULL) return NULL; /* posix_openpty already set exception. */
+    Py_master_fd = PyTuple_GET_ITEM(pty_tuple,0);
+    Py_slave_fd = PyTuple_GET_ITEM(pty_tuple,1);
+    master_fd = (int) PyInt_AsLong (Py_master_fd);
+    slave_fd = (int) PyInt_AsLong (Py_slave_fd);
+    Py_DECREF(pty_tuple);
+
+    if (master_fd < 0 || slave_fd < 0) {
+        return posix_error();
+    }
+    slave_name = ptsname(master_fd);
+
+    pid = fork();
+    switch (pid) {
+    case -1:
             return posix_error();
-	case 0: /* Child */
+    case 0: /* Child */
 
 #ifdef TIOCNOTTY
-	/* Explicitly close the old controlling terminal.
-	Some platforms require an explicit detach of the current controlling tty
-	before we close stdin, stdout, stderr.
-	OpenBSD says that this is obsolete, but doesn't hurt. */
+        /* Some platforms require an explicit detach of the
+        current controlling tty before closing stdin, stdout, stderr.
+        OpenBSD says that this is obsolete, but doesn't hurt. */
         fd = open("/dev/tty", O_RDWR | O_NOCTTY);
         if (fd >= 0) {
-		    (void) ioctl(fd, TIOCNOTTY, (char *)0);
-	    	close(fd);
+            (void) ioctl(fd, TIOCNOTTY, (char *)0);
+            close(fd);
         }
 #endif /* TIOCNOTTY */
-
-		/* The setsid() system call will place the process into its own session
+        /* The setsid() system call will place the process into its own session
             which has the effect of disassociating it from the controlling terminal.
             This is known to be true for OpenBSD.
          */
-		if (setsid() < 0){
-			return posix_error();
-		}
+        if (setsid() < 0) {
+            return posix_error();
+        }
 
+        /* Verify that we are disconnected from the controlling tty. */
+        fd = open("/dev/tty", O_RDWR | O_NOCTTY);
+        if (fd >= 0) {
+            close(fd);
+            return posix_error();
+        }
 
-		/* Verify that we are disconnected from the controlling tty. */
-		fd = open("/dev/tty", O_RDWR | O_NOCTTY);
-		if (fd >= 0) {
-			close(fd);
-			return posix_error();
-        	}
-	
 #ifdef TIOCSCTTY
-		/* Make the pseudo terminal the controlling terminal for this process
-		 (the process must not currently have a controlling terminal).
-		*/
-        if (ioctl(slave_fd, TIOCSCTTY, (char *)0) < 0){
-			return posix_error();
-	}
+        /* Make the pseudo terminal the controlling terminal for this process
+         (the process must not currently have a controlling terminal).
+        */
+        if (ioctl(slave_fd, TIOCSCTTY, (char *)0) < 0) {
+            return posix_error();
+        }
 #endif /* TIOCSCTTY */
 
-		/* Verify that we can open to the slave pty file. */
-		fd = open(slave_name, O_RDWR);
-		if (fd < 0){
-			return posix_error();
-		}
-		else
-			close(fd);
+        /* Verify that we can open the slave pty file. */
+        fd = open(slave_name, O_RDWR);
+        if (fd < 0) {
+            return posix_error();
+        }
+        else
+            close(fd);
 
-		/* Verify that we now have a controlling tty. */
-		fd = open("/dev/tty", O_WRONLY);
-		if (fd < 0){
-			return posix_error();
-		}
-		else {
-			close(fd);
-		}
+        /* Verify that we now have a controlling tty. */
+        fd = open("/dev/tty", O_WRONLY);
+        if (fd < 0) {
+            return posix_error();
+        }
+        else {
+            close(fd);
+        }
 
-		(void) close(master_fd);
-		(void) dup2(slave_fd, 0);
-		(void) dup2(slave_fd, 1);
-		(void) dup2(slave_fd, 2);
-		if (slave_fd > 2)
-			(void) close(slave_fd);
-            pid = 0;
-            break;
-	default:
-		/* PARENT */
-		(void) close(slave_fd);
-	}
+        (void) close(master_fd);
+        (void) dup2(slave_fd, 0);
+        (void) dup2(slave_fd, 1);
+        (void) dup2(slave_fd, 2);
+        if (slave_fd > 2)
+            (void) close(slave_fd);
+        pid = 0;
+        break;
+    default:
+        /* PARENT */
+        (void) close(slave_fd);
+    }
 #endif
 
 	if (pid == -1)
@@ -2816,7 +2700,7 @@ posix_forkpty(PyObject *self, PyObject *noargs)
 		PyOS_AfterFork();
 	return Py_BuildValue("(ii)", pid, master_fd);
 }
-#endif
+#endif /* defined(HAVE_FORKPTY) || (defined(HAVE_FORK) && (defined(HAVE_OPENPTY) || defined(HAVE__GETPTY) || defined(HAVE_DEV_PTMX))) */
 
 #ifdef HAVE_GETEGID
 PyDoc_STRVAR(posix_getegid__doc__,
@@ -5318,11 +5202,7 @@ posix_pipe(PyObject *self, PyObject *noargs)
 	int fds[2];
 	int res;
 	Py_BEGIN_ALLOW_THREADS
-#if defined(__VMS)
-	res = pipe(fds,0,2100); /* bigger mailbox quota than 512 */
-#else
 	res = pipe(fds);
-#endif
 	Py_END_ALLOW_THREADS
 	if (res != 0)
 		return posix_error();

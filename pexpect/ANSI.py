@@ -253,5 +253,6 @@ class ANSI (term):
                 self.scroll_up ()
                 self.cursor_home (self.cur_r, 1)
                 self.erase_line()
-#t = ANSI()
-#t.test()
+if __name__ == '__main__':
+    t = ANSI()
+    t.test()

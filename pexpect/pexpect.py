@@ -186,6 +186,53 @@ class spawn:
         return self.expect_list(compiled_pattern_list, local_timeout)
 
 
+    def expect_exact (self, str_list, local_timeout = None):
+        '''This is similar to expect() except that it takes
+        list of regular strings instead of compiled regular expressions.
+        The idea is that this should be much faster. It could also be
+        useful when you don't want to have to worry about escaping
+        regular expression characters that you want to match.
+        You may also pass just a string without a list and the single
+        string will be converted to a list.
+        '''
+        matched_pattern = None
+        before_pattern = None
+        index = None
+        
+        if type(str_list)is StringType:
+            str_list = [str_list]
+
+        try:
+            done = 0
+            incoming = ''
+            while not done: # Keep reading until done.
+                c = self.read(1, local_timeout)
+                incoming = incoming + c
+
+                # Sequence through the list of patterns and look for a match.
+                index = 0
+                for str_target in str_list:
+                    match_index = incoming.find (str_target)
+                    if match_index >= 0:
+                        matched_pattern = incoming[match_index:]
+                        before_pattern = incoming[:match_index]
+                        done = 1
+                        break
+                    else:
+                        index = index + 1
+        except Exception, e:
+            ### Here I should test if the client wants to pass exceptions, or
+            ### to return some state flag. Exception versus return value.
+            matched_pattern = None
+            before_pattern = incoming
+            index = -1
+            raise
+
+        self.before = before_pattern
+        self.matched = matched_pattern
+        return index
+
+
     def expect_list(self, re_list, local_timeout = None):
         '''This is called by expect(). This takes a list of compiled
         regular expressions. This returns the matched index into the

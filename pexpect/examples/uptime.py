@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 """This displays uptime information using uptime.
-A bit redundant perhaps, but it demonstrates expecting for a
+This is redundant perhaps, but it demonstrates expecting for a
 regular expression that uses subgroups.
 """
 
 import pexpect
 import re
 
-# Different styles of uptime results.
+# There are many different styles of uptime results.
+# I try to parse them all. Yeee!
 #
 # [x86] Linux 2.4 (Redhat 7.3)
 #  2:06pm  up 63 days, 18 min,  3 users,  load average: 0.32, 0.08, 0.02
@@ -19,13 +20,35 @@ import re
 #  2:13pm  up 22 min(s),  1 user,  load average: 0.02, 0.01, 0.01
 # [x86] Linux 2.4.18-14 (Redhat 8)
 # 11:36pm  up 4 days, 17:58,  1 user,  load average: 0.03, 0.01, 0.00
+# AIX jwdir 2 5 0001DBFA4C00
+#  09:43AM   up  23:27,  1 user,  load average: 0.49, 0.32, 0.23
 
+# This parses uptime output into the major groups using
+# regex group matching.
 p = pexpect.spawn ('uptime')
-p.expect ('up ([0-9]+) days?,.*?,\s+([0-9]+) users?,\s+load averages?: ([0-9]+\.[0-9][0-9]), ([0-9]+\.[0-9][0-9]), ([0-9]+\.[0-9][0-9])')
+p.expect('up\s+(.*?),\s+([0-9]+) users?,\s+load averages?: ([0-9]+\.[0-9][0-9]), ([0-9]+\.[0-9][0-9]), ([0-9]+\.[0-9][0-9])')
+match = p.match
+duration, users, av1, av5, av15 = match.groups()
 
-duration, users, av1, av5, av15 = p.match.groups()
+# The duration is a little harder to parse because of all the different
+# styles of uptime. I'm sure there is a way to do this all at once with
+# one single regex, but I bet it would be hard to read and maintain.
+# If anyone wants to send me a version using a single regex I'd be
+# happy to see it.
+days = '0'
+if 'day' in duration:
+    match = re.search('([0-9]+)\s+day',duration)
+    days = match.group(1)
+hours = '0:0'
+if ':' in duration:
+    match = re.search('([0-9]+:[0-9]+)',duration)
+    hours = match.group(1)
+mins = '0'
+if 'min' in duration:
+    match = re.search('([0-9]+)\s+min',duration)
+    mins = match.group(1)
 
-print '%s days, %s users, %s (1 min), %s (5 min), %s (15 min)' % (
-    duration, users, av1, av5, av15)
-
+# Print the parsed fields in CSV format.
+print 'days, hours, minutes, users, cpu avg 1 min, cpu avg 5 min, cpu avg 15 min'
+print '%s, %s, %s, %s, %s, %s, %s' % (days, hours, mins, users, av1, av5, av15)
 

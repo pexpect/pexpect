@@ -5,28 +5,28 @@ import sys
 
 class IsAliveTestCase(unittest.TestCase):
         
-    def test_expect_is_alive1 (self):
-        p = pexpect.spawn('/bin/ls')
+    def test_expect_isalive1 (self):
+        p = pexpect.spawn('ls')
         p.expect(pexpect.EOF)
-        if p.isAlive():
+        if p.isalive():
             self.fail ('Child process is not dead. It should be.')
 
-    def test_expect_is_alive2 (self):
-        p = pexpect.spawn('/bin/cat')
-        if not p.isAlive():
+    def test_expect_isalive2 (self):
+        p = pexpect.spawn('cat')
+        if not p.isalive():
             self.fail ('Child process is not alive. It should be.')
         p.kill(1)
         p.expect(pexpect.EOF)
-        if p.isAlive():
+        if p.isalive():
             self.fail ('Child process is not dead. It should be.')
 
-    def test_expect_is_alive3 (self):
-        p = pexpect.spawn('/bin/cat')
-        if not p.isAlive():
+    def test_expect_isalive3 (self):
+        p = pexpect.spawn('cat')
+        if not p.isalive():
             self.fail ('Child process is not alive. It should be.')
         p.kill(9)
         p.expect(pexpect.EOF)
-        if p.isAlive():
+        if p.isalive():
             self.fail ('Child process is not dead. It should be.')
 
 if __name__ == '__main__':

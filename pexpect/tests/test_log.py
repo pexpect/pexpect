@@ -10,7 +10,7 @@ class TestCaseLog(unittest.TestCase):
     def test_log (self):
 	log_message = 'This is a test.'
 	filename = tempfile.mktemp()
-        p = pexpect.spawn('/bin/echo', [log_message])
+        p = pexpect.spawn('echo', [log_message])
 	p.log_open (filename)
 	p.expect (pexpect.EOF)
 	p.log_close()

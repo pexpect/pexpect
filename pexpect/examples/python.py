@@ -18,5 +18,5 @@ print 'Escape character is \'^]\'.'
 print c.after,
 c.interact()
 c.kill(1)
-print 'isAlive:', c.isAlive()
+print 'is alive:', c.isalive()
 

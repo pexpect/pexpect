@@ -17,6 +17,7 @@ modules_to_test = (
 'test_screen'
 ) 
 
+
 def suite(): 
     alltests = unittest.TestSuite() 
     for module in map(__import__, modules_to_test): 

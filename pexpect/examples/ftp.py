@@ -23,8 +23,8 @@ sys.stdout.write (child.after)
 sys.stdout.flush()
 child.interact() # Escape character defaults to ^]
 
-if child.isAlive():
+if child.isalive():
     child.sendline('bye')
     child.kill(1)
-print 'Is Alive: ', child.isAlive()
+print 'Is Alive: ', child.isalive()
 

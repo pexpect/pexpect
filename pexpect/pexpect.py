@@ -130,19 +130,22 @@ class spawn:
 
         if which(self.command) == None:
             raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
-
-        # This is necessary for isAlive() to work. Without this there is
-        # no portable way to tell if a child process is a zombie.
-        # Checking waitpid with WNOHANG option does not work and
-        # checking waitpid without it would block if the child is not a zombie.
-        # With this children should exit completely without going into
-        # a zombie state. Note that some UNIX flavors may send the signal
-        # before the child's pty output buffer is empty, while others
-        # may send the signal only when the buffer is empty.
-        # In the later case, isAlive() will always return true until the
-        # output buffer is empty. Use expect_eof() to consume all child output.
-        # This is not the same as the Zombie (waiting to die) problem.
-        #signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+# I'm no longer using this technique to test if a process is alive.
+# First, it is not portable.
+# Second, it messes up other subsystems that use signals (such as pipes).
+# Third, signals on UNIX suck.
+#        # This is necessary for isAlive() to work. Without this there is
+#        # no portable way to tell if a child process is a zombie.
+#        # Checking waitpid with WNOHANG option does not work and
+#        # checking waitpid without it would block if the child is not a zombie.
+#        # With this children should exit completely without going into
+#        # a zombie state. Note that some UNIX flavors may send the signal
+#        # before the child's pty output buffer is empty, while others
+#        # may send the signal only when the buffer is empty.
+#        # In the later case, isAlive() will always return true until the
+#        # output buffer is empty. Use expect_eof() to consume all child output.
+#        # This is not the same as the Zombie (waiting to die) problem.
+#        #signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
         try:
             self.pid, self.child_fd = pty.fork()
@@ -461,15 +464,15 @@ class spawn:
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old) # restore state
         
-    def isAlive(self):
+    def isalive(self):
         """This tests if the child process is running or not.
-        It returns 1 if the child process appears to be running or
-        0 if not.
+        This returns 1 if the child process appears to be running or 0 if not.
         """
         status = os.waitpid (self.pid, os.WNOHANG)
         if status[0] == 0:
             return 1
 
+        # I didn't OR this together because I want hooks for debugging.
         if os.WIFEXITED (status[1]):
             return 0
         elif os.WIFSTOPPED (status[1]):
@@ -479,36 +482,36 @@ class spawn:
         else:
             return 1
 
-    def isAliveOld(self):
-        """This tests if the child process is running or not.
-        It returns 1 if the child process appears to be running or
-        0 if not. This checks the process list to see if the pid is
-        there. In theory, the original child could have died and the
-        pid could have been reused by some other process. This is
-        unlikely, but I can find no portable way to make sure.
-        Also, this is not POSIX portable way to check, but
-        UNIX provides no standard way to test if a given pid is
-        running or not. By convention most modern UNIX systems will
-        respond to signal 0.
-        """
-        old_signal = signal.getsignal (signal.SIGCHLD)
-        if old_signal is None:
-            raise ExceptionPexpect ('Existing signal handler is non-Python')
-        #signal.signal(signal.SIGCHLD, signal.SIG_IGN)
-        try:
-            print "stuff2"
-            os.kill (self.pid, 0)
-            print "stuff3"
-            signal.signal(signal.SIGCHLD, old_signal)
-            return 1
-        except OSError, e:
-            print str(e)
-            signal.signal(signal.SIGCHLD, old_signal)
-            return 0
-            ###return e.errno == errno.EPERM
-            ### For some reason I got this exception printed even though
-            ### I am explicitly catching OSError. Noah doth halucinate?
-            ###     OSError: [Errno 3] No such process
+#    def isAlive(self):
+#        """This tests if the child process is running or not.
+#        It returns 1 if the child process appears to be running or
+#        0 if not. This checks the process list to see if the pid is
+#        there. In theory, the original child could have died and the
+#        pid could have been reused by some other process. This is
+#        unlikely, but I can find no portable way to make sure.
+#        Also, this is not POSIX portable way to check, but
+#        UNIX provides no standard way to test if a given pid is
+#        running or not. By convention most modern UNIX systems will
+#        respond to signal 0.
+#        """
+#        old_signal = signal.getsignal (signal.SIGCHLD)
+#        if old_signal is None:
+#            raise ExceptionPexpect ('Existing signal handler is non-Python')
+#        #signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+#        try:
+#            print "stuff2"
+#            os.kill (self.pid, 0)
+#            print "stuff3"
+#            signal.signal(signal.SIGCHLD, old_signal)
+#            return 1
+#        except OSError, e:
+#            print str(e)
+#            signal.signal(signal.SIGCHLD, old_signal)
+#            return 0
+#            ###return e.errno == errno.EPERM
+#            ### For some reason I got this exception printed even though
+#            ### I am explicitly catching OSError. Noah doth halucinate?
+#            ###     OSError: [Errno 3] No such process
 
     def kill(self, sig):
         """This sends the given signal to the child application.

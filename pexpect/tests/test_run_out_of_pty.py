@@ -13,7 +13,7 @@ class ExpectTestCase(unittest.TestCase):
 	plist=[]
         for count in range (0,1000):
 		try:
-			plist.append (pexpect.spawn('/bin/ls -l'))
+			plist.append (pexpect.spawn('ls -l'))
 		except pexpect.ExceptionPexpect, e:
 			return
 		except Exception, e:

@@ -8,9 +8,9 @@ class ExpectTestCase(unittest.TestCase):
     #def runTest (self):
         
     def test_expect (self):
-        the_old_way = commands.getoutput('/bin/ls -l')
+        the_old_way = commands.getoutput('ls -l')
 
-        p = pexpect.spawn('/bin/ls -l')
+        p = pexpect.spawn('ls -l')
         the_new_way = ''
         try:
                 while 1:
@@ -23,9 +23,9 @@ class ExpectTestCase(unittest.TestCase):
         assert the_old_way == the_new_way
 
     def test_expect_exact (self):
-        the_old_way = commands.getoutput('/bin/ls -l')
+        the_old_way = commands.getoutput('ls -l')
 
-        p = pexpect.spawn('/bin/ls -l')
+        p = pexpect.spawn('ls -l')
         try:
                 the_new_way = ''
                 while 1:
@@ -38,9 +38,9 @@ class ExpectTestCase(unittest.TestCase):
         assert the_old_way == the_new_way
 
     def test_expect_eof (self):
-        the_old_way = commands.getoutput('/bin/ls -l')
+        the_old_way = commands.getoutput('ls -l')
 
-        p = pexpect.spawn('/bin/ls -l')
+        p = pexpect.spawn('ls -l')
         p.expect(pexpect.EOF) # This basically tells it to read everything.
         the_new_way = p.before
         the_new_way = the_new_way.replace('\r','')
@@ -49,7 +49,7 @@ class ExpectTestCase(unittest.TestCase):
         assert the_old_way == the_new_way
 
     def test_unexpected_eof (self):
-        p = pexpect.spawn('/bin/ls -l')
+        p = pexpect.spawn('ls -l')
         try:
             p.expect('ZXYXZ') # Probably never see this in ls output.
         except pexpect.EOF, e:

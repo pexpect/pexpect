@@ -1,4 +1,4 @@
-import os, fcntl, termios, struct
+import os, fcntl, termios
 import time
 
 def my_forkpty():
@@ -14,16 +14,17 @@ def my_forkpty():
     if pid == -1:
         raise ExceptionPexpect("Forkpty failed")
     elif pid == 0: # Child
-        if 'TIOCNOTTY' in dir(termios):
-        #        /* Some platforms require an explicit detach of the
+        if hasattr(termios, 'TIOCNOTTY'): 
+        #        Some platforms require an explicit detach of the
         #        current controlling tty before closing stdin, stdout, stderr.
-        #        OpenBSD says that this is obsolete, but doesn't hurt. */
-            fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
-            if fd >= 0:
-                s = struct.pack("H", 0)
-                fcntl.ioctl(fd, termios.TIOCNOTTY, s);
+        #        OpenBSD says that this is obsolete, but doesn't hurt.
+            try:
+                fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
+            except:
+                pass
+            else: #if fd >= 0:
+                fcntl.ioctl(fd, termios.TIOCNOTTY, 0)
                 os.close(fd)
-
 
         # The setsid() system call will place the process into its own session
         # which has the effect of disassociating it from the controlling terminal.
@@ -41,8 +42,7 @@ def my_forkpty():
         if 'TIOCSCTTY' in dir(termios):
             # Make the pseudo terminal the controlling terminal for this process
             # (the process must not currently have a controlling terminal).
-            s = struct.pack("H", 0)
-            if fcntl.ioctl(slave_fd, termios.TIOCSCTTY, s) < 0:
+            if fcntl.ioctl(slave_fd, termios.TIOCSCTTY, '') < 0:
                 raise ExceptionPexpect("Forkpty failed")
 
 #        # Verify that we can open to the slave pty file. */

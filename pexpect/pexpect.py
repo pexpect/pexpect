@@ -138,9 +138,7 @@ class spawn:
         try:
             self.pid, self.child_fd = pty.fork()
         except OSError, e:
-            raise ExceptionPexpect(str(e) + '\nPexpect: pty.fork() failed. ' \
-                                  'Out of pty devices or this platform ' \
-                                  'does not properly support pty.fork().')
+            raise ExceptionPexpect('Pexpect: pty.fork() failed: ' + str(e))
 
         if self.pid == 0: # Child
             setwinsize(24, 80)

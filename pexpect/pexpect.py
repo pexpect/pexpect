@@ -222,11 +222,13 @@ class spawn:
         Note that calling close() more than once is valid.
         This emulates standard Python behavior with files.
 	If wait is set to True then close will wait
-	for the exit status of the process. This is a blocking call,
-	but this usually takes almost no time at all. If you are
+	for the exit status of the process. Doing a wait is a blocking call,
+	but this usually takes almost no time at all. Generally,
+	you don't have to worry about this. If you are
 	creating lots of children then you usually want to call wait.
-	Only set wait to false if yo uknow the child will
+	Only set wait to false if you know the child will
 	continue to run after closing the controlling TTY.
+	Otherwise you will end up with defunct (zombie) processes.
         """
         if self.child_fd != -1:
             if not self.__child_fd_owner:

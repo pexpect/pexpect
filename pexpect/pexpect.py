@@ -18,6 +18,10 @@ License: Python Software Foundation License
 
 Noah Spurrier
 2002
+
+$Revision$
+$Date$
+
 '''
 import select
 import signal

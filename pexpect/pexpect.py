@@ -24,7 +24,6 @@ $Date$
 
 import os, sys
 import select
-import traceback
 import string
 import re
 import struct
@@ -146,8 +145,8 @@ class spawn:
             self.args = _split_command_line(command)
             self.command = self.args[0]
         else:
-            args.insert (0, command)
             self.args = args
+            self.args.insert (0, command)
             self.command = command
         self.name = '<' + reduce(lambda x, y: x+' '+y, self.args) + '>'
 
@@ -454,7 +453,7 @@ class spawn:
 
         try:
             pid, status = os.waitpid(self.pid, os.WNOHANG)
-        except OSError, e:
+        except OSError:
             return 0
 
         # I have to do this twice for Solaris.
@@ -462,7 +461,7 @@ class spawn:
         try:
             pid, status = os.waitpid(self.pid, os.WNOHANG)
             #print 'Solaris sucks'
-        except OSError, e:
+        except OSError:
             # Non-Solaris platforms raise an exception that is
             # quietly ignored here.  This is harmless... I think :-)
             pass
@@ -624,21 +623,21 @@ class spawn:
                         self.after = incoming [match_index : ]
                         self.match = None
                         return index
-        except EOF, e:
+        except EOF:
             if EOF in pattern_list:
                 self.before = incoming
                 self.after = EOF
                 return pattern_list.index(EOF)
             else:
                 raise
-        except TIMEOUT, e:
+        except TIMEOUT:
             if TIMEOUT in pattern_list:
                 self.before = incoming
                 self.after = TIMEOUT
                 return pattern_list.index(TIMEOUT)
             else:
                 raise
-        except Exception, e:
+        except Exception:
             self.before = incoming
             self.after = None
             self.match = None
@@ -674,21 +673,21 @@ class spawn:
                         self.after = incoming[match.start() : ]
                         self.match = match
                         return index
-        except EOF, e:
+        except EOF:
             if EOF in pattern_list:
                 self.before = incoming
                 self.after = EOF
                 return pattern_list.index(EOF)
             else:
                 raise
-        except TIMEOUT, e:
+        except TIMEOUT:
             if TIMEOUT in pattern_list:
                 self.before = incoming
                 self.after = TIMEOUT
                 return pattern_list.index(TIMEOUT)
             else:
                 raise
-        except Exception, e:
+        except Exception:
             self.before = incoming
             self.after = None
             self.match = None
@@ -787,7 +786,7 @@ def _setwinsize(r, c):
 
     # Assume ws_xpixel and ws_ypixel are zero.
     s = struct.pack("HHHH", r, c, 0, 0)
-    x = fcntl.ioctl(sys.stdout.fileno(), TIOCSWINSZ, s)
+    fcntl.ioctl(sys.stdout.fileno(), TIOCSWINSZ, s)
 
 def _getwinsize():
     s = struct.pack("HHHH", 0, 0, 0, 0)

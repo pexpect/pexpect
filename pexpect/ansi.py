@@ -4,7 +4,8 @@
 # http://www.retards.org/terminals/vt102.html
 # http://vt100.net/docs/vt102-ug/contents.html
 
-import screen
+#import screen
+from screen import *
 import FSM
 import copy
 import string
@@ -105,17 +106,14 @@ def Log (fsm):
         fout.write (fsm.input_symbol + ',' + fsm.current_state + '\n')
         fout.close()
 
-class term (screen.screen):
-    def __init__ (self, r=24, c=80):
-        screen.screen(r,c)
-
-class ansi (term):
+class ansi (screen):
     '''This class encapsulates a generic terminal.
         It filters a stream and maintains the state of
         a screen object.
     '''
     def __init__ (self, r=24,c=80):
-        term (r,c)
+        screen.__init__(self,r,c)
+
         #self.screen = screen (24,80)
         self.state = FSM.FSM ('INIT',[self])
         self.state.set_default_transition (Log, 'INIT')
@@ -189,10 +187,10 @@ class ansi (term):
         ch = ch[0]
 
         if ch == '\r':
-            self.cr()
+            self.crlr()
             return
         if ch == '\n':
-            self.lf()
+            self.crlf()
             return
         if ch == chr(BS):
             self.cursor_back()
@@ -205,7 +203,7 @@ class ansi (term):
             fout.close()
 
             return
-        self.put(self.cur_r, self.cur_c, ch)
+        self.put_abs(self.cur_r, self.cur_c, ch)
         old_r = self.cur_r
         old_c = self.cur_c
         self.cursor_forward()
@@ -218,4 +216,3 @@ class ansi (term):
                 self.cursor_home (self.cur_r, 1)
                 self.erase_line()
 
-a = ansi()

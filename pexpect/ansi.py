@@ -173,6 +173,7 @@ class term:
         self.state.add_transition ('7', 'ESC', DoCursorSave, 'INIT')
         self.state.add_transition ('8', 'ESC', DoCursorRestore, 'INIT')
         self.state.add_transition ('M', 'ESC', DoUpReverse, 'INIT')
+        self.state.add_transition ('=', 'ESC', None, 'INIT') # Selects application keypad.
         self.state.add_transition ('#', 'ESC', None, 'GRAPHICS_POUND')
         self.state.add_transition_any ('GRAPHICS_POUND', None, 'INIT')
         self.state.add_transition ('H', 'ELB', DoHomeOrigin, 'INIT')
@@ -275,13 +276,25 @@ class screen:
         of the screen.
         \r and \n both produce a call to crlf().
         '''
+        ch = ch[0]
+
         if ch == '\r':
             self.cr()
             return
-        if  ch == '\n':
+        if ch == '\n':
             self.lf()
             return
+        if ch == chr(BS):
+            self.cursor_back()
+            self.put(self.cur_r, self.cur_c, ' ')
+            return
 
+        if ch not in string.printable:
+            fout = open ('log', 'a')
+            fout.write ('Nonprint: ' + str(ord(ch)))
+            fout.close()
+
+            return
         self.put(self.cur_r, self.cur_c, ch)
         old_r = self.cur_r
         old_c = self.cur_c
@@ -337,7 +350,7 @@ class screen:
         self.cur_c = c
         self.cursor_constrain ()
     def cursor_back (self,count=1): # <ESC>[{COUNT}D (not confused with down)
-        self.cur_r = self.cur_r - count
+        self.cur_c = self.cur_c - count
         self.cursor_constrain ()
     def cursor_down (self,count=1): # <ESC>[{COUNT}B (not confused with back)
         self.cur_r = self.cur_r + count
@@ -358,10 +371,10 @@ class screen:
         self.cursor_home (r, c)
     def cursor_save (self): # <ESC>[s
         '''Save current cursor position.'''
-        pass
+        self.cursor_save_attrs()
     def cursor_unsave (self): # <ESC>[u
         '''Restores cursor position after a Save Cursor.'''
-        pass
+        self.cursor_restore_attrs()
     def cursor_save_attrs (self): # <ESC>7
         '''Save current cursor position.'''
         self.cur_saved_r = self.cur_r
@@ -369,7 +382,6 @@ class screen:
     def cursor_restore_attrs (self): # <ESC>8
         '''Restores cursor position after a Save Cursor.'''
         self.cursor_home (self.cur_saved_r, self.cur_saved_c)
-
     def scroll_constrain (self):
         '''This keeps the scroll region within the screen region.'''
         if self.scroll_row_start <= 0:

@@ -6,6 +6,9 @@ import gc
 import time
 
 class TestCaseDestructor(PexpectTestCase.PexpectTestCase):
+    def setUp(self):
+        print self.id()
+
     def test_destructor (self):
         p1 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
         p2 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)

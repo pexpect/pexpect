@@ -4,6 +4,8 @@ import unittest
 import sys, os, time
 
 class IsAliveTestCase(unittest.TestCase):
+    def setUp(self):
+        print self.id()
         
     def test_expect_isalive1 (self):
         p = pexpect.spawn('ls')

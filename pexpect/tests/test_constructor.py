@@ -4,7 +4,9 @@ import unittest
 import time
 
 class TestCaseConstructor(unittest.TestCase):
-        
+    def setUp(self):
+        print self.id()
+
     def test_constructor (self):
         """This tests that the constructor will work and give
         the same results for different styles of invoking __init__().

@@ -3,7 +3,9 @@ import pexpect
 import unittest
 
 class SplitCommandLineTestCase(unittest.TestCase):
-    #def runTest (self):
+    def setUp(self):
+        print self.id()
+
     def testSplitSizes(self):
         assert len(pexpect._split_command_line(r'')) == 0
         assert len(pexpect._split_command_line(r'one')) == 1

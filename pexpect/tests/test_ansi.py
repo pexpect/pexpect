@@ -59,6 +59,8 @@ tetris_target='                           XX            XXXX    XX              
 '                                                                                \n'
 
 class ansiTestCase (unittest.TestCase):
+    def setUp(self):
+        print self.id()
 
     def test_write (self):
         s = ANSI.ANSI (6,65)

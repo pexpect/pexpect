@@ -3,6 +3,9 @@ import pexpect
 import unittest
 
 class MissingCommandTestCase (unittest.TestCase):
+    def setUp(self):
+        print self.id()
+
     def testMissingCommand(self):
         try:
             i = pexpect.spawn ('ZXQYQZX')

@@ -5,6 +5,9 @@ import PexpectTestCase
 import time
 
 class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
+    def setUp(self):
+        print self.id()
+
     def test_winsize (self):
 	"""
 	This tests that the child process can set and get the windows size.

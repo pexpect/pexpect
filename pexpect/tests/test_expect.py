@@ -5,6 +5,8 @@ import commands
 import sys
 
 class ExpectTestCase(unittest.TestCase):
+    def setUp(self):
+        print self.id()
     def test_exp (self):
         p = pexpect.spawn('cat')
         p.sendline ('Hello')

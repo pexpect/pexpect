@@ -5,6 +5,8 @@ import os
 import tempfile 
 
 class TestCaseLog(unittest.TestCase):
+    def setUp(self):
+        print self.id()
         
     def test_log (self):
         log_message = 'This is a test. This is a test.'

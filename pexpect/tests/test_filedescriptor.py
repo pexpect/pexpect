@@ -6,13 +6,15 @@ import sys
 import os
 
 class ExpectTestCase(PexpectTestCase.PexpectTestCase):
+    def setUp(self):
+        print self.id()
+
     def test_fd (self):
 	fd = os.open ('TESTDATA.txt', os.O_RDONLY)
 	s = pexpect.spawn (fd)
 	s.expect ('This is the end of test data:')
 	s.expect (pexpect.EOF)
 	assert s.before == ' END\n'
-
 
     def test_setmaxread (self):
     	fd = os.open ('TESTDATA.txt', os.O_RDONLY)

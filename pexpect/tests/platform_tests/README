@@ -1,0 +1,4 @@
+These are tests that are not yet pyunit tests
+or are not intended to be pyunit tests.
+Anything not part of the Python unittest framework
+should go here.

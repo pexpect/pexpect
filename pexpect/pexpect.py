@@ -173,10 +173,9 @@ class spawn:
         """This opens a log file. All data read from the child
         application will be written to the log file.
         This is very useful to use while creating scripts.
-        You can use this to figure out exactly what the child
-        is sending.
+        You can use this to figure out exactly what the child is sending.
         """
-        self.log_fd = os.open (filename, O_APPEND | O_CREAT)
+        self.log_fd = os.open (filename, os.O_WRONLY | os.O_CREAT | os.O_APPEND)
         
     def log_close (self):
         """This closes the log file opened by log().

@@ -12,6 +12,7 @@ SHELL_PROMPT = '[#\$] '
 
 def login(host, user, password):
     child = pexpect.spawn('ssh %s@%s'%(user, host))
+    child.log_open('LOG')
     child.expect('password:')
     child.sendline(password)
     i = child.expect(['Permission denied', SHELL_PROMPT, 'Terminal type'])

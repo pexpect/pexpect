@@ -26,7 +26,7 @@ dist: pexpect-current.tgz
 pexpect-current.tgz: dist/pexpect-$(VERSION).tar.gz
 	rm -f pexpect-current.tgz
 	cp dist/pexpect-$(VERSION).tar.gz ./pexpect-current.tgz
-	cp dist/pexpect-$(VERSION).tar.gz .
+	cp dist/pexpect-$(VERSION).tar.gz ./pexpect-$(VERSION).tgz
 
 doc: pexpect-doc.tgz
 
@@ -47,7 +47,7 @@ clean:
 	rm -f *.pyc
 	rm -f dist/pexpect-$(VERSION).tar.gz
 	cd dist;rm -rf pexpect-$(VERSION)/
-	rm -f pexpect-$(VERSION).tar.gz
+	rm -f pexpect-$(VERSION).tgz
 	rm -f pexpect-current.tgz
 	rm -f pexpect-examples.tgz
 	rm -f pexpect-doc.tgz

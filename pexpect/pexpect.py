@@ -366,7 +366,7 @@ class spawn:
         It includes a timeout. If the read does not complete within the
         timeout period then a TIMEOUT exception is raised.
         If the end of file is read then an EOF exception will be raised.
-        If a log file was opened using log_open() then all data will
+        If a log file was set using setlog() then all data will
         also be written to the log file.
 
         Notice that if this method is called with timeout=None 
@@ -388,10 +388,9 @@ class spawn:
                 self.flag_eof = 1
                 raise EOF('End Of File (EOF) in read(). Empty string style platform.')
             
-            #if self.log_fd != -1:
-            #    os.write (self.log_fd, s)
             if self.log_file != None:
                 self.log_file.write (s)
+                self.log_file.flush()
                 
             return s
 

@@ -215,40 +215,40 @@ class spawn:
         on error.
 
         After a match is found the instance attributes
-	'before', 'after' and 'match' will be set.
-	You can see all the data read before the match in 'before'.
-	You can see the data that was matched in 'after'.
-	The re.MatchObject used in the re match will be in 'match'.
+        'before', 'after' and 'match' will be set.
+        You can see all the data read before the match in 'before'.
+        You can see the data that was matched in 'after'.
+        The re.MatchObject used in the re match will be in 'match'.
         If an error occured then 'before' will be set to all the
-	data read so far and 'after' and 'match' will be None.
+        data read so far and 'after' and 'match' will be None.
 
         Note: A list entry may be EOF instead of a string.
-	This will catch EOF exceptions and return the index
-	of the EOF entry instead of raising the EOF exception.
-	The attributes 'after' and 'match' will be None.
-	This allows you to write code like this:
-		index = p.expect (['good', 'bad', pexpect.EOF])
-		if index == 0:
-			do_something()
-		elif index == 1:
-			do_something_else()
-		elif index == 2:
-			do_some_other_thing()
-	instead of code like this:
-		try:
-			index = p.expect (['good', 'bad'])
-			if index == 0:
-				do_something()
-			elif index == 1:
-				do_something_else()
-		except EOF:
-			do_some_other_thing()
-	These two forms are equivalent. It all depends on what you want.
-	You can also just expect the EOF if you are waiting for all output
-	of a child to finish. For example:
-		p = pexpect.spawn('/bin/ls')
-		p.expect (pexpect.EOF)
-		print p.before
+        This will catch EOF exceptions and return the index
+        of the EOF entry instead of raising the EOF exception.
+        The attributes 'after' and 'match' will be None.
+        This allows you to write code like this:
+                index = p.expect (['good', 'bad', pexpect.EOF])
+                if index == 0:
+                        do_something()
+                elif index == 1:
+                        do_something_else()
+                elif index == 2:
+                        do_some_other_thing()
+        instead of code like this:
+                try:
+                        index = p.expect (['good', 'bad'])
+                        if index == 0:
+                                do_something()
+                        elif index == 1:
+                                do_something_else()
+                except EOF:
+                        do_some_other_thing()
+        These two forms are equivalent. It all depends on what you want.
+        You can also just expect the EOF if you are waiting for all output
+        of a child to finish. For example:
+                p = pexpect.spawn('/bin/ls')
+                p.expect (pexpect.EOF)
+                print p.before
         """
         compiled_pattern_list = self.compile_pattern_list(pattern)
         return self.expect_list(compiled_pattern_list, timeout)
@@ -303,7 +303,7 @@ class spawn:
     def expect_list(self, pattern_list, local_timeout = None):
         """This is called by expect(). This takes a list of compiled
         regular expressions. This returns the index into the pattern_list
-	that matched the child's output.
+        that matched the child's output.
 
         """
 

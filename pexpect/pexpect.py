@@ -466,7 +466,10 @@ class spawn:
         try:
             pid, status = os.waitpid(self.pid, os.WNOHANG)
         except OSError, e:
-            return 0
+            # Non-Solaris platforms raise an exception.
+            # This is harmless... I think :-)
+            print 'XCEPT'
+            pass
 
         # If status is still 0 after two calls to waitpid() then
         # the process really is alive. This seems to work on all platforms.
@@ -479,7 +482,6 @@ class spawn:
 #            # This is dangerous because if I am wrong then this could block.
 #            pid, status = os.waitpid (self.pid, 0)
 
-        self.exitstatus = None
         # I didn't OR this together because I want hooks for debugging.
         if os.WIFEXITED (status):
             self.exitstatus = os.WEXITSTATUS(status)

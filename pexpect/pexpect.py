@@ -468,21 +468,37 @@ class spawn:
     def isalive(self):
         """This tests if the child process is running or not.
         This returns 1 if the child process appears to be running or 0 if not.
+        I can't figure out how to check if a process is alive on Solaris.
+        This is what is wrong. Apparently the call:
+            os.waitpid(self.pid, os.WNOHANG)
+        does not work. It always returns with (0,0) whether the process
+        is running or defunct. This works:
+            os.waitpid(self.pid, 0)
+        but it blocks if the process IS alive, so it's useless for me.
+        I don't want to use signals. Signals on UNIX suck and they
+        mess up Python pipes (setting SIGCHLD to SIGIGNORE).
         """
         try:
-            status = os.waitpid (self.pid, os.WNOHANG)
+            pid, status = os.waitpid(self.pid, os.WNOHANG)
         except OSError, e:
             return 0
-
-        if status[0] == 0:
+### This does not work on Solaris. Grrr!!!
+#        if pid == self.pid and status == 0:
+        if status == 0:
             return 1
 
+#        if pid == 0 and status == 0: # This happens on Solaris...
+#            # This means (I think) that the Solaris process is "defunct"
+#            # and a second wait must be called without the WNOHANG.
+#            # This is dangerous because if I am wrong then this could block.
+#            pid, status = os.waitpid (self.pid, 0)
+
         # I didn't OR this together because I want hooks for debugging.
-        if os.WIFEXITED (status[1]):
+        if os.WIFEXITED (status):
             return 0
-        elif os.WIFSTOPPED (status[1]):
+        elif os.WIFSTOPPED (status):
             return 0
-        elif os.WIFSIGNALED (status[1]):
+        elif os.WIFSIGNALED (status):
             return 0
         else:
             return 1

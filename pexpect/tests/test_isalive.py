@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import pexpect
 import unittest
-import sys
+import sys, os
 
 class IsAliveTestCase(unittest.TestCase):
         
@@ -12,7 +12,7 @@ class IsAliveTestCase(unittest.TestCase):
             self.fail ('Child process is not dead. It should be.')
 
     def test_expect_isalive2 (self):
-        p = pexpect.spawn('cat')
+        p = pexpect.spawn('cat', timeout=5)
         if not p.isalive():
             self.fail ('Child process is not alive. It should be.')
         p.kill(1)
@@ -21,15 +21,20 @@ class IsAliveTestCase(unittest.TestCase):
             self.fail ('Child process is not dead. It should be.')
 
     def test_expect_isalive3 (self):
-        p = pexpect.spawn('cat')
+        p = pexpect.spawn('cat', timeout=3)
         if not p.isalive():
             self.fail ('Child process is not alive. It should be.')
         p.kill(9)
         p.expect(pexpect.EOF)
         if p.isalive():
+#            pid, sts = os.waitpid(p.pid, 0)#, os.WNOHANG)
+#            print 'p.pid, pid, sts:', p.pid, pid, sts
+#            pp = pexpect.spawn('ps -p %d' % p.pid)
+#            pp.expect (pexpect.EOF)
+#            print pp.before
             self.fail ('Child process is not dead. It should be.')
 
-# Some platforms allow this. Some reset status after call to waitpid.
+### Some platforms allow this. Some reset status after call to waitpid.
     def OFF_test_expect_isalive4 (self):
         """This tests that multiple calls to isalive() return same value.
 	"""

@@ -36,7 +36,7 @@ def find_modules_and_add_paths (root_path):
     for module_file in import_list:
         path, module = os.path.split(module_file)
         module_list.append (module)
-	print 'Adding:', module_file
+        print 'Adding:', module_file
         if not path in sys.path:
             sys.path.append (path)
         if not os.path.dirname(path) in sys.path:

@@ -8,14 +8,14 @@ class ExpectTestCase(unittest.TestCase):
     def test_expect (self):
         the_old_way = commands.getoutput('ls -l /bin')
         p = pexpect.spawn('ls -l /bin')
-	the_new_way = ''
-	while 1:
-		i = p.expect (['\n', pexpect.EOF])
-		the_new_way = the_new_way + p.before
-		if i == 1:
-			break
-	the_new_way = the_new_way[:-1]
-	the_new_way = the_new_way.replace('\r','\n')
+        the_new_way = ''
+        while 1:
+                i = p.expect (['\n', pexpect.EOF])
+                the_new_way = the_new_way + p.before
+                if i == 1:
+                        break
+        the_new_way = the_new_way[:-1]
+        the_new_way = the_new_way.replace('\r','\n')
 
         assert the_old_way == the_new_way
 
@@ -23,14 +23,14 @@ class ExpectTestCase(unittest.TestCase):
         the_old_way = commands.getoutput('ls -l /bin')
 
         p = pexpect.spawn('ls -l /bin')
-	the_new_way = ''
-	while 1:
-		i = p.expect (['\n', pexpect.EOF])
-		the_new_way = the_new_way + p.before
-		if i == 1:
-			break
-	the_new_way = the_new_way[:-1]
-	the_new_way = the_new_way.replace('\r','\n')
+        the_new_way = ''
+        while 1:
+                i = p.expect (['\n', pexpect.EOF])
+                the_new_way = the_new_way + p.before
+                if i == 1:
+                        break
+        the_new_way = the_new_way[:-1]
+        the_new_way = the_new_way.replace('\r','\n')
 
         assert the_old_way == the_new_way
 

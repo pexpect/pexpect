@@ -109,7 +109,7 @@ class spawn:
         Python only garbage collects Python objects. Since OS file descriptors
         are not Python objects, so they must be handled manually.
         """
-	self.close()
+        self.close()
 
     def __spawn(self):
         """This starts the given command in a child process. This does
@@ -157,10 +157,10 @@ class spawn:
             raise ExceptionPexpect('Pexpect: pty.fork() failed: ' + str(e))
 
         if self.pid == 0: # Child
-	    try: # Some platforms (notably Cygwin) do not like setwinsize.
+            try: # Some platforms (notably Cygwin) do not like setwinsize.
                 setwinsize(24, 80)
-	    except:
-	        pass
+            except:
+                pass
             # Do not allow child to inherit open file descriptors from parent.
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
             for i in range (3, max_fd):
@@ -180,14 +180,14 @@ class spawn:
 
     def close (self):
         """This is experimental.
-	This closes the file descriptor of the child application.
-	It makes no attempt to actually kill the child or wait for its status.
-	"""
-	if self.child_fd != -1:
-	    os.close (self.child_fd)
-	    self.child_fd = -1
+        This closes the file descriptor of the child application.
+        It makes no attempt to actually kill the child or wait for its status.
+        """
+        if self.child_fd != -1:
+            os.close (self.child_fd)
+            self.child_fd = -1
 
-    def set_echo (self, on):
+    def setecho (self, on):
         """This sets the terminal echo-mode on or off."""
         new = termios.tcgetattr(self.child_fd)
         if on:

@@ -3,4 +3,4 @@ import sys
 
 lines = sys.stdin.readlines()
 for line in lines:
-	sys.stdout.write ('#' + line)
+    sys.stdout.write ('#' + line)

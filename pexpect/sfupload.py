@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-'''This connects to an ftp site; does a few ftp stuff; and then gives the user interactive control over the session.
+'''This connects to an ftp site; does a few ftp stuff; and 
+then gives the user interactive control over the session.
 '''
 import pexpect
 import sys

@@ -15,7 +15,7 @@ import fcntl
 class s:
     def __init__(self, command, args=None, timeout=30):
 
-	self.pid = self.child_fd = None
+        self.pid = self.child_fd = None
         try:
             #self.pid, self.child_fd = posix.forkpty()
             self.pid, self.child_fd = pty.fork()

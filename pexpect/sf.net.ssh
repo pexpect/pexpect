@@ -1,3 +1,5 @@
+# This is old. Use cvs.conf instead.
+
 export PYTHONPATH=$PYTHONPATH:.:`pwd`
 alias sf="ssh noah@use-pr-shell1.sourceforge.net"
 export CVS_RSH=ssh 

@@ -115,6 +115,7 @@ class spawn:
         self.timeout = timeout
         self.child_fd = -1 # initially closed
         self.__child_fd_owner = None
+        self.exitstatus = None
         self.pid = None
         self.log_file = None    
         self.before = None
@@ -478,8 +479,10 @@ class spawn:
 #            # This is dangerous because if I am wrong then this could block.
 #            pid, status = os.waitpid (self.pid, 0)
 
+        self.exitstatus = None
         # I didn't OR this together because I want hooks for debugging.
         if os.WIFEXITED (status):
+            self.exitstatus = os.WEXITSTATUS(status)
             return 0
         elif os.WIFSTOPPED (status):
             return 0

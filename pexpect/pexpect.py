@@ -12,7 +12,7 @@ should work on any platform that supports the standard Python pty
 module. The Pexpect interface focuses on ease of use so that simple
 tasks are easy.
 
-Pexpect is Open Source, free, and all that stuff.
+Pexpect is Open Source, Free, and all Good that stuff.
 License: Python Software Foundation License
          http://www.opensource.org/licenses/PythonSoftFoundation.html
 
@@ -21,6 +21,7 @@ Noah Spurrier
 $Revision$
 $Date$
 """
+
 import os, sys
 import select
 import traceback
@@ -61,6 +62,8 @@ class TIMEOUT(ExceptionPexpect):
     """Raised when a read time exceeds the timeout."""
 ##class MAXBUFFER(ExceptionPexpect):
 ##    """Raised when a scan buffer fills before matching an expected pattern."""
+
+
 
 class spawn:
     """This is the main class interface for Pexpect. Use this class to
@@ -208,173 +211,6 @@ class spawn:
         """
         self.log_file = fileobject
 
-    def compile_pattern_list(self, patterns):
-        """This compiles a pattern-string or a list of pattern-strings.
-        Argument must be one of StringType, EOF, SRE_Pattern, or a list of those type.
-        This is used by expect() when calling expect_list().
-        Thus expect() is nothing more than::
-             cpl = self.compile_pattern_list(pl)
-             return self.expect_list(clp, timeout)
-
-        If you are using expect() within a loop it may be more
-        efficient to compile the patterns first and then call expect_list().
-        This avoid calls in a loop to compile_pattern_list():
-             cpl = self.compile_pattern_list(my_pattern)
-             while some_condition:
-                ...
-                i = self.expect_list(clp, timeout)
-                ...
-        """
-        if type(patterns) is not ListType:
-            patterns = [patterns]
-
-        compiled_pattern_list = []
-        for p in patterns:
-            if type(p) is StringType:
-                compiled_pattern_list.append(re.compile(p, re.DOTALL))
-            elif p is EOF:
-                compiled_pattern_list.append(EOF)
-            elif type(p) is type(re.compile('')):
-                compiled_pattern_list.append(p)
-            else:
-                raise TypeError, 'Argument must be one of StringType, EOF, SRE_Pattern, or a list of those type. %s' % str(type(p))
-
-        return compiled_pattern_list
- 
-    def expect(self, pattern, timeout = None):
-        """This seeks through the stream until an expected pattern is matched.
-        The pattern is overloaded and may take several types including a list.
-        The pattern can be a StringType, EOF, a compiled re, or
-        a list of those types. Strings will be compiled to re types.
-        This returns the index into the pattern list. If the pattern was
-        not a list this returns index 0 on a successful match.
-        This may raise exceptions for EOF or TIMEOUT.
-        To avoid the EOF exception add EOF to the pattern list.
-
-        After a match is found the instance attributes
-        'before', 'after' and 'match' will be set.
-        You can see all the data read before the match in 'before'.
-        You can see the data that was matched in 'after'.
-        The re.MatchObject used in the re match will be in 'match'.
-        If an error occured then 'before' will be set to all the
-        data read so far and 'after' and 'match' will be None.
-
-        Note: A list entry may be EOF instead of a string.
-        This will catch EOF exceptions and return the index
-        of the EOF entry instead of raising the EOF exception.
-        The attributes 'after' and 'match' will be None.
-        This allows you to write code like this:
-                index = p.expect (['good', 'bad', pexpect.EOF])
-                if index == 0:
-                    do_something()
-                elif index == 1:
-                    do_something_else()
-                elif index == 2:
-                    do_some_other_thing()
-        instead of code like this:
-                try:
-                    index = p.expect (['good', 'bad'])
-                    if index == 0:
-                        do_something()
-                    elif index == 1:
-                        do_something_else()
-                except EOF:
-                    do_some_other_thing()
-        These two forms are equivalent. It all depends on what you want.
-        You can also just expect the EOF if you are waiting for all output
-        of a child to finish. For example:
-                p = pexpect.spawn('/bin/ls')
-                p.expect (pexpect.EOF)
-                print p.before
-        """
-        compiled_pattern_list = self.compile_pattern_list(pattern)
-        return self.expect_list(compiled_pattern_list, timeout)
-
-    def expect_exact (self, pattern_list, local_timeout = None):
-        """This is similar to expect() except that it takes
-        list of regular strings instead of compiled regular expressions.
-        The idea is that this should be much faster. It could also be
-        useful when you don't want to have to worry about escaping
-        regular expression characters that you want to match.
-        You may also pass just a string without a list and the single
-        string will be converted to a list.
-        """
-        ### This is dumb. It shares most of the code with expect_list.
-        ### The only different is the comparison method and that
-        ### self.match is always None after calling this.
-
-        if type(pattern_list) is StringType:
-            pattern_list = [pattern_list]
-
-        try:
-            incoming = ''
-            while 1: # Keep reading until exception or return.
-                c = self.read_nonblocking (1, local_timeout)
-                incoming = incoming + c
-
-                # Sequence through the list of patterns and look for a match.
-                index = -1
-                for str_target in pattern_list:
-                    index = index + 1
-                    match_index = incoming.find (str_target)
-                    if match_index >= 0:
-                        self.before = incoming [ : match_index]
-                        self.after = incoming [match_index : ]
-                        self.match = None
-                        return index
-        except EOF, e:
-            if EOF in pattern_list:
-                self.before = incoming
-                self.after = EOF
-                return pattern_list.index(EOF)
-            else:
-                raise
-        except Exception, e:
-            self.before = incoming
-            self.after = None
-            self.match = None
-            raise
-            
-    def expect_list(self, pattern_list, local_timeout = None):
-        """This is called by expect(). This takes a list of compiled
-        regular expressions. This returns the index into the pattern_list
-        that matched the child's output.
-        """
-
-        if local_timeout is None: 
-            local_timeout = self.timeout
-        
-        try:
-            incoming = ''
-            while 1: # Keep reading until exception or return.
-                c = self.read_nonblocking (1, local_timeout)
-                incoming = incoming + c
-
-                # Sequence through the list of patterns and look for a match.
-                index = -1
-                for cre in pattern_list:
-                    index = index + 1
-                    if cre is EOF: 
-                        continue # The EOF pattern is not a regular expression.
-                    match = cre.search(incoming)
-                    if match is not None:
-                        self.before = incoming[ : match.start()]
-                        self.after = incoming[match.start() : ]
-                        self.match = match
-                        return index
-        except EOF, e:
-            if EOF in pattern_list:
-                self.before = incoming
-                self.after = EOF
-                return pattern_list.index(EOF)
-            else:
-                raise
-        except Exception, e:
-            self.before = incoming
-            self.after = None
-            self.match = None
-            raise
-
     def read_nonblocking (self, size = -1, timeout = None):
         """This reads at most size characters from the child application.
         It includes a timeout. If the read does not complete within the
@@ -440,7 +276,7 @@ class spawn:
             self.expect (EOF)
             return self.before
 
-        # I could have been more dicrect by not using expect(), but
+        # I could have done this more directly by not using expect(), but
         # I deliberately decided to couple read() to expect() so that
         # I would catch any bugs early and ensure consistant behavior.
         # It's a little less efficient, but there is less for me to
@@ -458,7 +294,7 @@ class spawn:
         what the pseudo tty device returns. So contrary to what you may be used to
         you will get a newline as \r\n.
         An empty string is returned when EOF is hit immediately.
-        Currently, size is mostly ignored, so this behavior is not
+        Currently, the size agument is mostly ignored, so this behavior is not
         standard for a file-like object.
         """
         if size == 0:
@@ -482,7 +318,7 @@ class spawn:
         return lines
 
     def write(self, str):   # File-like object.
-        """This is an alias for send() except that there is no return value.
+        """This is similar to send() except that there is no return value.
         """
         self.send (str)
 
@@ -502,7 +338,8 @@ class spawn:
         return os.write(self.child_fd, str)
 
     def sendline(self, str=''):
-        """This is like send(), but it adds a line separator.
+        """This is like send(), but it adds a line feed
+        (line separator -- os.linesep)
         This returns the number of bytes written.
         """
         n = self.send(str)
@@ -594,6 +431,173 @@ class spawn:
         if self.isalive():
             os.kill(self.pid, sig)
 
+    def compile_pattern_list(self, patterns):
+        """This compiles a pattern-string or a list of pattern-strings.
+        Argument must be one of StringType, EOF, SRE_Pattern, or a list of those type.
+        This is used by expect() when calling expect_list().
+        Thus expect() is nothing more than::
+             cpl = self.compile_pattern_list(pl)
+             return self.expect_list(clp, timeout)
+
+        If you are using expect() within a loop it may be more
+        efficient to compile the patterns first and then call expect_list().
+        This avoid calls in a loop to compile_pattern_list():
+             cpl = self.compile_pattern_list(my_pattern)
+             while some_condition:
+                ...
+                i = self.expect_list(clp, timeout)
+                ...
+        """
+        if type(patterns) is not ListType:
+            patterns = [patterns]
+
+        compiled_pattern_list = []
+        for p in patterns:
+            if type(p) is StringType:
+                compiled_pattern_list.append(re.compile(p, re.DOTALL))
+            elif p is EOF:
+                compiled_pattern_list.append(EOF)
+            elif type(p) is type(re.compile('')):
+                compiled_pattern_list.append(p)
+            else:
+                raise TypeError, 'Argument must be one of StringType, EOF, SRE_Pattern, or a list of those type. %s' % str(type(p))
+
+        return compiled_pattern_list
+ 
+    def expect(self, pattern, timeout = None):
+        """This seeks through the stream until an expected pattern is matched.
+        The pattern is overloaded and may take several types including a list.
+        The pattern can be a StringType, EOF, a compiled re, or
+        a list of those types. Strings will be compiled to re types.
+        This returns the index into the pattern list. If the pattern was
+        not a list this returns index 0 on a successful match.
+        This may raise exceptions for EOF or TIMEOUT.
+        To avoid the EOF exception add EOF to the pattern list.
+
+        After a match is found the instance attributes
+        'before', 'after' and 'match' will be set.
+        You can see all the data read before the match in 'before'.
+        You can see the data that was matched in 'after'.
+        The re.MatchObject used in the re match will be in 'match'.
+        If an error occured then 'before' will be set to all the
+        data read so far and 'after' and 'match' will be None.
+
+        Note: A list entry may be EOF instead of a string.
+        This will catch EOF exceptions and return the index
+        of the EOF entry instead of raising the EOF exception.
+        The attributes 'after' and 'match' will be None.
+        This allows you to write code like this:
+                index = p.expect (['good', 'bad', pexpect.EOF])
+                if index == 0:
+                    do_something()
+                elif index == 1:
+                    do_something_else()
+                elif index == 2:
+                    do_some_other_thing()
+        instead of code like this:
+                try:
+                    index = p.expect (['good', 'bad'])
+                    if index == 0:
+                        do_something()
+                    elif index == 1:
+                        do_something_else()
+                except EOF:
+                    do_some_other_thing()
+        These two forms are equivalent. It all depends on what you want.
+        You can also just expect the EOF if you are waiting for all output
+        of a child to finish. For example:
+                p = pexpect.spawn('/bin/ls')
+                p.expect (pexpect.EOF)
+                print p.before
+        """
+        compiled_pattern_list = self.compile_pattern_list(pattern)
+        return self.expect_list(compiled_pattern_list, timeout)
+
+    def expect_exact (self, pattern_list, local_timeout = None):
+        """This is similar to expect() except that it takes
+        list of plain strings instead of regular expressions.
+        The idea is that this should be much faster. It could also be
+        useful when you don't want to have to worry about escaping
+        regular expression characters that you want to match.
+        You may also pass just a string without a list and the single
+        string will be converted to a list.
+        """
+        ### This is dumb. It shares most of the code with expect_list.
+        ### The only different is the comparison method and that
+        ### self.match is always None after calling this.
+
+        if type(pattern_list) is StringType:
+            pattern_list = [pattern_list]
+
+        try:
+            incoming = ''
+            while 1: # Keep reading until exception or return.
+                c = self.read_nonblocking (1, local_timeout)
+                incoming = incoming + c
+
+                # Sequence through the list of patterns and look for a match.
+                index = -1
+                for str_target in pattern_list:
+                    index = index + 1
+                    match_index = incoming.find (str_target)
+                    if match_index >= 0:
+                        self.before = incoming [ : match_index]
+                        self.after = incoming [match_index : ]
+                        self.match = None
+                        return index
+        except EOF, e:
+            if EOF in pattern_list:
+                self.before = incoming
+                self.after = EOF
+                return pattern_list.index(EOF)
+            else:
+                raise
+        except Exception, e:
+            self.before = incoming
+            self.after = None
+            self.match = None
+            raise
+            
+    def expect_list(self, pattern_list, local_timeout = None):
+        """This is called by expect(). This takes a list of compiled
+        regular expressions. This returns the index into the pattern_list
+        that matched the child's output.
+        """
+
+        if local_timeout is None: 
+            local_timeout = self.timeout
+        
+        try:
+            incoming = ''
+            while 1: # Keep reading until exception or return.
+                c = self.read_nonblocking (1, local_timeout)
+                incoming = incoming + c
+
+                # Sequence through the list of patterns and look for a match.
+                index = -1
+                for cre in pattern_list:
+                    index = index + 1
+                    if cre is EOF: 
+                        continue # The EOF pattern is not a regular expression.
+                    match = cre.search(incoming)
+                    if match is not None:
+                        self.before = incoming[ : match.start()]
+                        self.after = incoming[match.start() : ]
+                        self.match = match
+                        return index
+        except EOF, e:
+            if EOF in pattern_list:
+                self.before = incoming
+                self.after = EOF
+                return pattern_list.index(EOF)
+            else:
+                raise
+        except Exception, e:
+            self.before = incoming
+            self.after = None
+            self.match = None
+            raise
+
     def interact(self, escape_character = chr(29)):
         """This gives control of the child process to the interactive user.
         Keystrokes are sent to the child process, and the stdout and stderr
@@ -634,19 +638,10 @@ class spawn:
                 if escape_character in data:
                     break
 
+##############################################################################
+# End of Spawn
+##############################################################################
 
-##    def send_human(self, text, delay_min = 0, delay_max = 1):
-##        pass
-##    def spawn2(self, command, args):
-##        """return pid, fd_stdio, fd_stderr
-##        """
-##        pass
-##    def expect_ex(self, string_match, local_timeout = None):
-##        """This is like expect(), except that instead of regular expression patterns
-##        it matches on exact strings.
-##        """
-##        pass
-##        # Return (data_read)
 
 
 def which (filename):
@@ -677,8 +672,7 @@ def setwinsize(r, c):
     """This sets the windowsize of the tty for stdout.
     This does not change the physical window size.
     It changes the size reported to TTY-aware applications like
-    vi or curses. In other words, applications that respond to the
-    SIGWINCH signal.
+    vi or curses -- applications that respond to the SIGWINCH signal.
     This is used by __spawn to set the tty window size of the child.
     """
     # Check for buggy platforms. Some Pythons on some platforms
@@ -688,7 +682,8 @@ def setwinsize(r, c):
     # yet other platforms like OpenBSD have a large negative value for
     # TIOCSWINSZ and they don't truncate.
     # Newer versions of Linux have totally different values for TIOCSWINSZ.
-    # Note, this fix is a hack.
+    #
+    # Note that this fix is a hack.
     TIOCSWINSZ = termios.TIOCSWINSZ
     if TIOCSWINSZ == 2148037735L: # L is not required in Python 2.2.
         TIOCSWINSZ = -2146929561 # Same number in binary, but with sign.
@@ -706,7 +701,7 @@ def split_command_line(command_line):
     """This splits a command line into a list of arguments.
     It splits arguments on spaces, but handles
     embedded quotes, doublequotes, and escaped characters.
-    I couldn't do this with a regular expression, so
+    It's impossible to do this with a regular expression, so
     I wrote a little state machine to parse the command line.
     """
     arg_list = []
@@ -746,11 +741,21 @@ def split_command_line(command_line):
         arg_list.append(arg)
     return arg_list
 
+
+
 ####################
 #
 #        NOTES
 #
 ####################
+
+##    def send_human(self, text, delay_min = 0, delay_max = 1):
+##        pass
+##    def spawn2(self, command, args):
+##        """return pid, fd_stdio, fd_stderr
+##        """
+##        pass
+
 
 # Reason for double fork:
 # http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC15
@@ -776,9 +781,6 @@ def split_command_line(command_line):
 # Basic documentation:
 #       Explain use of lists of patterns and return index.
 #       Explain exceptions for non-handled special cases like EOF
-# Advanced documentation:
-#       Explain how patterns can be associated with actions.
-#       Can I Do this without changing interface.
 
 # Test bad fork
 # Test ENOENT. In other words, no more TTY devices.
@@ -789,9 +791,6 @@ def split_command_line(command_line):
 #    frame.f_globals['pexpect'].GLOBAL_SIGCHLD_RECEIVED = 1
 #    print str(frame.f_globals['pexpect'].GLOBAL_SIGCHLD_RECEIVED)
 #    GLOBAL_SIGCHLD_RECEIVED = 1
-
-### Add a greedy read -- like a readall() to keep reading until a
-# timeout is returned. Will e.expect('') work? or e.expect(None)?
 
 ### Weird bug. If you read too fast after doing a sendline()
 # Sometimes you will read the data back that you just sent even if

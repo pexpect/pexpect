@@ -38,7 +38,7 @@ try:
 except ImportError, e:
     raise ImportError, str(e) + """
 A critical module was not found. Probably this OS does not support it.
-Currently pexpect is intended for UNIX operating systems (including OS X)."""
+Currently pexpect is intended for UNIX operating systems."""
 
 
 
@@ -126,7 +126,7 @@ class spawn:
             try: # Command is an int, so now check if it is a file descriptor.
                 os.fstat(command)
             except OSError:
-                raise ExceptionPexpect, 'Command is an int type, but is not a valid file descriptor.'
+                raise ExceptionPexpect, 'Command is an int type, yet is not a valid file descriptor.'
             self.__child_fd_owner = 0
             self.pid = -1 
             self.child_fd = command
@@ -373,8 +373,7 @@ class spawn:
         return os.write(self.child_fd, str)
 
     def sendline(self, str=''):
-        """This is like send(), but it adds a line feed
-        (line separator -- os.linesep)
+        """This is like send(), but it adds a line feed (os.linesep).
         This returns the number of bytes written.
         """
         n = self.send(str)
@@ -383,16 +382,14 @@ class spawn:
 
     def sendeof(self):
         """This sends an EOF to the child.
-
-        More precisely: this sends a character which causes the pending
-        child buffer to be sent to the waiting user program without
+        This sends a character which causes the pending
+        child buffer to be sent to the waiting child program without
         waiting for end-of-line. If it is the first character of the
         line, the read() in the user program returns 0, which
-        signifies end-of-file.
-
-        This means: to make this work as expected a send_eof() has to be
-        called at the begining of a line. A newline character is not
-        send here to avoid problems.
+        signifies end-of-file. This means to make this work as expected 
+        a sendeof() has to be called at the begining of a line. 
+        This method does not  send a newline. It is the responsibility
+        of the caller to ensure the eof is sent at the beginning of a line.
         """
         ### Hmmm... how do I send an EOF?
         ###C  if ((m = write(pty, *buf, p - *buf)) < 0)
@@ -401,17 +398,17 @@ class spawn:
         fd = sys.stdin.fileno()
         old = termios.tcgetattr(fd) # remember current state
         new = termios.tcgetattr(fd)
-        new[3] = new[3] | termios.ICANON        # lflags
+        new[3] = new[3] | termios.ICANON # lflags
         # use try/finally to ensure state gets restored
         try:
-            # EOF is recognized when ICANON is set, thus ensure it is:
+            # EOF is recognized when ICANON is set, so make sure it is set.
             termios.tcsetattr(fd, termios.TCSADRAIN, new)
             os.write (self.child_fd, '%c' % termios.CEOF)
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old) # restore state
 
     def eof (self):
-        """This returns 1 if the EOF except was raised.
+        """This returns 1 if the EOF exception was raised.
         """
         return self.flag_eof
 
@@ -518,7 +515,7 @@ class spawn:
         return compiled_pattern_list
  
     def expect(self, pattern, timeout = -1):
-        """This seeks through the stream until an expected pattern is matched.
+        """This seeks through the stream until a pattern is matched.
         The pattern is overloaded and may take several types including a list.
         The pattern can be a StringType, EOF, a compiled re, or
         a list of those types. Strings will be compiled to re types.
@@ -632,9 +629,11 @@ class spawn:
             raise
             
     def expect_list(self, pattern_list, timeout = -1):
-        """This is called by expect(). This takes a list of compiled
-        regular expressions. This returns the index into the pattern_list
-        that matched the child's output.
+        """This takes a list of compiled regular expressions and returns 
+        the index into the pattern_list that matched the child's output.
+        This is called by expect(). It is similar to the expect() method
+        except that expect_list() is not overloaded. You must not pass
+        anything except a list of compiled regular expressions.
         If timeout is -1 then timeout will be set to the self.timeout value.
         """
 
@@ -680,7 +679,8 @@ class spawn:
             raise
 
     def interact(self, escape_character = chr(29)):
-        """This gives control of the child process to the interactive user.
+        """This gives control of the child process to the interactive user
+        (the human at the keyboard).
         Keystrokes are sent to the child process, and the stdout and stderr
         output of the child process is printed.
         When the user types the escape_character this method will stop.

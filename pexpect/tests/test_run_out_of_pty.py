@@ -7,6 +7,7 @@ import sys
 class ExpectTestCase(unittest.TestCase):
     def setUp(self):
         print self.id()
+        unittest.TestCase.setUp(self)
         
     def off_test_run_out (self):
         """This assumes that the tested platform has < 10000 pty devices.

@@ -5,6 +5,7 @@ import unittest
 class MissingCommandTestCase (unittest.TestCase):
     def setUp(self):
         print self.id()
+        unittest.TestCase.setUp(self)
 
     def testMissingCommand(self):
         try:

@@ -59,6 +59,7 @@ get_region_target = ['......', '.\\/...', './\\...', '......']
 class screenTestCase (unittest.TestCase):
     def setUp(self):
         print self.id()
+        unittest.TestCase.setUp(self)
 
     def make_screen_with_put (self):
         s = screen.screen(10,10)

@@ -8,6 +8,7 @@ testdata = 'BEGIN\nHello world\nEND'
 class TestCaseDotall(unittest.TestCase):
     def setUp(self):
         print self.id()
+        unittest.TestCase.setUp(self)
         
     def test_dotall (self):
 	p = pexpect.spawn('echo "%s"' % testdata)

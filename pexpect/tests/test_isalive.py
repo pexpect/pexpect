@@ -6,6 +6,7 @@ import sys, os, time
 class IsAliveTestCase(unittest.TestCase):
     def setUp(self):
         print self.id()
+        unittest.TestCase.setUp(self)
         
     def test_expect_isalive1 (self):
         p = pexpect.spawn('ls')

@@ -7,6 +7,7 @@ import tempfile
 class TestCaseLog(unittest.TestCase):
     def setUp(self):
         print self.id()
+        unittest.TestCase.setUp(self)
         
     def test_log (self):
         log_message = 'This is a test. This is a test.'

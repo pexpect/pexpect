@@ -7,6 +7,7 @@ import time
 class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
     def setUp(self):
         print self.id()
+        PexpectTestCase.PexpectTestCase.setUp(self)
 
     def test_winsize (self):
 	"""

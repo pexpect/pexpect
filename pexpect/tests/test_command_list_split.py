@@ -5,6 +5,7 @@ import unittest
 class SplitCommandLineTestCase(unittest.TestCase):
     def setUp(self):
         print self.id()
+        unittest.TestCase.setUp(self)
 
     def testSplitSizes(self):
         assert len(pexpect._split_command_line(r'')) == 0

@@ -96,22 +96,22 @@ class spawn:
 
         self.timeout = timeout
         self.child_fd = -1 # initially closed
+        self.__child_fd_owner = None
         self.pid = None
         self.log_file = None    
         self.before = None
         self.after = None
         self.match = None
-        self.nofork = None # Don't spawn a child.
         self.softspace = 0 # File-like object.
         self.name = '' # File-like object.
 
         # If command is an int type then it must represent an open file descriptor.
         if type (command) == type(0):
-            try:
+            try: # Command is an int, so now check if it is a file descriptor.
                 os.fstat(command)
             except OSError:
                 raise ExceptionPexpect, 'Command is an int type, but is not a valid file descriptor.'
-            self.nofork = 1
+            self.__child_fd_owner = 0
             self.pid = -1 
             self.child_fd = command
             self.args = None
@@ -131,15 +131,17 @@ class spawn:
             self.command = command
         self.name = '<' + reduce(lambda x, y: x+' '+y, self.args) + '>'
 
-        self.nofork = 0
         self.__spawn()
 
     def __del__(self):
         """This makes sure that no system resources are left open.
         Python only garbage collects Python objects. OS file descriptors
         are not Python objects, so they must be handled manually.
+        If the child file descriptor was opened outside of this spawned class
+        (passed to the constructor) then this does not close the file descritor.
         """
-        self.close()
+        if self.__child_fd_owner:
+            self.close()
 
     def __spawn(self):
         """This starts the given command in a child process. This does
@@ -187,6 +189,7 @@ class spawn:
             raise ExceptionPexpect ('Reached an unexpected state in __spawn().')
 
         # Parent
+        self.__child_fd_owner = 1
 
     def fileno (self):   # File-like object.
         """This returns the file descriptor of the pty for the child."""
@@ -195,10 +198,8 @@ class spawn:
     def close (self):   # File-like object.
         """ This closes the file descriptor of the child application.
         It makes no attempt to actually kill the child or wait for its status.
-        If the child file descriptor was opened outside of this spawned class
-        (passed to the constructor) then this does not close the file descritor.
         """
-        if self.child_fd != -1 and not self.nofork:
+        if self.child_fd != -1:
             self.flush()
             os.close (self.child_fd)
             self.child_fd = -1
@@ -212,7 +213,7 @@ class spawn:
         """This returns 1 if the file descriptor is open and
         connected to a tty(-like) device, else 0.
         """
-        return os.isatty(child_fd)
+        return os.isatty(self.child_fd)
 
     def setecho (self, on):
         """This sets the terminal echo-mode on or off."""
@@ -406,8 +407,14 @@ class spawn:
         I don't want to use signals. Signals on UNIX suck and they
         mess up Python pipes (setting SIGCHLD to SIGIGNORE).
         """
-        if (self.pid == -1): ### For attached fd with no pid, this should check fd status.
-           return(1) ### This should really check os.fstat(fd)
+        # If this class was created from an existing file descriptor then
+        # I just check to see if the file descriptor is still valid.
+        if self.pid == -1 and not self.__child_fd_owner: 
+            try:
+                os.fstat(self.child_fd)
+                return 1
+            except:
+                return 0
 
         try:
             pid, status = os.waitpid(self.pid, os.WNOHANG)
@@ -449,12 +456,14 @@ class spawn:
         you send the right signal.
         """
         # Same as os.kill, but the pid is given for you.
-        if self.isalive() and (not self.nofork):
+        if self.isalive():
             os.kill(self.pid, sig)
 
     def compile_pattern_list(self, patterns):
         """This compiles a pattern-string or a list of pattern-strings.
-        Argument must be one of StringType, EOF, SRE_Pattern, or a list of those type.
+        Patterns must be a StringType, EOF, TIMEOUT, SRE_Pattern, or 
+        a list of those.
+
         This is used by expect() when calling expect_list().
         Thus expect() is nothing more than::
              cpl = self.compile_pattern_list(pl)

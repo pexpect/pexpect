@@ -6,6 +6,7 @@
 
 import FSM
 import copy
+import string
 
 NUL = 0    # Fill character; ignored on input.
 ENQ = 5    # Transmit answerback message.
@@ -67,27 +68,66 @@ def BuildNumber (fsm):
 	ns = ns + fsm.input_symbol
 	fsm.something.append (ns)
 def DoBack (fsm):
-	count = fsm.something.pop()
+	count = int(fsm.something.pop())
 	screen = fsm.something[0]
 	screen.cursor_back (count)
 def DoDown (fsm):
-	count = fsm.something.pop()
+	count = int(fsm.something.pop())
 	screen = fsm.something[0]
 	screen.cursor_down (count)
 def DoForward (fsm):
-	count = fsm.something.pop()
+	count = int(fsm.something.pop())
 	screen = fsm.something[0]
 	screen.cursor_forward (count)
 def DoUp (fsm):
-	count = fsm.something.pop()
+	count = int(fsm.something.pop())
 	screen = fsm.something[0]
 	screen.cursor_up (count)
 def DoHome (fsm):
-	c = fsm.something.pop()
-	r = fsm.something.pop()
+	c = int(fsm.something.pop())
+	r = int(fsm.something.pop())
 	screen = fsm.something[0]
 	screen.cursor_home (r,c)
-	pass
+def DoHomeOrigin (fsm):
+	c = 1
+	r = 1
+	screen = fsm.something[0]
+	screen.cursor_home (r,c)
+def DoEraseDown (fsm):
+	screen = fsm.something[0]
+	screen.erase_down()
+def DoErase (fsm):
+	arg = int(fsm.something.pop())
+	screen = fsm.something[0]
+	if arg == 0:
+		screen.erase_down()
+	elif arg == 1:
+		screen.erase_up()
+	elif arg == 2:
+		screen.erase_screen()
+def DoEraseEndOfLine (fsm):
+	screen = fsm.something[0]
+	screen.erase_end_of_line()
+def DoEraseLine (fsm):
+	screen = fsm.something[0]
+	if arg == 0:
+		screen.end_of_line()
+	elif arg == 1:
+		screen.start_of_line()
+	elif arg == 2:
+		screen.erase_line()
+
+def DoCursorSave (fsm):
+	screen = fsm.something[0]
+	screen.cursor_save_attrs()
+def DoCursorRestore (fsm):
+	screen = fsm.something[0]
+	screen.cursor_restore_attrs()
+
+def Log (fsm):
+	fout = open ('log', 'a')
+	fout.write (fsm.input_symbol + ',' + fsm.current_state + '\n')
+	fout.close()
 
 class term:
     '''This class encapsulates a generic terminal.
@@ -96,19 +136,27 @@ class term:
     '''
     def __init__ (self):
 	self.screen = screen (24,80)
-	self.stack = [self.screen]
-        self.state = FSM ('INIT',stack)
+        self.state = FSM.FSM ('INIT',[self.screen])
+	self.state.set_default_transition (Log, 'INIT')
 	self.state.add_transition_any ('INIT', Emit, 'INIT')
 	self.state.add_transition ('\x1b', 'INIT', None, 'ESC')
 	self.state.add_transition_any ('ESC', None, 'INIT')
 	self.state.add_transition ('[', 'ESC', None, 'ELB')
+	self.state.add_transition ('H', 'ELB', DoHomeOrigin, 'INIT')
+	self.state.add_transition ('J', 'ELB', DoEraseDown, 'INIT')
+	self.state.add_transition ('K', 'ELB', DoEraseEndOfLine, 'INIT')
+	self.state.add_transition ('7', 'ELB', DoCursorSave, 'INIT')
+	self.state.add_transition ('8', 'ELB', DoCursorRestore, 'INIT')
 	self.state.add_transition_list (string.digits, 'ELB', StartNumber, 'NUMBER_1')
 	self.state.add_transition_list (string.digits, 'NUMBER_1', BuildNumber, 'NUMBER_1')
 	self.state.add_transition ('D', 'NUMBER_1', DoBack, 'INIT')
 	self.state.add_transition ('B', 'NUMBER_1', DoDown, 'INIT')
 	self.state.add_transition ('C', 'NUMBER_1', DoForward, 'INIT')
 	self.state.add_transition ('A', 'NUMBER_1', DoUp, 'INIT')
+	self.state.add_transition ('J', 'NUMBER_1', DoErase, 'INIT')
+	self.state.add_transition ('K', 'NUMBER_1', DoEraseLine, 'INIT')
 
+#RM   Reset Mode                Esc [ Ps l                   none
 	self.state.add_transition (';', 'NUMBER_1', None, 'SEMICOLON')
 	self.state.add_transition_any ('SEMICOLON', None, 'INIT')
 	self.state.add_transition_list (string.digits, 'SEMICOLON', StartNumber, 'NUMBER_2')
@@ -142,6 +190,8 @@ class screen:
         self.cols = c
         self.cur_r = 1
         self.cur_c = 1
+	self.cur_saved_r = 1
+	self.cur_saved_c = 1
         self.scroll_row_start = 1
         self.scroll_row_end = self.rows
         self.mode_scape = 0
@@ -178,8 +228,11 @@ class screen:
         of the screen.
         \r and \n both produce a call to crlf().
         '''
-        if ch == '\r' or ch == '\n':
-            self.crlf()
+        if ch == '\r':
+	    self.cr()
+	    return
+	if  ch == '\n':
+            self.lf()
             return
 
         self.put(self.cur_r, self.cur_c, ch)
@@ -195,17 +248,25 @@ class screen:
                 self.cursor_home (self.cur_r, 1)
                 self.erase_line()
 
-    def crlf (self):
-        '''This advances the cursor with CRLF properties.
-        The cursor will line wrap and the screen may scroll.
-        Under UNIX this is what happens when a chr(13) '\r' is read.
-        '''
-        self.cursor_home (self.cur_r, 1)
+    def cr (self):
+	'''This moves the cursor to the beginning (col 1) of the current row.
+	'''
+	self.cursor_home (self.cur_r, 1)
+    def lf (self):
+	'''This moves the cursor down with scrolling.
+	'''
         old_r = self.cur_r
         self.cursor_down()
         if old_r == self.cur_r:
             self.scroll_up ()
             self.erase_line()
+
+    def crlf (self):
+        '''This advances the cursor with CRLF properties.
+        The cursor will line wrap and the screen may scroll.
+        '''
+	self.cr ()
+	self.lf ()
 
     def put (self, r, c, ch):
         '''Screen array starts at 1 index.'''
@@ -223,7 +284,7 @@ class screen:
     def cursor_constrain (self):
         self.cur_r = constrain (self.cur_r, 1, self.rows)
         self.cur_c = constrain (self.cur_c, 1, self.cols)
-
+    
     def cursor_home (self, r=1, c=1): # <ESC>[{ROW};{COLUMN}H
         self.cur_r = r
         self.cur_c = c
@@ -251,10 +312,12 @@ class screen:
         pass
     def cursor_save_attrs (self): # <ESC>7
         '''Save current cursor position.'''
-        pass
+	self.cur_saved_r = self.cur_r
+	self.cur_saved_c = self.cur_c
     def cursor_restore_attrs (self): # <ESC>8
         '''Restores cursor position after a Save Cursor.'''
-        pass
+	self.cursor_home (self.cur_saved_r, self.cur_saved_c)
+
     def scroll_constrain (self):
         '''This keeps the scroll region within the screen region.'''
         if self.scroll_row_start <= 0:
@@ -282,7 +345,7 @@ class screen:
         s = self.scroll_row_start - 1
         e = self.scroll_row_end - 1
         self.w[s:e] = copy.deepcopy(self.w[s+1:e+1])
-    def erase_end_of_line (self): # <ESC>[K
+    def erase_end_of_line (self): # <ESC>[0K -or- <ESC>[K
         '''Erases from the current cursor position to
         the end of the current line.'''
         self.fill_region (self.cur_r, self.cur_c, self.cur_r, self.cols)
@@ -293,7 +356,7 @@ class screen:
     def erase_line (self): # <ESC>[2K
         '''Erases the entire current line.'''
         self.fill_region (self.cur_r, 1, self.cur_r, self.cols)
-    def erase_down (self): # <ESC>[J
+    def erase_down (self): # <ESC>[0J -or- <ESC>[J
         '''Erases the screen from the current line down to
         the bottom of the screen.'''
         self.erase_end_of_line ()
@@ -359,3 +422,7 @@ def test_typing ():
 #       sys.stdout.write (e + 'D')
 
 #test_typing()
+
+t = term()
+t.test()
+

@@ -301,7 +301,7 @@ class spawn:
         try:
             incoming = ''
             while 1: # Keep reading until exception or return.
-                c = self.read(1, local_timeout)
+                c = self.read_nonblocking (1, local_timeout)
                 incoming = incoming + c
 
                 # Sequence through the list of patterns and look for a match.
@@ -339,7 +339,7 @@ class spawn:
         try:
             incoming = ''
             while 1: # Keep reading until exception or return.
-                c = self.read(1, local_timeout)
+                c = self.read_nonblocking (1, local_timeout)
                 incoming = incoming + c
 
                 # Sequence through the list of patterns and look for a match.
@@ -367,7 +367,7 @@ class spawn:
             self.match = None
             raise
 
-    def read (self, size = -1, timeout = None):
+    def read_nonblocking (self, size = -1, timeout = None):
         """This reads at most size characters from the child application.
         It includes a timeout. If the read does not complete within the
         timeout period then a TIMEOUT exception is raised.
@@ -380,7 +380,6 @@ class spawn:
 
         This is a non-blocking wrapper around os.read().
         It uses select.select() to supply a timeout. 
-
         """
         
         if self.child_fd == -1:
@@ -424,14 +423,26 @@ class spawn:
         the string, but may be absent when a file ends with an incomplete line. 
         Trivia: This readline() looks for a \r\n pair even on UNIX because this is 
         what the pseudo tty device returns. The newline is converted to os.linesep 
-        before it is returned.
+        before it is returned. An empty string is returned when EOF is hit immediately.
         """
         index = self.expect (['\r\n', EOF])
         if index == 0:
             return self.before + os.linesep
         else:
             return self.before
-        
+
+    def readlines (self, sizehint = -1):    # File-like object.
+        """This reads until EOF using readline() and returns a list containing 
+        the lines thus read. THhe optional sizehint argument is ignored.
+        """        
+        lines = []
+        while 1:
+            line = self.readline()
+            if not line:
+                break
+            lines.append(line)
+        return lines
+
     def write(self, str):   # File-like object.
         """This is an alias for send() except that there is no return value.
         """

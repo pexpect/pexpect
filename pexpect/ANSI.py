@@ -99,6 +99,11 @@ def DoCursorSave (fsm):
 def DoCursorRestore (fsm):
         screen = fsm.something[0]
         screen.cursor_restore_attrs()
+def DoScrollRegion (fsm):
+	screen = fsm.something[0]
+        r2 = int(fsm.something.pop())
+        r1 = int(fsm.something.pop())
+	screen.scroll_screen_rows (r1,r2)
 
 def DoMode (fsm):
         screen = fsm.something[0]
@@ -163,7 +168,12 @@ class ANSI (term):
         self.state.add_transition ('J', 'NUMBER_1', DoErase, 'INIT')
         self.state.add_transition ('K', 'NUMBER_1', DoEraseLine, 'INIT')
         self.state.add_transition ('l', 'NUMBER_1', DoMode, 'INIT')
+	### It gets worse... the 'm' code can have infinite number of
+	### number;number;number before it. I've never seen more than two,
+	### but the specs say it's allowed. crap!
         self.state.add_transition ('m', 'NUMBER_1', None, 'INIT')
+	### LED control. Same problem as 'm' code.
+        self.state.add_transition ('q', 'NUMBER_1', None, 'INIT') 
         
         # \E[?47h appears to be "switch to alternate screen"
         # \E[?47l restores alternate screen... I think.
@@ -180,6 +190,13 @@ class ANSI (term):
         self.state.add_transition_any ('NUMBER_2', Log, 'INIT')
         self.state.add_transition ('H', 'NUMBER_2', DoHome, 'INIT')
         self.state.add_transition ('f', 'NUMBER_2', DoHome, 'INIT')
+        self.state.add_transition ('r', 'NUMBER_2', DoScrollRegion, 'INIT')
+	### It gets worse... the 'm' code can have infinite number of
+	### number;number;number before it. I've never seen more than two,
+	### but the specs say it's allowed. crap!
+        self.state.add_transition ('m', 'NUMBER_2', None, 'INIT')
+	### LED control. Same problem as 'm' code.
+        self.state.add_transition ('q', 'NUMBER_2', None, 'INIT') 
     def process (self, c):
         self.state.process(c)
     def process_list (self, l):
@@ -187,9 +204,12 @@ class ANSI (term):
             self.process (c)
 
     def test (self):
+        import sys
         dump = file('dump').read()
         for c in dump:
                 self.state.process(c)
+                sys.stdout.write (c)
+                sys.stdout.flush()
         print str(self)
 
 
@@ -231,4 +251,5 @@ class ANSI (term):
                 self.scroll_up ()
                 self.cursor_home (self.cur_r, 1)
                 self.erase_line()
-
+t = ANSI()
+t.test()

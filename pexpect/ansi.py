@@ -4,6 +4,7 @@
 # http://www.retards.org/terminals/vt102.html
 # http://vt100.net/docs/vt102-ug/contents.html
 
+import FSM
 import copy
 
 NUL = 0    # Fill character; ignored on input.
@@ -24,8 +25,6 @@ SUB = 26   # Same as CAN.
 ESC = 27   # Introduce a control sequence.
 DEL = 127  # Fill character; ignored on input.
 SPACE = chr(32) # Space or blank character.
-
-import fsm
 
 def constrain (n, min, max):
     if n < min:
@@ -103,15 +102,10 @@ class screen:
         re = constrain (re, 1, self.rows)
         cs = constrain (cs, 1, self.cols)
         ce = constrain (ce, 1, self.cols)
-        temp=0
         if rs > re:
-            temp = re
-            re = rs
-            rs = temp
+            rs, re = re, rs
         if cs > ce:
-            temp = ce
-            ce = cs
-            cs = temp
+            cs, ce = ce, cs
 	for r in range (rs, re+1):
 	    for c in range (cs, ce + 1):
 		self.put (r,c,ch)
@@ -121,8 +115,9 @@ class screen:
         cursor position if moved forward with wrap-around, but
         no scrolling is done if the cursor hits the lower-right corner
         of the screen.
+        \r and \n both produce a call to crlf().
         '''
-        if ch == '\r':
+        if ch == '\r' or ch == '\n':
             self.crlf()
             return
 
@@ -308,40 +303,26 @@ e = chr(0x1b)
 #for i in range (0,9):
 #       sys.stdout.write (e + 'D')
 
-s = screen (10,10)
-s.fill ('X')
-s.fill_region (2,2,9,9,'O')
-s.fill_region (5,5,s.rows-5,s.cols-5, 'X')
+ignore = '''
+s = screen(10,10)
+s.fill ('.')
 for r in range (1,s.rows + 1):
-    s.put (r, 1, str(r))
-s.put(1,1, '1')
-s.put(1,s.cols, 'C')
-s.put(s.rows, 1, 'R')
-s.put(s.rows, s.cols, '*')
-from pprint import *
-print
-pprint (s.w)
-print str(s)
-print
-s.scroll_screen_rows (4,6)
-s.scroll_down()
-s.scroll_down()
-s.scroll_down()
-print str(s)
-print
-s.scroll_screen_rows (3,7)
-s.scroll_up()
-s.scroll_up()
-s.scroll_up()
-s.scroll_up()
-s.scroll_up()
-print str(s)
-s.fill('.')
-s.cursor_home()
-for r in range (1,11):
-    for c in range(1,11):
-        s.type(r*c)
-print
-print str(s)
-
+    if r % 2:
+	s.put (r, 1, str(r))
+    else:
+	s.put (r, s.cols, str(r))
+for c in range (1,s.cols + 1):
+    if c % 2:
+	s.put (1, c, str(c))
+    else:
+	s.put (s.rows, c, str(c))
+s.put(1,1, '\\')
+s.put(1,s.cols, '/')
+s.put(s.rows,1,'/')
+s.put(s.rows, s.cols, '\\')
+s.put(5,5,'\\')
+s.put(5,6,'/')
+s.put(6,5,'/')
+s.put(6,6,'\\')
+'''
 #test_typing()

@@ -9,7 +9,7 @@ class MissingCommandTestCase (unittest.TestCase):
         except Exception:
             pass
         else:
-            fail('expected an Exception')
+            self.fail('Expected an Exception.')
     
 if __name__ == '__main__':
     unittest.main()

@@ -55,7 +55,7 @@ class ExpectTestCase(unittest.TestCase):
         except pexpect.EOF, e:
             pass
         else:
-            fail ('Expected an EOF exception.')
+            self.fail ('Expected an EOF exception.')
 
 if __name__ == '__main__':
     unittest.main()

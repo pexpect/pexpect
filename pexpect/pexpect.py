@@ -23,7 +23,6 @@ $Date$
 """
 import os, sys
 import select
-# import signal
 import traceback
 import re
 import struct
@@ -418,7 +417,7 @@ class spawn:
 
         raise ExceptionPexpect('Reached an unexpected state in read().')
 
-    def read (self, size = -1):
+    def read (self, size = -1):   # File-like object.
         """This reads at most size bytes from the file 
         (less if the read hits EOF before obtaining size bytes). 
         If the size argument is negative or omitted, 
@@ -432,10 +431,10 @@ class spawn:
             self.expect (EOF)
             return self.before
 
-        # I could make this more dicrect by no using expect(), but
+        # I could have been more dicrect by not using expect(), but
         # I deliberately decided to couple read() to expect() so that
         # I would catch any bugs early and ensure consistant behavior.
-        # It's a little less efficient, but it makes less for me to
+        # It's a little less efficient, but there is less for me to
         # worry about if I have to later modify read() or expect().
         cre = re.compile('.{%d}' % size, re.DOTALL) 
         index = self.expect ([cre, EOF])
@@ -450,7 +449,11 @@ class spawn:
         what the pseudo tty device returns. So contrary to what you may be used to
         you will get a newline as \r\n.
         An empty string is returned when EOF is hit immediately.
+        Currently, size is mostly ignored, so this behavior is not
+        standard for a file-like object.
         """
+        if size == 0:
+            return ''
         index = self.expect (['\r\n', EOF])
         if index == 0:
             return self.before + '\r\n'
@@ -459,7 +462,7 @@ class spawn:
 
     def readlines (self, sizehint = -1):    # File-like object.
         """This reads until EOF using readline() and returns a list containing 
-        the lines thus read. THhe optional sizehint argument is ignored.
+        the lines thus read. The optional sizehint argument is ignored.
         """        
         lines = []
         while 1:

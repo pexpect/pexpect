@@ -73,6 +73,31 @@ write_text = 'I\'ve got a ferret sticking up my nose.\n' + \
 'And what is more it radically affects my sense of smell.\n' + \
 '(His sense of smell.)'
 
+TETRIS_TARGET='                           XX            XXXX    XX                             \n' +\
+'                           XXXXXX    XXXXXXXX    XX                             \n' +\
+'                           XXXXXX    XXXXXXXX    XX                             \n' +\
+'                           XX  XX    XX  XXXX    XX                             \n' +\
+'                           XXXXXX  XXXX  XXXX    XX                             \n' +\
+'                           XXXXXXXXXX    XXXX    XX                             \n' +\
+'                           XX  XXXXXX      XX    XX                             \n' +\
+'                           XXXXXX          XX    XX                             \n' +\
+'                           XXXX    XXXXXX  XX    XX                             \n' +\
+'                           XXXXXX    XXXX  XX    XX                             \n' +\
+'                           XX  XX    XXXX  XX    XX                             \n' +\
+'                           XX  XX      XX  XX    XX                             \n' +\
+'                           XX  XX    XXXX  XXXX  XX                             \n' +\
+'                           XXXXXXXX  XXXX  XXXX  XX                             \n' +\
+'                           XXXXXXXXXXXXXX  XXXXXXXX                             \n' +\
+'                           XX    XXXXXXXX  XX    XX                             \n' +\
+'                           XXXXXXXXXXXXXX  XX    XX                             \n' +\
+'                           XX  XXXX    XXXXXX    XX                             \n' +\
+'                           XXXXXX          XXXXXXXX                             \n' +\
+'                           XXXXXXXXXX      XX    XX                             \n' +\
+'                           XXXXXXXXXXXXXXXXXXXXXXXX                             \n' +\
+'                                                                                \n' +\
+'  J->LEFT  K->ROTATE  L->RIGHT  SPACE->DROP  P->PAUSE  Q->QUIT                  \n' +\
+'                                                                                \n'
+
 class ansiFillTestCase (unittest.TestCase):
 
     def make_screen_with_put (self):
@@ -134,7 +159,12 @@ class ansiFillTestCase (unittest.TestCase):
         for c in write_text:
             s.write (c)
         assert str(s) == write_target
-
+    def test_tetris (self)
+        s = ansi.screen (24,80)
+        tetris_text = open ('tetris.data').read()
+        for c in tetris_text:
+            s.write (c)
+        assert str(s) == tetris_target
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,5 +1,6 @@
 README.txt
 setup.py
 pexpect.py
+screen.py
 ansi.py
 FSM.py

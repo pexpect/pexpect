@@ -1,3 +1,4 @@
+export PYTHONPATH=$PYTHONPATH:.:`pwd`
 alias sf="ssh noah@use-pr-shell1.sourceforge.net"
 export CVS_RSH=ssh 
 alias cvssf="cvs -z3 -d:ext:noah@cvs.pexpect.sourceforge.net:/cvsroot/pexpect"

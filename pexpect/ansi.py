@@ -59,75 +59,75 @@ def default (input_symbol, state, stack):
 
 
 def Emit (fsm):
-	screen = fsm.something[0]
-	screen.write(fsm.input_symbol)
+        screen = fsm.something[0]
+        screen.write(fsm.input_symbol)
 def StartNumber (fsm):
-	fsm.something.append (fsm.input_symbol)
+        fsm.something.append (fsm.input_symbol)
 def BuildNumber (fsm):
-	ns = fsm.something.pop()
-	ns = ns + fsm.input_symbol
-	fsm.something.append (ns)
+        ns = fsm.something.pop()
+        ns = ns + fsm.input_symbol
+        fsm.something.append (ns)
 def DoBack (fsm):
-	count = int(fsm.something.pop())
-	screen = fsm.something[0]
-	screen.cursor_back (count)
+        count = int(fsm.something.pop())
+        screen = fsm.something[0]
+        screen.cursor_back (count)
 def DoDown (fsm):
-	count = int(fsm.something.pop())
-	screen = fsm.something[0]
-	screen.cursor_down (count)
+        count = int(fsm.something.pop())
+        screen = fsm.something[0]
+        screen.cursor_down (count)
 def DoForward (fsm):
-	count = int(fsm.something.pop())
-	screen = fsm.something[0]
-	screen.cursor_forward (count)
+        count = int(fsm.something.pop())
+        screen = fsm.something[0]
+        screen.cursor_forward (count)
 def DoUp (fsm):
-	count = int(fsm.something.pop())
-	screen = fsm.something[0]
-	screen.cursor_up (count)
+        count = int(fsm.something.pop())
+        screen = fsm.something[0]
+        screen.cursor_up (count)
 def DoHome (fsm):
-	c = int(fsm.something.pop())
-	r = int(fsm.something.pop())
-	screen = fsm.something[0]
-	screen.cursor_home (r,c)
+        c = int(fsm.something.pop())
+        r = int(fsm.something.pop())
+        screen = fsm.something[0]
+        screen.cursor_home (r,c)
 def DoHomeOrigin (fsm):
-	c = 1
-	r = 1
-	screen = fsm.something[0]
-	screen.cursor_home (r,c)
+        c = 1
+        r = 1
+        screen = fsm.something[0]
+        screen.cursor_home (r,c)
 def DoEraseDown (fsm):
-	screen = fsm.something[0]
-	screen.erase_down()
+        screen = fsm.something[0]
+        screen.erase_down()
 def DoErase (fsm):
-	arg = int(fsm.something.pop())
-	screen = fsm.something[0]
-	if arg == 0:
-		screen.erase_down()
-	elif arg == 1:
-		screen.erase_up()
-	elif arg == 2:
-		screen.erase_screen()
+        arg = int(fsm.something.pop())
+        screen = fsm.something[0]
+        if arg == 0:
+                screen.erase_down()
+        elif arg == 1:
+                screen.erase_up()
+        elif arg == 2:
+                screen.erase_screen()
 def DoEraseEndOfLine (fsm):
-	screen = fsm.something[0]
-	screen.erase_end_of_line()
+        screen = fsm.something[0]
+        screen.erase_end_of_line()
 def DoEraseLine (fsm):
-	screen = fsm.something[0]
-	if arg == 0:
-		screen.end_of_line()
-	elif arg == 1:
-		screen.start_of_line()
-	elif arg == 2:
-		screen.erase_line()
+        screen = fsm.something[0]
+        if arg == 0:
+                screen.end_of_line()
+        elif arg == 1:
+                screen.start_of_line()
+        elif arg == 2:
+                screen.erase_line()
 
 def DoCursorSave (fsm):
-	screen = fsm.something[0]
-	screen.cursor_save_attrs()
+        screen = fsm.something[0]
+        screen.cursor_save_attrs()
 def DoCursorRestore (fsm):
-	screen = fsm.something[0]
-	screen.cursor_restore_attrs()
+        screen = fsm.something[0]
+        screen.cursor_restore_attrs()
 
 def Log (fsm):
-	fout = open ('log', 'a')
-	fout.write (fsm.input_symbol + ',' + fsm.current_state + '\n')
-	fout.close()
+        fout = open ('log', 'a')
+        fout.write (fsm.input_symbol + ',' + fsm.current_state + '\n')
+        fout.close()
 
 class term:
     '''This class encapsulates a generic terminal.
@@ -135,40 +135,40 @@ class term:
         a screen object.
     '''
     def __init__ (self):
-	self.screen = screen (24,80)
+        self.screen = screen (24,80)
         self.state = FSM.FSM ('INIT',[self.screen])
-	self.state.set_default_transition (Log, 'INIT')
-	self.state.add_transition_any ('INIT', Emit, 'INIT')
-	self.state.add_transition ('\x1b', 'INIT', None, 'ESC')
-	self.state.add_transition_any ('ESC', None, 'INIT')
-	self.state.add_transition ('[', 'ESC', None, 'ELB')
-	self.state.add_transition ('H', 'ELB', DoHomeOrigin, 'INIT')
-	self.state.add_transition ('J', 'ELB', DoEraseDown, 'INIT')
-	self.state.add_transition ('K', 'ELB', DoEraseEndOfLine, 'INIT')
-	self.state.add_transition ('7', 'ELB', DoCursorSave, 'INIT')
-	self.state.add_transition ('8', 'ELB', DoCursorRestore, 'INIT')
-	self.state.add_transition_list (string.digits, 'ELB', StartNumber, 'NUMBER_1')
-	self.state.add_transition_list (string.digits, 'NUMBER_1', BuildNumber, 'NUMBER_1')
-	self.state.add_transition ('D', 'NUMBER_1', DoBack, 'INIT')
-	self.state.add_transition ('B', 'NUMBER_1', DoDown, 'INIT')
-	self.state.add_transition ('C', 'NUMBER_1', DoForward, 'INIT')
-	self.state.add_transition ('A', 'NUMBER_1', DoUp, 'INIT')
-	self.state.add_transition ('J', 'NUMBER_1', DoErase, 'INIT')
-	self.state.add_transition ('K', 'NUMBER_1', DoEraseLine, 'INIT')
+        self.state.set_default_transition (Log, 'INIT')
+        self.state.add_transition_any ('INIT', Emit, 'INIT')
+        self.state.add_transition ('\x1b', 'INIT', None, 'ESC')
+        self.state.add_transition_any ('ESC', None, 'INIT')
+        self.state.add_transition ('[', 'ESC', None, 'ELB')
+        self.state.add_transition ('H', 'ELB', DoHomeOrigin, 'INIT')
+        self.state.add_transition ('J', 'ELB', DoEraseDown, 'INIT')
+        self.state.add_transition ('K', 'ELB', DoEraseEndOfLine, 'INIT')
+        self.state.add_transition ('7', 'ELB', DoCursorSave, 'INIT')
+        self.state.add_transition ('8', 'ELB', DoCursorRestore, 'INIT')
+        self.state.add_transition_list (string.digits, 'ELB', StartNumber, 'NUMBER_1')
+        self.state.add_transition_list (string.digits, 'NUMBER_1', BuildNumber, 'NUMBER_1')
+        self.state.add_transition ('D', 'NUMBER_1', DoBack, 'INIT')
+        self.state.add_transition ('B', 'NUMBER_1', DoDown, 'INIT')
+        self.state.add_transition ('C', 'NUMBER_1', DoForward, 'INIT')
+        self.state.add_transition ('A', 'NUMBER_1', DoUp, 'INIT')
+        self.state.add_transition ('J', 'NUMBER_1', DoErase, 'INIT')
+        self.state.add_transition ('K', 'NUMBER_1', DoEraseLine, 'INIT')
 
 #RM   Reset Mode                Esc [ Ps l                   none
-	self.state.add_transition (';', 'NUMBER_1', None, 'SEMICOLON')
-	self.state.add_transition_any ('SEMICOLON', None, 'INIT')
-	self.state.add_transition_list (string.digits, 'SEMICOLON', StartNumber, 'NUMBER_2')
-	self.state.add_transition_list (string.digits, 'NUMBER_2', BuildNumber, 'NUMBER_2')
-	self.state.add_transition_any ('NUMBER_2', None, 'INIT')
-	self.state.add_transition ('H', 'NUMBER_2', DoHome, 'INIT')
-	self.state.add_transition ('f', 'NUMBER_2', DoHome, 'INIT')
+        self.state.add_transition (';', 'NUMBER_1', None, 'SEMICOLON')
+        self.state.add_transition_any ('SEMICOLON', None, 'INIT')
+        self.state.add_transition_list (string.digits, 'SEMICOLON', StartNumber, 'NUMBER_2')
+        self.state.add_transition_list (string.digits, 'NUMBER_2', BuildNumber, 'NUMBER_2')
+        self.state.add_transition_any ('NUMBER_2', None, 'INIT')
+        self.state.add_transition ('H', 'NUMBER_2', DoHome, 'INIT')
+        self.state.add_transition ('f', 'NUMBER_2', DoHome, 'INIT')
     def test (self):
-	dump = file('dump').read()
-	for c in dump:
-		self.state.process(c)
-	print str(self.screen)
+        dump = file('dump').read()
+        for c in dump:
+                self.state.process(c)
+        print str(self.screen)
 
     old_crap = '''
         f.add_default_transition ('INIT', default)
@@ -190,8 +190,8 @@ class screen:
         self.cols = c
         self.cur_r = 1
         self.cur_c = 1
-	self.cur_saved_r = 1
-	self.cur_saved_c = 1
+        self.cur_saved_r = 1
+        self.cur_saved_c = 1
         self.scroll_row_start = 1
         self.scroll_row_end = self.rows
         self.mode_scape = 0
@@ -229,9 +229,9 @@ class screen:
         \r and \n both produce a call to crlf().
         '''
         if ch == '\r':
-	    self.cr()
-	    return
-	if  ch == '\n':
+            self.cr()
+            return
+        if  ch == '\n':
             self.lf()
             return
 
@@ -249,12 +249,12 @@ class screen:
                 self.erase_line()
 
     def cr (self):
-	'''This moves the cursor to the beginning (col 1) of the current row.
-	'''
-	self.cursor_home (self.cur_r, 1)
+        '''This moves the cursor to the beginning (col 1) of the current row.
+        '''
+        self.cursor_home (self.cur_r, 1)
     def lf (self):
-	'''This moves the cursor down with scrolling.
-	'''
+        '''This moves the cursor down with scrolling.
+        '''
         old_r = self.cur_r
         self.cursor_down()
         if old_r == self.cur_r:
@@ -265,8 +265,8 @@ class screen:
         '''This advances the cursor with CRLF properties.
         The cursor will line wrap and the screen may scroll.
         '''
-	self.cr ()
-	self.lf ()
+        self.cr ()
+        self.lf ()
 
     def put (self, r, c, ch):
         '''Screen array starts at 1 index.'''
@@ -312,11 +312,11 @@ class screen:
         pass
     def cursor_save_attrs (self): # <ESC>7
         '''Save current cursor position.'''
-	self.cur_saved_r = self.cur_r
-	self.cur_saved_c = self.cur_c
+        self.cur_saved_r = self.cur_r
+        self.cur_saved_c = self.cur_c
     def cursor_restore_attrs (self): # <ESC>8
         '''Restores cursor position after a Save Cursor.'''
-	self.cursor_home (self.cur_saved_r, self.cur_saved_c)
+        self.cursor_home (self.cur_saved_r, self.cur_saved_c)
 
     def scroll_constrain (self):
         '''This keeps the scroll region within the screen region.'''
@@ -385,8 +385,6 @@ class screen:
 #        Delete character        Esc [ Pn P
 #        Scrolling region        Esc [ Pn(top);Pn(bot) r
 
-
-        
 import tty, termios, sys
 
 def getkey():

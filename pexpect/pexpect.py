@@ -24,7 +24,7 @@ $Date$
 
 
 try:
-    import os, sys
+    import os, sys, time
     import select
     import string
     import re
@@ -43,7 +43,7 @@ Currently pexpect is intended for UNIX operating systems."""
 
 
 
-__version__ = '0.999'
+__version__ = '0.9999'
 __revision__ = '$Revision$'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run',
     '__version__', '__revision__']
@@ -719,7 +719,10 @@ class spawn:
 
         if timeout == -1:
             timeout = self.timeout
-        
+            end_time = None # Thanks Kimberley...
+        if timeout != None:
+            end_time = time.time() + timeout
+ 
         try:
             #ED# incoming = ''
             incoming = self.buffer
@@ -727,7 +730,7 @@ class spawn:
                 #ED# c = self.read_nonblocking (1, timeout)
                 #ED# incoming = incoming + c
 
-                # Sequence through the list of patterns and look for a match.
+                # Sequence through the list of patterns looking for a match.
                 index = -1
                 for cre in pattern_list:
                     index = index + 1
@@ -741,6 +744,8 @@ class spawn:
                         self.buffer = incoming[match.end() : ]
                         return index
                 # Read more data
+                if timeout != None:
+                    timeout = end_time - time.time()
                 c = self.read_nonblocking (self.maxread, timeout)
                 incoming = incoming + c
                 

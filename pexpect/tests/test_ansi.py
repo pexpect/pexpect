@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import ansi
+import ANSI
 import unittest
 
 write_target = 'I\'ve got a ferret sticking up my nose.                           \n' +\
@@ -61,22 +61,17 @@ tetris_target='                           XX            XXXX    XX              
 class ansiTestCase (unittest.TestCase):
 
     def test_write (self):
-        s = ansi.ansi (6,65)
+        s = ANSI.ANSI (6,65)
         s.fill('.')
         s.cursor_home()
         for c in write_text:
             s.write (c)
-        print str(s)
         assert str(s) == write_target
     def test_tetris (self):
-        s = ansi.ansi (24,80)
+        s = ANSI.ANSI (24,80)
         tetris_text = open ('tetris.data').read()
         for c in tetris_text:
             s.process (c)
-	print '---'
-	print str(s)
-	print '---'
-	print tetris_target
         assert str(s) == tetris_target
 
 if __name__ == '__main__':

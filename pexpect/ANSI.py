@@ -8,7 +8,6 @@
 # 
 
 import screen
-#from screen import *
 import FSM
 import copy
 import string
@@ -113,7 +112,7 @@ class term (screen.screen):
     def __init__ (self, r=24, c=80):
         screen.screen.__init__(self, r,c)
 
-class ansi (term):
+class ANSI (term):
     '''This class encapsulates a generic terminal.
         It filters a stream and maintains the state of
         a screen object.

@@ -115,6 +115,20 @@ class screen:
     def get (self):
         self.get_abs (self.cur_r, self.cur_c)
 
+    def get_region (self, rs,cs, re,ce):
+        rs = constrain (rs, 1, self.rows)
+        re = constrain (re, 1, self.rows)
+        cs = constrain (cs, 1, self.cols)
+        ce = constrain (ce, 1, self.cols)
+        if rs > re:
+            rs, re = re, rs
+        if cs > ce:
+            cs, ce = ce, cs
+        assert 0, 'This is not implemented yet.'
+        for r in range (rs, re+1):
+            for c in range (cs, ce + 1):
+                self.put_abs (r,c,'X')
+
     def cursor_constrain (self):
         '''This keeps the cursor within the screen area.
         '''

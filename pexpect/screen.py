@@ -116,6 +116,8 @@ class screen:
         self.get_abs (self.cur_r, self.cur_c)
 
     def get_region (self, rs,cs, re,ce):
+        '''This returns a list of lines representing the region.
+        '''
         rs = constrain (rs, 1, self.rows)
         re = constrain (re, 1, self.rows)
         cs = constrain (cs, 1, self.cols)
@@ -124,10 +126,14 @@ class screen:
             rs, re = re, rs
         if cs > ce:
             cs, ce = ce, cs
-        assert 0, 'This is not implemented yet.'
+        sc = []
         for r in range (rs, re+1):
+            line = ''
             for c in range (cs, ce + 1):
-                self.put_abs (r,c,'X')
+                ch = self.get_abs (r,c)
+                line = line + ch
+            sc.append (line)
+        return sc
 
     def cursor_constrain (self):
         '''This keeps the cursor within the screen area.

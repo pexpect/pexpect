@@ -17,6 +17,10 @@ class TestCaseConstructor(unittest.TestCase):
 
         assert (p1.before == p2.before)
 
+    def test_named_parameters (self):
+	p = pexpect.spawn ('ls',timeout=10)
+	p = pexpect.spawn (timeout=10, command='ls')
+	p = pexpect.spawn (args=[], command='ls')
 
 if __name__ == '__main__':
     unittest.main()

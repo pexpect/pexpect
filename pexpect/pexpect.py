@@ -57,7 +57,7 @@ class spawn:
     start and control child applications.
     """
 
-    def __init__(self, command, args=None):
+    def __init__(self, command, args=None, timeout=30):
         """This is the constructor. The command parameter is a string
         that includes the path and any arguments to the command. For example:
             p = pexpect.spawn ('/usr/bin/ftp')
@@ -80,7 +80,7 @@ class spawn:
         # anything before maxsearchsize point is preserved, but not searched.
         #self.maxsearchsize = 1000
 
-        self.timeout = 30.0 # Seconds
+        self.timeout = timeout
         self.child_fd = -1
         self.pid = None
         self.log_fd = -1

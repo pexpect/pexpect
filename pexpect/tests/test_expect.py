@@ -8,24 +8,33 @@ class ExpectTestCase(unittest.TestCase):
     #def runTest (self):
         
     def test_expect (self):
-        the_old_way = commands.getoutput('ls -l')
+        the_old_way = commands.getoutput('ls -l /bin')
 
-        p = pexpect.spawn('ls -l')
+        p = pexpect.spawn('ls -l /bin')
         the_new_way = ''
-        try:
-                while 1:
-                        p.expect ('\n')
-                        the_new_way = the_new_way + p.before
-        except:
-                the_new_way = the_new_way[:-1]
-                the_new_way = the_new_way.replace('\r','\n')
+	while 1:
+		i = p.expect (['\n', pexpect.EOF])
+		the_new_way = the_new_way + p.before
+		if i == 1:
+			print 'pbefore', p.before
+			print 'pafter', p.after
+			break
+	the_new_way = the_new_way[:-1]
+	the_new_way = the_new_way.replace('\r','\n')
+
+	fout = open ('f1','wb')
+	fout.write (the_new_way)
+	fout.close()
+	fout = open ('f2','wb')
+	fout.write (the_old_way)
+	fout.close()
 
         assert the_old_way == the_new_way
 
     def test_expect_exact (self):
-        the_old_way = commands.getoutput('ls -l')
+        the_old_way = commands.getoutput('ls -l /bin')
 
-        p = pexpect.spawn('ls -l')
+        p = pexpect.spawn('ls -l /bin')
         try:
                 the_new_way = ''
                 while 1:
@@ -38,9 +47,9 @@ class ExpectTestCase(unittest.TestCase):
         assert the_old_way == the_new_way
 
     def test_expect_eof (self):
-        the_old_way = commands.getoutput('ls -l')
+        the_old_way = commands.getoutput('ls -l /bin')
 
-        p = pexpect.spawn('ls -l')
+        p = pexpect.spawn('ls -l /bin')
         p.expect(pexpect.EOF) # This basically tells it to read everything.
         the_new_way = p.before
         the_new_way = the_new_way.replace('\r','')
@@ -49,7 +58,7 @@ class ExpectTestCase(unittest.TestCase):
         assert the_old_way == the_new_way
 
     def test_unexpected_eof (self):
-        p = pexpect.spawn('ls -l')
+        p = pexpect.spawn('ls -l /bin')
         try:
             p.expect('ZXYXZ') # Probably never see this in ls output.
         except pexpect.EOF, e:

@@ -23,12 +23,13 @@ COMMAND_PROMPT = '[$#] ' ### This is way too simple for industrial use :-) ...
               # This is the prompt we get if SSH does not have 
               # the remote host's public key stored in the cache.
 SSH_NEWKEY = 'Are you sure you want to continue connecting (yes/no)?'
-
+PASSWORD_PROMPT_MYSQL = 'Enter password: '
 
 print 'Enter the host that you wish to monitor.'
 host = raw_input('Hostname: ')
 user = raw_input('User: ')
 password = getpass.getpass('Password: ')
+password_mysql = getpass.getpass('MySQL Password [None]: ')
 
 #
 # Login via SSH
@@ -81,6 +82,20 @@ print child.before
 
 # Run free.
 child.sendline ('free') # Linux systems only.
+child.expect (COMMAND_PROMPT)
+print
+print child.before
+
+# Run df.
+child.sendline ('df')
+child.expect (COMMAND_PROMPT)
+print
+print child.before
+
+# Run MySQL show status.
+child.sendline ('mysql -p -e "SHOW STATUS;"')
+child.expect (PASSWORD_PROMPT_MYSQL)
+child.sendline (password_mysql)
 child.expect (COMMAND_PROMPT)
 print
 print child.before

@@ -12,7 +12,11 @@ X = getpass.getpass('Password: ')
 
 def start_tunnel ():
     ssh_tunnel = pexpect.spawn (tunnel_command % globals())
-    ssh_tunnel.expect ('password:')
+    try:
+        ssh_tunnel.expect ('password:')
+    except:
+        print ssh_tunnel.before
+        print ssh_tunnel.after
     time.sleep (0.1)
     ssh_tunnel.sendline (X)
     time.sleep (60)

@@ -7,11 +7,11 @@ import os
 class ExpectTestCase(unittest.TestCase):
 
     def test_fd (self):
-	fd = os.open ('README.txt', os.O_RDONLY)
+	fd = os.open ('TESTDATA.txt', os.O_RDONLY)
 	s = pexpect.spawn (fd)
-	s.expect ('License:')
+	s.expect ('This is the end of test data:')
 	s.expect (pexpect.EOF)
-	assert s.before == ' Python Software Foundation License\n\nNoah Spurrier\nhttp://pexpect.sourceforge.net/\n\n\n'
+	assert s.before == ' END\n'
 
     def test_fd_isalive (self):
 	fd = os.open ('README.txt', os.O_RDONLY)

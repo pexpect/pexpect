@@ -5,6 +5,12 @@ import sys
 import os
 
 class ExpectTestCase(unittest.TestCase):
+    def setUp(self):
+	self.original_path = os.getcwd()
+	newpath = os.path.join (os.environ['PROJECT_PEXPECT_HOME'], 'tests')
+	os.chdir (newpath)
+    def tearDown(self):
+        os.chdir (self.original_path)
 
     def test_fd (self):
 	fd = os.open ('TESTDATA.txt', os.O_RDONLY)
@@ -24,7 +30,7 @@ class ExpectTestCase(unittest.TestCase):
 	fd = os.open ('TESTDATA.txt', os.O_RDONLY)
 	s = pexpect.spawn (fd)
 	assert not s.isatty()
-	s.close()
+	os.close(fd)
 
     def test_close_does_not_close_fd (self):
 	"""Calling close() on a pexpect.spawn object should not

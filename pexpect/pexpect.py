@@ -539,7 +539,7 @@ class spawn:
         compiled_pattern_list = self.compile_pattern_list(pattern)
         return self.expect_list(compiled_pattern_list, timeout)
 
-    def expect_exact (self, pattern_list, local_timeout = None):
+    def expect_exact (self, pattern_list, timeout = None):
         """This is similar to expect() except that it takes
         list of plain strings instead of regular expressions.
         The idea is that this should be much faster. It could also be
@@ -558,7 +558,7 @@ class spawn:
         try:
             incoming = ''
             while 1: # Keep reading until exception or return.
-                c = self.read_nonblocking (1, local_timeout)
+                c = self.read_nonblocking (1, timeout) 
                 incoming = incoming + c
 
                 # Sequence through the list of patterns and look for a match.
@@ -593,19 +593,19 @@ class spawn:
             self.match = None
             raise
             
-    def expect_list(self, pattern_list, local_timeout = None):
+    def expect_list(self, pattern_list, timeout = None):
         """This is called by expect(). This takes a list of compiled
         regular expressions. This returns the index into the pattern_list
         that matched the child's output.
         """
 
-        if local_timeout is None: 
-            local_timeout = self.timeout
+        if timeout is None: 
+            timeout = self.timeout
         
         try:
             incoming = ''
             while 1: # Keep reading until exception or return.
-                c = self.read_nonblocking (1, local_timeout)
+                c = self.read_nonblocking (1, timeout)
                 incoming = incoming + c
 
                 # Sequence through the list of patterns and look for a match.

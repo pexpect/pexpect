@@ -62,7 +62,7 @@ class spawn:
     start and control child applications.
     """
 
-    def __init__(self, command, args=None, timeout=30):
+    def __init__(self, command, args=[], timeout=30):
         """This is the constructor. The command parameter is a string
         that includes the path and any arguments to the command. For example:
             p = pexpect.spawn ('/usr/bin/ftp')
@@ -95,7 +95,10 @@ class spawn:
         self.softspace = 0 # File-like object.
         self.name = '' # File-like object.
 
-        if args is None:
+        if type (args) != type([])
+            raise TypeError, 'The second argument, args, must be a list. %s' % str(type(p))
+
+        if args == []:
             self.args = split_command_line(command)
             self.command = self.args[0]
         else:

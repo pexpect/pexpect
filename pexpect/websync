@@ -6,6 +6,6 @@
 # The Vaults of Parnasus which requires a direct URL link to a
 # tar ball distribution. I don't advertise the package this way.
 ssh noah@use-pr-shell1.sourceforge.net "cd htdocs;rm index.html;wget http://www.noah.org/python/pexpect/index.html"
-scp doc.tgz noah@use-pr-shell1.sourceforge.net:htdocs/doc.tgz
-ssh noah@use-pr-shell1.sourceforge.net "cd htdocs;tar zxvf doc.tgz"
+scp pexpect-doc.tgz noah@use-pr-shell1.sourceforge.net:htdocs/pexpect-doc.tgz
+ssh noah@use-pr-shell1.sourceforge.net "cd htdocs;tar zxvf pexpect-doc.tgz"
 scp pexpect-current.tgz noah@use-pr-shell1.sourceforge.net:htdocs/pexpect-current.tgz

@@ -378,7 +378,7 @@ class spawn:
         If a log file was opened using log_open() then all data will
         also be written to the log file.
 
-        Note that if this method is called with timeout=None 
+        Notice that if this method is called with timeout=None 
         then it actually may block.
         This is a non-blocking wrapper around os.read().
         It uses select.select() to supply a timeout. 
@@ -405,30 +405,32 @@ class spawn:
         raise ExceptionPexpect('Reached an unexpected state in read().')
 
     def write(self, text):
-        """This is an alias for send()."""
-        self.send (text)
+        """This is an alias for send().
+	This return the number of bytes actually written.
+	"""
+        return self.send (text)
 
     def writelines (self, sequence):
+	"""This calls write() for each element in the sequence.
+	This return the number of bytes actually written.
+	"""
+	total_n = 0
         for str in sequence:
-            self.write (str)
+            total_n = total_n + self.write (str)
+	return total_n
 
     def send(self, text):
         """This sends a string to the child process.
+	This return the number of bytes actually written.
         """
-        try:
-            if text == EOF:
-                self.senf_eof
-                
-            os.write(self.child_fd, text)
-        except Exception, e:
-            msg = 'Exception caught in send(): %s' % str(e)
-            raise ExceptionPexpect(msg)
+        return os.write(self.child_fd, text)
 
     def sendline(self, text):
         """This is like send(), but it adds a line separator.
+	This return the number of bytes actually written.
         """
-        self.send(text)
-        self.send(os.linesep)
+	n = self.send(text)
+        return n + self.send(os.linesep)
 
     def send_eof(self):
         """This sends an EOF to the child.
@@ -439,14 +441,10 @@ class spawn:
         line, the read() in the user program returns 0, which
         signifies end-of-file.
 
-        This means: do make this work as expected send_eof() has to be
-        called at the begining of a line. A newline-charakter is _not_
+        This means: to make this work as expected a send_eof() has to be
+        called at the begining of a line. A newline character is not
         send here to avoid problems.
         """
-        ### Known Bug: this should either get the EOF character from
-        ### termios or set (and restore) it. Currently the character
-        ### is hard-coded here.
-        ### EOF = '\004'
         ### Hmmm... how do I send an EOF?
         ###C  if ((m = write(pty, *buf, p - *buf)) < 0)
         ###C      return (errno == EWOULDBLOCK) ? n : -1;
@@ -459,7 +457,7 @@ class spawn:
         try:
             # EOF is recognized when ICANON is set, thus ensure it is:
             termios.tcsetattr(fd, termios.TCSADRAIN, new)
-            os.write(self.child_fd, termios.CEOF) ### This was based from EOF = '\004'
+            os.write(self.child_fd, termios.CEOF)
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old) # restore state
         

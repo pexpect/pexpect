@@ -340,6 +340,18 @@ class spawn:
         else:
             return self.before
 
+    def __iter__ (self):
+        """This is to support interators over a file-like object.
+        """
+        return self
+    def next (self):
+        """This is to support iterators over a file-like object.
+        """
+        result = self.readline()
+        if result == "":
+            raise StopIteration
+        return result
+
     def readlines (self, sizehint = -1):    # File-like object.
         """This reads until EOF using readline() and returns a list containing 
         the lines thus read. The optional sizehint argument is ignored.

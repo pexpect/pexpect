@@ -457,10 +457,12 @@ class spawn:
                 compiled_pattern_list.append(re.compile(p, re.DOTALL))
             elif p is EOF:
                 compiled_pattern_list.append(EOF)
+            elif p is TIMEOUT:
+                compiled_pattern_list.append(TIMEOUT)
             elif type(p) is type(re.compile('')):
                 compiled_pattern_list.append(p)
             else:
-                raise TypeError, 'Argument must be one of StringType, EOF, SRE_Pattern, or a list of those type. %s' % str(type(p))
+                raise TypeError, 'Argument must be one of StringType, EOF, TIMEOUT, SRE_Pattern, or a list of those type. %s' % str(type(p))
 
         return compiled_pattern_list
  

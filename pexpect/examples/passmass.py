@@ -58,14 +58,14 @@ def main():
             print 'Could not login to host:', host
             continue
         print 'Changing password on host:', host
-        change_password(e, user, password, newpassword)
+        change_password(child, user, password, newpassword)
         child.expect(SHELL_PROMPT)
         child.sendline('exit')
 
 if __name__ == '__main__':
     try:
         main()
-    except ExceptionPypect, e:
+    except pexpect.ExceptionPexpect, e:
         print str(e)
 
 

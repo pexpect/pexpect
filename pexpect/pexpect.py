@@ -21,21 +21,22 @@ Noah Spurrier
 $Revision$
 $Date$
 """
-
+import os, sys
 import select
 import signal
-import os, sys
-#import errno
-#import time
-import pty
-import tty
-import termios
-import fcntl
 import traceback
 import re
 import struct
 from types import *
-
+try:
+    import pty
+    import tty
+    import termios
+    import fcntl
+except ImportError, e:
+    raise ImportError, str(e) + """
+A critical module was not found. Probably this OS does not support it.
+Currently pexpect is intended for UNIX operating systems (including OS-X)."""
 
 # Exception classes used by this module.
 class ExceptionPexpect(Exception):
@@ -66,10 +67,6 @@ class spawn:
         After this the child application will be created and
         will be ready for action. See expect() and send()/sendline().
         """
-        ### This is not strictly correct since pty is not POSIX (Alas!).
-        ### Instead I should check for a working pty or something...
-        if os.name != 'posix':
-            raise OSError, 'This operating system is not supported: %s'%os.name
 
         self.STDIN_FILENO = sys.stdin.fileno()
         self.STDOUT_FILENO = sys.stdout.fileno()
@@ -156,35 +153,6 @@ class spawn:
         """This returns the file descriptor of the pty for the child."""
         return self.child_fd
 
-    def send_eof(self):
-        """This sends an EOF to the child.
-
-        More precisely: this sends a character which causes the pending
-        child buffer to be sent to the waiting user program without
-        waiting for end-of-line. If it is the first character of the
-        line, the read() in the user program returns 0, which
-        signifies end-of-file.
-
-        This means: do make this work as expected send_eof() has to be
-        called at the begining of a line. A newline-charakter is _not_
-        send here to avoid problems.
-        """
-        ### Known Bug: this should either get the EOF character from
-        ### termios or set (and restore) it. Currently the character
-        ### is hard-coded here.
-        ### EOF = '\004'
-        fd = sys.stdin.fileno()
-        old = termios.tcgetattr(fd) # remember current state
-        new = termios.tcgetattr(fd)
-        new[3] = new[3] | termios.ICANON        # lflags
-        # use try/finally to ensure state gets restored
-        try:
-            # EOF is recognized when ICANON is set, thus ensure it is:
-            termios.tcsetattr(fd, termios.TCSADRAIN, new)
-            os.write(self.child_fd, termios.CEOF) ### This was based from EOF = '\004'
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old) # restore state
-
     def set_echo (self, on):
         """This sets the terminal echo-mode on or off."""
         new = termios.tcgetattr(self.child_fd)
@@ -225,14 +193,14 @@ class spawn:
                 ...
         """
         if pattern is EOF:
-            compiled_pattern_list = [None]
+            compiled_pattern_list = [EOF]
         elif type(pattern) is StringType:
             compiled_pattern_list = [re.compile(pattern)]
         elif type(pattern) is ListType:
             compiled_pattern_list = []
             for x in pattern:
                 if x is EOF:
-                    compiled_pattern_list.append(None)
+                    compiled_pattern_list.append(EOF)
                 else:
                     compiled_pattern_list.append( re.compile(x) )
         else:
@@ -306,10 +274,10 @@ class spawn:
         return index
 
 
-    def expect_list(self, re_list, local_timeout = None):
+    def expect_list(self, pattern_list, local_timeout = None):
         """This is called by expect(). This takes a list of compiled
         regular expressions. This returns the matched index into the
-        re_list.
+        pattern_list.
 
         Special: A list entry may be None instead of 
         a compiled regular expression. This will catch EOF exceptions and 
@@ -322,90 +290,59 @@ class spawn:
         # matched_pattern = None
         # done = 1
         # break
-        
-        matched_pattern = None
-        before_pattern = None
-        index = 0
 
+        if local_timeout is None: 
+            local_timeout = self.timeout
+        
         try:
-            done = 0
             incoming = ''
-            while not done: # Keep reading until done.
+            while 1: # Keep reading until except or return.
                 c = self.read(1, local_timeout)
                 incoming = incoming + c
 
                 # Sequence through the list of patterns and look for a match.
-                for cre in re_list:
+                index = -1
+                for cre in pattern_list:
+                    index = index + 1
+                    if cre is EOF: 
+                        continue # The EOF pattern is not a regular expression.
                     match = cre.search(incoming)
                     if match is not None:
-                        matched_pattern = incoming[match.start() : match.end()]
-                        before_pattern = incoming[ : match.start()]
-                        done = 1
-                        break
-                    else:
-                        index = index + 1
+                        self.match = incoming[match.start() : match.end()]
+                        self.before = incoming[ : match.start()]
+                        return index
+        except EOF, e:
+            if EOF in pattern_list:
+                self.before = incoming
+                self.match = EOF
+                return pattern_list.index(EOF)
         except Exception, e:
-            ### Here I should test if the client wants to pass exceptions, or
-            ### to return some state flag. Exception versus return value.
-            matched_pattern = None
-            before_pattern = incoming
-            raise
-
-        self.before = before_pattern
-        self.matched = matched_pattern
-        return index
-
-    def expect_eof(self, timeout = None):
-        """This reads from the child until the end of file is found.
-        A timeout exception may be thrown.
-        """
-        if timeout is None: 
-            timeout = self.timeout
-
-        incoming = ''
-        self.match = self.matched = None
-        try:
-            while 1:
-                c = self.read(1, timeout)
-                incoming = incoming + c
-        except EOF:
             self.before = incoming
-            return 0
-        except:  # save incoming data (usefull for debugging)
-            self.before = incoming
+            self.match = None
             raise
-
-    def write(self, text):
-        """This is an alias for send()."""
-        self.send (text)
-
-    def writelines (self, sequence):
-        for str in sequence:
-            self.write (str)
-
-    def send(self, text):
-        """This sends a string to the child process.
-        """
-        ### Add code so that an empty string will send an EOF.
-        ### This emulates the symantics of Libes Expect.
-        ### Hmmm... how do I send an EOF?
-        ###C  if ((m = write(pty, *buf, p - *buf)) < 0)
-        ###C      return (errno == EWOULDBLOCK) ? n : -1;
-
-        try:
-            if text == '':
-                pass ### Do something someday, like send an EOF.
-            os.write(self.child_fd, text)
-        except Exception, e:
-            msg = 'Exception caught in send(): %s' % str(e)
-            raise ExceptionPexpect(msg)
-
-    def sendline(self, text):
-        """This is like send(), but it adds a line separator.
-        """
-        self.send(text)
-        self.send(os.linesep)
+            
+        assert 0 == 1, 'Should not get here.'
         
+#    def expect_eof(self, timeout = None):
+#        """This reads from the child until the end of file is found.
+#        A timeout exception may be thrown.
+#        """
+#        if timeout is None: 
+#            timeout = self.timeout
+#
+#        incoming = ''
+#        self.match = self.matched = None
+#        try:
+#            while 1:
+#                c = self.read(1, timeout)
+#                incoming = incoming + c
+#        except EOF:
+#            self.before = incoming
+#            return 0
+#        except:  # save incoming data (usefull for debugging)
+#            self.before = incoming
+#            raise
+
     def read(self, n, timeout = None):
         """This reads up to n characters from the child application.
         It includes a timeout. If the read does not complete within the
@@ -440,7 +377,65 @@ class spawn:
 
         raise ExceptionPexpect('Reached an unexpected state in read().')
 
+    def write(self, text):
+        """This is an alias for send()."""
+        self.send (text)
 
+    def writelines (self, sequence):
+        for str in sequence:
+            self.write (str)
+
+    def send(self, text):
+        """This sends a string to the child process.
+        """
+        try:
+            if text == EOF:
+                self.senf_eof
+                
+            os.write(self.child_fd, text)
+        except Exception, e:
+            msg = 'Exception caught in send(): %s' % str(e)
+            raise ExceptionPexpect(msg)
+
+    def sendline(self, text):
+        """This is like send(), but it adds a line separator.
+        """
+        self.send(text)
+        self.send(os.linesep)
+
+    def send_eof(self):
+        """This sends an EOF to the child.
+
+        More precisely: this sends a character which causes the pending
+        child buffer to be sent to the waiting user program without
+        waiting for end-of-line. If it is the first character of the
+        line, the read() in the user program returns 0, which
+        signifies end-of-file.
+
+        This means: do make this work as expected send_eof() has to be
+        called at the begining of a line. A newline-charakter is _not_
+        send here to avoid problems.
+        """
+        ### Known Bug: this should either get the EOF character from
+        ### termios or set (and restore) it. Currently the character
+        ### is hard-coded here.
+        ### EOF = '\004'
+        ### Hmmm... how do I send an EOF?
+        ###C  if ((m = write(pty, *buf, p - *buf)) < 0)
+        ###C      return (errno == EWOULDBLOCK) ? n : -1;
+
+        fd = sys.stdin.fileno()
+        old = termios.tcgetattr(fd) # remember current state
+        new = termios.tcgetattr(fd)
+        new[3] = new[3] | termios.ICANON        # lflags
+        # use try/finally to ensure state gets restored
+        try:
+            # EOF is recognized when ICANON is set, thus ensure it is:
+            termios.tcsetattr(fd, termios.TCSADRAIN, new)
+            os.write(self.child_fd, termios.CEOF) ### This was based from EOF = '\004'
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old) # restore state
+        
     def isAlive(self):
         """This tests if the child process is running or not.
         It returns 1 if the child process appears to be running or
@@ -561,9 +556,25 @@ def setwinsize(r, c):
     SIGWINCH signal.
     This is used by __spawn to set the tty window size of the child.
     """
+    # Check for buggy platforms. Some Pythons on some platforms
+    # (notably RedHat 7.1) truncate the value for termios.TIOCSWINSZ.
+    # It is not clear why this happens. These platforms don't seem to
+    # handle the signed ing very well; yet other platforms like OpenBSD
+    # have a large negative value for TIOCSWINSZ, yet they don't truncate.
+    # Newer versions of Linux have totally different values for TIOCSWINSZ.
+    # This fix is a hack.
+    TIOCSWINSZ = termios.TIOCSWINSZ
+    if TIOCSWINSZ == 2148037735:
+        TIOCSWINSZ = -2146929561 # Same number in binary, but with sign.
+
     # Assume ws_xpixel and ws_ypixel are zero.
     s = struct.pack("HHHH", r, c, 0, 0)
-    x = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCSWINSZ, s)
+    x = fcntl.ioctl(sys.stdout.fileno(), TIOCSWINSZ, s)
+
+def getwinsize():
+    s = struct.pack("HHHH", 0, 0, 0, 0)
+    x = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, s)
+    return struct.unpack("HHHH", x)
 
 def split_command_line(command_line):
     """This splits a command line into a list of arguments.

@@ -110,6 +110,7 @@ class spawn:
         self.match = None
         self.softspace = 0 # File-like object.
         self.name = '' # File-like object.
+        self.flag_eof = 0
 
         # If command is an int type then it must represent an open file descriptor.
         if type (command) == type(0):
@@ -399,7 +400,12 @@ class spawn:
             os.write (self.child_fd, '%c' % termios.CEOF)
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old) # restore state
-        
+
+    def eof (self):
+        """This returns 1 if the EOF except was raised.
+        """
+        return self.flag_eof
+
     def isalive(self):
         """This tests if the child process is running or not.
         This returns 1 if the child process appears to be running or 0 if not.

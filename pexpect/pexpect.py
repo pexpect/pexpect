@@ -505,9 +505,9 @@ class spawn:
 
         # I have to do this twice for Solaris.
         # I can't even believe that I figured this out...
-	# If waitpid() returns 0 it means that no child process wishes to
-	# report, and the value of status is undefined.
-#	if pid == 0 and status == 0:
+        # If waitpid() returns 0 it means that no child process wishes to
+        # report, and the value of status is undefined.
+#        if pid == 0 and status == 0:
         if pid == 0:
             try:
                 pid, status = os.waitpid(self.pid, os.WNOHANG)
@@ -690,8 +690,8 @@ class spawn:
             else:
                 raise
         except TIMEOUT:
-	    self.before = incoming
-	    self.after = TIMEOUT
+            self.before = incoming
+            self.after = TIMEOUT
             if TIMEOUT in pattern_list:
                 #self.buffer = ''
                 return pattern_list.index(TIMEOUT)
@@ -745,16 +745,16 @@ class spawn:
                 incoming = incoming + c
                 
         except EOF:
-	    self.before = incoming
-	    self.after = EOF
+            self.before = incoming
+            self.after = EOF
             if EOF in pattern_list:
                 #self.buffer = ''
                 return pattern_list.index(EOF)
             else:
                 raise
         except TIMEOUT:
-	    self.before = incoming
-	    self.after = TIMEOUT
+            self.before = incoming
+            self.after = TIMEOUT
             if TIMEOUT in pattern_list:
                 #self.buffer = ''
                 return pattern_list.index(TIMEOUT)

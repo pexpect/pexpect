@@ -40,8 +40,8 @@ def test_platform (platform_menu, platform_python_path):
 
 PASSWORD = getpass.getpass('password: ')
 results = []
-result = test_platform ('H', 'python tools/testall.py')
-results.append (('H', '[PPC - G4] MacOS X 10.1 SERVER Edition', result))
+result = test_platform ('I', 'python tools/testall.py')
+results.append (('I', '[PPC - G4] MacOS X 10.1 SERVER Edition', result))
 result = test_platform ('L', 'python tools/testall.py')
 results.append (('L', '[Sparc - Ultra60] Linux 2.4 (Debian 3.0)', result))
 result = test_platform ('B', 'python2 tools/testall.py')

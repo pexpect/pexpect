@@ -214,10 +214,12 @@ class spawn:
         return self.child_fd
 
     def close (self):   # File-like object.
-        """ This closes the file descriptor of the child application.
+        """ This closes the connection with the child application.
         It makes no attempt to actually kill the child or wait for its status.
 	If the file descriptor was set by passing a file descriptor
         to the constructor then this method raises an exception.
+        Note that calling close() more than once is valid.
+        This emulates standard Python behavior with files.
         """
         if self.child_fd != -1:
             if not self.__child_fd_owner:

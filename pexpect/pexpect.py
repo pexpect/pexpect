@@ -485,7 +485,7 @@ class spawn:
 
         return compiled_pattern_list
  
-    def expect(self, pattern, timeout = None):
+    def expect(self, pattern, timeout = -1):
         """This seeks through the stream until an expected pattern is matched.
         The pattern is overloaded and may take several types including a list.
         The pattern can be a StringType, EOF, a compiled re, or
@@ -493,7 +493,8 @@ class spawn:
         This returns the index into the pattern list. If the pattern was
         not a list this returns index 0 on a successful match.
         This may raise exceptions for EOF or TIMEOUT.
-        To avoid the EOF exception add EOF to the pattern list.
+        To avoid the EOF or TIMEOUT exceptions add EOF or TIMEOUT to
+        the pattern list.
 
         After a match is found the instance attributes
         'before', 'after' and 'match' will be set.
@@ -502,6 +503,8 @@ class spawn:
         The re.MatchObject used in the re match will be in 'match'.
         If an error occured then 'before' will be set to all the
         data read so far and 'after' and 'match' will be None.
+
+        If timeout is -1 then timeout will be set to the self.timeout value.
 
         Note: A list entry may be EOF or TIMEOUT instead of a string.
         This will catch these exceptions and return the index
@@ -547,10 +550,13 @@ class spawn:
         regular expression characters that you want to match.
         You may also pass just a string without a list and the single
         string will be converted to a list.
+        If timeout is -1 then timeout will be set to the self.timeout value.
         """
         ### This is dumb. It shares most of the code with expect_list.
         ### The only different is the comparison method and that
         ### self.match is always None after calling this.
+        if timeout == -1:
+            timeout = self.timeout
 
         if type(pattern_list) is StringType:
             pattern_list = [pattern_list]
@@ -597,9 +603,10 @@ class spawn:
         """This is called by expect(). This takes a list of compiled
         regular expressions. This returns the index into the pattern_list
         that matched the child's output.
+        If timeout is -1 then timeout will be set to the self.timeout value.
         """
 
-        if timeout is None: 
+        if timeout == -1:
             timeout = self.timeout
         
         try:

@@ -58,7 +58,7 @@ class ExpectTestCase(unittest.TestCase):
     def test_expect_timeout (self):
         the_old_way = commands.getoutput('ls -l /bin')
 
-        p = pexpect.spawn('ls -l /bin')
+        p = pexpect.spawn('cat')
         i = p.expect(pexpect.TIMEOUT) 
 	assert p.after == pexpect.TIMEOUT
 

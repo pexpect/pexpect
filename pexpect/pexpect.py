@@ -42,7 +42,7 @@ Currently pexpect is intended for UNIX operating systems (including OS-X)."""
 
 
 
-__version__ = '0.96'
+__version__ = '0.97'
 __revision__ = '$Revision$'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn',
     '__version__', '__revision__']
@@ -101,8 +101,23 @@ class spawn:
         self.before = None
         self.after = None
         self.match = None
+        self.nofork = None # Don't spawn a child.
         self.softspace = 0 # File-like object.
         self.name = '' # File-like object.
+
+        # If command is an int type then it must represent an open file descriptor.
+        if type (command) == type(0):
+            try:
+                os.fstat(command)
+            except OSError:
+                raise ExceptionPexpect, 'Command is an int type, but is not a valid file descriptor.'
+            self.nofork = 1
+            self.pid = -1 
+            self.child_fd = command
+            self.args = None
+            self.command = None
+            self.name = '<file descriptor>'
+            return
 
         if type (args) != type([]):
             raise TypeError, 'The second argument, args, must be a list.'
@@ -116,6 +131,7 @@ class spawn:
             self.command = command
         self.name = '<' + reduce(lambda x, y: x+' '+y, self.args) + '>'
 
+        self.nofork = 0
         self.__spawn()
 
     def __del__(self):
@@ -388,11 +404,14 @@ class spawn:
         I don't want to use signals. Signals on UNIX suck and they
         mess up Python pipes (setting SIGCHLD to SIGIGNORE).
         """
+        if (self.pid == -1): ### For attached fd with no pid, this should check fd status.
+           return(1) ### This should really check os.fstat(fd)
+
         try:
             pid, status = os.waitpid(self.pid, os.WNOHANG)
         except OSError, e:
             return 0
-            
+
         # I have to do this twice for Solaris.
         # I can't even believe that I figured this out...
         try:
@@ -428,7 +447,7 @@ class spawn:
         you send the right signal.
         """
         # Same as os.kill, but the pid is given for you.
-        if self.isalive():
+        if self.isalive() and (not self.nofork):
             os.kill(self.pid, sig)
 
     def compile_pattern_list(self, patterns):
@@ -546,6 +565,8 @@ class spawn:
                 index = -1
                 for str_target in pattern_list:
                     index = index + 1
+                    if str_target is EOF or str_target is TIMEOUT: 
+                        continue # The Exception patterns are handled differently.
                     match_index = incoming.find (str_target)
                     if match_index >= 0:
                         self.before = incoming [ : match_index]
@@ -591,8 +612,8 @@ class spawn:
                 index = -1
                 for cre in pattern_list:
                     index = index + 1
-                    if cre is EOF: 
-                        continue # The EOF pattern is not a regular expression.
+                    if cre is EOF or cre is TIMEOUT: 
+                        continue # The Exception patterns are handled differently.
                     match = cre.search(incoming)
                     if match is not None:
                         self.before = incoming[ : match.start()]

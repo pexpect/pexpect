@@ -13,6 +13,16 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
 	s.expect (pexpect.EOF)
 	assert s.before == ' END\n'
 
+
+    def test_setmaxread (self):
+    	fd = os.open ('TESTDATA.txt', os.O_RDONLY)
+    	s = pexpect.spawn (fd)
+    	s.setmaxread(100)
+    	s.expect('2')
+    	s.expect ('This is the end of test data:')
+    	s.expect (pexpect.EOF)
+    	assert s.before == ' END\n'
+  
     def test_fd_isalive (self):
 	fd = os.open ('TESTDATA.txt', os.O_RDONLY)
 	s = pexpect.spawn (fd)

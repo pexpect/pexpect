@@ -106,6 +106,10 @@ class spawn:
         self.STDOUT_FILENO = sys.stdout.fileno()
         self.STDERR_FILENO = sys.stderr.fileno()
 
+	self.stdin = sys.stdin
+	self.stdout = sys.stdout
+	self.stderr = sys.stderr
+
         ### IMPLEMENT THIS FEATURE!!!
         #self.maxbuffersize = 10000
         # anything before maxsearchsize point is preserved, but not searched.
@@ -124,6 +128,11 @@ class spawn:
         self.name = '' # File-like object.
         self.flag_eof = 0
 
+
+	# Add the ability to read more than one byte from a TTY at a time.
+	self.buffer = ''
+	self.maxread = 1 # Maximum to read at a time
+	
         # If command is an int type then it must represent an open file descriptor.
         if type (command) == type(0):
             try: # Command is an int, so now check if it is a file descriptor.
@@ -235,8 +244,18 @@ class spawn:
                 raise ExceptionPexpect ('This file descriptor cannot be closed because it was not created by spawn. The original creator is responsible for closing it.')
             self.flush()
             os.close (self.child_fd)
+<<<<<<< pexpect.py
+<<<<<<< pexpect.py
+            
+            pid, status = os.waitpid(self.pid)
+            
+=======
+            os.waitpid (self.pid, 0)
+>>>>>>> 1.79
+=======
             if wait:
                 os.waitpid (self.pid, 0)
+>>>>>>> 1.80
             self.child_fd = -1
             self.__child_fd_owner = None
 
@@ -265,6 +284,11 @@ class spawn:
         Set fileobject to None to stop logging.
         """
         self.log_file = fileobject
+
+    def setmaxread (self, maxread):
+    	"""This sets the maximum number of bytes to read from a TTY at one time.
+    	"""
+    	self.maxread = maxread
 
     def read_nonblocking (self, size = -1, timeout = None):
         """
@@ -618,10 +642,11 @@ class spawn:
             pattern_list = [pattern_list]
 
         try:
-            incoming = ''
+            #ED# incoming = ''
+            incoming = self.buffer
             while 1: # Keep reading until exception or return.
-                c = self.read_nonblocking (1, timeout) 
-                incoming = incoming + c
+                #ED# c = self.read_nonblocking (1, timeout) 
+                #ED# incoming = incoming + c
 
                 # Sequence through the list of patterns and look for a match.
                 index = -1
@@ -633,12 +658,17 @@ class spawn:
                     if match_index >= 0:
                         self.before = incoming [ : match_index]
                         self.after = incoming [match_index : ]
+                        self.buffer = incoming [match_index + len(str_target):]
                         self.match = None
                         return index
+                c = self.read_nonblocking (self.maxread, timeout) 
+                incoming = incoming + c
+                
         except EOF:
             if EOF in pattern_list:
                 self.before = incoming
                 self.after = EOF
+                self.buffer = ''
                 return pattern_list.index(EOF)
             else:
                 raise
@@ -646,6 +676,7 @@ class spawn:
             if TIMEOUT in pattern_list:
                 self.before = incoming
                 self.after = TIMEOUT
+                self.buffer = ''
                 return pattern_list.index(TIMEOUT)
             else:
                 raise
@@ -653,6 +684,7 @@ class spawn:
             self.before = incoming
             self.after = None
             self.match = None
+            self.buffer = ''
             raise
             
     def expect_list(self, pattern_list, timeout = -1):
@@ -669,10 +701,11 @@ class spawn:
             timeout = self.timeout
         
         try:
-            incoming = ''
+            #ED# incoming = ''
+            incoming = self.buffer
             while 1: # Keep reading until exception or return.
-                c = self.read_nonblocking (1, timeout)
-                incoming = incoming + c
+                #ED# c = self.read_nonblocking (1, timeout)
+                #ED# incoming = incoming + c
 
                 # Sequence through the list of patterns and look for a match.
                 index = -1
@@ -685,11 +718,17 @@ class spawn:
                         self.before = incoming[ : match.start()]
                         self.after = incoming[match.start() : ]
                         self.match = match
+                        self.buffer = incoming[match.end() : ]
                         return index
+                # Read more data
+                c = self.read_nonblocking (self.maxread, timeout)
+                incoming = incoming + c
+                
         except EOF:
             if EOF in pattern_list:
                 self.before = incoming
                 self.after = EOF
+                self.buffer = ''
                 return pattern_list.index(EOF)
             else:
                 raise
@@ -697,6 +736,7 @@ class spawn:
             if TIMEOUT in pattern_list:
                 self.before = incoming
                 self.after = TIMEOUT
+                self.buffer = ''
                 return pattern_list.index(TIMEOUT)
             else:
                 raise
@@ -704,6 +744,7 @@ class spawn:
             self.before = incoming
             self.after = None
             self.match = None
+            self.buffer = ''
             raise
 
     def getwinsize(self):
@@ -751,6 +792,10 @@ class spawn:
         This simply echos the child stdout and child stderr to the real
         stdout and it echos the real stdin to the child stdin.
         """
+        # Flush the buffer.
+        self.stdout.write (self.buffer)
+        self.buffer = ''
+        self.stdout.flush()
         mode = tty.tcgetattr(self.STDIN_FILENO)
         tty.setraw(self.STDIN_FILENO)
         try:

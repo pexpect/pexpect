@@ -10,7 +10,7 @@ class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
 	This tests that the child process can set and get the windows size.
         This makes use of an external script sigwinch_report.py.
         """
-	p1 = pexpect.spawn('python sigwinch_report.py')
+	p1 = pexpect.spawn('%s sigwinch_report.py' % self.PYTHONBIN)
 	time.sleep(1)
 	p1.setwinsize (11,22)
 	p1.expect ('SIGWINCH: \(([0-9]*), ([0-9]*)\)')

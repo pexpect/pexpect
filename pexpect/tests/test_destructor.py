@@ -7,10 +7,10 @@ import time
 
 class TestCaseDestructor(PexpectTestCase.PexpectTestCase):
     def test_destructor (self):
-        p1 = pexpect.spawn('python hello_world.py')
-        p2 = pexpect.spawn('python hello_world.py')
-        p3 = pexpect.spawn('python hello_world.py')
-        p4 = pexpect.spawn('python hello_world.py')
+        p1 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
+        p2 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
+        p3 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
+        p4 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
         fd_t1 = (p1.child_fd,p2.child_fd,p3.child_fd,p4.child_fd)
         p1.expect(pexpect.EOF)
         p2.expect(pexpect.EOF)
@@ -26,10 +26,10 @@ class TestCaseDestructor(PexpectTestCase.PexpectTestCase):
         p4 = None
         gc.collect()
         time.sleep(1) # Some platforms are slow at gc... Solaris!
-        p1 = pexpect.spawn('ls -l')
-        p2 = pexpect.spawn('ls -l')
-        p3 = pexpect.spawn('ls -l')
-        p4 = pexpect.spawn('ls -l')
+        p1 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
+        p2 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
+        p3 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
+        p4 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
         fd_t2 = (p1.child_fd,p2.child_fd,p3.child_fd,p4.child_fd)
         p1.kill(9)
         p2.kill(9)
@@ -41,10 +41,10 @@ class TestCaseDestructor(PexpectTestCase.PexpectTestCase):
         del (p4)
         gc.collect()
         time.sleep(1)
-        p1 = pexpect.spawn('ls -l')
-        p2 = pexpect.spawn('ls -l')
-        p3 = pexpect.spawn('ls -l')
-        p4 = pexpect.spawn('ls -l')
+        p1 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
+        p2 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
+        p3 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
+        p4 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
         fd_t3 = (p1.child_fd,p2.child_fd,p3.child_fd,p4.child_fd)
 
         assert (fd_t1 == fd_t2 == fd_t3)

@@ -67,18 +67,33 @@ def BuildNumber (fsm):
         ns = fsm.something.pop()
         ns = ns + fsm.input_symbol
         fsm.something.append (ns)
+def DoBackOne (fsm):
+        screen = fsm.something[0]
+        screen.cursor_back ()
 def DoBack (fsm):
         count = int(fsm.something.pop())
         screen = fsm.something[0]
         screen.cursor_back (count)
+def DoDownOne (fsm):
+        screen = fsm.something[0]
+        screen.cursor_down ()
 def DoDown (fsm):
         count = int(fsm.something.pop())
         screen = fsm.something[0]
         screen.cursor_down (count)
+def DoForwardOne (fsm):
+        screen = fsm.something[0]
+        screen.cursor_forward ()
 def DoForward (fsm):
         count = int(fsm.something.pop())
         screen = fsm.something[0]
         screen.cursor_forward (count)
+def DoUpReverse (fsm):
+        screen = fsm.something[0]
+        screen.cursor_up_reverse()
+def DoUpOne (fsm):
+        screen = fsm.something[0]
+        screen.cursor_up ()
 def DoUp (fsm):
         count = int(fsm.something.pop())
         screen = fsm.something[0]
@@ -116,7 +131,9 @@ def DoEraseLine (fsm):
                 screen.start_of_line()
         elif arg == 2:
                 screen.erase_line()
-
+def DoEnableScroll (fsm):
+        # Scrolling is on by default.
+        pass
 def DoCursorSave (fsm):
         screen = fsm.something[0]
         screen.cursor_save_attrs()
@@ -124,7 +141,14 @@ def DoCursorRestore (fsm):
         screen = fsm.something[0]
         screen.cursor_restore_attrs()
 
+def DoMode (fsm):
+        screen = fsm.something[0]
+        mode = fsm.something.pop() # Should be 4
+        # screen.setReplaceMode ()
+
 def Log (fsm):
+        screen = fsm.something[0]
+        fsm.something = [screen]
         fout = open ('log', 'a')
         fout.write (fsm.input_symbol + ',' + fsm.current_state + '\n')
         fout.close()
@@ -140,13 +164,27 @@ class term:
         self.state.set_default_transition (Log, 'INIT')
         self.state.add_transition_any ('INIT', Emit, 'INIT')
         self.state.add_transition ('\x1b', 'INIT', None, 'ESC')
-        self.state.add_transition_any ('ESC', None, 'INIT')
+        self.state.add_transition_any ('ESC', Log, 'INIT')
+        self.state.add_transition ('(', 'ESC', None, 'G0SCS')
+        self.state.add_transition (')', 'ESC', None, 'G1SCS')
+        self.state.add_transition_list ('AB012', 'G0SCS', None, 'INIT')
+        self.state.add_transition_list ('AB012', 'G1SCS', None, 'INIT')
         self.state.add_transition ('[', 'ESC', None, 'ELB')
+        self.state.add_transition ('7', 'ESC', DoCursorSave, 'INIT')
+        self.state.add_transition ('8', 'ESC', DoCursorRestore, 'INIT')
+        self.state.add_transition ('M', 'ESC', DoUpReverse, 'INIT')
+        self.state.add_transition ('#', 'ESC', None, 'GRAPHICS_POUND')
+        self.state.add_transition_any ('GRAPHICS_POUND', None, 'INIT')
         self.state.add_transition ('H', 'ELB', DoHomeOrigin, 'INIT')
+        self.state.add_transition ('D', 'ELB', DoBackOne, 'INIT')
+        self.state.add_transition ('B', 'ELB', DoDownOne, 'INIT')
+        self.state.add_transition ('C', 'ELB', DoForwardOne, 'INIT')
+        self.state.add_transition ('A', 'ELB', DoUpOne, 'INIT')
         self.state.add_transition ('J', 'ELB', DoEraseDown, 'INIT')
         self.state.add_transition ('K', 'ELB', DoEraseEndOfLine, 'INIT')
-        self.state.add_transition ('7', 'ELB', DoCursorSave, 'INIT')
-        self.state.add_transition ('8', 'ELB', DoCursorRestore, 'INIT')
+        self.state.add_transition ('r', 'ELB', DoEnableScroll, 'INIT')
+        self.state.add_transition ('m', 'ELB', None, 'INIT')
+        self.state.add_transition ('?', 'ELB', None, 'MODECRAP')
         self.state.add_transition_list (string.digits, 'ELB', StartNumber, 'NUMBER_1')
         self.state.add_transition_list (string.digits, 'NUMBER_1', BuildNumber, 'NUMBER_1')
         self.state.add_transition ('D', 'NUMBER_1', DoBack, 'INIT')
@@ -155,6 +193,15 @@ class term:
         self.state.add_transition ('A', 'NUMBER_1', DoUp, 'INIT')
         self.state.add_transition ('J', 'NUMBER_1', DoErase, 'INIT')
         self.state.add_transition ('K', 'NUMBER_1', DoEraseLine, 'INIT')
+        self.state.add_transition ('l', 'NUMBER_1', DoMode, 'INIT')
+        self.state.add_transition ('m', 'NUMBER_1', None, 'INIT')
+        
+        # \E[?47h appears to be "switch to alternate screen"
+        # \E[?47l restores alternate screen... I think.
+        self.state.add_transition_list (string.digits, 'MODECRAP', StartNumber, 'MODECRAP_NUM')
+        self.state.add_transition_list (string.digits, 'MODECRAP_NUM', BuildNumber, 'MODECRAP_NUM')
+        self.state.add_transition ('l', 'MODECRAP_NUM', None, 'INIT')
+        self.state.add_transition ('h', 'MODECRAP_NUM', None, 'INIT')
 
 #RM   Reset Mode                Esc [ Ps l                   none
         self.state.add_transition (';', 'NUMBER_1', None, 'SEMICOLON')
@@ -301,6 +348,11 @@ class screen:
     def cursor_up (self,count=1): # <ESC>[{COUNT}A
         self.cur_r = self.cur_r - count
         self.cursor_constrain ()
+    def cursor_up_reverse (self): # <ESC> M   (called RI -- Reverse Index)
+        old_r = self.cur_r
+        self.cursor_up()
+        if old_r == self.cur_r:
+            self.scroll_up()
     def cursor_force_position (self, r, c): # <ESC>[{ROW};{COLUMN}f
         '''Identical to Cursor Home.'''
         self.cursor_home (r, c)

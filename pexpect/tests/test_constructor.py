@@ -14,8 +14,6 @@ class TestCaseConstructor(unittest.TestCase):
         p2 = pexpect.spawn('ls' ,['-l', '/bin'])
 	p1.expect (pexpect.EOF)
 	p2.expect (pexpect.EOF)
-	print p1.before
-	print p2.before
         assert (p1.before == p2.before)
 
     def test_named_parameters (self):

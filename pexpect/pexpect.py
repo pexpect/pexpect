@@ -425,7 +425,7 @@ class spawn:
         """
         return os.write(self.child_fd, text)
 
-    def sendline(self, text):
+    def sendline(self, text=''):
         """This is like send(), but it adds a line separator.
 	This return the number of bytes actually written.
         """

@@ -1,17 +1,11 @@
 #!/usr/bin/env python
 import pexpect
 import unittest
+import PexpectTestCase
 import sys
 import os
 
-class ExpectTestCase(unittest.TestCase):
-    def setUp(self):
-	self.original_path = os.getcwd()
-	newpath = os.path.join (os.environ['PROJECT_PEXPECT_HOME'], 'tests')
-	os.chdir (newpath)
-    def tearDown(self):
-        os.chdir (self.original_path)
-
+class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def test_fd (self):
 	fd = os.open ('TESTDATA.txt', os.O_RDONLY)
 	s = pexpect.spawn (fd)

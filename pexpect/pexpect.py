@@ -257,7 +257,8 @@ class spawn:
         self.log_file = fileobject
 
     def read_nonblocking (self, size = -1, timeout = None):
-        """This reads at most size characters from the child application.
+        """
+        This reads at most size characters from the child application.
         It includes a timeout. If the read does not complete within the
         timeout period then a TIMEOUT exception is raised.
         If the end of file is read then an EOF exception will be raised.
@@ -439,8 +440,10 @@ class spawn:
         This returns 1 if the child process appears to be running or 0 if not.
         This also sets the exitstatus attribute.
         It can take literally SECONDS for Solaris to return the right status.
+        This is the most wiggly part of Pexpect, but I think I've almost got
+        it nailed down.
         """
-        # I don't want to use signals. Signals on UNIX suck and they
+        # I can't use signals. Signals on UNIX suck and they
         # mess up Python pipes (setting SIGCHLD to SIGIGNORE).
 
         # If this class was created from an existing file descriptor then
@@ -459,20 +462,18 @@ class spawn:
 
         # I have to do this twice for Solaris.
         # I can't even believe that I figured this out...
-        try:
-            pid, status = os.waitpid(self.pid, os.WNOHANG)
-            #print 'Solaris sucks'
-        except OSError:
-            # Non-Solaris platforms raise an exception that is
-            # quietly ignored here.  This is harmless... I think :-)
-            pass
+        if pid == 0 and status == 0:
+            try:
+                pid, status = os.waitpid(self.pid, os.WNOHANG)
+                #print 'Solaris sucks'
+            except OSError: # This is crufty. When does this happen?
+                return 0
+            # If pid and status is still 0 after two calls to waitpid() then
+            # the process really is alive. This seems to work on all platforms.
+            if pid == 0 and status == 0:
+                return 1
 
-        # If status is still 0 after two calls to waitpid() then
-        # the process really is alive. This seems to work on all platforms.
-        if status == 0:
-            return 1
-
-        # I didn't OR this together because I want hooks for debugging.
+        # I do not OR this together because I want hooks for debugging.
         if os.WIFEXITED (status):
             self.exitstatus = os.WEXITSTATUS(status)
             return 0
@@ -481,7 +482,7 @@ class spawn:
         elif os.WIFSIGNALED (status):
             return 0
         else:
-            return 1
+            return 0 # Can I ever get here?
 
     def kill(self, sig):
         """This sends the given signal to the child application.

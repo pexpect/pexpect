@@ -381,11 +381,11 @@ class spawn:
         # For this case, I test isalive() before doing any reading.
         # If isalive() is false, then I pretend that this is the same as EOF.
         if not self.isalive():
-	    r, w, e = select.select([self.child_fd], [], [], 0)
-	    if not r:
-	        self.flag_eof = 1
-		raise EOF ('End Of File (EOF) in read(). Braindead platform.')
-
+            r, w, e = select.select([self.child_fd], [], [], 0)
+            if not r:
+                self.flag_eof = 1
+                raise EOF ('End Of File (EOF) in read(). Braindead platform.')
+        
         r, w, e = select.select([self.child_fd], [], [], timeout)
         if not r:
             raise TIMEOUT('Timeout exceeded in read().')

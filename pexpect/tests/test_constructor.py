@@ -3,7 +3,6 @@ import pexpect
 import unittest
 
 class TestCaseConstructor(unittest.TestCase):
-    #def runTest (self):
         
     def test_constructor (self):
 	"""This tests that the constructor will work and give

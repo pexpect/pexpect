@@ -17,13 +17,15 @@ import re
 # 2:11PM  up 3 days, 13:50, 3 users, load averages: 0.01, 0.00, 0.00
 # [Sparc - R220] Sun Solaris (8)
 #  2:13pm  up 22 min(s),  1 user,  load average: 0.02, 0.01, 0.01
+# [x86] Linux 2.4.18-14 (Redhat 8)
+# 11:36pm  up 4 days, 17:58,  1 user,  load average: 0.03, 0.01, 0.00
 
 p = pexpect.spawn ('uptime')
-p.expect ('up ([0-9]+) days,.*?,\s+([0-9]+) users,\s+load average[s]*: ([0-9]+\.[0-9][0-9]), ([0-9]+\.[0-9][0-9]), ([0-9]+\.[0-9][0-9])')
+p.expect ('up ([0-9]+) days?,.*?,\s+([0-9]+) users?,\s+load averages?: ([0-9]+\.[0-9][0-9]), ([0-9]+\.[0-9][0-9]), ([0-9]+\.[0-9][0-9])')
 
 duration, users, av1, av5, av15 = p.match.groups()
 
-print '%s time, %s users, %s (1 min), %s (5 min), %s (15 min)' % (
+print '%s days, %s users, %s (1 min), %s (5 min), %s (15 min)' % (
     duration, users, av1, av5, av15)
 
 

@@ -93,6 +93,8 @@ class spawn:
         self.before = None
         self.after = None
         self.match = None
+	self.softspace = 0 # File-like object.
+	self.name = ''
 
         if args is None:
             self.args = split_command_line(command)
@@ -101,6 +103,7 @@ class spawn:
             args.insert (0, command)
             self.args = args
             self.command = command
+	self.name = reduce(lambda x, y: x+' '+y, self.args)
 
         self.__spawn()
 
@@ -438,7 +441,7 @@ class spawn:
 
         raise ExceptionPexpect('Reached an unexpected state in read().')
 
-    def write(self, text):
+    def write(self, str):
         """This is an alias for send().
         This return the number of bytes actually written.
         """

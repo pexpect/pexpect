@@ -482,18 +482,21 @@ class spawn:
         If an error occured then 'before' will be set to all the
         data read so far and 'after' and 'match' will be None.
 
-        Note: A list entry may be EOF instead of a string.
-        This will catch EOF exceptions and return the index
-        of the EOF entry instead of raising the EOF exception.
-        The attributes 'after' and 'match' will be None.
+        Note: A list entry may be EOF or TIMEOUT instead of a string.
+        This will catch these exceptions and return the index
+        of the list entry instead of raising the exception.
+        The attribute 'after' will be set to the exception type.
+        The attribute 'match' will be None.
         This allows you to write code like this:
-                index = p.expect (['good', 'bad', pexpect.EOF])
+                index = p.expect (['good', 'bad', pexpect.EOF, pexpect.TIMEOUT])
                 if index == 0:
                     do_something()
                 elif index == 1:
                     do_something_else()
                 elif index == 2:
                     do_some_other_thing()
+                elif index == 3:
+                    do_something_completely_different()
         instead of code like this:
                 try:
                     index = p.expect (['good', 'bad'])
@@ -503,6 +506,8 @@ class spawn:
                         do_something_else()
                 except EOF:
                     do_some_other_thing()
+                except TIMEOUT:
+                    do_something_completely_different()
         These two forms are equivalent. It all depends on what you want.
         You can also just expect the EOF if you are waiting for all output
         of a child to finish. For example:
@@ -552,6 +557,13 @@ class spawn:
                 return pattern_list.index(EOF)
             else:
                 raise
+        except TIMEOUT, e:
+            if TIMEOUT in pattern_list:
+                self.before = incoming
+                self.after = TIMEOUT
+                return pattern_list.index(TIMEOUT)
+            else:
+                raise
         except Exception, e:
             self.before = incoming
             self.after = None
@@ -590,6 +602,13 @@ class spawn:
                 self.before = incoming
                 self.after = EOF
                 return pattern_list.index(EOF)
+            else:
+                raise
+        except TIMEOUT, e:
+            if TIMEOUT in pattern_list:
+                self.before = incoming
+                self.after = TIMEOUT
+                return pattern_list.index(TIMEOUT)
             else:
                 raise
         except Exception, e:

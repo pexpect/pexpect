@@ -39,10 +39,14 @@ except ImportError, e:
 A critical module was not found. Probably this OS does not support it.
 Currently pexpect is intended for UNIX operating systems (including OS-X)."""
 
+
+
 __version__ = '0.96'
 __revision__ = '$Revision$'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn',
     '__version__', '__revision__']
+
+
 
 # Exception classes used by this module.
 class ExceptionPexpect(Exception):
@@ -65,16 +69,17 @@ class spawn:
 
     def __init__(self, command, args=[], timeout=30):
         """This is the constructor. The command parameter is a string
-        that includes the path and any arguments to the command. For example:
+        that includes a command and any arguments to the command. For example:
             p = pexpect.spawn ('/usr/bin/ftp')
             p = pexpect.spawn ('/usr/bin/ssh some@host.com')
-            p = pexpect.spawn ('/bin/ls -latr /tmp')
+            p = pexpect.spawn ('ls -latr /tmp')
         You may also construct it with a list of arguments like so:
             p = pexpect.spawn ('/usr/bin/ftp', [])
             p = pexpect.spawn ('/usr/bin/ssh', ['some@host.com'])
-            p = pexpect.spawn ('/bin/ls', ['-latr', '/tmp'])
+            p = pexpect.spawn ('ls', ['-latr', '/tmp'])
         After this the child application will be created and
-        will be ready for action. See expect() and send()/sendline().
+        will be ready for action. For normal use, see expect() and 
+        send() and sendline().
         """
 
         self.STDIN_FILENO = sys.stdin.fileno()
@@ -106,7 +111,7 @@ class spawn:
             args.insert (0, command)
             self.args = args
             self.command = command
-        self.name = reduce(lambda x, y: x+' '+y, self.args)
+        self.name = '<' + reduce(lambda x, y: x+' '+y, self.args) + '>'
 
         self.__spawn()
 

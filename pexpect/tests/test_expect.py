@@ -17,6 +17,7 @@ class ExpectTestCase(unittest.TestCase):
         p.expect (pexpect.EOF)
 
     def test_expect (self):
+        """Test a simple expect example."""
         the_old_way = commands.getoutput('ls -l /bin')
         p = pexpect.spawn('ls -l /bin')
         the_new_way = ''
@@ -30,6 +31,7 @@ class ExpectTestCase(unittest.TestCase):
         assert the_old_way == the_new_way
 
     def test_expect_exact (self):
+        """Test expecting an exact string match."""
         the_old_way = commands.getoutput('ls -l /bin')
 
         p = pexpect.spawn('ls -l /bin')
@@ -45,6 +47,7 @@ class ExpectTestCase(unittest.TestCase):
         assert the_old_way == the_new_way
 
     def test_expect_eof (self):
+        """Test expecting EOF"""
         the_old_way = commands.getoutput('ls -l /bin')
 
         p = pexpect.spawn('ls -l /bin')
@@ -56,6 +59,7 @@ class ExpectTestCase(unittest.TestCase):
         assert the_old_way == the_new_way
 
     def test_expect_timeout (self):
+        """Test expecting a TIMEOUT."""
         the_old_way = commands.getoutput('ls -l /bin')
 
         p = pexpect.spawn('ls -l /bin')
@@ -65,6 +69,7 @@ class ExpectTestCase(unittest.TestCase):
         assert the_old_way == the_new_way
 
     def test_unexpected_eof (self):
+        """Test what happens when EOF is NOT expected."""
         p = pexpect.spawn('ls -l /bin')
         try:
             p.expect('ZXYXZ') # Probably never see this in ls output.

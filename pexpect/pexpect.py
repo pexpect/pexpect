@@ -35,6 +35,7 @@ try:
     import tty
     import termios
     import fcntl
+    import errno
 except ImportError, e:
     raise ImportError, str(e) + """
 A critical module was not found. Probably this OS does not support it.

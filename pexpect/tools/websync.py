@@ -11,13 +11,13 @@ import getpass
 
 X = getpass.getpass('Password: ')
 
-p = pexpect.spawn ('ssh noah@use-pr-shell1.sourceforge.net "cd htdocs;rm index.html;wget http://www.noah.org/python/pexpect/index.html"')
+p = pexpect.spawn ('ssh noah@use-pr-shell1.sourceforge.net "cd htdocs;rm -f index.html;wget http://www.noah.org/python/pexpect/index.html"')
 p.expect ('password:')
 p.sendline (X)
 p.expect (pexpect.EOF)
 print p.before
 
-p = pexpect.spawn ('ssh noah@use-pr-shell1.sourceforge.net "cd htdocs;rm clean.css;wget http://www.noah.org/python/pexpect/clean.css"')
+p = pexpect.spawn ('ssh noah@use-pr-shell1.sourceforge.net "cd htdocs;rm -f clean.css;wget http://www.noah.org/python/pexpect/clean.css"')
 p.expect ('password:')
 p.sendline (X)
 p.expect (pexpect.EOF)

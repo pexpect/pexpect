@@ -245,9 +245,9 @@ class spawn:
             os.close (self.child_fd)
             if wait:
                 try:
-		    os.waitpid (self.pid, 0)
+                    os.waitpid (self.pid, 0)
                 except OSError:
-		    pass
+                    pass
             self.child_fd = -1
             self.__child_fd_owner = None
 

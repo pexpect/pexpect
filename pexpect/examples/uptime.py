@@ -8,7 +8,7 @@ import pexpect
 import re
 
 p = pexpect.spawn ('uptime')
-p.expect ('up ([0-9]+) days, ..:.., ([0-9]+) users, load averages: ([0-9]+\.[0-9][0-9]), ([0-9]+\.[0-9][0-9]), ([0-9]+\.[0-9][0-9])')
+p.expect ('up ([0-9]+) days, ..:..,\s+([0-9]+) users,\s+load average[s]*: ([0-9]+\.[0-9][0-9]), ([0-9]+\.[0-9][0-9]), ([0-9]+\.[0-9][0-9])')
 
 days, users, av1, av5, av15 = p.match.groups()
 

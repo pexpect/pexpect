@@ -180,7 +180,7 @@ class spawn:
         """
         pass
 
-    def isatty ():   # File-like object.
+    def isatty (self):   # File-like object.
         """This always returns 1.
         """
         return 1
@@ -240,7 +240,7 @@ class spawn:
         a list of those types. Strings will be compiled to re types.
         This returns the index into the pattern list. If the pattern was
         not a list this returns index 0 on a successful match.
-    This may raise exceptions for EOF or TIMEOUT.
+        This may raise exceptions for EOF or TIMEOUT.
         To avoid the EOF exception add EOF to the pattern list.
 
         After a match is found the instance attributes
@@ -366,28 +366,8 @@ class spawn:
             self.after = None
             self.match = None
             raise
-            
-#    def expect_eof(self, timeout = None):
-#        """This reads from the child until the end of file is found.
-#        A timeout exception may be thrown.
-#        """
-#        if timeout is None: 
-#            timeout = self.timeout
-#
-#        incoming = ''
-#        self.match = self.matched = None
-#        try:
-#            while 1:
-#                c = self.read(1, timeout)
-#                incoming = incoming + c
-#        except EOF:
-#            self.before = incoming
-#            return 0
-#        except:  # save incoming data (usefull for debugging)
-#            self.before = incoming
-#            raise
 
-    def read(self, size = -1, timeout = None):
+    def read (self, size = -1, timeout = None):
         """This reads at most size characters from the child application.
         It includes a timeout. If the read does not complete within the
         timeout period then a TIMEOUT exception is raised.
@@ -439,7 +419,7 @@ class spawn:
 
         raise ExceptionPexpect('Reached an unexpected state in read().')
 
-    def readline (size = -1):    # File-like object.
+    def readline (self, size = -1):    # File-like object.
         """This reads and returns one entire line. A trailing newline is kept in
         the string, but may be absent when a file ends with an incomplete line. 
         Trivia: This readline() looks for a \r\n pair even on UNIX because this is 
@@ -466,18 +446,19 @@ class spawn:
         for str in sequence:
             self.write (str)
 
-    def send(self, text):
+    def send(self, str):
         """This sends a string to the child process.
         This returns the number of bytes written.
         """
-        return os.write(self.child_fd, text)
+        return os.write(self.child_fd, str)
 
-    def sendline(self, text=''):
+    def sendline(self, str=''):
         """This is like send(), but it adds a line separator.
         This returns the number of bytes written.
         """
-        n = self.send(text)
-        return n + self.send(os.linesep)
+        n = self.send(str)
+        n = n + self.send (os.linesep)
+        return n
 
     def sendeof(self):
         """This sends an EOF to the child.
@@ -545,37 +526,6 @@ class spawn:
             return 0
         else:
             return 1
-
-#    def isAlive(self):
-#        """This tests if the child process is running or not.
-#        It returns 1 if the child process appears to be running or
-#        0 if not. This checks the process list to see if the pid is
-#        there. In theory, the original child could have died and the
-#        pid could have been reused by some other process. This is
-#        unlikely, but I can find no portable way to make sure.
-#        Also, this is not POSIX portable way to check, but
-#        UNIX provides no standard way to test if a given pid is
-#        running or not. By convention most modern UNIX systems will
-#        respond to signal 0.
-#        """
-#        old_signal = signal.getsignal (signal.SIGCHLD)
-#        if old_signal is None:
-#            raise ExceptionPexpect ('Existing signal handler is non-Python')
-#        #signal.signal(signal.SIGCHLD, signal.SIG_IGN)
-#        try:
-#            print "stuff2"
-#            os.kill (self.pid, 0)
-#            print "stuff3"
-#            signal.signal(signal.SIGCHLD, old_signal)
-#            return 1
-#        except OSError, e:
-#            print str(e)
-#            signal.signal(signal.SIGCHLD, old_signal)
-#            return 0
-#            ###return e.errno == errno.EPERM
-#            ### For some reason I got this exception printed even though
-#            ### I am explicitly catching OSError. Noah doth halucinate?
-#            ###     OSError: [Errno 3] No such process
 
     def kill(self, sig):
         """This sends the given signal to the child application.

@@ -8,10 +8,10 @@ class ExpectTestCase(unittest.TestCase):
     #def runTest (self):
         
     def test_run_out (self):
-        """This assumes that the tested platform has less than 1000 pty devices.
+        """This assumes that the tested platform has less than 10000 pty devices.
 	"""
 	plist=[]
-        for count in range (0,1000):
+        for count in range (0,10000):
 		try:
 			plist.append (pexpect.spawn('ls -l'))
 		except pexpect.ExceptionPexpect, e:

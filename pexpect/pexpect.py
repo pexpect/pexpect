@@ -145,7 +145,7 @@ class spawn:
 #        # In the later case, isAlive() will always return true until the
 #        # output buffer is empty. Use expect_eof() to consume all child output.
 #        # This is not the same as the Zombie (waiting to die) problem.
-#        #signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+#         #signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
         try:
             self.pid, self.child_fd = pty.fork()

@@ -10,10 +10,12 @@ class TestCaseConstructor(unittest.TestCase):
 	the same results for different styles of invoking __init__().
 	This assumes that the root directory / is static during the test.
 	"""
-        p1 = pexpect.spawn('ls -l')
-        p2 = pexpect.spawn('ls' ,['-l'])
+        p1 = pexpect.spawn('ls -l /bin')
+        p2 = pexpect.spawn('ls' ,['-l', '/bin'])
 	p1.expect (pexpect.EOF)
 	p2.expect (pexpect.EOF)
+	print p1.before
+	print p2.before
         assert (p1.before == p2.before)
 
     def test_named_parameters (self):

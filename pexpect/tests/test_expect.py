@@ -16,18 +16,9 @@ class ExpectTestCase(unittest.TestCase):
 		i = p.expect (['\n', pexpect.EOF])
 		the_new_way = the_new_way + p.before
 		if i == 1:
-			print 'pbefore', p.before
-			print 'pafter', p.after
 			break
 	the_new_way = the_new_way[:-1]
 	the_new_way = the_new_way.replace('\r','\n')
-
-	fout = open ('f1','wb')
-	fout.write (the_new_way)
-	fout.close()
-	fout = open ('f2','wb')
-	fout.write (the_old_way)
-	fout.close()
 
         assert the_old_way == the_new_way
 
@@ -35,14 +26,14 @@ class ExpectTestCase(unittest.TestCase):
         the_old_way = commands.getoutput('ls -l /bin')
 
         p = pexpect.spawn('ls -l /bin')
-        try:
-                the_new_way = ''
-                while 1:
-                        p.expect_exact ('\n')
-                        the_new_way = the_new_way + p.before
-        except:
-                the_new_way = the_new_way[:-1]
-                the_new_way = the_new_way.replace('\r','\n')
+	the_new_way = ''
+	while 1:
+		i = p.expect (['\n', pexpect.EOF])
+		the_new_way = the_new_way + p.before
+		if i == 1:
+			break
+	the_new_way = the_new_way[:-1]
+	the_new_way = the_new_way.replace('\r','\n')
 
         assert the_old_way == the_new_way
 

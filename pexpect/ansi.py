@@ -3,9 +3,12 @@
 # references:
 # http://www.retards.org/terminals/vt102.html
 # http://vt100.net/docs/vt102-ug/contents.html
+# http://vt100.net/docs/vt220-rm/
+# http://www.termsys.demon.co.uk/vtansi.htm
+# 
 
-#import screen
-from screen import *
+import screen
+#from screen import *
 import FSM
 import copy
 import string
@@ -106,13 +109,17 @@ def Log (fsm):
         fout.write (fsm.input_symbol + ',' + fsm.current_state + '\n')
         fout.close()
 
-class ansi (screen):
+class term (screen.screen):
+    def __init__ (self, r=24, c=80):
+        screen.screen.__init__(self, r,c)
+
+class ansi (term):
     '''This class encapsulates a generic terminal.
         It filters a stream and maintains the state of
         a screen object.
     '''
     def __init__ (self, r=24,c=80):
-        screen.__init__(self,r,c)
+        term.__init__(self,r,c)
 
         #self.screen = screen (24,80)
         self.state = FSM.FSM ('INIT',[self])
@@ -168,13 +175,13 @@ class ansi (screen):
         self.state.add_transition_any ('NUMBER_2', Log, 'INIT')
         self.state.add_transition ('H', 'NUMBER_2', DoHome, 'INIT')
         self.state.add_transition ('f', 'NUMBER_2', DoHome, 'INIT')
-    def write (self, c):
+    def process (self, c):
         self.state.process(c)
     def test (self):
         dump = file('dump').read()
         for c in dump:
                 self.state.process(c)
-        print str(self.screen)
+        print str(self)
 
 
     def write (self, ch):
@@ -192,7 +199,7 @@ class ansi (screen):
         if ch == '\n':
             self.crlf()
             return
-        if ch == chr(BS):
+        if ch == chr(screen.BS):
             self.cursor_back()
             self.put(self.cur_r, self.cur_c, ' ')
             return

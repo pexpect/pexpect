@@ -33,7 +33,7 @@ write_text = 'I\'ve got a ferret sticking up my nose.\n' + \
 'And what is more it radically affects my sense of smell.\n' + \
 '(His sense of smell.)'
 
-TETRIS_TARGET='                           XX            XXXX    XX                             \n' +\
+tetris_target='                           XX            XXXX    XX                             \n' +\
 '                           XXXXXX    XXXXXXXX    XX                             \n' +\
 '                           XXXXXX    XXXXXXXX    XX                             \n' +\
 '                           XX  XX    XX  XXXX    XX                             \n' +\
@@ -68,12 +68,16 @@ class ansiTestCase (unittest.TestCase):
             s.write (c)
         print str(s)
         assert str(s) == write_target
-   # def test_tetris (self):
-   #     s = ansi.ansi (24,80)
-   #     tetris_text = open ('tetris.data').read()
-   #     for c in tetris_text:
-   #         s.write (c)
-   #     assert str(s) == tetris_target
+    def test_tetris (self):
+        s = ansi.ansi (24,80)
+        tetris_text = open ('tetris.data').read()
+        for c in tetris_text:
+            s.process (c)
+	print '---'
+	print str(s)
+	print '---'
+	print tetris_target
+        assert str(s) == tetris_target
 
 if __name__ == '__main__':
     unittest.main()

@@ -561,13 +561,13 @@ def setwinsize(r, c):
     # Check for buggy platforms. Some Pythons on some platforms
     # (notably OSF1 Alpha and RedHat 7.1) truncate the value for
     # termios.TIOCSWINSZ. It is not clear why this happens.
-    # These platforms don't seem to  handle the signed int very well;
+    # These platforms don't seem to handle the signed int very well;
     # yet other platforms like OpenBSD have a large negative value for
-    # TIOCSWINSZ, yet they don't truncate.
+    # TIOCSWINSZ and they don't truncate.
     # Newer versions of Linux have totally different values for TIOCSWINSZ.
     # Note, this fix is a hack.
     TIOCSWINSZ = termios.TIOCSWINSZ
-    if TIOCSWINSZ == 2148037735:
+    if TIOCSWINSZ == 2148037735L: # L is not required in Python 2.2.
         TIOCSWINSZ = -2146929561 # Same number in binary, but with sign.
 
     # Assume ws_xpixel and ws_ypixel are zero.

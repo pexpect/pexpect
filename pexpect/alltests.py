@@ -5,8 +5,8 @@ import sys
 sys.path.append('tests') 
 
 modules_to_test = ( 
-'test_expect',
 'test_isalive',
+'test_expect',
 'test_ansi',
 'test_command_list_split',
 'test_destructor',
@@ -16,7 +16,6 @@ modules_to_test = (
 'test_run_out_of_pty',
 'test_screen'
 ) 
-
 
 def suite(): 
     alltests = unittest.TestSuite() 

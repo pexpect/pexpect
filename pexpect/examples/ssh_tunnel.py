@@ -44,11 +44,11 @@ def main ():
             print time.asctime(),
             print 'restarting tunnel'
             start_tunnel ()
-            time.sleep (60)
+            time.sleep (11)
 	    print 'tunnel OK'
         else:
             # print 'tunnel OK'
-            time.sleep (60)
+            time.sleep (7)
 
 if __name__ == '__main__':
     main ()

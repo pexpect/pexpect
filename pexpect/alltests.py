@@ -6,7 +6,7 @@ sys.path.append('tests')
 
 modules_to_test = ( 
 'test_expect',
-'test_is_alive',
+'test_isalive',
 'test_ansi',
 'test_command_list_split',
 'test_destructor',

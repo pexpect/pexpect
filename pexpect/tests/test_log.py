@@ -14,7 +14,7 @@ class TestCaseLog(unittest.TestCase):
 	p.log_open (filename)
 	p.expect (pexpect.EOF)
 	p.log_close()
-	l = file(filename).read()
+	l = open(filename).read()
 	l = l[:-2]
 	os.unlink (filename)
 	assert l == log_message

@@ -1,0 +1,4 @@
+#!/bin/sh
+ssh noah@use-pr-shell1.sourceforge.net "cd htdocs;rm index.html;wget http://www.noah.org/python/pexpect/index.html"
+scp doc.tgz noah@use-pr-shell1.sourceforge.net:htdocs/doc.tgz
+ssh noah@use-pr-shell1.sourceforge.net "cd htdocs;tar zxvf doc.tgz"

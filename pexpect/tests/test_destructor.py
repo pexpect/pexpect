@@ -38,8 +38,8 @@ class TestCaseDestructor(unittest.TestCase):
         p2 = pexpect.spawn('ls -l')
         p3 = pexpect.spawn('ls -l')
         p4 = pexpect.spawn('ls -l')
-#        fd_t3 = (p1.child_fd,p2.child_fd,p3.child_fd,p4.child_fd)
-	print fd_t3
+        fd_t3 = (p1.child_fd,p2.child_fd,p3.child_fd,p4.child_fd)
+#	print fd_t3
 
         assert (fd_t1 == fd_t2 == fd_t3)
 

@@ -5,19 +5,21 @@ import os
 import tempfile 
 
 class TestCaseLog(unittest.TestCase):
-    #def runTest (self):
         
     def test_log (self):
-	log_message = 'This is a test.'
-	filename = tempfile.mktemp()
+        log_message = 'This is a test. This is a test.'
+        filename = tempfile.mktemp()
+        mylog = open (filename, 'w')
         p = pexpect.spawn('echo', [log_message])
-	p.log_open (filename)
-	p.expect (pexpect.EOF)
-	p.log_close()
-	l = open(filename).read()
-	l = l[:-2]
-	os.unlink (filename)
-	assert l == log_message
+        p.setlog (mylog)
+        p.expect (pexpect.EOF)
+        p.setlog (None)
+        mylog.close()
+        
+        l = open(filename).read()
+        l = l[:-2]
+        os.unlink (filename)
+        assert l == log_message
 
 if __name__ == '__main__':
     unittest.main()

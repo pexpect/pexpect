@@ -83,8 +83,8 @@ class spawn:
         self.timeout = timeout
         self.child_fd = -1
         self.pid = None
-        self.log_fd = -1
-    
+        #self.log_fd = -1
+        self.log_file = None    
         self.before = None
         self.after = None
         self.match = None
@@ -167,25 +167,17 @@ class spawn:
         """This sets the terminal echo-mode on or off."""
         new = termios.tcgetattr(self.child_fd)
         if on:
-            new[3] = new[3] | termios.ECHO          # lflags
+            new[3] = new[3] | termios.ECHO # lflags
         else:
-            new[3] = new[3] & ~termios.ECHO          # lflags
+            new[3] = new[3] & ~termios.ECHO # lflags
         termios.tcsetattr(self.child_fd, termios.TCSADRAIN, new)
 
-    def log_open (self, filename):
-        """This opens a log file. All data read from the child
-        application will be written to the log file.
-        This is very useful to use while creating scripts.
-        You can use this to figure out exactly what the child is sending.
+    def setlog (self, fileobject):
+        """This sets logging output to go to the given fileobject.
+        Set fileobject to None to stop logging.
         """
-        self.log_fd = os.open (filename, os.O_WRONLY | os.O_CREAT | os.O_APPEND)
-        
-    def log_close (self):
-        """This closes the log file opened by log().
-        """
-        os.close (self.log_fd)
-        self.log_fd = -1
-        
+        self.log_file = fileobject
+
     def compile_pattern_list(self, pattern):
         """This compiles a pattern-string or a list of pattern-strings.
         This is used by expect() when calling expect_list().
@@ -396,8 +388,10 @@ class spawn:
                 self.flag_eof = 1
                 raise EOF('End Of File (EOF) in read(). Empty string style platform.')
             
-            if self.log_fd != -1:
-                os.write (self.log_fd, s)
+            #if self.log_fd != -1:
+            #    os.write (self.log_fd, s)
+            if self.log_file != None:
+                self.log_file.write (s)
                 
             return s
 
@@ -465,9 +459,9 @@ class spawn:
         This returns 1 if the child process appears to be running or 0 if not.
         """
         try:
-	    status = os.waitpid (self.pid, os.WNOHANG)
-	except OSError, e:
-	    return 0
+            status = os.waitpid (self.pid, os.WNOHANG)
+        except OSError, e:
+            return 0
 
         if status[0] == 0:
             return 1

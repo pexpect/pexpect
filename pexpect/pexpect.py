@@ -557,12 +557,13 @@ def setwinsize(r, c):
     This is used by __spawn to set the tty window size of the child.
     """
     # Check for buggy platforms. Some Pythons on some platforms
-    # (notably RedHat 7.1) truncate the value for termios.TIOCSWINSZ.
-    # It is not clear why this happens. These platforms don't seem to
-    # handle the signed ing very well; yet other platforms like OpenBSD
-    # have a large negative value for TIOCSWINSZ, yet they don't truncate.
+    # (notably OSF1 Alpha and RedHat 7.1) truncate the value for
+    # termios.TIOCSWINSZ. It is not clear why this happens.
+    # These platforms don't seem to  handle the signed int very well;
+    # yet other platforms like OpenBSD have a large negative value for
+    # TIOCSWINSZ, yet they don't truncate.
     # Newer versions of Linux have totally different values for TIOCSWINSZ.
-    # This fix is a hack.
+    # Note, this fix is a hack.
     TIOCSWINSZ = termios.TIOCSWINSZ
     if TIOCSWINSZ == 2148037735:
         TIOCSWINSZ = -2146929561 # Same number in binary, but with sign.

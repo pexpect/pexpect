@@ -308,8 +308,6 @@ class spawn:
             self.match = None
             raise
             
-        assert 0 == 1, 'Should not get here.'
-
     def expect_list(self, pattern_list, local_timeout = None):
         """This is called by expect(). This takes a list of compiled
         regular expressions. This returns the index into the pattern_list
@@ -351,8 +349,6 @@ class spawn:
             self.match = None
             raise
             
-        assert 0 == 1, 'Should not get here.'
-        
 #    def expect_eof(self, timeout = None):
 #        """This reads from the child until the end of file is found.
 #        A timeout exception may be thrown.
@@ -468,7 +464,11 @@ class spawn:
         """This tests if the child process is running or not.
         This returns 1 if the child process appears to be running or 0 if not.
         """
-        status = os.waitpid (self.pid, os.WNOHANG)
+        try:
+	    status = os.waitpid (self.pid, os.WNOHANG)
+	except OSError, e:
+	    return 0
+
         if status[0] == 0:
             return 1
 

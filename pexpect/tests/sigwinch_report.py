@@ -12,5 +12,5 @@ def handler(signum, frame):
 signal.signal(signal.SIGWINCH, handler)
 
 while 1:
-	time.sleep(10)
+        time.sleep(10)
 

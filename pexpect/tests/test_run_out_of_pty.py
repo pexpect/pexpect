@@ -11,10 +11,10 @@ class ExpectTestCase(unittest.TestCase):
         
     def off_test_run_out (self):
         """This assumes that the tested platform has < 10000 pty devices.
-	This test currently does not work under Solaris.
-	Under Solaris it runs out of file descriptors first and
-	ld.so starts to barf:
-	    ld.so.1: pt_chmod: fatal: /usr/lib/libc.so.1: Too many open files
+        This test currently does not work under Solaris.
+        Under Solaris it runs out of file descriptors first and
+        ld.so starts to barf:
+            ld.so.1: pt_chmod: fatal: /usr/lib/libc.so.1: Too many open files
         """
 
         plist=[]

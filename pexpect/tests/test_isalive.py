@@ -11,7 +11,7 @@ class IsAliveTestCase(unittest.TestCase):
     def test_expect_isalive1 (self):
         p = pexpect.spawn('ls')
         p.expect(pexpect.EOF)
-	time.sleep(1) # allow kernel status time to catch up with state.
+        time.sleep(1) # allow kernel status time to catch up with state.
         if p.isalive():
             self.fail ('Child process is not dead. It should be.')
 
@@ -20,9 +20,9 @@ class IsAliveTestCase(unittest.TestCase):
         if not p.isalive():
             self.fail ('Child process is not alive. It should be.')
         p.kill(1)
-	# Solaris is kind of slow.
-	# Without this delay then p.expect(...) will not see
-	# that the process is dead and it will timeout.
+        # Solaris is kind of slow.
+        # Without this delay then p.expect(...) will not see
+        # that the process is dead and it will timeout.
         time.sleep(1)
         p.expect(pexpect.EOF)
         if p.isalive():
@@ -33,9 +33,9 @@ class IsAliveTestCase(unittest.TestCase):
         if not p.isalive():
             self.fail ('Child process is not alive. It should be.')
         p.kill(9)
-	# Solaris is kind of slow.
-	# Without this delay then p.expect(...) will not see
-	# that the process is dead and it will timeout.
+        # Solaris is kind of slow.
+        # Without this delay then p.expect(...) will not see
+        # that the process is dead and it will timeout.
         time.sleep(1)
         p.expect(pexpect.EOF)
         if p.isalive():

@@ -65,7 +65,7 @@ class ExpectTestCase(unittest.TestCase):
         #p = pexpect.spawn('ls -l /bin')
         p = pexpect.spawn('ed')
         i = p.expect(pexpect.TIMEOUT) # This tells it to wait for timeout.
-	assert p.after == pexpect.TIMEOUT
+        assert p.after == pexpect.TIMEOUT
 
     def test_unexpected_eof (self):
         p = pexpect.spawn('ls -l /bin')

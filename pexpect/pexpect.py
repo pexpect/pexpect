@@ -202,43 +202,48 @@ class spawn:
         """
         self.log_file = fileobject
 
-    def compile_pattern_list(self, pattern):
+    def compile_pattern_list(self, patterns):
         """This compiles a pattern-string or a list of pattern-strings.
+        Argument must be one of StringType, EOF, SRE_Pattern, or a list of those type.
         This is used by expect() when calling expect_list().
         Thus expect() is nothing more than::
              cpl = self.compile_pattern_list(pl)
              return self.expect_list(clp, timeout)
 
         If you are using expect() within a loop it may be more
-        efficient to compile the patterns first and call expect_list():
+        efficient to compile the patterns first and then call expect_list().
+        This avoid calls in a loop to compile_pattern_list():
              cpl = self.compile_pattern_list(my_pattern)
              while some_condition:
                 ...
                 i = self.expect_list(clp, timeout)
                 ...
         """
-        if pattern is EOF:
-            compiled_pattern_list = [EOF]
-        elif type(pattern) is StringType:
-            compiled_pattern_list = [re.compile(pattern)]
-        elif type(pattern) is ListType:
-            compiled_pattern_list = []
-            for x in pattern:
-                if x is EOF:
-                    compiled_pattern_list.append(EOF)
-                else:
-                    compiled_pattern_list.append( re.compile(x) )
-        else:
-            raise TypeError, 'Pattern argument must be a string or a list of strings.'
+        if type(patterns) is not ListType:
+            patterns = [patterns]
+
+        compiled_pattern_list = []
+        for p in patterns:
+            if type(p) is StringType:
+                compiled_pattern_list.append(re.compile(p, re.DOTALL))
+            elif p is EOF:
+                compiled_pattern_list.append(EOF)
+            elif type(p) is type(re.compile('')):
+                compiled_pattern_list.append(p)
+            else:
+                raise TypeError, 'Argument must be one of StringType, EOF, SRE_Pattern, or a list of those type. %s' % str(type(p))
 
         return compiled_pattern_list
  
     def expect(self, pattern, timeout = None):
-        """This seeks through the stream looking for the given
-        pattern. The 'pattern' can be a string or a list of strings.
-        The strings are regular expressions (see module 're'). This
-        returns the index into the pattern list or raises an exception
-        on error.
+        """This seeks through the stream until an expected pattern is matched.
+        The pattern is overloaded and may take several types including a list.
+        The pattern can be a StringType, EOF, a compiled re, or
+        a list of those types. Strings will be compiled to re types.
+        This returns the index into the pattern list. If the pattern was
+        not a list this returns index 0 on a successful match.
+	This may raise exceptions for EOF or TIMEOUT.
+        To avoid the EOF exception add EOF to the pattern list.
 
         After a match is found the instance attributes
         'before', 'after' and 'match' will be set.
@@ -255,20 +260,20 @@ class spawn:
         This allows you to write code like this:
                 index = p.expect (['good', 'bad', pexpect.EOF])
                 if index == 0:
-                        do_something()
+                    do_something()
                 elif index == 1:
-                        do_something_else()
+                    do_something_else()
                 elif index == 2:
-                        do_some_other_thing()
+                    do_some_other_thing()
         instead of code like this:
                 try:
-                        index = p.expect (['good', 'bad'])
-                        if index == 0:
-                                do_something()
-                        elif index == 1:
-                                do_something_else()
+                    index = p.expect (['good', 'bad'])
+                    if index == 0:
+                        do_something()
+                    elif index == 1:
+                        do_something_else()
                 except EOF:
-                        do_some_other_thing()
+                    do_some_other_thing()
         These two forms are equivalent. It all depends on what you want.
         You can also just expect the EOF if you are waiting for all output
         of a child to finish. For example:

@@ -8,7 +8,7 @@ MANIFEST_LINES := $(shell cat MANIFEST)
 # This is for BSD Make. This does not work on GNU Make.
 #MANIFEST_LINES != cat MANIFEST
 
-all: dist examples doc
+all: dist examples docs
 
 # *.py README.txt MANIFEST
 
@@ -31,7 +31,7 @@ pexpect-current.tgz: dist/pexpect-$(VERSION).tar.gz
 	cp dist/pexpect-$(VERSION).tar.gz ./pexpect-current.tgz
 	cp dist/pexpect-$(VERSION).tar.gz ./pexpect-$(VERSION).tgz
 
-doc: pexpect-doc.tgz
+docs: pexpect-doc.tgz
 
 pexpect-doc.tgz: doc/*
 	rm -f pexpect-doc.tgz

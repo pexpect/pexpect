@@ -142,7 +142,7 @@ class spawn:
         # In the later case, isAlive() will always return true until the
         # output buffer is empty. Use expect_eof() to consume all child output.
         # This is not the same as the Zombie (waiting to die) problem.
-        signal.signal(signal.SIGCHLD, signal.SIG_IGN)
+        #signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
         try:
             self.pid, self.child_fd = pty.fork()
@@ -462,6 +462,13 @@ class spawn:
             termios.tcsetattr(fd, termios.TCSADRAIN, old) # restore state
         
     def isAlive(self):
+        status = os.waitpid (self.pid, os.WNOHANG)[1]
+	print 'status:', status
+        print 'WTERMSIG:'
+	print os.WTERMSIG(status)
+	return os.WIFEXITED(status)
+
+    def isAlive2(self):
         """This tests if the child process is running or not.
         It returns 1 if the child process appears to be running or
         0 if not. This checks the process list to see if the pid is
@@ -473,10 +480,19 @@ class spawn:
         running or not. By convention most modern UNIX systems will
         respond to signal 0.
         """
+	old_signal = signal.getsignal (signal.SIGCHLD)
+	if old_signal is None:
+	    raise ExceptionPexpect ('Existing signal handler is non-Python')
+        #signal.signal(signal.SIGCHLD, signal.SIG_IGN)
         try:
-            self.kill(0)
+	    print "stuff2"
+	    os.kill (self.pid, 0)
+	    print "stuff3"
+	    signal.signal(signal.SIGCHLD, old_signal)
             return 1
         except OSError, e:
+	    print str(e)
+	    signal.signal(signal.SIGCHLD, old_signal)
             return 0
             ###return e.errno == errno.EPERM
             ### For some reason I got this exception printed even though

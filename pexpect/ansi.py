@@ -27,6 +27,8 @@ DEL = 127  # Fill character; ignored on input.
 SPACE = chr(32) # Space or blank character.
 
 def constrain (n, min, max):
+    '''This returns n constrained to the min and max bounds.
+    '''
     if n < min:
         return min
     if n > max:
@@ -55,13 +57,72 @@ def default (input_symbol, state, stack):
     stack=[]
 
 
+def Emit (fsm):
+	screen = fsm.something[0]
+	screen.write(fsm.input_symbol)
+def StartNumber (fsm):
+	fsm.something.append (fsm.input_symbol)
+def BuildNumber (fsm):
+	ns = fsm.something.pop()
+	ns = ns + fsm.input_symbol
+	fsm.something.append (ns)
+def DoBack (fsm):
+	count = fsm.something.pop()
+	screen = fsm.something[0]
+	screen.cursor_back (count)
+def DoDown (fsm):
+	count = fsm.something.pop()
+	screen = fsm.something[0]
+	screen.cursor_down (count)
+def DoForward (fsm):
+	count = fsm.something.pop()
+	screen = fsm.something[0]
+	screen.cursor_forward (count)
+def DoUp (fsm):
+	count = fsm.something.pop()
+	screen = fsm.something[0]
+	screen.cursor_up (count)
+def DoHome (fsm):
+	c = fsm.something.pop()
+	r = fsm.something.pop()
+	screen = fsm.something[0]
+	screen.cursor_home (r,c)
+	pass
+
 class term:
     '''This class encapsulates a generic terminal.
-	It filters a stream and maintains the state of
-	a screen object.
+        It filters a stream and maintains the state of
+        a screen object.
     '''
     def __init__ (self):
-        s = fsm ('INIT')
+	self.screen = screen (24,80)
+	self.stack = [self.screen]
+        self.state = FSM ('INIT',stack)
+	self.state.add_transition_any ('INIT', Emit, 'INIT')
+	self.state.add_transition ('\x1b', 'INIT', None, 'ESC')
+	self.state.add_transition_any ('ESC', None, 'INIT')
+	self.state.add_transition ('[', 'ESC', None, 'ELB')
+	self.state.add_transition_list (string.digits, 'ELB', StartNumber, 'NUMBER_1')
+	self.state.add_transition_list (string.digits, 'NUMBER_1', BuildNumber, 'NUMBER_1')
+	self.state.add_transition ('D', 'NUMBER_1', DoBack, 'INIT')
+	self.state.add_transition ('B', 'NUMBER_1', DoDown, 'INIT')
+	self.state.add_transition ('C', 'NUMBER_1', DoForward, 'INIT')
+	self.state.add_transition ('A', 'NUMBER_1', DoUp, 'INIT')
+
+	self.state.add_transition (';', 'NUMBER_1', None, 'SEMICOLON')
+	self.state.add_transition_any ('SEMICOLON', None, 'INIT')
+	self.state.add_transition_list (string.digits, 'SEMICOLON', StartNumber, 'NUMBER_2')
+	self.state.add_transition_list (string.digits, 'NUMBER_2', BuildNumber, 'NUMBER_2')
+	self.state.add_transition_any ('NUMBER_2', None, 'INIT')
+	self.state.add_transition ('H', 'NUMBER_2', DoHome, 'INIT')
+	self.state.add_transition ('f', 'NUMBER_2', DoHome, 'INIT')
+    def test (self):
+	dump = file('dump').read()
+	for c in dump:
+		self.state.process(c)
+	print str(self.screen)
+
+    old_crap = '''
         f.add_default_transition ('INIT', default)
         f.add_transition('INIT','\x1b', 'ESC', None)
         f.add_transition('ESC','[', 'ELB', None)
@@ -72,30 +133,30 @@ class term:
         f.add_transition_list('ELB_DIGIT2',['0','1','2','3','4','5','6','7','8','9'], 'ELB_DIGIT2', build_digit)
         f.add_transition_list('ELB_DIGIT2',['H','f'], 'INIT', accept)
         f.add_transition_list('ELB_DIGIT',['D','B','C','A'], 'INIT', accept)
-
+    '''
 
 
 class screen:
     def __init__ (self, r=24,c=80):
-    	self.rows = r
-    	self.cols = c
-	self.cur_r = 1
-	self.cur_c = 1
-	self.scroll_row_start = 1
-	self.scroll_row_end = self.rows
-	self.mode_scape = 0
-	self.w = [ [SPACE] * self.cols for c in range(self.rows)]
+        self.rows = r
+        self.cols = c
+        self.cur_r = 1
+        self.cur_c = 1
+        self.scroll_row_start = 1
+        self.scroll_row_end = self.rows
+        self.mode_scape = 0
+        self.w = [ [SPACE] * self.cols for c in range(self.rows)]
 
     def __str__ (self):
-	s = ''
-	for r in range (1, self.rows + 1):
-	    for c in range (1, self.cols + 1):
-		s = s + self.get(r,c)
-	    s = s + '\n'
-	return s
+        s = ''
+        for r in range (1, self.rows + 1):
+            for c in range (1, self.cols + 1):
+                s = s + self.get(r,c)
+            s = s + '\n'
+        return s
 
     def fill (self, ch=SPACE):
-	self.fill_region (1,1,self.rows,self.cols, ch)
+        self.fill_region (1,1,self.rows,self.cols, ch)
 
     def fill_region (self, rs,cs, re,ce, ch=SPACE):
         rs = constrain (rs, 1, self.rows)
@@ -106,11 +167,11 @@ class screen:
             rs, re = re, rs
         if cs > ce:
             cs, ce = ce, cs
-	for r in range (rs, re+1):
-	    for c in range (cs, ce + 1):
-		self.put (r,c,ch)
+        for r in range (rs, re+1):
+            for c in range (cs, ce + 1):
+                self.put (r,c,ch)
 
-    def type (self, ch):
+    def write (self, ch):
         '''Puts a character at the current cursor position.
         cursor position if moved forward with wrap-around, but
         no scrolling is done if the cursor hits the lower-right corner
@@ -147,114 +208,114 @@ class screen:
             self.erase_line()
 
     def put (self, r, c, ch):
-	'''Screen array starts at 1 index.'''
+        '''Screen array starts at 1 index.'''
 #        if r < 1 or r > self.rows or c < 1 or c > self.cols:
 #            raise IndexError ('Screen array index out of range')
         ch = str(ch)[0]
-	self.w[r-1][c-1] = ch
+        self.w[r-1][c-1] = ch
 
     def get (self, r, c):
-	'''Screen array starts at 1 index.'''
+        '''Screen array starts at 1 index.'''
 #        if r < 1 or r > self.rows or c < 1 or c > self.cols:
 #            raise IndexError ('Screen array index out of range')
-	return self.w[r-1][c-1]
+        return self.w[r-1][c-1]
 
     def cursor_constrain (self):
         self.cur_r = constrain (self.cur_r, 1, self.rows)
         self.cur_c = constrain (self.cur_c, 1, self.cols)
 
     def cursor_home (self, r=1, c=1): # <ESC>[{ROW};{COLUMN}H
-	self.cur_r = r
-	self.cur_c = c
-	self.cursor_constrain ()
+        self.cur_r = r
+        self.cur_c = c
+        self.cursor_constrain ()
     def cursor_back (self,count=1): # <ESC>[{COUNT}D (not confused with down)
-	self.cur_r = self.cur_r - count
-	self.cursor_constrain ()
+        self.cur_r = self.cur_r - count
+        self.cursor_constrain ()
     def cursor_down (self,count=1): # <ESC>[{COUNT}B (not confused with back)
-	self.cur_r = self.cur_r + count
-	self.cursor_constrain ()
+        self.cur_r = self.cur_r + count
+        self.cursor_constrain ()
     def cursor_forward (self,count=1): # <ESC>[{COUNT}C
-	self.cur_c = self.cur_c + count
-	self.cursor_constrain ()
+        self.cur_c = self.cur_c + count
+        self.cursor_constrain ()
     def cursor_up (self,count=1): # <ESC>[{COUNT}A
-	self.cur_r = self.cur_r - count
-	self.cursor_constrain ()
+        self.cur_r = self.cur_r - count
+        self.cursor_constrain ()
     def cursor_force_position (self, r, c): # <ESC>[{ROW};{COLUMN}f
-	'''Identical to Cursor Home.'''
-	self.cursor_home (r, c)
+        '''Identical to Cursor Home.'''
+        self.cursor_home (r, c)
     def cursor_save (self): # <ESC>[s
-	'''Save current cursor position.'''
-	pass
+        '''Save current cursor position.'''
+        pass
     def cursor_unsave (self): # <ESC>[u
-	'''Restores cursor position after a Save Cursor.'''
-	pass
+        '''Restores cursor position after a Save Cursor.'''
+        pass
     def cursor_save_attrs (self): # <ESC>7
-	'''Save current cursor position.'''
-	pass
+        '''Save current cursor position.'''
+        pass
     def cursor_restore_attrs (self): # <ESC>8
-	'''Restores cursor position after a Save Cursor.'''
-	pass
+        '''Restores cursor position after a Save Cursor.'''
+        pass
     def scroll_constrain (self):
-	'''This keeps the scroll region within the screen region.'''
-	if self.scroll_row_start <= 0:
-	    self.scroll_row_start = 1
-	if self.scroll_row_end > self.rows:
-	    self.scroll_row_end = self.rows
+        '''This keeps the scroll region within the screen region.'''
+        if self.scroll_row_start <= 0:
+            self.scroll_row_start = 1
+        if self.scroll_row_end > self.rows:
+            self.scroll_row_end = self.rows
     def scroll_screen (self): # <ESC>[r
-	'''Enable scrolling for entire display.'''
-	self.scroll_row_start = 1
-	self.scroll_row_end = self.rows
+        '''Enable scrolling for entire display.'''
+        self.scroll_row_start = 1
+        self.scroll_row_end = self.rows
     def scroll_screen_rows (self, rs, re): # <ESC>[{start};{end}r
-	'''Enable scrolling from row {start} to row {end}.'''
-	self.scroll_row_start = rs
-	self.scroll_row_end = re
-	self.scroll_constrain()
+        '''Enable scrolling from row {start} to row {end}.'''
+        self.scroll_row_start = rs
+        self.scroll_row_end = re
+        self.scroll_constrain()
     def scroll_down (self): # <ESC>D
-	'''Scroll display down one line.'''
-	# Screen is indexed from 1, but arrays are indexed from 0.
-	s = self.scroll_row_start - 1
-	e = self.scroll_row_end - 1
-	self.w[s+1:e+1] = copy.deepcopy(self.w[s:e])
+        '''Scroll display down one line.'''
+        # Screen is indexed from 1, but arrays are indexed from 0.
+        s = self.scroll_row_start - 1
+        e = self.scroll_row_end - 1
+        self.w[s+1:e+1] = copy.deepcopy(self.w[s:e])
     def scroll_up (self): # <ESC>M
-	'''Scroll display up one line.'''
-	# Screen is indexed from 1, but arrays are indexed from 0.
-	s = self.scroll_row_start - 1
-	e = self.scroll_row_end - 1
-	self.w[s:e] = copy.deepcopy(self.w[s+1:e+1])
+        '''Scroll display up one line.'''
+        # Screen is indexed from 1, but arrays are indexed from 0.
+        s = self.scroll_row_start - 1
+        e = self.scroll_row_end - 1
+        self.w[s:e] = copy.deepcopy(self.w[s+1:e+1])
     def erase_end_of_line (self): # <ESC>[K
-	'''Erases from the current cursor position to
-	the end of the current line.'''
+        '''Erases from the current cursor position to
+        the end of the current line.'''
         self.fill_region (self.cur_r, self.cur_c, self.cur_r, self.cols)
     def erase_start_of_line (self): # <ESC>[1K
-	'''Erases from the current cursor position to
-	the start of the current line.'''
+        '''Erases from the current cursor position to
+        the start of the current line.'''
         self.fill_region (self.cur_r, 1, self.cur_r, self.cur_c)
     def erase_line (self): # <ESC>[2K
-	'''Erases the entire current line.'''
+        '''Erases the entire current line.'''
         self.fill_region (self.cur_r, 1, self.cur_r, self.cols)
     def erase_down (self): # <ESC>[J
-	'''Erases the screen from the current line down to
-	the bottom of the screen.'''
+        '''Erases the screen from the current line down to
+        the bottom of the screen.'''
         self.erase_end_of_line ()
         self.fill_region (self.cur_r + 1, 1, self.rows, self.cols)
     def erase_up (self): # <ESC>[1J
-	'''Erases the screen from the current line up to
-	the top of the screen.'''
+        '''Erases the screen from the current line up to
+        the top of the screen.'''
         self.erase_start_of_line ()
         self.fill_region (self.cur_r-1, 1, 1, self.cols)
     def erase_screen (self): # <ESC>[2J
-	'''Erases the screen with the background color.'''
-	self.fill ()
+        '''Erases the screen with the background color.'''
+        self.fill ()
 
     def set_tab (self): # <ESC>H
-	'''Sets a tab at the current position.'''
-	pass
+        '''Sets a tab at the current position.'''
+        pass
     def clear_tab (self): # <ESC>[g
-	'''Clears tab at the current position.'''
-	pass
+        '''Clears tab at the current position.'''
+        pass
     def clear_all_tabs (self): # <ESC>[3g
-	'''Clears all tabs.'''
-	pass
+        '''Clears all tabs.'''
+        pass
 
 #        Insert line             Esc [ Pn L
 #        Delete line             Esc [ Pn M
@@ -262,9 +323,7 @@ class screen:
 #        Scrolling region        Esc [ Pn(top);Pn(bot) r
 
 
-
-	
-	
+        
 import tty, termios, sys
 
 def getkey():
@@ -277,21 +336,17 @@ def getkey():
         termios.tcsetattr(file, termios.TCSANOW, mode)
     return ch
 
-	
+        
 def test_typing ():
     s = screen (10,10)
     while 1:
         ch = getkey()
         s.type(ch)
-	print str(s)
+        print str(s)
         print 
 
-#s = screen ()
-#s.fill ('X')
-#print s.w
-import sys
-
-e = chr(0x1b)
+#import sys
+#e = chr(0x1b)
 #sys.stdout.write (e+'[6n')
 #sys.stdout.write (e+'[c')
 #sys.stdout.write (e+'[0c')
@@ -303,26 +358,4 @@ e = chr(0x1b)
 #for i in range (0,9):
 #       sys.stdout.write (e + 'D')
 
-ignore = '''
-s = screen(10,10)
-s.fill ('.')
-for r in range (1,s.rows + 1):
-    if r % 2:
-	s.put (r, 1, str(r))
-    else:
-	s.put (r, s.cols, str(r))
-for c in range (1,s.cols + 1):
-    if c % 2:
-	s.put (1, c, str(c))
-    else:
-	s.put (s.rows, c, str(c))
-s.put(1,1, '\\')
-s.put(1,s.cols, '/')
-s.put(s.rows,1,'/')
-s.put(s.rows, s.cols, '\\')
-s.put(5,5,'\\')
-s.put(5,6,'/')
-s.put(6,5,'/')
-s.put(6,6,'\\')
-'''
 #test_typing()

@@ -74,6 +74,7 @@ write_text = 'I\'ve got a ferret sticking up my nose.\n' + \
 '(His sense of smell.)'
 
 class ansiFillTestCase (unittest.TestCase):
+
     def make_screen_with_put (self):
         s = ansi.screen(10,10)
         s.fill ('.')
@@ -95,7 +96,7 @@ class ansiFillTestCase (unittest.TestCase):
         s.put(5,6,'/')
         s.put(6,5,'/')
         s.put(6,6,'\\')
-	return s
+        return s
 
     def test_fill (self):
         s = ansi.screen (10,10)
@@ -115,23 +116,23 @@ class ansiFillTestCase (unittest.TestCase):
         s.fill_region (6,6,6,6,'+')
         assert str(s) == fill2_target
     def test_put (self):
-	s = self.make_screen_with_put()
+        s = self.make_screen_with_put()
         assert str(s) == put_target
     def test_scroll (self):
-	s = self.make_screen_with_put()
-	s.scroll_screen_rows (1,4)
-	s.scroll_down(); s.scroll_down(); s.scroll_down()
-	s.scroll_down(); s.scroll_down(); s.scroll_down()
-	s.scroll_screen_rows (7,10)
-	s.scroll_up(); s.scroll_up(); s.scroll_up()
-	s.scroll_up(); s.scroll_up(); s.scroll_up()
+        s = self.make_screen_with_put()
+        s.scroll_screen_rows (1,4)
+        s.scroll_down(); s.scroll_down(); s.scroll_down()
+        s.scroll_down(); s.scroll_down(); s.scroll_down()
+        s.scroll_screen_rows (7,10)
+        s.scroll_up(); s.scroll_up(); s.scroll_up()
+        s.scroll_up(); s.scroll_up(); s.scroll_up()
         assert str(s) == scroll_target
     def test_write (self):
-	s = ansi.screen (6,65)
-	s.fill('.')
-	s.cursor_home()
-	for c in write_text:
-	    s.type (c)
+        s = ansi.screen (6,65)
+        s.fill('.')
+        s.cursor_home()
+        for c in write_text:
+            s.write (c)
         assert str(s) == write_target
 
 

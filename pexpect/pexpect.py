@@ -418,16 +418,42 @@ class spawn:
 
         raise ExceptionPexpect('Reached an unexpected state in read().')
 
+    def read (self, size = -1):
+        """This reads at most size bytes from the file 
+        (less if the read hits EOF before obtaining size bytes). 
+        If the size argument is negative or omitted, 
+        read all data until EOF is reached. 
+        The bytes are returned as a string object. 
+        An empty string is returned when EOF is encountered immediately.
+        """
+        if size == 0:
+            return ''
+        if size < 0:
+            self.expect (EOF)
+            return self.before
+
+        # I could make this more dicrect by no using expect(), but
+        # I deliberately decided to couple read() to expect() so that
+        # I would catch any bugs early and ensure consistant behavior.
+        # It's a little less efficient, but it makes less for me to
+        # worry about if I have to later modify read() or expect().
+        cre = re.compile('.{%d}' % size, re.DOTALL) 
+        index = self.expect ([cre, EOF])
+        if index == 0:
+            return self.after ### self.before should be ''. Should I assert this?
+        return self.before
+        
     def readline (self, size = -1):    # File-like object.
         """This reads and returns one entire line. A trailing newline is kept in
         the string, but may be absent when a file ends with an incomplete line. 
-        Trivia: This readline() looks for a \r\n pair even on UNIX because this is 
-        what the pseudo tty device returns. The newline is converted to os.linesep 
-        before it is returned. An empty string is returned when EOF is hit immediately.
+        Note: This readline() looks for a \r\n pair even on UNIX because this is 
+        what the pseudo tty device returns. So contrary to what you may be used to
+        you will get a newline as \r\n.
+        An empty string is returned when EOF is hit immediately.
         """
         index = self.expect (['\r\n', EOF])
         if index == 0:
-            return self.before + os.linesep
+            return self.before + '\r\n'
         else:
             return self.before
 

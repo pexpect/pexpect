@@ -542,7 +542,7 @@ class spawn:
         compiled_pattern_list = self.compile_pattern_list(pattern)
         return self.expect_list(compiled_pattern_list, timeout)
 
-    def expect_exact (self, pattern_list, timeout = None):
+    def expect_exact (self, pattern_list, timeout = -1):
         """This is similar to expect() except that it takes
         list of plain strings instead of regular expressions.
         The idea is that this should be much faster. It could also be
@@ -599,7 +599,7 @@ class spawn:
             self.match = None
             raise
             
-    def expect_list(self, pattern_list, timeout = None):
+    def expect_list(self, pattern_list, timeout = -1):
         """This is called by expect(). This takes a list of compiled
         regular expressions. This returns the index into the pattern_list
         that matched the child's output.

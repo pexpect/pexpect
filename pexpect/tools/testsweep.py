@@ -8,7 +8,7 @@ import getpass
 def test_platform (platform_menu, platform_python_path):
 	try:
 		s = pexpect.spawn ('ssh noah@cf.sourceforge.net')
-		#s.setlog (sys.stdout)
+		s.setlog (sys.stdout)
 		i = s.expect (['password:', 'yes/no'])
 		if i == 1:
 			s.sendline ('yes')

@@ -17,6 +17,7 @@ License: Python Software Foundation License
          http://www.opensource.org/licenses/PythonSoftFoundation.html
 
 Noah Spurrier
+Richard Holden
 
 $Revision$
 $Date$
@@ -36,6 +37,7 @@ try:
     import termios
     import fcntl
     import errno
+    import traceback
 except ImportError, e:
     raise ImportError, str(e) + """
 A critical module was not found. Probably this OS does not support it.
@@ -45,7 +47,7 @@ Currently pexpect is intended for UNIX operating systems."""
 
 __version__ = '0.9999'
 __revision__ = '$Revision$'
-__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run',
+__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'EXP_TIMEOUT', 'spawn', 'run',
     '__version__', '__revision__']
 
 
@@ -61,6 +63,29 @@ class EOF(ExceptionPexpect):
     """Raised when EOF is read from a child."""
 class TIMEOUT(ExceptionPexpect):
     """Raised when a read time exceeds the timeout."""
+class EXP_TIMEOUT(TIMEOUT):
+    """Raised when a pattern match time exceeds the timeout."""
+    def __init__(self,value,pattern_list):
+        self.value = value
+        self.pattern_list = pattern_list
+    def __str__(self):
+        string = self.value + "\nPattern(s) to Match:\n"
+        for reObject in self.pattern_list:
+            string = string + reObject.pattern + "\n" 
+        return string
+    def get_trace(self):
+        tblist = traceback.extract_tb(sys.exc_info()[2])
+        tblist = filter(self.tbNotPexpect, tblist)
+        tblist = traceback.format_list(tblist)
+        trace = "Origin:\n"
+        for item in tblist:
+            trace = trace + item
+        return trace
+    def tbNotPexpect(self, trace_list_item):
+        if trace_list_item[0].find("pexpect") == -1:
+            return True
+        else:
+            return False
 ##class MAXBUFFER(ExceptionPexpect):
 ##    """Raised when a scan buffer fills before matching an expected pattern."""
 
@@ -689,14 +714,14 @@ class spawn:
                 return pattern_list.index(EOF)
             else:
                 raise
-        except TIMEOUT:
+        except TIMEOUT, TimeOutInst:
             self.before = incoming
             self.after = TIMEOUT
             if TIMEOUT in pattern_list:
                 #self.buffer = ''
                 return pattern_list.index(TIMEOUT)
             else:
-                raise
+                raise EXP_TIMEOUT(TimeOutInst.__str__(),pattern_list)
         except Exception:
             self.before = incoming
             self.after = None
@@ -757,14 +782,14 @@ class spawn:
                 return pattern_list.index(EOF)
             else:
                 raise
-        except TIMEOUT:
+        except TIMEOUT, TimeOutInst:
             self.before = incoming
             self.after = TIMEOUT
             if TIMEOUT in pattern_list:
                 #self.buffer = ''
                 return pattern_list.index(TIMEOUT)
             else:
-                raise
+                raise EXP_TIMEOUT(TimeOutInst.__str__(),pattern_list)
         except Exception:
             self.before = incoming
             self.after = None

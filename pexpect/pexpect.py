@@ -244,18 +244,8 @@ class spawn:
                 raise ExceptionPexpect ('This file descriptor cannot be closed because it was not created by spawn. The original creator is responsible for closing it.')
             self.flush()
             os.close (self.child_fd)
-<<<<<<< pexpect.py
-<<<<<<< pexpect.py
-            
-            pid, status = os.waitpid(self.pid)
-            
-=======
-            os.waitpid (self.pid, 0)
->>>>>>> 1.79
-=======
             if wait:
                 os.waitpid (self.pid, 0)
->>>>>>> 1.80
             self.child_fd = -1
             self.__child_fd_owner = None
 

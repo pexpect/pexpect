@@ -150,7 +150,7 @@ class spawn:
     def log_open (self, filename):
         '''This opens a log file. All data read from the child
         application will be written to the log file.
-	This is very useful to use while creating scripts.
+        This is very useful to use while creating scripts.
         You can use this to figure out exactly what the child
         is sending.
         '''
@@ -166,7 +166,7 @@ class spawn:
         '''This seeks through the stream looking for the given
         pattern. The 'pattern' can be a string or a list of strings.
         The strings are regular expressions. This returns the index
-        into the pattern list or None if error. Afterwards the
+        into the pattern list. Afterwards the
         instance attributes 'before' and 'matched' will be set. You
         can read the data that was matched by the pattern in
         'matched'. You can read all the data read before the match in
@@ -179,7 +179,7 @@ class spawn:
         if type(pattern)is StringType:
             compiled_pattern_list = [re.compile(pattern)]
         elif type(pattern)is ListType:
-            compiled_pattern_list = [re.compile(x)for x in pattern]
+            compiled_pattern_list = [re.compile(x) for x in pattern]
         else:
             raise TypeError, 'Pattern argument is not a string or list of strings.'
 
@@ -197,7 +197,7 @@ class spawn:
         '''
         matched_pattern = None
         before_pattern = None
-        index = None
+        index = 0
         
         if type(str_list)is StringType:
             str_list = [str_list]
@@ -210,7 +210,6 @@ class spawn:
                 incoming = incoming + c
 
                 # Sequence through the list of patterns and look for a match.
-                index = 0
                 for str_target in str_list:
                     match_index = incoming.find (str_target)
                     if match_index >= 0:
@@ -225,7 +224,6 @@ class spawn:
             ### to return some state flag. Exception versus return value.
             matched_pattern = None
             before_pattern = incoming
-            index = -1
             raise
 
         self.before = before_pattern
@@ -236,11 +234,20 @@ class spawn:
     def expect_list(self, re_list, local_timeout = None):
         '''This is called by expect(). This takes a list of compiled
         regular expressions. This returns the matched index into the
-        re_list.
+        re_list. If there is an exception it will set matched to ''
+        and before to the data that was read so far.
+        This raises EOF and TIMEOUT exceptions.
         '''
+        # if partial=='': ### self.flag_eof:
+        # flag_eof = 1 ### Should not need this if self.flag_eof is used.
+        # index = None
+        # matched_pattern = None
+        # done = 1
+        # break
+        
         matched_pattern = None
         before_pattern = None
-        index = None
+        index = 0
 
         try:
             done = 0
@@ -250,12 +257,11 @@ class spawn:
                 incoming = incoming + c
 
                 # Sequence through the list of patterns and look for a match.
-                index = 0
                 for cre in re_list:
                     match = cre.search(incoming)
                     if match is not None:
-                        matched_pattern = incoming[match.start(): match.end()]
-                        before_pattern = incoming[: match.start()]
+                        matched_pattern = incoming[match.start() : match.end()]
+                        before_pattern = incoming[ : match.start()]
                         done = 1
                         break
                     else:
@@ -265,27 +271,16 @@ class spawn:
             ### to return some state flag. Exception versus return value.
             matched_pattern = None
             before_pattern = incoming
-            index = -1
             raise
 
         self.before = before_pattern
         self.matched = matched_pattern
-        return index #before_pattern, matched_pattern, index 
+        return index
 
     def expect_eof(self, local_timeout = None):
         '''This reads from the child until the end of file is found.
+        A timeout exception may be thrown.
         '''
-        foo = """    if partial=='': ### self.flag_eof:
-                flag_eof = 1 ### Should not need this if self.flag_eof is used.
-                index = None
-                matched_pattern = None
-                done = 1
-                break
-        """
-        matched_pattern = None
-        before_pattern = None
-        index = None
-
         try:
             done = 0
             incoming = ''
@@ -293,17 +288,19 @@ class spawn:
                 c = self.read(1, local_timeout)
                 incoming = incoming + c
         except EOF, e:
-            matched_pattern = ''
-            before_pattern = incoming
-            index = 1
+            pass
 
-        self.before = before_pattern
-        self.matched = matched_pattern
-        return index
+        self.before = incoming
+        self.matched = ''
+        return 1
 
     def write(self, text):
         '''This is an alias for send().'''
         self.send (text)
+
+    def writelines (self, sequence):
+        for str in sequence:
+            self.write (str)
 
     def send(self, text):
         '''This sends a string to the child process.

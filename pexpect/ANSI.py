@@ -253,5 +253,5 @@ class ANSI (term):
                 self.scroll_up ()
                 self.cursor_home (self.cur_r, 1)
                 self.erase_line()
-t = ANSI()
-t.test()
+#t = ANSI()
+#t.test()

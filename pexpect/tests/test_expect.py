@@ -2,6 +2,7 @@
 import pexpect
 import unittest
 import commands
+import sys
 
 class ExpectTestCase(unittest.TestCase):
     #def runTest (self):
@@ -25,12 +26,12 @@ class ExpectTestCase(unittest.TestCase):
         the_old_way = commands.getoutput('/bin/ls -l')
 
         p = pexpect.spawn('/bin/ls -l')
+        the_new_way = ''
         try:
-                the_new_way = ''
                 while 1:
                         p.expect ('\n')
                         the_new_way = the_new_way + p.before
-        except:
+        except Exception, e:
                 the_new_way = the_new_way[:-1]
                 the_new_way = the_new_way.replace('\r','\n')
 

@@ -214,20 +214,27 @@ class spawn:
         """This returns the file descriptor of the pty for the child."""
         return self.child_fd
 
-    def close (self):   # File-like object.
+    def close (self, wait=1):   # File-like object.
         """ This closes the connection with the child application.
         It makes no attempt to actually kill the child or wait for its status.
 	If the file descriptor was set by passing a file descriptor
         to the constructor then this method raises an exception.
         Note that calling close() more than once is valid.
         This emulates standard Python behavior with files.
+	If wait is set to True then close will wait
+	for the exit status of the process. This is a blocking call,
+	but this usually takes almost no time at all. If you are
+	creating lots of children then you usually want to call wait.
+	Only set wait to false if yo uknow the child will
+	continue to run after closing the controlling TTY.
         """
         if self.child_fd != -1:
             if not self.__child_fd_owner:
                 raise ExceptionPexpect ('This file descriptor cannot be closed because it was not created by spawn. The original creator is responsible for closing it.')
             self.flush()
             os.close (self.child_fd)
-            os.waitpid (self.pid, 0)
+            if wait:
+                os.waitpid (self.pid, 0)
             self.child_fd = -1
             self.__child_fd_owner = None
 

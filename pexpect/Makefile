@@ -29,6 +29,7 @@ doc: doc.tgz
 
 doc.tgz: doc/*
 	rm -f doc.tgz
+	-rm -f `ls doc/*.html | sed -e 's/doc\/index\.html//'` 
 	$(DOCGENERATOR) `echo "$(MANIFEST_LINES)" | sed -e "s/\.py//g"`
 	mv *.html doc/
 	tar zcf doc.tgz doc/
@@ -45,6 +46,7 @@ clean:
 	rm -f dist/pexpect-$(VERSION).tar.gz
 	rm -f examples.tgz
 	rm -f doc.tgz
+	-rm -f `ls doc/*.html | sed -e 's/doc\/index\.html//'` 
 	rm -f python.core
 	rm -f core
 	

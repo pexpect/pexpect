@@ -486,7 +486,7 @@ class spawn:
         try:
             # EOF is recognized when ICANON is set, thus ensure it is:
             termios.tcsetattr(fd, termios.TCSADRAIN, new)
-            os.write(self.child_fd, termios.CEOF)
+            os.write (self.child_fd, '%c' % termios.CEOF)
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old) # restore state
         

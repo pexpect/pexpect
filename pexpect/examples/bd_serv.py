@@ -70,6 +70,9 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     # I now return as the daemon
     return 0
 
+def add_cursor_blink (response, row, col):
+    i = (row-1) * 80 + col
+    return response[:i]+'<img src="http://www.noah.org/cursor.gif">'+response[i:]
 def main ():
     USER = sys.argv[1]
     PASSWORD = sys.argv[2]
@@ -81,7 +84,7 @@ def main ():
     sys.stdout.write ('Daemon started with pid %d\n' % os.getpid() )
 
     vs = ANSI.ANSI (24,80)
-    p = pexpect.spawn ('ssh %(USER)s@localhost'%locals(), timeout=9)
+    p = pexpect.spawn ('ssh %(USER)s@localhost'%locals(), timeout=3)
     p.expect ('assword')
     p.sendline (PASSWORD)
     time.sleep (0.2)
@@ -91,7 +94,7 @@ def main ():
     time.sleep (0.2)
     p.expect (pexpect.TIMEOUT)
     print p.before
-    vs.process (p.before)
+    vs.process_list (p.before)
     HOST = '' # Symbolic name meaning the local host
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind((HOST, PORT))
@@ -106,15 +109,27 @@ def main ():
 
         if data == 'exit':
             p.sendline (exit)
+            s.close()
             break
-        if not data == "pass":
+        if not data in ['NEXT','REFRESH','SKIP']: #== 'NEXT' and not data == 'REFRESH':
             p.sendline (data)
             time.sleep (0.1)
+        if data == 'SKIP':
+            p.expect (pexpect.TIMEOUT)
+            sh_response = p.before.replace ('\r', '')
+            vs.process_list (sh_response)
+
+        if not data == 'REFRESH':
             p.expect (['HAON ',pexpect.TIMEOUT])
             #response = p.before
             sh_response = p.before.replace ('\r', '')
             vs.process_list (sh_response)
+            if p.after is not pexpect.TIMEOUT:
+                vs.process_list (p.after)
         response = str (vs)
+        row = vs.cur_r
+        col = vs.cur_c
+        response = add_cursor_blink (response, row, col)
         print response
         sent = conn.send(response)
         if sent < len (response):

@@ -22,14 +22,15 @@ $Revision$
 $Date$
 """
 
-import os, sys
-import select
-import string
-import re
-import struct
-import resource
-from types import *
+
 try:
+    import os, sys
+    import select
+    import string
+    import re
+    import struct
+    import resource
+    from types import *
     import pty
     import tty
     import termios
@@ -41,7 +42,7 @@ Currently pexpect is intended for UNIX operating systems."""
 
 
 
-__version__ = '0.98'
+__version__ = '0.99'
 __revision__ = '$Revision$'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run',
     '__version__', '__revision__']
@@ -106,14 +107,9 @@ class spawn:
         self.STDOUT_FILENO = sys.stdout.fileno()
         self.STDERR_FILENO = sys.stderr.fileno()
 
-	self.stdin = sys.stdin
-	self.stdout = sys.stdout
-	self.stderr = sys.stderr
-
-        ### IMPLEMENT THIS FEATURE!!!
-        #self.maxbuffersize = 10000
-        # anything before maxsearchsize point is preserved, but not searched.
-        #self.maxsearchsize = 1000
+        self.stdin = sys.stdin
+        self.stdout = sys.stdout
+        self.stderr = sys.stderr
 
         self.timeout = timeout
         self.child_fd = -1 # initially closed
@@ -128,11 +124,14 @@ class spawn:
         self.name = '' # File-like object.
         self.flag_eof = 0
 
-
-	# Add the ability to read more than one byte from a TTY at a time.
-	self.buffer = ''
-	self.maxread = 1 # Maximum to read at a time
-	
+        # NEW -- to support buffering -- the ability to read more than one 
+        # byte from a TTY at a time. See setmaxread() method.
+        self.buffer = ''
+        self.maxread = 1 # Maximum to read at a time
+        ### IMPLEMENT THIS FEATURE!!!
+        # anything before maxsearchsize point is preserved, but not searched.
+        #self.maxsearchsize = 1000
+        
         # If command is an int type then it must represent an open file descriptor.
         if type (command) == type(0):
             try: # Command is an int, so now check if it is a file descriptor.
@@ -226,18 +225,18 @@ class spawn:
     def close (self, wait=1):   # File-like object.
         """ This closes the connection with the child application.
         It makes no attempt to actually kill the child or wait for its status.
-	If the file descriptor was set by passing a file descriptor
+        If the file descriptor was set by passing a file descriptor
         to the constructor then this method raises an exception.
         Note that calling close() more than once is valid.
         This emulates standard Python behavior with files.
-	If wait is set to True then close will wait
-	for the exit status of the process. Doing a wait is a blocking call,
-	but this usually takes almost no time at all. Generally,
-	you don't have to worry about this. If you are
-	creating lots of children then you usually want to call wait.
-	Only set wait to false if you know the child will
-	continue to run after closing the controlling TTY.
-	Otherwise you will end up with defunct (zombie) processes.
+        If wait is set to True then close will wait
+        for the exit status of the process. Doing a wait is a blocking call,
+        but this usually takes almost no time at all. Generally,
+        you don't have to worry about this. If you are
+        creating lots of children then you usually want to call wait.
+        Only set wait to false if you know the child will
+        continue to run after closing the controlling TTY.
+        Otherwise you will end up with defunct (zombie) processes.
         """
         if self.child_fd != -1:
             if not self.__child_fd_owner:
@@ -250,7 +249,7 @@ class spawn:
             self.__child_fd_owner = None
 
     def flush (self):   # File-like object.
-        """This does nothing.
+        """This does nothing. It is here to support the interface for a File-like object.
         """
         pass
 
@@ -271,16 +270,25 @@ class spawn:
 
     def setlog (self, fileobject):
         """This sets logging output to go to the given fileobject.
-        Set fileobject to None to stop logging.
+        Set fileobject to None to stop logging. 
+        Example:
+            child = pexpect.spawn('some_command')
+            fout = file('mylog.txt','w')
+            child.setlog (fout)
+            ...
         """
         self.log_file = fileobject
 
     def setmaxread (self, maxread):
-    	"""This sets the maximum number of bytes to read from a TTY at one time.
-    	"""
-    	self.maxread = maxread
+        """This sets the maximum number of bytes to read from a TTY at one time.
+        This is used to change the read buffer size. When a pexpect.spawn
+        object is created the default maxread is 1 (unbuffered).
+        Set this value higher to turn on buffer. This should help performance
+        in cases where large amounts of output are read back from the child.
+        """
+        self.maxread = maxread
 
-    def read_nonblocking (self, size = -1, timeout = None):
+    def read_nonblocking (self, size = 1, timeout = None):
         """
         This reads at most size characters from the child application.
         It includes a timeout. If the read does not complete within the
@@ -293,7 +301,7 @@ class spawn:
         then it actually may block.
 
         This is a non-blocking wrapper around os.read().
-        It uses select.select() to supply a timeout. 
+        It uses select.select() to implement a timeout. 
         """
         
         if self.child_fd == -1:
@@ -429,19 +437,18 @@ class spawn:
 
     def sendeof(self):
         """This sends an EOF to the child.
-        This sends a character which causes the pending
-        child buffer to be sent to the waiting child program without
+        This sends a character which causes the pending parent output
+        buffer to be sent to the waiting child program without
         waiting for end-of-line. If it is the first character of the
         line, the read() in the user program returns 0, which
-        signifies end-of-file. This means to make this work as expected 
+        signifies end-of-file. This means to work as expected 
         a sendeof() has to be called at the begining of a line. 
-        This method does not  send a newline. It is the responsibility
+        This method does not send a newline. It is the responsibility
         of the caller to ensure the eof is sent at the beginning of a line.
         """
         ### Hmmm... how do I send an EOF?
         ###C  if ((m = write(pty, *buf, p - *buf)) < 0)
         ###C      return (errno == EWOULDBLOCK) ? n : -1;
-
         fd = sys.stdin.fileno()
         old = termios.tcgetattr(fd) # remember current state
         new = termios.tcgetattr(fd)
@@ -455,7 +462,7 @@ class spawn:
             termios.tcsetattr(fd, termios.TCSADRAIN, old) # restore state
 
     def eof (self):
-        """This returns 1 if the EOF exception was raised.
+        """This returns 1 if the EOF exception was raised at some point.
         """
         return self.flag_eof
 
@@ -702,7 +709,7 @@ class spawn:
                 for cre in pattern_list:
                     index = index + 1
                     if cre is EOF or cre is TIMEOUT: 
-                        continue # The Exception patterns are handled differently.
+                        continue # The patterns for PexpectExceptions are handled differently.
                     match = cre.search(incoming)
                     if match is not None:
                         self.before = incoming[ : match.start()]

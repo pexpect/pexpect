@@ -39,6 +39,11 @@ except ImportError, e:
 A critical module was not found. Probably this OS does not support it.
 Currently pexpect is intended for UNIX operating systems (including OS-X)."""
 
+__version__ = '0.94'
+__revision__ = '$Revision$'
+__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn',
+    '__version__', '__revision__']
+
 # Exception classes used by this module.
 class ExceptionPexpect(Exception):
     """Base class for all exceptions raised by this module."""

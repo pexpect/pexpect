@@ -91,8 +91,8 @@ def DoEraseLine (fsm):
         elif arg == 2:
                 screen.erase_line()
 def DoEnableScroll (fsm):
-        # Scrolling is on by default.
-        pass
+        screen = fsm.something[0]
+        screen.scroll_screen()
 def DoCursorSave (fsm):
         screen = fsm.something[0]
         screen.cursor_save_attrs()
@@ -100,10 +100,10 @@ def DoCursorRestore (fsm):
         screen = fsm.something[0]
         screen.cursor_restore_attrs()
 def DoScrollRegion (fsm):
-	screen = fsm.something[0]
+        screen = fsm.something[0]
         r2 = int(fsm.something.pop())
         r1 = int(fsm.something.pop())
-	screen.scroll_screen_rows (r1,r2)
+        screen.scroll_screen_rows (r1,r2)
 
 def DoMode (fsm):
         screen = fsm.something[0]
@@ -141,13 +141,15 @@ class ANSI (term):
         self.state.add_transition (')', 'ESC', None, 'G1SCS')
         self.state.add_transition_list ('AB012', 'G0SCS', None, 'INIT')
         self.state.add_transition_list ('AB012', 'G1SCS', None, 'INIT')
-        self.state.add_transition ('[', 'ESC', None, 'ELB')
         self.state.add_transition ('7', 'ESC', DoCursorSave, 'INIT')
         self.state.add_transition ('8', 'ESC', DoCursorRestore, 'INIT')
         self.state.add_transition ('M', 'ESC', DoUpReverse, 'INIT')
+        self.state.add_transition ('>', 'ESC', DoUpReverse, 'INIT')
+        self.state.add_transition ('<', 'ESC', DoUpReverse, 'INIT')
         self.state.add_transition ('=', 'ESC', None, 'INIT') # Selects application keypad.
         self.state.add_transition ('#', 'ESC', None, 'GRAPHICS_POUND')
         self.state.add_transition_any ('GRAPHICS_POUND', None, 'INIT')
+        self.state.add_transition ('[', 'ESC', None, 'ELB')
         # ELB means Escape Left Bracket. That is ^[[
         self.state.add_transition ('H', 'ELB', DoHomeOrigin, 'INIT')
         self.state.add_transition ('D', 'ELB', DoBackOne, 'INIT')
@@ -168,11 +170,11 @@ class ANSI (term):
         self.state.add_transition ('J', 'NUMBER_1', DoErase, 'INIT')
         self.state.add_transition ('K', 'NUMBER_1', DoEraseLine, 'INIT')
         self.state.add_transition ('l', 'NUMBER_1', DoMode, 'INIT')
-	### It gets worse... the 'm' code can have infinite number of
-	### number;number;number before it. I've never seen more than two,
-	### but the specs say it's allowed. crap!
+        ### It gets worse... the 'm' code can have infinite number of
+        ### number;number;number before it. I've never seen more than two,
+        ### but the specs say it's allowed. crap!
         self.state.add_transition ('m', 'NUMBER_1', None, 'INIT')
-	### LED control. Same problem as 'm' code.
+        ### LED control. Same problem as 'm' code.
         self.state.add_transition ('q', 'NUMBER_1', None, 'INIT') 
         
         # \E[?47h appears to be "switch to alternate screen"
@@ -191,11 +193,11 @@ class ANSI (term):
         self.state.add_transition ('H', 'NUMBER_2', DoHome, 'INIT')
         self.state.add_transition ('f', 'NUMBER_2', DoHome, 'INIT')
         self.state.add_transition ('r', 'NUMBER_2', DoScrollRegion, 'INIT')
-	### It gets worse... the 'm' code can have infinite number of
-	### number;number;number before it. I've never seen more than two,
-	### but the specs say it's allowed. crap!
+        ### It gets worse... the 'm' code can have infinite number of
+        ### number;number;number before it. I've never seen more than two,
+        ### but the specs say it's allowed. crap!
         self.state.add_transition ('m', 'NUMBER_2', None, 'INIT')
-	### LED control. Same problem as 'm' code.
+        ### LED control. Same problem as 'm' code.
         self.state.add_transition ('q', 'NUMBER_2', None, 'INIT') 
     def process (self, c):
         self.state.process(c)

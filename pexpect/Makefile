@@ -3,7 +3,10 @@ SHELL = /bin/sh
 VERSION= 0.94
 #DOCGENERATOR= happydoc
 DOCGENERATOR= pydoc -w
-MANIFEST_LINES != cat MANIFEST
+# This is for GNU Make. This does not work on BSD Make.
+MANIFEST_LINES := $(shell cat MANIFEST)
+# This is for BSD Make. This does not work on GNU Make.
+#MANIFEST_LINES != cat MANIFEST
 
 all: dist examples doc
 

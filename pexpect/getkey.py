@@ -1,3 +1,11 @@
+'''
+This currently just holds some notes.
+This is not expected to be working code.
+
+$Revision$
+$Date$
+'''
+
 import tty, termios, sys
 
 def getkey():

@@ -1,5 +1,8 @@
-#!/usr/bin/env python
+'''
+$Revision$
+$Date$
 
+'''
 # references:
 # http://www.retards.org/terminals/vt102.html
 # http://vt100.net/docs/vt102-ug/contents.html

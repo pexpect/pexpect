@@ -17,7 +17,6 @@ License: Python Software Foundation License
          http://www.opensource.org/licenses/PythonSoftFoundation.html
 
 Noah Spurrier
-2002
 
 $Revision$
 $Date$

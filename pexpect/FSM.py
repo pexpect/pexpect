@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 '''This module implements a Finite State Machine (FSM).
 In addition to state this FSM also maintains a user defined "something".
 This "something" is effectively memory, so this FSM could be considered
@@ -59,7 +58,11 @@ and current_state then the FSM will raise an exception.
 This may be desirable, but you can always prevent this just by 
 defining a default transition.
 
-Noah Spurrier 20020822
+Noah Spurrier
+
+$Revision$
+$Date$
+
 '''
 
 class ExceptionFSM(Exception):

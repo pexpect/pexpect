@@ -1,4 +1,7 @@
-#!/usr/bin/env python
+'''
+$Revision$
+$Date$
+'''
 
 import copy
 #import string

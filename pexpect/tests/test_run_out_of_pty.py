@@ -16,8 +16,8 @@ class ExpectTestCase(unittest.TestCase):
 			plist.append (pexpect.spawn('/bin/ls -l'))
 		except pexpect.ExceptionPexpect, e:
 			return
-		else:
-			self.fail ('Expected ExceptionPexpect.')
+		except Exception, e:
+			self.fail ('Expected ExceptionPexpect. ' + str(e))
 	self.fail ('Could not run out of pty devices. This may be OK.')
 
 if __name__ == '__main__':

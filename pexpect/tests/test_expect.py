@@ -7,6 +7,21 @@ import sys
 class ExpectTestCase(unittest.TestCase):
     #def runTest (self):
         
+    def test_expect (self):
+        the_old_way = commands.getoutput('/bin/ls -l')
+
+        p = pexpect.spawn('/bin/ls -l')
+        the_new_way = ''
+        try:
+                while 1:
+                        p.expect ('\n')
+                        the_new_way = the_new_way + p.before
+        except:
+                the_new_way = the_new_way[:-1]
+                the_new_way = the_new_way.replace('\r','\n')
+
+        assert the_old_way == the_new_way
+
     def test_expect_exact (self):
         the_old_way = commands.getoutput('/bin/ls -l')
 
@@ -17,21 +32,6 @@ class ExpectTestCase(unittest.TestCase):
                         p.expect_exact ('\n')
                         the_new_way = the_new_way + p.before
         except:
-                the_new_way = the_new_way[:-1]
-                the_new_way = the_new_way.replace('\r','\n')
-
-        assert the_old_way == the_new_way
-
-    def test_expect (self):
-        the_old_way = commands.getoutput('/bin/ls -l')
-
-        p = pexpect.spawn('/bin/ls -l')
-        the_new_way = ''
-        try:
-                while 1:
-                        p.expect ('\n')
-                        the_new_way = the_new_way + p.before
-        except Exception, e:
                 the_new_way = the_new_way[:-1]
                 the_new_way = the_new_way.replace('\r','\n')
 

@@ -15,7 +15,7 @@ print f(c.before)
 print 'Yes, it\'s python, but it\'s backwards.'
 print
 print 'Escape character is \'^]\'.'
-print c.matched,
+print c.after,
 c.interact()
 c.kill(1)
 print 'isAlive:', c.isAlive()

@@ -69,7 +69,7 @@ class ansiTestCase (unittest.TestCase):
         assert str(s) == write_target
     def test_tetris (self):
         s = ANSI.ANSI (24,80)
-        tetris_text = open ('tetris.data').read()
+        tetris_text = open ('tests/tetris.data').read()
         for c in tetris_text:
             s.process (c)
         assert str(s) == tetris_target

@@ -14,10 +14,10 @@ class Chess:
                 self.term = ANSI.ANSI ()
              
                 #self.child.expect ('Chess')
-                #if self.child.matched != 'Chess':
+                #if self.child.after != 'Chess':
                 #        raise IOError, 'incompatible chess program'
                 #self.term.process_list (self.child.before)
-                #self.term.process_list (self.child.matched)
+                #self.term.process_list (self.child.after)
 
                 self.last_computer_move = ''
 

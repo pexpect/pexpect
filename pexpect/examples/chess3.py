@@ -15,38 +15,39 @@ class Chess:
 		self.child = pexpect.spawn (engine)
                 self.term = ANSI.ANSI ()
              
-		self.child.expect ('Chess')
-		if self.child.after != 'Chess':
-			raise IOError, 'incompatible chess program'
-                self.term.process_list (self.before)
-                self.term.process_list (self.after)
+#		self.child.expect ('Chess')
+	#	if self.child.after != 'Chess':
+	#		raise IOError, 'incompatible chess program'
+        #        self.term.process_list (self.before)
+        #        self.term.process_list (self.after)
 		self.last_computer_move = ''
-        def read_until_cursor (self, r,c)
+        def read_until_cursor (self, r,c):
+            fout = open ('log','a')
             while 1:
-                self.child.read(1, 60)
-                self.term.process (c)
+                k = self.child.read(1, 10)
+                self.term.process (k)
+                fout.write ('(r,c):(%d,%d)\n' %(self.term.cur_r, self.term.cur_c))
+                fout.flush()
                 if self.term.cur_r == r and self.term.cur_c == c:
+                    fout.close()
                     return 1
+                sys.stdout.write (k)
+                sys.stdout.flush()
 
-	def do_first_move (self, move):
-		self.child.expect ('Your move is')
-		self.child.sendline (move)
-                self.term.process_list (self.before)
-                self.term.process_list (self.after)
-		return move
+	def do_scan (self):
+            fout = open ('log','a')
+            while 1:
+                c = self.child.read(1,10)
+                self.term.process (c)
+                fout.write ('(r,c):(%d,%d)\n' %(self.term.cur_r, self.term.cur_c))
+                fout.flush()
+                sys.stdout.write (c)
+                sys.stdout.flush()
 
 	def do_move (self, move):
-                read_until_cursor (19,60)
-		#self.child.expect ('\[19;60H')
+                self.read_until_cursor (19,60)
 		self.child.sendline (move)
-		print 'do_move' move
 		return move
-
-	def get_first_computer_move (self):
-		self.child.expect ('My move is')
-		self.child.expect (REGEX_MOVE)
-#		print '', self.child.after
-		return self.child.after
 	
 	def get_computer_move (self):
 		print 'Here'
@@ -76,23 +77,29 @@ class Chess:
 import sys, os
 print 'Starting...'
 white = Chess()
-white.child.echo = 1
-white.child.expect ('Your move is')
-white.set_depth(2)
-white.switch()
+white.do_move('b2b4')
+white.read_until_cursor (19,60)
+c1 = white.term.get_abs(17,58)
+c2 = white.term.get_abs(17,59)
+c3 = white.term.get_abs(17,60)
+c4 = white.term.get_abs(17,61)
+fout = open ('log','a')
+fout.write ('Computer:%s%s%s%s\n' %(c1,c2,c3,c4))
+fout.close()
+white.do_move('c2c4')
+white.read_until_cursor (19,60)
+c1 = white.term.get_abs(17,58)
+c2 = white.term.get_abs(17,59)
+c3 = white.term.get_abs(17,60)
+c4 = white.term.get_abs(17,61)
+fout = open ('log','a')
+fout.write ('Computer:%s%s%s%s\n' %(c1,c2,c3,c4))
+fout.close()
+white.do_scan ()
 
-move_white = white.get_first_computer_move()
-print 'first move white:', move_white
-
-white.do_move ('e7e5')
-move_white = white.get_computer_move()
-print 'move white:', move_white
-white.do_move ('f8c5')
-move_white = white.get_computer_move()
-print 'move white:', move_white
-white.do_move ('b8a6')
-move_white = white.get_computer_move()
-print 'move white:', move_white
+#white.do_move ('b8a6')
+#move_white = white.get_computer_move()
+#print 'move white:', move_white
 
 sys.exit(1)
 

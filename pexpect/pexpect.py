@@ -83,7 +83,8 @@ class spawn:
         self.log_fd = -1
     
         self.before = None
-        self.matched = None
+        self.after = None
+        self.match = None
 
         self.args = split_command_line(command)
         self.command = self.args[0]
@@ -213,21 +214,46 @@ class spawn:
         returns the index into the pattern list or raises an exception
         on error.
 
-        Afterwards the instance attributes 'before', 'matched' and
-        'match' will be set. You can read all the data read before the
-        match in 'before'. You can read the data that was matched in
-        'matched', while 'match' is the corresponding
-        're.MatchObject'. If an error occured, both 'matched' and
-        'match' will be None.
+        After a match is found the instance attributes
+	'before', 'after' and 'match' will be set.
+	You can see all the data read before the match in 'before'.
+	You can see the data that was matched in 'after'.
+	The re.MatchObject used in the re match will be in 'match'.
+        If an error occured then 'before' will be set to all the
+	data read so far and 'after' and 'match' will be None.
 
-        Special: A list entry may be EOF instead of a string. This
-        will catch EOF exceptions and return the index of this entry
-        instead. 'matched' and 'match' will be None anyhow.
+        Note: A list entry may be EOF instead of a string.
+	This will catch EOF exceptions and return the index
+	of the EOF entry instead of raising the EOF exception.
+	The attributes 'after' and 'match' will be None.
+	This allows you to write code like this:
+		index = p.expect (['good', 'bad', pexpect.EOF])
+		if index == 0:
+			do_something()
+		elif index == 1:
+			do_something_else()
+		elif index == 2:
+			do_some_other_thing()
+	instead of code like this:
+		try:
+			index = p.expect (['good', 'bad'])
+			if index == 0:
+				do_something()
+			elif index == 1:
+				do_something_else()
+		except EOF:
+			do_some_other_thing()
+	These two forms are equivalent. It all depends on what you want.
+	You can also just expect the EOF if you are waiting for all output
+	of a child to finish. For example:
+		p = pexpect.spawn('/bin/ls')
+		p.expect (pexpect.EOF)
+		print p.before
         """
         compiled_pattern_list = self.compile_pattern_list(pattern)
         return self.expect_list(compiled_pattern_list, timeout)
 
-    def expect_exact (self, str_list, local_timeout = None):
+    def expect_exact (self, pattern_list, local_timeout = None):
         """This is similar to expect() except that it takes
         list of regular strings instead of compiled regular expressions.
         The idea is that this should be much faster. It could also be
@@ -236,65 +262,57 @@ class spawn:
         You may also pass just a string without a list and the single
         string will be converted to a list.
         """
-        matched_pattern = None
-        before_pattern = None
-        index = 0
-        
-        if type(str_list)is StringType:
-            str_list = [str_list]
+        ### This is dumb. It shares most of the code with expect_list.
+        ### The only different is the comparison method and that
+        ### self.match is always None after calling this.
+
+        if type(pattern_list) is StringType:
+            pattern_list = [pattern_list]
 
         try:
-            done = 0
             incoming = ''
-            while not done: # Keep reading until done.
+            while 1: # Keep reading until exception or return.
                 c = self.read(1, local_timeout)
                 incoming = incoming + c
 
                 # Sequence through the list of patterns and look for a match.
-                for str_target in str_list:
+                index = -1
+                for str_target in pattern_list:
+                    index = index + 1
                     match_index = incoming.find (str_target)
                     if match_index >= 0:
-                        matched_pattern = incoming[match_index:]
-                        before_pattern = incoming[:match_index]
-                        done = 1
-                        break
-                    else:
-                        index = index + 1
+                        self.before = incoming [ : match_index]
+                        self.after = incoming [match_index : ]
+                        self.match = None
+                        return index
+        except EOF, e:
+            if EOF in pattern_list:
+                self.before = incoming
+                self.after = EOF
+                return pattern_list.index(EOF)
+            else:
+                raise
         except Exception, e:
-            ### Here I should test if the client wants to pass exceptions, or
-            ### to return some state flag. Exception versus return value.
-            matched_pattern = None
-            before_pattern = incoming
+            self.before = incoming
+            self.after = None
+            self.match = None
             raise
-
-        self.before = before_pattern
-        self.matched = matched_pattern
-        return index
-
+            
+        assert 0 == 1, 'Should not get here.'
 
     def expect_list(self, pattern_list, local_timeout = None):
         """This is called by expect(). This takes a list of compiled
-        regular expressions. This returns the matched index into the
-        pattern_list.
+        regular expressions. This returns the index into the pattern_list
+	that matched the child's output.
 
-        Special: A list entry may be None instead of 
-        a compiled regular expression. This will catch EOF exceptions and 
-        return the index of this entry; otherwise, an exception is raised. 
-        After an EOF 'matched' and 'match' will be None.
         """
-        # if partial=='': ### self.flag_eof:
-        # flag_eof = 1 ### Should not need this if self.flag_eof is used.
-        # index = None
-        # matched_pattern = None
-        # done = 1
-        # break
 
         if local_timeout is None: 
             local_timeout = self.timeout
         
         try:
             incoming = ''
-            while 1: # Keep reading until except or return.
+            while 1: # Keep reading until exception or return.
                 c = self.read(1, local_timeout)
                 incoming = incoming + c
 
@@ -306,18 +324,20 @@ class spawn:
                         continue # The EOF pattern is not a regular expression.
                     match = cre.search(incoming)
                     if match is not None:
-                        self.match = incoming[match.start() : match.end()]
                         self.before = incoming[ : match.start()]
+                        self.after = incoming[match.start() : ]
+                        self.match = match
                         return index
         except EOF, e:
             if EOF in pattern_list:
                 self.before = incoming
-                self.match = EOF
+                self.after = EOF
                 return pattern_list.index(EOF)
             else:
                 raise
         except Exception, e:
             self.before = incoming
+            self.after = None
             self.match = None
             raise
             

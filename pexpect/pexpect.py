@@ -23,7 +23,7 @@ $Date$
 """
 import os, sys
 import select
-import signal
+# import signal
 import traceback
 import re
 import struct
@@ -83,7 +83,6 @@ class spawn:
         self.timeout = timeout
         self.child_fd = -1
         self.pid = None
-        #self.log_fd = -1
         self.log_file = None    
         self.before = None
         self.after = None
@@ -104,7 +103,7 @@ class spawn:
         Python only garbage collects Python objects. Since OS file descriptors
         are not Python objects, so they must be handled manually.
         """
-        if self.child_fd is not -1:
+        if self.child_fd != -1:
             os.close (self.child_fd)
 
     def __spawn(self):
@@ -374,7 +373,19 @@ class spawn:
 
         This is a non-blocking wrapper around os.read().
         It uses select.select() to supply a timeout. 
+
         """
+        # Note that some systems like Solaris don't seem to ever give
+        # an EOF when the child dies. In fact, you can still try to read
+        # from the child_fd -- it will block forever or until TIMEOUT.
+        # For this case, I test isalive() before doing any reading.
+        # If isalive() is false, then I pretend that this is the same as EOF.
+        if not self.isalive():
+	    r, w, e = select.select([self.child_fd], [], [], 0)
+	    if not r:
+	        self.flag_eof = 1
+		raise EOF ('End Of File (EOF) in read(). Braindead platform.')
+
         r, w, e = select.select([self.child_fd], [], [], timeout)
         if not r:
             raise TIMEOUT('Timeout exceeded in read().')

@@ -17,10 +17,10 @@ class s:
 
 	self.pid = self.child_fd = None
         try:
-            self.pid, self.child_fd = posix.forkpty()
-            #self.pid, self.child_fd = pty.fork()
+            #self.pid, self.child_fd = posix.forkpty()
+            self.pid, self.child_fd = pty.fork()
         except OSError, e:
-            raise Exception('posix.fork() failed: ' + str(e))
+            raise Exception('pty fork() failed: ' + str(e))
 
         if self.pid == 0: # Child
             os.execvp(command, args)
@@ -32,8 +32,8 @@ print '1'
 x = s('ls', ['ls'])
 time.sleep(5)
 print '2'
-some = os.read (x.child_fd, 3225)
+result = os.read (x.child_fd, 5555)
 print '3'
-print some
+print result
 print '4'
 

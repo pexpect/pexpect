@@ -157,7 +157,10 @@ class spawn:
             raise ExceptionPexpect('Pexpect: pty.fork() failed: ' + str(e))
 
         if self.pid == 0: # Child
-            setwinsize(24, 80)
+	    try: # Some platforms (notably Cygwin) do not like setwinsize.
+                setwinsize(24, 80)
+	    except:
+	        pass
             # Do not allow child to inherit open file descriptors from parent.
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
             for i in range (3, max_fd):

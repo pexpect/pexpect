@@ -93,8 +93,8 @@ class spawn:
         self.before = None
         self.after = None
         self.match = None
-	self.softspace = 0 # File-like object.
-	self.name = ''
+        self.softspace = 0 # File-like object.
+        self.name = '' # File-like object.
 
         if args is None:
             self.args = split_command_line(command)
@@ -103,7 +103,7 @@ class spawn:
             args.insert (0, command)
             self.args = args
             self.command = command
-	self.name = reduce(lambda x, y: x+' '+y, self.args)
+        self.name = reduce(lambda x, y: x+' '+y, self.args)
 
         self.__spawn()
 
@@ -245,7 +245,7 @@ class spawn:
         a list of those types. Strings will be compiled to re types.
         This returns the index into the pattern list. If the pattern was
         not a list this returns index 0 on a successful match.
-	This may raise exceptions for EOF or TIMEOUT.
+    This may raise exceptions for EOF or TIMEOUT.
         To avoid the EOF exception add EOF to the pattern list.
 
         After a match is found the instance attributes
@@ -336,7 +336,6 @@ class spawn:
         """This is called by expect(). This takes a list of compiled
         regular expressions. This returns the index into the pattern_list
         that matched the child's output.
-
         """
 
         if local_timeout is None: 
@@ -393,8 +392,8 @@ class spawn:
 #            self.before = incoming
 #            raise
 
-    def read(self, n, timeout = None):
-        """This reads up to n characters from the child application.
+    def read(self, size = -1, timeout = None):
+        """This reads at most size characters from the child application.
         It includes a timeout. If the read does not complete within the
         timeout period then a TIMEOUT exception is raised.
         If the end of file is read then an EOF exception will be raised.
@@ -425,7 +424,7 @@ class spawn:
 
         if self.child_fd in r:
             try:
-                s = os.read(self.child_fd, n)
+                s = os.read(self.child_fd, size)
             except OSError, e:
                 self.flag_eof = 1
                 raise EOF('End Of File (EOF) in read(). Exception style platform.')
@@ -441,30 +440,29 @@ class spawn:
 
         raise ExceptionPexpect('Reached an unexpected state in read().')
 
-    def write(self, str):
-        """This is an alias for send().
-        This return the number of bytes actually written.
+    def write(self, str):   # File-like object.
+        """This is an alias for send() except that there is no return value.
         """
-        return self.send (text)
+        self.send (str)
 
-    def writelines (self, sequence):
+    def writelines (self, sequence):   # File-like object.
         """This calls write() for each element in the sequence.
-        This return the number of bytes actually written.
+        The sequence can be any iterable object producing strings, 
+        typically a list of strings. This does not add line separators
+        There is no return value.
         """
-        total_n = 0
         for str in sequence:
-            total_n = total_n + self.write (str)
-        return total_n
+            self.write (str)
 
     def send(self, text):
         """This sends a string to the child process.
-        This return the number of bytes actually written.
+        This returns the number of bytes written.
         """
         return os.write(self.child_fd, text)
 
     def sendline(self, text=''):
         """This is like send(), but it adds a line separator.
-        This return the number of bytes actually written.
+        This returns the number of bytes written.
         """
         n = self.send(text)
         return n + self.send(os.linesep)

@@ -2,4 +2,4 @@ README.txt
 setup.py
 pexpect.py
 ansi.py
-fsm.py
+FSM.py

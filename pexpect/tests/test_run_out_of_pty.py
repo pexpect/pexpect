@@ -5,11 +5,14 @@ import commands
 import sys
 
 class ExpectTestCase(unittest.TestCase):
-    #def runTest (self):
         
     def test_run_out (self):
-        """This assumes that the tested platform has less than 10000 pty devices.
+        """This assumes that the tested platform has < 10000 pty devices.
+	This test currently does not work under Solaris.
+	Under Solaris it runs out of file descriptors first and
+	ld.so starts to barf.
         """
+
         plist=[]
         for count in range (0,10000):
                 try:

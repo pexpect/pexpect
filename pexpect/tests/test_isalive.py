@@ -8,6 +8,7 @@ class IsAliveTestCase(unittest.TestCase):
     def test_expect_isalive1 (self):
         p = pexpect.spawn('ls')
         p.expect(pexpect.EOF)
+	time.sleep(1) # allow kernel status time to catch up with state.
         if p.isalive():
             self.fail ('Child process is not dead. It should be.')
 

@@ -244,7 +244,10 @@ class spawn:
             self.flush()
             os.close (self.child_fd)
             if wait:
-                os.waitpid (self.pid, 0)
+                try:
+		    os.waitpid (self.pid, 0)
+                except OSError:
+		    pass
             self.child_fd = -1
             self.__child_fd_owner = None
 

@@ -17,8 +17,8 @@ class s:
 
 	self.pid = self.child_fd = None
         try:
-            #self.pid, self.child_fd = posix.forkpty()
-            self.pid, self.child_fd = pty.fork()
+            self.pid, self.child_fd = posix.forkpty()
+            #self.pid, self.child_fd = pty.fork()
         except OSError, e:
             raise Exception('posix.fork() failed: ' + str(e))
 
@@ -27,9 +27,6 @@ class s:
 
         # Parent
 
-    def __del__(self):
-        if self.child_fd is not -1:
-            os.close (self.child_fd)
 
 print '1'
 x = s('ls', ['ls'])

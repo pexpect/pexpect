@@ -9,7 +9,7 @@ host = raw_input('Hostname: ')
 user = raw_input('User: ')
 password = getpass.getpass('Password: ')
 
-child = pexpect.spawn("/usr/bin/ssh -l %s %s /bin/ls -l"%(user, host))
+child = pexpect.spawn("ssh -l %s %s /bin/ls -l"%(user, host))
 
 child.expect('password:')
 child.sendline(password)

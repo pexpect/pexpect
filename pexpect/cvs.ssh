@@ -1,3 +1,0 @@
-export CVS_RSH=ssh
-export CVSROOT=:ext:noah@cvs.pexpect.sourceforge.net:/cvsroot/pexpect
-

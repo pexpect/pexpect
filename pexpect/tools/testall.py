@@ -1,16 +1,13 @@
 #!/usr/bin/env python
-'''This module allows you to run all tests in the project where:
-    test directories are named 'tests'
-    test module names begin with 'test_'
-
-Testing from Unittest GUI:
-    type testall.py into the unittestgui.py GUI
-
-Testing from Command Line:
-    To run tests from command line just run this script.
-    Alternatively you can run it this way:
-        python /usr/local/lib/python2.1/unittest.py testall
-
+'''This script runs all tests in a directory.
+It does not need to know about the tests ahead of time.
+It recursively descends from the current directory and
+automatically builds up a list of tests to run.
+Only directories named 'tests' are processed.
+The path to each 'tests' directory is added to the PYTHONPATH.
+Only python scripts that start with 'test_' are added to
+the list of scripts in the test suite.
+Noah Spurrier
 '''
 
 import unittest

@@ -461,7 +461,7 @@ class spawn:
         n = self.send(text)
         return n + self.send(os.linesep)
 
-    def send_eof(self):
+    def sendeof(self):
         """This sends an EOF to the child.
 
         More precisely: this sends a character which causes the pending
@@ -566,7 +566,8 @@ class spawn:
         you send the right signal.
         """
         # Same as os.kill, but the pid is given for you.
-        os.kill(self.pid, sig)
+        if self.isalive():
+            os.kill(self.pid, sig)
 
     def interact(self, escape_character = chr(29)):
         """This gives control of the child process to the interactive user.

@@ -371,6 +371,7 @@ class spawn:
 
         Notice that if this method is called with timeout=None 
         then it actually may block.
+
         This is a non-blocking wrapper around os.read().
         It uses select.select() to supply a timeout. 
         """

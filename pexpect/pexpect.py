@@ -87,7 +87,7 @@ class spawn:
         #self.maxsearchsize = 1000
 
         self.timeout = timeout
-        self.child_fd = -1
+        self.child_fd = -1 # initially closed
         self.pid = None
         self.log_file = None    
         self.before = None
@@ -109,7 +109,7 @@ class spawn:
 
     def __del__(self):
         """This makes sure that no system resources are left open.
-        Python only garbage collects Python objects. Since OS file descriptors
+        Python only garbage collects Python objects. OS file descriptors
         are not Python objects, so they must be handled manually.
         """
         self.close()
@@ -125,8 +125,8 @@ class spawn:
         # So the only way you can tell if the child process started
         # or not is to try to read from the file descriptor. If you get
         # EOF immediately then it means that the child is already dead.
-        # That may not necessarily be bad, because you may spawn a child
-        # that performs some operator, creates no stdout output, and then dies.
+        # That may not necessarily be bad, because you may haved spawned a child
+        # that performs some task; creates no stdout output; and then dies.
         # It is a fuzzy edge case. Any child process that you are likely to
         # want to interact with Pexpect would probably not fall into this
         # category.
@@ -137,22 +137,6 @@ class spawn:
 
         if which(self.command) == None:
             raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
-# I'm no longer using this technique to test if a process is alive.
-# First, it is not portable.
-# Second, it messes up other subsystems that use signals (such as pipes).
-# Third, signals on UNIX suck.
-#        # This is necessary for isAlive() to work. Without this there is
-#        # no portable way to tell if a child process is a zombie.
-#        # Checking waitpid with WNOHANG option does not work and
-#        # checking waitpid without it would block if the child is not a zombie.
-#        # With this children should exit completely without going into
-#        # a zombie state. Note that some UNIX flavors may send the signal
-#        # before the child's pty output buffer is empty, while others
-#        # may send the signal only when the buffer is empty.
-#        # In the later case, isAlive() will always return true until the
-#        # output buffer is empty. Use expect_eof() to consume all child output.
-#        # This is not the same as the Zombie (waiting to die) problem.
-#         #signal.signal(signal.SIGCHLD, signal.SIG_IGN)
 
         try:
             self.pid, self.child_fd = pty.fork()
@@ -160,7 +144,7 @@ class spawn:
             raise ExceptionPexpect('Pexpect: pty.fork() failed: ' + str(e))
 
         if self.pid == 0: # Child
-            try: # Some platforms (notably Cygwin) do not like setwinsize.
+            try: # Some platforms do not like setwinsize (for example, Cygwin).
                 setwinsize(24, 80)
             except:
                 pass
@@ -177,18 +161,29 @@ class spawn:
 
         # Parent
 
-    def fileno (self):
+    def fileno (self):   # File-like object.
         """This returns the file descriptor of the pty for the child."""
         return self.child_fd
 
-    def close (self):
+    def close (self):   # File-like object.
         """This is experimental.
         This closes the file descriptor of the child application.
         It makes no attempt to actually kill the child or wait for its status.
         """
         if self.child_fd != -1:
+            self.flush()
             os.close (self.child_fd)
             self.child_fd = -1
+
+    def flush (self):   # File-like object.
+        """This currently does nothing.
+        """
+        pass
+
+    def isatty ():   # File-like object.
+        """This always returns 1.
+        """
+        return 1
 
     def setecho (self, on):
         """This sets the terminal echo-mode on or off."""
@@ -407,6 +402,10 @@ class spawn:
         It uses select.select() to supply a timeout. 
 
         """
+        
+        if self.child_fd == -1:
+            raise ValueError ('I/O operation on closed file')
+
         # Note that some systems like Solaris don't seem to ever give
         # an EOF when the child dies. In fact, you can still try to read
         # from the child_fd -- it will block forever or until TIMEOUT.
@@ -440,6 +439,19 @@ class spawn:
 
         raise ExceptionPexpect('Reached an unexpected state in read().')
 
+    def readline (size = -1):    # File-like object.
+        """This reads and returns one entire line. A trailing newline is kept in
+        the string, but may be absent when a file ends with an incomplete line. 
+        Trivia: This readline() looks for a \r\n pair even on UNIX because this is 
+        what the pseudo tty device returns. The newline is converted to os.linesep 
+        before it is returned.
+        """
+        index = self.expect (['\r\n', EOF])
+        if index == 0:
+            return self.before + os.linesep
+        else:
+            return self.before
+        
     def write(self, str):   # File-like object.
         """This is an alias for send() except that there is no return value.
         """

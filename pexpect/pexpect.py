@@ -38,13 +38,13 @@ try:
 except ImportError, e:
     raise ImportError, str(e) + """
 A critical module was not found. Probably this OS does not support it.
-Currently pexpect is intended for UNIX operating systems (including OS-X)."""
+Currently pexpect is intended for UNIX operating systems (including OS X)."""
 
 
 
 __version__ = '0.97'
 __revision__ = '$Revision$'
-__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn',
+__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run',
     '__version__', '__revision__']
 
 
@@ -64,6 +64,12 @@ class TIMEOUT(ExceptionPexpect):
 ##    """Raised when a scan buffer fills before matching an expected pattern."""
 
 
+
+def run (command, args=[], timeout=30):
+    """This runs a command; waits for it to finish; then returns all output as a string. This is a utility interface around the spawn class."""
+    child = spawn(command, args, timeout)
+    child.expect (EOF)
+    return child.before
 
 class spawn:
     """This is the main class interface for Pexpect. Use this class to

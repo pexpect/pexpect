@@ -1,6 +1,9 @@
 Pexpect
 a Pure Python "Expect like" module
 
+To work with this CVS repository you should source the cvs.conf file.
+    . ./cvs.conf
+
 The purpose of the Pexpect module is to make Python be a better glue.
 
 Pexpect works like Don Libes' Expect. Use Pexpect when you want to

@@ -246,8 +246,11 @@ class spawn:
             if wait:
                 try:
                     os.waitpid (self.pid, 0)
-                except OSError:
-                    pass
+                except OSError, e: ### suggested by Robert Stone
+                    if e[0] == errno.ECHILD:
+                        pass
+                    else:
+                        raise e
             self.child_fd = -1
             self.__child_fd_owner = None
 

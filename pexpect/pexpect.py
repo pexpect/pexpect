@@ -1,4 +1,4 @@
-'''
+"""
 Pexpect is a Python module for spawning child applications;
 controlling them; and responding to expected patterns in their output.
 Pexpect can be used for automating interactive applications such as
@@ -20,13 +20,13 @@ Noah Spurrier
 
 $Revision$
 $Date$
+"""
 
-'''
 import select
 import signal
 import os, sys
-import errno
-import time
+#import errno
+#import time
 import pty
 import tty
 import termios
@@ -39,25 +39,25 @@ from types import *
 
 # Exception classes used by this module.
 class ExceptionPexpect(Exception):
-    '''Base class for all exceptions raised by this module.'''
+    """Base class for all exceptions raised by this module."""
     def __init__(self, value):
         self.value = value
     def __str__(self):
         return `self.value`
 class EOF(ExceptionPexpect):
-    '''Raised when EOF is read from a child.'''
+    """Raised when EOF is read from a child."""
 class TIMEOUT(ExceptionPexpect):
-    '''Raised when a read time exceeds the timeout.'''
+    """Raised when a read time exceeds the timeout."""
 ##class MAXBUFFER(ExceptionPexpect):
-##    '''Raised when a scan buffer fills before matching an expected pattern.'''
+##    """Raised when a scan buffer fills before matching an expected pattern."""
 
 class spawn:
-    '''This is the main class interface for Pexpect. Use this class to
+    """This is the main class interface for Pexpect. Use this class to
     start and control child applications.
-    '''
+    """
 
     def __init__(self, command):
-        '''This is the constructor. The command parameter is a string
+        """This is the constructor. The command parameter is a string
         that includes the path and any arguments to the command. For
         example:
             p = pexpect.spawn ('/usr/bin/ftp')
@@ -65,7 +65,7 @@ class spawn:
             p = pexpect.spawn ('/usr/bin/ssh some@host.com')
         After this the child application will be created and
         will be ready for action. See expect() and send()/sendline().
-        '''
+        """
         ### This is not strictly correct since pty is not POSIX (Alas!).
         ### Instead I should check for a working pty or something...
         if os.name != 'posix':
@@ -93,18 +93,18 @@ class spawn:
         self.__spawn()
 
     def __del__(self):
-        '''This makes sure that no system resources are left open.
+        """This makes sure that no system resources are left open.
         Python only garbage collects Python objects. Since OS file descriptors
         are not Python objects, so they must be handled manually.
-        '''
+        """
         if self.child_fd is not -1:
             os.close (self.child_fd)
 
     def __spawn(self):
-        '''This starts the given command in a child process. This does
+        """This starts the given command in a child process. This does
         all the fork/exec type of stuff for a pty. This is called by
         __init__. The args parameter is a list, command is a string.
-        '''
+        """
         # The pid and child_fd of this object get set by this method.
         # Note that it is difficult for this method to fail.
         # You cannot detect if the child process cannot start.
@@ -122,7 +122,8 @@ class spawn:
         assert self.command != None, 'The command member is None.'
 
         command_line = split_command_line(self.command)
-        assert which (command_line[0]) != None, 'The command was not found or was not executable.'
+        if which(command_line[0]) == None:
+            raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
 
         # This is necessary for isAlive() to work. Without this there is
         # no portable way to tell if a child process is a zombie.
@@ -140,8 +141,8 @@ class spawn:
         try:
             self.pid, self.child_fd = pty.fork()
         except OSError, e:
-            raise ExceptionPexpect(str(e) + '\nPexpect: pty.fork() failed. ' +
-                                  'Out of pty devices or this platform ' +
+            raise ExceptionPexpect(str(e) + '\nPexpect: pty.fork() failed. ' \
+                                  'Out of pty devices or this platform ' \
                                   'does not properly support pty.fork().')
 
         if self.pid == 0: # Child
@@ -151,58 +152,124 @@ class spawn:
 
         # Parent
 
-    def fileno ():
-        '''This returns the file descriptor of the pty for the child.'''
-        return child_fd
-        
+    def fileno (self):
+        """This returns the file descriptor of the pty for the child."""
+        return self.child_fd
+
+    def send_eof(self):
+        """This sends an EOF to the child.
+
+        More precisely: this sends a character which causes the pending
+        child buffer to be sent to the waiting user program without
+        waiting for end-of-line. If it is the first character of the
+        line, the read() in the user program returns 0, which
+        signifies end-of-file.
+
+        This means: do make this work as expected send_eof() has to be
+        called at the begining of a line. A newline-charakter is _not_
+        send here to avoid problems.
+        """
+        ### Known Bug: this should either get the EOF character from
+        ### termios or set (and restore) it. Currently the character
+        ### is hard-coded here.
+        ### EOF = '\004'
+        fd = sys.stdin.fileno()
+        old = termios.tcgetattr(fd) # remember current state
+        new = termios.tcgetattr(fd)
+        new[3] = new[3] | termios.ICANON        # lflags
+        # use try/finally to ensure state gets restored
+        try:
+            # EOF is recognized when ICANON is set, thus ensure it is:
+            termios.tcsetattr(fd, termios.TCSADRAIN, new)
+            os.write(self.child_fd, termios.CEOF) ### This was based from EOF = '\004'
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old) # restore state
+
+    def set_echo (self, on):
+        """This sets the terminal echo-mode on or off."""
+        new = termios.tcgetattr(self.child_fd)
+        if on:
+            new[3] = new[3] | termios.ECHO          # lflags
+        else:
+            new[3] = new[3] & ~termios.ECHO          # lflags
+        termios.tcsetattr(self.child_fd, termios.TCSADRAIN, new)
+
     def log_open (self, filename):
-        '''This opens a log file. All data read from the child
+        """This opens a log file. All data read from the child
         application will be written to the log file.
         This is very useful to use while creating scripts.
         You can use this to figure out exactly what the child
         is sending.
-        '''
+        """
         self.log_fd = os.open (filename, O_APPEND | O_CREAT)
         
     def log_close (self):
-        '''This closes the log file opened by log().
-        '''
+        """This closes the log file opened by log().
+        """
         os.close (self.log_fd)
         self.log_fd = -1
         
-    def expect(self, pattern, local_timeout = None):
-        '''This seeks through the stream looking for the given
-        pattern. The 'pattern' can be a string or a list of strings.
-        The strings are regular expressions. This returns the index
-        into the pattern list. Afterwards the
-        instance attributes 'before' and 'matched' will be set. You
-        can read the data that was matched by the pattern in
-        'matched'. You can read all the data read before the match in
-        'before'.
-        '''
-        if local_timeout == None:
-            local_timeout = self.timeout
+    def compile_pattern_list(self, pattern):
+        """This compiles a pattern-string or a list of pattern-strings.
+        This is used by expect() when calling expect_list().
+        Thus expect() is nothing more than::
+             cpl = self.compile_pattern_list(pl)
+             return self.expect_list(clp, timeout)
 
-        compiled_pattern_list = []
-        if type(pattern)is StringType:
+        If you are using expect() within a loop it may be more
+        efficient to compile the patterns first and call expect_list():
+             cpl = self.compile_pattern_list(my_pattern)
+             while some_condition:
+                ...
+                i = self.expect_list(clp, timeout)
+                ...
+        """
+        if pattern is EOF:
+            compiled_pattern_list = [None]
+        elif type(pattern) is StringType:
             compiled_pattern_list = [re.compile(pattern)]
-        elif type(pattern)is ListType:
-            compiled_pattern_list = [re.compile(x) for x in pattern]
+        elif type(pattern) is ListType:
+            compiled_pattern_list = []
+            for x in pattern:
+                if x is EOF:
+                    compiled_pattern_list.append(None)
+                else:
+                    compiled_pattern_list.append( re.compile(x) )
         else:
-            raise TypeError, 'Pattern argument is not a string or list of strings.'
+            raise TypeError, 'Pattern argument must be a string or a list of strings.'
 
-        return self.expect_list(compiled_pattern_list, local_timeout)
+        return compiled_pattern_list
+ 
+    def expect(self, pattern, timeout = None):
+        """This seeks through the stream looking for the given
+        pattern. The 'pattern' can be a string or a list of strings.
+        The strings are regular expressions (see module 're'). This
+        returns the index into the pattern list or raises an exception
+        on error.
 
+        Afterwards the instance attributes 'before', 'matched' and
+        'match' will be set. You can read all the data read before the
+        match in 'before'. You can read the data that was matched in
+        'matched', while 'match' is the corresponding
+        're.MatchObject'. If an error occured, both 'matched' and
+        'match' will be None.
+
+        Special: A list entry may be EOF instead of a string. This
+        will catch EOF exceptions and return the index of this entry
+        instead. 'matched' and 'match' will be None anyhow.
+        """
+        compiled_pattern_list = self.compile_pattern_list(pattern)
+        return self.expect_list(compiled_pattern_list, timeout)
 
     def expect_exact (self, str_list, local_timeout = None):
-        '''This is similar to expect() except that it takes
+        """This is similar to expect() except that it takes
         list of regular strings instead of compiled regular expressions.
         The idea is that this should be much faster. It could also be
         useful when you don't want to have to worry about escaping
         regular expression characters that you want to match.
         You may also pass just a string without a list and the single
         string will be converted to a list.
-        '''
+        """
         matched_pattern = None
         before_pattern = None
         index = 0
@@ -240,12 +307,12 @@ class spawn:
 
 
     def expect_list(self, re_list, local_timeout = None):
-        '''This is called by expect(). This takes a list of compiled
+        """This is called by expect(). This takes a list of compiled
         regular expressions. This returns the matched index into the
         re_list. If there is an exception it will set matched to ''
         and before to the data that was read so far.
         This raises EOF and TIMEOUT exceptions.
-        '''
+        """
         # if partial=='': ### self.flag_eof:
         # flag_eof = 1 ### Should not need this if self.flag_eof is used.
         # index = None
@@ -285,25 +352,28 @@ class spawn:
         self.matched = matched_pattern
         return index
 
-    def expect_eof(self, local_timeout = None):
-        '''This reads from the child until the end of file is found.
+    def expect_eof(self, timeout = None):
+        """This reads from the child until the end of file is found.
         A timeout exception may be thrown.
-        '''
-        try:
-            done = 0
-            incoming = ''
-            while not done:
-                c = self.read(1, local_timeout)
-                incoming = incoming + c
-        except EOF, e:
-            pass
+        """
+        if timeout is None: 
+            timeout = self.timeout
 
-        self.before = incoming
-        self.matched = ''
-        return 1
+        incoming = ''
+        self.match = self.matched = None
+        try:
+            while 1:
+                c = self.read(1, timeout)
+                incoming = incoming + c
+        except EOF:
+            self.before = incoming
+            return 0
+        except:  # save incoming data (usefull for debugging)
+            self.before = incoming
+            raise
 
     def write(self, text):
-        '''This is an alias for send().'''
+        """This is an alias for send()."""
         self.send (text)
 
     def writelines (self, sequence):
@@ -311,8 +381,8 @@ class spawn:
             self.write (str)
 
     def send(self, text):
-        '''This sends a string to the child process.
-        '''
+        """This sends a string to the child process.
+        """
         ### Add code so that an empty string will send an EOF.
         ### This emulates the symantics of Libes Expect.
         ### Hmmm... how do I send an EOF?
@@ -324,17 +394,17 @@ class spawn:
                 pass ### Do something someday, like send an EOF.
             os.write(self.child_fd, text)
         except Exception, e:
-            msg = 'Exception caught in send():' + str(e) + '\n' 
+            msg = 'Exception caught in send(): %s' % str(e)
             raise ExceptionPexpect(msg)
 
     def sendline(self, text):
-        '''This is like send(), but it adds a line separator.
-        '''
+        """This is like send(), but it adds a line separator.
+        """
         self.send(text)
         self.send(os.linesep)
         
     def read(self, n, timeout = None):
-        '''This reads up to n characters from the child application.
+        """This reads up to n characters from the child application.
         It includes a timeout. If the read does not complete within the
         timeout period then a TIMEOUT exception is raised.
         If the end of file is read then an EOF exception will be raised.
@@ -345,7 +415,7 @@ class spawn:
         then it actually may block.
         This is a non-blocking wrapper around os.read().
         It uses select.select() to supply a timeout. 
-        '''
+        """
         r, w, e = select.select([self.child_fd], [], [], timeout)
         if not r:
             raise TIMEOUT('Timeout exceeded in read().')
@@ -369,7 +439,7 @@ class spawn:
 
 
     def isAlive(self):
-        '''This tests if the child process is running or not.
+        """This tests if the child process is running or not.
         It returns 1 if the child process appears to be running or
         0 if not. This checks the process list to see if the pid is
         there. In theory, the original child could have died and the
@@ -379,7 +449,7 @@ class spawn:
         UNIX provides no standard way to test if a given pid is
         running or not. By convention most modern UNIX systems will
         respond to signal 0.
-        '''
+        """
         try:
             self.kill(0)
             return 1
@@ -391,23 +461,23 @@ class spawn:
             ###     OSError: [Errno 3] No such process
 
     def kill(self, sig):
-        '''This sends the given signal to the child application.
+        """This sends the given signal to the child application.
         In keeping with UNIX tradition it has a misleading name.
         It does not necessarily kill the child unless
         you send the right signal.
-        '''
+        """
         # Same as os.kill, but the pid is given for you.
         os.kill(self.pid, sig)
 
     def interact(self, escape_character = chr(29)):
-        '''This gives control of the child process to the interactive user.
+        """This gives control of the child process to the interactive user.
         Keystrokes are sent to the child process, and the stdout and stderr
         output of the child process is printed.
         When the user types the escape_character this method will stop.
         The default for escape_character is ^] (ASCII 29).
         This simply echos the child stdout and child stderr to the real
         stdout and it echos the real stdin to the child stdin.
-        '''
+        """
         mode = tty.tcgetattr(self.STDIN_FILENO)
         tty.setraw(self.STDIN_FILENO)
         try:
@@ -416,8 +486,8 @@ class spawn:
             tty.tcsetattr(self.STDIN_FILENO, tty.TCSAFLUSH, mode)
 
     def __interact_writen(self, fd, data):
-        '''This is used by the interact() method.
-        '''
+        """This is used by the interact() method.
+        """
         ### This is stupid. It's a deadlock waiting to happen.
         ### I can't check isAlive due to problems with OpenBSD handling.
         ### I can't think of a safe way to handle this.
@@ -425,12 +495,12 @@ class spawn:
             n = os.write(fd, data)
             data = data[n:]
     def __interact_read(self, fd):
-        '''This is used by the interact() method.
-        '''
+        """This is used by the interact() method.
+        """
         return os.read(fd, 1000)
     def __interact_copy(self, escape_character = None):
-        '''This is used by the interact() method.
-        '''
+        """This is used by the interact() method.
+        """
         while self.isAlive():
             r, w, e = select.select([self.child_fd, self.STDIN_FILENO], [], [])
             if self.child_fd in r:
@@ -446,24 +516,24 @@ class spawn:
 ##    def send_human(self, text, delay_min = 0, delay_max = 1):
 ##        pass
 ##    def spawn2(self, command, args):
-##        '''return pid, fd_stdio, fd_stderr
-##        '''
+##        """return pid, fd_stdio, fd_stderr
+##        """
 ##        pass
 ##    def expect_ex(self, string_match, local_timeout = None):
-##        '''This is like expect(), except that instead of regular expression patterns
+##        """This is like expect(), except that instead of regular expression patterns
 ##        it matches on exact strings.
-##        '''
+##        """
 ##        pass
 ##        # Return (data_read)
 
 
 def which (filename):
-    '''This takes a given filename and tries to find it in the
+    """This takes a given filename and tries to find it in the
     environment path and check if it is executable.
-    '''
+    """
 
     # Special case where filename already contains a path.
-    if os.path.split(filename)[0] != '':
+    if os.path.dirname(filename) != '':
         if os.access (filename, os.X_OK):
             return filename
 
@@ -481,24 +551,24 @@ def which (filename):
     return None
 
 def setwinsize(r, c):
-    '''This sets the windowsize of the tty for stdout.
+    """This sets the windowsize of the tty for stdout.
     This does not change the physical window size.
     It changes the size reported to TTY-aware applications like
     vi or curses. In other words, applications that respond to the
     SIGWINCH signal.
     This is used by __spawn to set the tty window size of the child.
-    '''
+    """
     # Assume ws_xpixel and ws_ypixel are zero.
     s = struct.pack("HHHH", r, c, 0, 0)
     x = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCSWINSZ, s)
 
 def split_command_line(command_line):
-    '''This splits a command line into a list of arguments.
+    """This splits a command line into a list of arguments.
     It splits arguments on spaces, but handles
     embedded quotes, doublequotes, and escaped characters.
     I couldn't do this with a regular expression, so
     I wrote a little state machine to parse the command line.
-    '''
+    """
     arg_list = []
     arg = ''
     state_quote = 0
@@ -507,14 +577,14 @@ def split_command_line(command_line):
     for c in command_line:
         if c == '\\': # Escape the next character
             state_esc = 1
-        if c == r"'": # Handle single quote
+        elif c == r"'": # Handle single quote
             if state_esc:
                 state_esc = 0
             elif not state_quote:
                 state_quote = 1
             else:
                 state_quote = 0
-        if c == r'"': # Handle double quote
+        elif c == r'"': # Handle double quote
             if state_esc:
                 state_esc = 0
             elif not state_doublequote:
@@ -523,7 +593,7 @@ def split_command_line(command_line):
                 state_doublequote = 0
 
         # Add arg to arg_list unless in some other state.
-        if c == ' 'and not state_quote and not state_doublequote and not state_esc:
+        elif c == ' 'and not state_quote and not state_doublequote and not state_esc:
             arg_list.append(arg)
             arg = ''
         else:
@@ -541,10 +611,6 @@ def split_command_line(command_line):
 #        NOTES
 #
 ####################
-
-# If you want the static mathods too then
-# from pexpect import *
-#
 
 # Reason for double fork:
 # http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC15
@@ -599,21 +665,21 @@ def split_command_line(command_line):
 # match. This is not as efficient, but it works well enough for the
 # output of most applications and it makes program logic much simpler.
 ##class PushbackReader:
-##    '''This class is a wrapper around os.read. It adds the features of buffering
+##    """This class is a wrapper around os.read. It adds the features of buffering
 ##        to allow push-back of data and to provide a timeout on a read.
-##    '''
+##    """
 ##    def __init__(self, file_descriptor):
 ##        self.fd = file_descriptor
 ##        self.buffer = ''
 ##
 ##    def read(self, n, timeout = None):
-##        '''This does a read restricted by a timeout and 
+##        """This does a read restricted by a timeout and 
 ##        it includes any cached data from previous calls. 
 ##            This is a non-blocking wrapper around os.read.
 ##        it uses select.select to supply a timeout. 
 ##        Note that if this is called with timeout=None (the default)
 ##        then this actually MAY block.
-##        '''
+##        """
 ##        # The read() call is a problem.
 ##        # Some platforms return an empty string '' at EOF.
 ##        # Whereas other platforms raise an Input/output exception.
@@ -648,3 +714,4 @@ def split_command_line(command_line):
 ##
 ##    def pushback(self, data):
 ##        self.buffer = piece+self.buffer
+

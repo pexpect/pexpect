@@ -9,17 +9,17 @@ import sys, os, time
 
 class Chess:
 
-	def __init__(self, engine = "/usr/local/bin/gnuchess -a -h 1"):
-		self.child = pexpect.spawn (engine)
+        def __init__(self, engine = "/usr/local/bin/gnuchess -a -h 1"):
+                self.child = pexpect.spawn (engine)
                 self.term = ANSI.ANSI ()
              
-		#self.child.expect ('Chess')
-		#if self.child.matched != 'Chess':
-		#	raise IOError, 'incompatible chess program'
+                #self.child.expect ('Chess')
+                #if self.child.matched != 'Chess':
+                #        raise IOError, 'incompatible chess program'
                 #self.term.process_list (self.child.before)
                 #self.term.process_list (self.child.matched)
 
-		self.last_computer_move = ''
+                self.last_computer_move = ''
 
         def read_until_cursor (self, r,c, e=0):
             '''Eventually something like this should move into the screen class or
@@ -45,7 +45,12 @@ class Chess:
             fout.close()
             return 1
 
-	def do_scan (self):
+        def expect_region (self):
+            '''This is another method that would be moved into the
+            screen class.
+            '''
+            pass
+        def do_scan (self):
             fout = open ('log','a')
             while 1:
                 c = self.child.read(1,10)
@@ -55,10 +60,10 @@ class Chess:
                 sys.stdout.write (c)
                 sys.stdout.flush()
 
-	def do_move (self, move, e = 0):
+        def do_move (self, move, e = 0):
                 time.sleep(1)
                 self.read_until_cursor (19,60, e)
-		self.child.sendline (move)
+                self.child.sendline (move)
 
         def wait (self, color):
             while 1:
@@ -70,27 +75,27 @@ class Chess:
 
         def parse_computer_move (self, s):
                 i = s.find ('is: ')
-                cm = s[i+3:i+9]	
+                cm = s[i+3:i+9]        
                 return cm
-	def get_computer_move (self, e = 0):
+        def get_computer_move (self, e = 0):
                 time.sleep(1)
-		self.read_until_cursor (19,60, e)
+                self.read_until_cursor (19,60, e)
                 time.sleep(1)
                 r = self.term.get_region (17,50,17,62)[0]
                 cm = self.parse_computer_move (r)
-		return cm
+                return cm
 
-	def switch (self):
+        def switch (self):
                 print 'switching'
-		self.child.sendline ('switch')
+                self.child.sendline ('switch')
 
-	def set_depth (self, depth):
-		self.child.sendline ('depth')
-		self.child.expect ('depth=')
-		self.child.sendline ('%d' % depth)
+        def set_depth (self, depth):
+                self.child.sendline ('depth')
+                self.child.expect ('depth=')
+                self.child.sendline ('%d' % depth)
 
-	def quit(self):
-		self.child.sendline ('quit')
+        def quit(self):
+                self.child.sendline ('quit')
 
 def LOG (s):
     print s

@@ -143,7 +143,7 @@ class spawn:
             raise TypeError, 'The second argument, args, must be a list.'
 
         if args == []:
-            self.args = split_command_line(command)
+            self.args = __split_command_line(command)
             self.command = self.args[0]
         else:
             args.insert (0, command)
@@ -184,7 +184,7 @@ class spawn:
         assert self.pid == None, 'The pid member is not None.'
         assert self.command != None, 'The command member is None.'
 
-        if which(self.command) == None:
+        if __which(self.command) == None:
             raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
 
         try:
@@ -193,8 +193,8 @@ class spawn:
             raise ExceptionPexpect('Pexpect: pty.fork() failed: ' + str(e))
 
         if self.pid == 0: # Child
-            try: # Some platforms do not like setwinsize (for example, Cygwin).
-                setwinsize(24, 80)
+            try: # Some platforms do not like __setwinsize (for example, Cygwin).
+                __setwinsize(24, 80)
             except:
                 pass
             # Do not allow child to inherit open file descriptors from parent.
@@ -739,11 +739,9 @@ class spawn:
 # End of Spawn
 ##############################################################################
 
-
-
-def which (filename):
-    """This takes a given filename and tries to find it in the
-    environment path and check if it is executable.
+def __which (filename):
+    """This takes a given filename; tries to find it in the
+    environment path; then checks if it is executable.
     """
 
     # Special case where filename already contains a path.
@@ -756,7 +754,9 @@ def which (filename):
     else:
         p = os.environ['PATH']
 
-    #pathlist = p.split (os.pathsep)
+    # Oddly enough this was the one line that made Pexpect
+    # incompatible with Python 1.5.2.
+    #pathlist = p.split (os.pathsep) 
     pathlist = string.split (p, os.pathsep)
 
     for path in pathlist:
@@ -765,7 +765,7 @@ def which (filename):
             return f
     return None
 
-def setwinsize(r, c):
+def __setwinsize(r, c):
     """This sets the windowsize of the tty for stdout.
     This does not change the physical window size.
     It changes the size reported to TTY-aware applications like
@@ -789,12 +789,12 @@ def setwinsize(r, c):
     s = struct.pack("HHHH", r, c, 0, 0)
     x = fcntl.ioctl(sys.stdout.fileno(), TIOCSWINSZ, s)
 
-def getwinsize():
+def __getwinsize():
     s = struct.pack("HHHH", 0, 0, 0, 0)
     x = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, s)
     return struct.unpack("HHHH", x)
 
-def split_command_line(command_line):
+def __split_command_line(command_line):
     """This splits a command line into a list of arguments.
     It splits arguments on spaces, but handles
     embedded quotes, doublequotes, and escaped characters.

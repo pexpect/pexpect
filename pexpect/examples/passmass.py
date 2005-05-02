@@ -8,30 +8,46 @@ import pexpect
 import sys, getpass
 
 USAGE = '''passmass host1 host2 host3 . . .'''
-SHELL_PROMPT = '[#\$] '
-
+COMMAND_PROMPT = '[$#] '
+TERMINAL_PROMPT = r'Terminal type\?'
+TERMINAL_TYPE = 'vt100'
+SSH_NEWKEY = r'Are you sure you want to continue connecting \(yes/no\)\?'
 def login(host, user, password):
-    child = pexpect.spawn('ssh %s@%s'%(user, host))
-    child.expect('password:')
+    child = pexpect.spawn('ssh -l %s %s'%(user, host))
+    fout = file ("LOG.TXT","wb")
+    child.setlog (fout)
+
+    i = child.expect([pexpect.TIMEOUT, SSH_NEWKEY, '[Pp]assword: '])
+    if i == 0: # Timeout
+        print 'ERROR!'
+        print 'SSH could not login. Here is what SSH said:'
+        print child.before, child.after
+        sys.exit (1)
+    if i == 1: # SSH does not have the public key. Just accept it.
+        child.sendline ('yes')
+        child.expect ('[Pp]assword: ')
     child.sendline(password)
-    i = child.expect(['Permission denied', SHELL_PROMPT, 'Terminal type'])
+    # Now we are either at the command prompt or
+    # the login process is asking for our terminal type.
+    i = child.expect (['Permission denied', TERMINAL_PROMPT, COMMAND_PROMPT])
     if i == 0:
         print 'Permission denied on host:', host
-        return None
-    elif i == 2:
-        child.sendline('vt100')
-        i = child.expect('[#\$] ')
+        sys.exit (1)
+    if i == 1:
+        child.sendline (TERMINAL_TYPE)
+        child.expect (COMMAND_PROMPT)
     return child
 
+# (current) UNIX password:
 def change_password(child, user, oldpassword, newpassword):
-    child.sendline('passwd %s'%user)
-    i = child.expect(['Old [Pp]assword', 'New [Pp]assword'])
+    child.sendline('passwd') 
+    i = child.expect(['[Oo]ld [Pp]assword', '.current.*password', '[Nn]ew [Pp]assword'])
     # Root does not require old password, so it gets to bypass the next step.
-    if i == 0:
+    if i == 0 or i == 1:
         child.sendline(oldpassword)
-        child.expect('New [Pp]assword')
+        child.expect('[Nn]ew [Pp]assword')
     child.sendline(newpassword)
-    i = child.expect(['New [Pp]assword', 'Retype', 'Re-enter'])
+    i = child.expect(['[Nn]ew [Pp]assword', '[Rr]etype', '[Rr]e-enter'])
     if i == 0:
         print 'Host did not like new password. Here is what it said...'
         print child.before
@@ -60,7 +76,7 @@ def main():
             continue
         print 'Changing password on host:', host
         change_password(child, user, password, newpassword)
-        child.expect(SHELL_PROMPT)
+        child.expect(COMMAND_PROMPT)
         child.sendline('exit')
 
 if __name__ == '__main__':

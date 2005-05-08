@@ -78,8 +78,7 @@ class EXP_TIMEOUT(TIMEOUT):
         tblist = filter(self.tbNotPexpect, tblist)
         tblist = traceback.format_list(tblist)
         trace = "Origin:\n"
-        for item in tblist:
-            trace = trace + item
+	trace = trace + ''.join(tblist)
         return trace
     def tbNotPexpect(self, trace_list_item):
         if trace_list_item[0].find("pexpect") == -1:

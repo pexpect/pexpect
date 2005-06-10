@@ -78,7 +78,7 @@ class EXP_TIMEOUT(TIMEOUT):
         tblist = filter(self.tbNotPexpect, tblist)
         tblist = traceback.format_list(tblist)
         trace = "Origin:\n"
-	trace = trace + ''.join(tblist)
+        trace = trace + ''.join(tblist)
         return trace
     def tbNotPexpect(self, trace_list_item):
         if trace_list_item[0].find("pexpect") == -1:
@@ -87,8 +87,6 @@ class EXP_TIMEOUT(TIMEOUT):
             return False
 ##class MAXBUFFER(ExceptionPexpect):
 ##    """Raised when a scan buffer fills before matching an expected pattern."""
-
-
 
 def run (command, args=[], timeout=30):
     """This runs a command; waits for it to finish; then returns
@@ -932,8 +930,7 @@ def _split_command_line(command_line):
             elif c == r'"': # Handle double quote
                 state = state_doublequote
             elif c.isspace():
-                # Add arg to arg_list if we aren't in the middle of
-                # whitespace.
+                # Add arg to arg_list if we aren't in the middle of whitespace.
                 if state == state_whitespace:
                     None # Do nothing.
                 else:

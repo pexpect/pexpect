@@ -146,6 +146,7 @@ class spawn:
         self.softspace = 0 # File-like object.
         self.name = '' # File-like object.
         self.flag_eof = 0
+        self.delimeter = EOF
 
         # NEW -- to support buffering -- the ability to read more than one 
         # byte from a TTY at a time. See setmaxread() method.
@@ -384,7 +385,7 @@ class spawn:
         if size == 0:
             return ''
         if size < 0:
-            self.expect (EOF)
+            self.expect (self.delimeter)
             return self.before
 
         # I could have done this more directly by not using expect(), but
@@ -393,7 +394,7 @@ class spawn:
         # It's a little less efficient, but there is less for me to
         # worry about if I have to later modify read() or expect().
         cre = re.compile('.{%d}' % size, re.DOTALL) 
-        index = self.expect ([cre, EOF])
+        index = self.expect ([cre, self.delimeter])
         if index == 0:
             return self.after ### self.before should be ''. Should I assert this?
         return self.before
@@ -411,7 +412,7 @@ class spawn:
         """
         if size == 0:
             return ''
-        index = self.expect (['\r\n', EOF])
+        index = self.expect (['\r\n', self.delimeter])
         if index == 0:
             return self.before + '\r\n'
         else:

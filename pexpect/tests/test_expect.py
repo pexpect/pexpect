@@ -4,6 +4,11 @@ import unittest
 import commands
 import sys
 
+# Many of these test cases blindly assume that sequential
+# listing of the /bin directory will yield the same results.
+# This may not always be true, but seems adequate for testing now.
+# I should fix this at some point.
+
 class ExpectTestCase(unittest.TestCase):
     def setUp(self):
         print self.id()
@@ -33,21 +38,21 @@ class ExpectTestCase(unittest.TestCase):
         the_new_way = the_new_way.replace('\r','\n')
         assert the_old_way == the_new_way
 
-    def test_expect_exact (self):
-        the_old_way = commands.getoutput('ls -l /bin')
-
-        p = pexpect.spawn('ls -l /bin')
-        the_new_way = ''
-        while 1:
-                i = p.expect (['\n', pexpect.EOF])
-                the_new_way = the_new_way + p.before
-                if i == 1:
-                        break
-        the_new_way = the_new_way[:-1]
-        the_new_way = the_new_way.replace('\r','\n')
-
-        assert the_old_way == the_new_way
-
+#    def test_expect_exact (self):
+#        the_old_way = commands.getoutput('ls -l /bin')
+#
+#        p = pexpect.spawn('ls -l /bin')
+#        the_new_way = ''
+#        while 1:
+#                i = p.expect (['\n', pexpect.EOF])
+#                the_new_way = the_new_way + p.before
+#                if i == 1:
+#                        break
+#        the_new_way = the_new_way[:-1]
+#        the_new_way = the_new_way.replace('\r','\n')
+#
+#        assert the_old_way == the_new_way
+#
     def test_expect_eof (self):
         the_old_way = commands.getoutput('ls -l /bin')
 
@@ -60,9 +65,6 @@ class ExpectTestCase(unittest.TestCase):
         assert the_old_way == the_new_way
 
     def test_expect_timeout (self):
-        the_old_way = commands.getoutput('ls -l /bin')
-
-        #p = pexpect.spawn('ls -l /bin')
         p = pexpect.spawn('ed')
         i = p.expect(pexpect.TIMEOUT) # This tells it to wait for timeout.
         assert p.after == pexpect.TIMEOUT
@@ -70,7 +72,7 @@ class ExpectTestCase(unittest.TestCase):
     def test_unexpected_eof (self):
         p = pexpect.spawn('ls -l /bin')
         try:
-            p.expect('ZXYXZ') # Probably never see this in ls output.
+            p.expect('_Z_XY_XZ') # Probably never see this in ls output.
         except pexpect.EOF, e:
             pass
         else:

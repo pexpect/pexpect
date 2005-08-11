@@ -18,6 +18,16 @@ License: Python Software Foundation License
 
 Noah Spurrier
 Richard Holden
+Marco Molteni
+Kimberley Burchett 
+Robert Stone
+Mike Snitzer
+Marti Raudsepp
+Matt <matt (*) corvil.com>
+Hartmut Goebel
+Chad Schroeder
+Erick Tryzelaar
+(Let me know if I forgot anyone.)
 
 $Revision$
 $Date$
@@ -39,59 +49,63 @@ try:
     import errno
     import traceback
 except ImportError, e:
-    raise ImportError, str(e) + """
-A critical module was not found. Probably this OS does not support it.
-Currently pexpect is intended for UNIX operating systems."""
+    raise ImportError (str(e) + """
+A critical module was not found. Probably this operating system does not support it.
+Pexpect is intended for UNIX-like operating systems.""")
 
-
-
-__version__ = '0.9999'
+__version__ = '0.99999'
 __revision__ = '$Revision$'
-__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'EXP_TIMEOUT', 'spawn', 'run',
+__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'TIMEOUT_PATTERN', 'spawn', 'run',
     '__version__', '__revision__']
-
-
 
 # Exception classes used by this module.
 class ExceptionPexpect(Exception):
     """Base class for all exceptions raised by this module."""
-    def __init__(self, value):
+    def __init__(self, value, pattern_list = None):
         self.value = value
+        self.pattern_list = pattern_list
     def __str__(self):
-        return `self.value`
+        if self.pattern_list is None:
+            return str(self.value)
+        string = str(self.value) + '\nPattern(s) to match:\n'
+        for p in self.pattern_list:
+            if type(p) is type(re.compile('')):
+                string = string + p.pattern + '\n'
+            else:
+                string = string + str(p) + '\n'
+        return string[:-1]
+    def get_trace(self):
+        """This returns an abbreviated stack trace with lines that only concern the caller.
+        In other words, the stack trace inside the Pexpect module is not included.
+        """
+        tblist = traceback.extract_tb(sys.exc_info()[2])
+        tblist = filter(self.__filter_not_pexpect, tblist)
+        tblist = traceback.format_list(tblist)
+        return ''.join(tblist)
+    def __filter_not_pexpect(self, trace_list_item):
+        if trace_list_item[0].find('pexpect.py') == -1:
+            return True
+        else:
+            return False
 class EOF(ExceptionPexpect):
     """Raised when EOF is read from a child."""
 class TIMEOUT(ExceptionPexpect):
     """Raised when a read time exceeds the timeout."""
-class EXP_TIMEOUT(TIMEOUT):
-    """Raised when a pattern match time exceeds the timeout."""
-    def __init__(self,value,pattern_list):
-        self.value = value
-        self.pattern_list = pattern_list
-    def __str__(self):
-        string = self.value + "\nPattern(s) to Match:\n"
-        for reObject in self.pattern_list:
-            string = string + reObject.pattern + "\n" 
-        return string
-    def get_trace(self):
-        tblist = traceback.extract_tb(sys.exc_info()[2])
-        tblist = filter(self.tbNotPexpect, tblist)
-        tblist = traceback.format_list(tblist)
-        trace = "Origin:\n"
-        trace = trace + ''.join(tblist)
-        return trace
-    def tbNotPexpect(self, trace_list_item):
-        if trace_list_item[0].find("pexpect") == -1:
-            return True
-        else:
-            return False
+##class TIMEOUT_PATTERN(TIMEOUT):
+##    """Raised when the pattern match time exceeds the timeout.
+##    This is different than a read TIMEOUT because the child process may
+##    give output, thus never give a TIMEOUT, but the output
+##    may never match a pattern.
+##    """
 ##class MAXBUFFER(ExceptionPexpect):
 ##    """Raised when a scan buffer fills before matching an expected pattern."""
 
 def run (command, args=[], timeout=30):
-    """This runs a command; waits for it to finish; then returns
-        all output as a string. This is a utility interface around
-        the spawn class.
+    """This funnction runs the given command; waits for it to finish;
+        then returns all output as a string. STDERR is included in output.
+        This is a function interface to the spawn class.
+        Note that lines are terminated by CR/LF (\\r\\n) combination
+        even on UNIX-like systems because this is the standard for pseudo ttys.
     """
     child = spawn(command, args, timeout)
     child.expect (EOF)
@@ -161,7 +175,7 @@ class spawn:
             try: # Command is an int, so now check if it is a file descriptor.
                 os.fstat(command)
             except OSError:
-                raise ExceptionPexpect, 'Command is an int type, yet is not a valid file descriptor.'
+                raise ExceptionPexpect ('Command is an int type, yet is not a valid file descriptor.')
             self.pid = -1 
             self.child_fd = command
             self.__child_fd_owner = 0 # Sets who is reponsible for the child_fd
@@ -171,7 +185,7 @@ class spawn:
             return
 
         if type (args) != type([]):
-            raise TypeError, 'The second argument, args, must be a list.'
+            raise TypeError ('The second argument, args, must be a list.')
 
         if args == []:
             self.args = _split_command_line(command)
@@ -337,7 +351,7 @@ class spawn:
         """
         
         if self.child_fd == -1:
-            raise ValueError ('I/O operation on closed file')
+            raise ValueError ('I/O operation on closed file in read_nonblocking().')
 
         # Note that some systems like Solaris don't seem to ever give
         # an EOF when the child dies. In fact, you can still try to read
@@ -348,25 +362,25 @@ class spawn:
             r, w, e = select.select([self.child_fd], [], [], 0)
             if not r:
                 self.flag_eof = 1
-                raise EOF ('End Of File (EOF) in read(). Braindead platform.')
-        
+                raise EOF ('End Of File (EOF) in read_nonblocking(). Braindead platform.')
+
         r, w, e = select.select([self.child_fd], [], [], timeout)
         if not r:
-            raise TIMEOUT('Timeout exceeded in read().')
+            raise TIMEOUT ('Timeout exceeded in read_nonblocking().')
 #            if not self.isalive():
-#                raise EOF ('End of File (EOF) in read(). Really dumb platform.')
+#                raise EOF ('End of File (EOF) in read_nonblocking(). Really dumb platform.')
 #            else:
-#                raise TIMEOUT('Timeout exceeded in read().')
+#                raise TIMEOUT ('Timeout exceeded in read_nonblocking().')
 
         if self.child_fd in r:
             try:
                 s = os.read(self.child_fd, size)
             except OSError, e:
                 self.flag_eof = 1
-                raise EOF('End Of File (EOF) in read(). Exception style platform.')
+                raise EOF ('End Of File (EOF) in read_nonblocking(). Exception style platform.')
             if s == '':
                 self.flag_eof = 1
-                raise EOF('End Of File (EOF) in read(). Empty string style platform.')
+                raise EOF ('End Of File (EOF) in read_nonblocking(). Empty string style platform.')
             
             if self.log_file != None:
                 self.log_file.write (s)
@@ -374,7 +388,7 @@ class spawn:
                 
             return s
 
-        raise ExceptionPexpect('Reached an unexpected state in read().')
+        raise ExceptionPexpect ('Reached an unexpected state in read_nonblocking().')
 
     def read (self, size = -1):   # File-like object.
         """This reads at most size bytes from the file 
@@ -599,7 +613,7 @@ class spawn:
             elif type(p) is type(re.compile('')):
                 compiled_pattern_list.append(p)
             else:
-                raise TypeError, 'Argument must be one of StringType, EOF, TIMEOUT, SRE_Pattern, or a list of those type. %s' % str(type(p))
+                raise TypeError ('Argument must be one of StringType, EOF, TIMEOUT, SRE_Pattern, or a list of those type. %s' % str(type(p)))
 
         return compiled_pattern_list
  
@@ -664,70 +678,79 @@ class spawn:
         return self.expect_list(compiled_pattern_list, timeout)
 
     def expect_exact (self, pattern_list, timeout = -1):
-        """This is similar to expect() except that it takes
-        list of plain strings instead of regular expressions.
-        This should be much faster than expect(). It could also be
-        useful when you don't want to have to worry about escaping
-        regular expression characters that you want to match.
-        You may also pass just a string without a list and the string
-        will be automatically converted to a list with a single string element.
-        If timeout is -1 then timeout will be set to the self.timeout value.
-        See also expect_list() for speed optimization.
+        """This method is no longer supported or allowed.
+        It was too hard to maintain and keep it up to date with expect_list.
+        Few people used this method. Most people favored reliability over speed.
+        The implementation is left in comments in case anyone needs to hack this
+        feature back into their copy.
+        If someone wants to diff this with expect_list and make them work
+        nearly the same then I will consider adding this make in.
         """
-        ### This is dumb. It shares most of the code with expect_list.
-        ### The only different is the comparison method and that
-        ### self.match is always None after calling this.
-        if timeout == -1:
-            timeout = self.timeout
-
-        if type(pattern_list) is StringType:
-            pattern_list = [pattern_list]
-
-        try:
-            #ED# incoming = ''
-            incoming = self.buffer
-            while 1: # Keep reading until exception or return.
-                #ED# c = self.read_nonblocking (1, timeout) 
-                #ED# incoming = incoming + c
-
-                # Sequence through the list of patterns and look for a match.
-                index = -1
-                for str_target in pattern_list:
-                    index = index + 1
-                    if str_target is EOF or str_target is TIMEOUT: 
-                        continue # The Exception patterns are handled differently.
-                    match_index = incoming.find (str_target)
-                    if match_index >= 0:
-                        self.before = incoming [ : match_index]
-                        self.after = incoming [match_index : ]
-                        self.buffer = incoming [match_index + len(str_target):]
-                        self.match = None
-                        return index
-                c = self.read_nonblocking (self.maxread, timeout) 
-                incoming = incoming + c
-                
-        except EOF:
-            self.before = incoming
-            self.after = EOF
-            if EOF in pattern_list:
-                #self.buffer = ''
-                return pattern_list.index(EOF)
-            else:
-                raise
-        except TIMEOUT, TimeOutInst:
-            self.before = incoming
-            self.after = TIMEOUT
-            if TIMEOUT in pattern_list:
-                #self.buffer = ''
-                return pattern_list.index(TIMEOUT)
-            else:
-                raise EXP_TIMEOUT(TimeOutInst.__str__(),pattern_list)
-        except Exception:
-            self.before = incoming
-            self.after = None
-            self.match = None
-            self.buffer = ''
-            raise
+        raise ExceptionPexpect ('This method is no longer supported or allowed.')
+#        """This is similar to expect() except that it takes
+#        list of plain strings instead of regular expressions.
+#        This should be much faster than expect(). It could also be
+#        useful when you don't want to have to worry about escaping
+#        regular expression characters that you want to match.
+#        You may also pass just a string without a list and the string
+#        will be automatically converted to a list with a single string element.
+#        If timeout is -1 then timeout will be set to the self.timeout value.
+#        See also expect_list() for speed optimization.
+#        """
+#        ### This is dumb. It shares most of the code with expect_list.
+#        ### The only different is the comparison method and that
+#        ### self.match is always None after calling this.
+#        if timeout == -1:
+#            timeout = self.timeout
+#
+#        if type(pattern_list) is StringType:
+#            pattern_list = [pattern_list]
+#
+#        try:
+#            #ED# incoming = ''
+#            incoming = self.buffer
+#            while 1: # Keep reading until exception or return.
+#                #ED# c = self.read_nonblocking (1, timeout) 
+#                #ED# incoming = incoming + c
+#
+#                # Sequence through the list of patterns and look for a match.
+#                index = -1
+#                for str_target in pattern_list:
+#                    index = index + 1
+#                    if str_target is EOF or str_target is TIMEOUT: 
+#                        continue # The Exception patterns are handled differently.
+#                    match_index = incoming.find (str_target)
+#                    if match_index >= 0:
+#                        self.before = incoming [ : match_index]
+#                        self.after = incoming [match_index : ]
+#                        self.buffer = incoming [match_index + len(str_target):]
+#                        self.match = None
+#                        return index
+#                c = self.read_nonblocking (self.maxread, timeout) 
+#                incoming = incoming + c
+#                
+#        except EOF:
+#            self.before = incoming
+#            self.after = EOF
+#            if EOF in pattern_list:
+#                #self.buffer = ''
+#                return pattern_list.index(EOF)
+#            else:
+#                raise
+#        except TIMEOUT, TimeOutInst:
+#            self.before = incoming
+#            self.after = TIMEOUT
+#            if TIMEOUT in pattern_list:
+#                #self.buffer = ''
+#                return pattern_list.index(TIMEOUT)
+#            else:
+#                raise TIMEOUT (TimeOutInst.__str__(),pattern_list)
+#        except Exception:
+#            self.before = incoming
+#            self.after = None
+#            self.match = None
+#            self.buffer = ''
+#            raise
             
     def expect_list(self, pattern_list, timeout = -1):
         """
@@ -739,22 +762,17 @@ class spawn:
         trying to optimize for speed. You must not pass
         anything except a list of compiled regular expressions.
         If timeout is -1 then timeout will be set to the self.timeout value.
-        See also expect_exact() for speed optimization.
         """
 
         if timeout == -1:
             timeout = self.timeout
-            end_time = None # Thanks Kimberley...
+            end_time = None
         if timeout != None:
             end_time = time.time() + timeout
  
         try:
-            #ED# incoming = ''
             incoming = self.buffer
             while 1: # Keep reading until exception or return.
-                #ED# c = self.read_nonblocking (1, timeout)
-                #ED# incoming = incoming + c
-
                 # Sequence through the list of patterns looking for a match.
                 index = -1
                 for cre in pattern_list:
@@ -768,28 +786,27 @@ class spawn:
                         self.match = match
                         self.buffer = incoming[match.end() : ]
                         return index
-                # Read more data
+                # No match, so read more data
                 if timeout != None:
                     timeout = end_time - time.time()
+                    if timeout <= 0:
+                        raise TIMEOUT ('Timeout exceeded in expect_list().')
                 c = self.read_nonblocking (self.maxread, timeout)
                 incoming = incoming + c
-                
-        except EOF:
+        except EOF, e:
             self.before = incoming
             self.after = EOF
             if EOF in pattern_list:
-                #self.buffer = ''
                 return pattern_list.index(EOF)
             else:
-                raise
-        except TIMEOUT, TimeOutInst:
+                raise EOF (str(e), pattern_list)
+        except TIMEOUT, e:
             self.before = incoming
             self.after = TIMEOUT
             if TIMEOUT in pattern_list:
-                #self.buffer = ''
                 return pattern_list.index(TIMEOUT)
             else:
-                raise EXP_TIMEOUT(TimeOutInst.__str__(),pattern_list)
+                raise TIMEOUT (str(e), pattern_list)
         except Exception:
             self.before = incoming
             self.after = None
@@ -1053,21 +1070,21 @@ def _split_command_line(command_line):
 ##        r, w, e = select.select([self.fd], [], [], timeout)
 ##        if not r:
 ##            self.flag_timeout = 1
-##            raise TIMEOUT('Read exceeded time: %d'%timeout)
+##            raise TIMEOUT ('Read exceeded time: %d'%timeout)
 ##
 ##        if self.fd in r:
 ##            try:
 ##                s = os.read(self.fd, n)
 ##            except OSError, e:
 ##                self.flag_eof = 1
-##                raise EOF('Read reached End Of File (EOF). Exception platform.')
+##                raise EOF ('Read reached End Of File (EOF). Exception platform.')
 ##            if s == '':
 ##                self.flag_eof = 1
-##                raise EOF('Read reached End Of File (EOF). Empty string platform.')
+##                raise EOF ('Read reached End Of File (EOF). Empty string platform.')
 ##            return s
 ##
 ##        self.flag_error = 1
-##        raise ExceptionPexpect('PushbackReader.read() reached an unexpected state.'+
+##        raise ExceptionPexpect ('PushbackReader.read() reached an unexpected state.'+
 ##        ' There is a logic error in the Pexpect source code.')
 ##
 ##    def pushback(self, data):

@@ -269,7 +269,9 @@ class spawn:
             os.close (self.child_fd)
             if wait:
                 try:
-                    os.waitpid (self.pid, 0)
+                    pid, status = os.waitpid (self.pid, 0)
+                    if os.WIFEXITED (status):
+                        self.exitstatus = os.WEXITSTATUS(status)
                 except OSError, e: ### suggested by Robert Stone
                     if e[0] == errno.ECHILD:
                         pass

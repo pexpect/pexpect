@@ -385,7 +385,7 @@ class spawn:
         if size == 0:
             return ''
         if size < 0:
-            self.expect (self.delimiter)
+            self.expect (self.delimiter) # delimiter default is EOF
             return self.before
 
         # I could have done this more directly by not using expect(), but
@@ -394,7 +394,7 @@ class spawn:
         # It's a little less efficient, but there is less for me to
         # worry about if I have to later modify read() or expect().
         cre = re.compile('.{%d}' % size, re.DOTALL) 
-        index = self.expect ([cre, self.delimiter])
+        index = self.expect ([cre, self.delimiter]) # delimiter default is EOF
         if index == 0:
             return self.after ### self.before should be ''. Should I assert this?
         return self.before
@@ -412,7 +412,7 @@ class spawn:
         """
         if size == 0:
             return ''
-        index = self.expect (['\r\n', self.delimiter])
+        index = self.expect (['\r\n', self.delimiter]) # delimiter default is EOF
         if index == 0:
             return self.before + '\r\n'
         else:

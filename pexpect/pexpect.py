@@ -126,9 +126,9 @@ class spawn:
         raise an exception if you try to call spawn.close().
         """
 
-        self.STDIN_FILENO = sys.stdin.fileno()
-        self.STDOUT_FILENO = sys.stdout.fileno()
-        self.STDERR_FILENO = sys.stderr.fileno()
+        self.STDIN_FILENO = pty.STDIN_FILENO
+        self.STDOUT_FILENO = pty.STDOUT_FILENO
+        self.STDERR_FILENO = pty.STDERR_FILENO
 
         self.stdin = sys.stdin
         self.stdout = sys.stdout

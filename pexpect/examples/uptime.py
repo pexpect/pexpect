@@ -27,8 +27,7 @@ import re
 # regex group matching.
 p = pexpect.spawn ('uptime')
 p.expect('up\s+(.*?),\s+([0-9]+) users?,\s+load averages?: ([0-9]+\.[0-9][0-9]), ([0-9]+\.[0-9][0-9]), ([0-9]+\.[0-9][0-9])')
-match = p.match
-duration, users, av1, av5, av15 = match.groups()
+duration, users, av1, av5, av15 = p.match.groups()
 
 # The duration is a little harder to parse because of all the different
 # styles of uptime. I'm sure there is a way to do this all at once with
@@ -37,16 +36,16 @@ duration, users, av1, av5, av15 = match.groups()
 # happy to see it.
 days = '0'
 if 'day' in duration:
-    match = re.search('([0-9]+)\s+day',duration)
-    days = match.group(1)
+    p.match = re.search('([0-9]+)\s+day',duration)
+    days = p.match.group(1)
 hours = '0:0'
 if ':' in duration:
-    match = re.search('([0-9]+:[0-9]+)',duration)
-    hours = match.group(1)
+    p.match = re.search('([0-9]+:[0-9]+)',duration)
+    hours = p.match.group(1)
 mins = '0'
 if 'min' in duration:
-    match = re.search('([0-9]+)\s+min',duration)
-    mins = match.group(1)
+    p.match = re.search('([0-9]+)\s+min',duration)
+    mins = p.match.group(1)
 
 # Print the parsed fields in CSV format.
 print 'days, hours, minutes, users, cpu avg 1 min, cpu avg 5 min, cpu avg 15 min'

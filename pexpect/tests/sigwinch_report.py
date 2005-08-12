@@ -9,6 +9,9 @@ def getwinsize():
 def handler(signum, frame):
     print 'SIGWINCH:', getwinsize ()
 
+#print termios.TIOCSWINSZ
+#print 'SIGWINCH:', getwinsize ()
+#sys.stdout.flush()
 signal.signal(signal.SIGWINCH, handler)
 
 while 1:

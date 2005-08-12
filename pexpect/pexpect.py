@@ -61,19 +61,10 @@ __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'TIMEOUT_PATTERN', 'spawn', 'ru
 # Exception classes used by this module.
 class ExceptionPexpect(Exception):
     """Base class for all exceptions raised by this module."""
-    def __init__(self, value, pattern_list = None):
+    def __init__(self, value):
         self.value = value
-        self.pattern_list = pattern_list
     def __str__(self):
-        if self.pattern_list is None:
-            return str(self.value)
-        string = str(self.value) + '\nPattern(s) to match:\n'
-        for p in self.pattern_list:
-            if type(p) is type(re.compile('')):
-                string = string + p.pattern + '\n'
-            else:
-                string = string + str(p) + '\n'
-        return string[:-1]
+        return str(self.value)
     def get_trace(self):
         """This returns an abbreviated stack trace with lines that only concern the caller.
         In other words, the stack trace inside the Pexpect module is not included.
@@ -148,24 +139,26 @@ class spawn:
         self.stdout = sys.stdout
         self.stderr = sys.stderr
 
-        self.timeout = timeout
-        self.child_fd = -1 # initially closed
-        self.__child_fd_owner = None
-        self.exitstatus = None
-        self.pid = None
-        self.log_file = None    
+        self.pattern_list = None
         self.before = None
         self.after = None
         self.match = None
+        self.match_index = None
+        self.exitstatus = None
+        self.flag_eof = 0
+        self.pid = None
+        self.child_fd = -1 # initially closed
+        self.__child_fd_owner = None
+        self.timeout = timeout
+        self.delimiter = EOF
+        self.log_file = None    
         self.softspace = 0 # File-like object.
         self.name = '' # File-like object.
-        self.flag_eof = 0
-        self.delimiter = EOF
 
-        # NEW -- to support buffering -- the ability to read more than one 
+        # This is to support buffering -- the ability to read more than one 
         # byte from a TTY at a time. See setmaxread() method.
         self.buffer = ''
-        self.maxread = 1 # Maximum to read at a time
+        self.maxread = 1 # Max bytes to read at one time
         ### IMPLEMENT THIS FEATURE!!!
         # anything before maxsearchsize point is preserved, but not searched.
         #self.maxsearchsize = 1000
@@ -207,6 +200,28 @@ class spawn:
         """
         if self.__child_fd_owner:
             self.close()
+
+    def __str__(self):
+        string = repr(self) + '\n'
+        if self.pattern_list is not None:
+            string += 'pattern_list:\n'
+            for p in self.pattern_list:
+                if type(p) is type(re.compile('')):
+                    string += '    ' + p.pattern + '\n'
+                else:
+                    string += '    ' + str(p) + '\n'
+        string += 'before: ' + str(self.before) + '\n'
+        string += 'after: ' + str(self.after) + '\n'
+        string += 'match: ' + str(self.match) + '\n'
+        string += 'match_index: ' + str(self.match_index) + '\n'
+        string += 'exitstatus: ' + str(self.exitstatus) + '\n'
+        string += 'flag_eof: ' + str(self.flag_eof) + '\n'
+        string += 'pid: ' + str(self.pid) + '\n'
+        string += 'child_fd: ' + str(self.child_fd) + '\n'
+        string += 'timeout: ' + str(self.timeout) + '\n'
+        string += 'delimiter: ' + str(self.delimiter) + '\n'
+        string += 'log_file: ' + str(self.log_file)
+        return string
 
     def __spawn(self):
         """This starts the given command in a child process. This does
@@ -671,8 +686,7 @@ class spawn:
                 p.expect (pexpect.EOF)
                 print p.before
 
-        If you are trying to optimize for speed then see
-        expect_list() and expect_exact().
+        If you are trying to optimize for speed then see expect_list().
         """
         compiled_pattern_list = self.compile_pattern_list(pattern)
         return self.expect_list(compiled_pattern_list, timeout)
@@ -764,6 +778,8 @@ class spawn:
         If timeout is -1 then timeout will be set to the self.timeout value.
         """
 
+        self.pattern_list = pattern_list
+
         if timeout == -1:
             timeout = self.timeout
             end_time = None
@@ -775,16 +791,17 @@ class spawn:
             while 1: # Keep reading until exception or return.
                 # Sequence through the list of patterns looking for a match.
                 index = -1
-                for cre in pattern_list:
+                for cre in self.pattern_list:
                     index = index + 1
                     if cre is EOF or cre is TIMEOUT: 
                         continue # The patterns for PexpectExceptions are handled differently.
                     match = cre.search(incoming)
                     if match is not None:
+                        self.buffer = incoming[match.end() : ]
                         self.before = incoming[ : match.start()]
                         self.after = incoming[match.start() : ]
                         self.match = match
-                        self.buffer = incoming[match.end() : ]
+                        self.match_index = index
                         return index
                 # No match, so read more data
                 if timeout != None:
@@ -794,24 +811,33 @@ class spawn:
                 c = self.read_nonblocking (self.maxread, timeout)
                 incoming = incoming + c
         except EOF, e:
+            self.buffer = ''
             self.before = incoming
             self.after = EOF
             if EOF in pattern_list:
-                return pattern_list.index(EOF)
+                self.match = EOF
+                self.match_index = pattern_list.index(EOF)
+                return self.match_index
             else:
-                raise EOF (str(e), pattern_list)
+                self.match = None
+                self.match_index = None
+                raise EOF (str(e) + '\n' + str(self))
         except TIMEOUT, e:
             self.before = incoming
             self.after = TIMEOUT
             if TIMEOUT in pattern_list:
-                return pattern_list.index(TIMEOUT)
+                self.match = TIMEOUT
+                self.match_index = pattern_list.index(TIMEOUT)
+                return self.match_index
             else:
-                raise TIMEOUT (str(e), pattern_list)
+                self.match = None
+                self.match_index = None
+                raise TIMEOUT (str(e) + '\n' + str(self))
         except Exception:
             self.before = incoming
             self.after = None
             self.match = None
-            self.buffer = ''
+            self.match_index = None
             raise
 
     def getwinsize(self):

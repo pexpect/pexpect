@@ -12,7 +12,7 @@ class Exp_TimeoutTestCase(unittest.TestCase):
         """This tests that we can raise and catch TIMEOUT.
         """
         try:
-            raise pexpect.TIMEOUT("TIMEOUT match test","")
+            raise pexpect.TIMEOUT("TIMEOUT match test")
         except pexpect.TIMEOUT:
             pass
             #print "Correctly caught TIMEOUT when raising TIMEOUT."
@@ -28,11 +28,7 @@ class Exp_TimeoutTestCase(unittest.TestCase):
             p.expect('Hello')
             p.expect('Goodbye',timeout=5)
         except pexpect.TIMEOUT, expTimeoutInst:
-            timeoutAsString = expTimeoutInst.__str__()
-            helloCount = timeoutAsString.count('Hello')
-            goodbyeCount = timeoutAsString.count('Goodbye') 
-            if (helloCount):
-                self.fail("Pattern not for correct expect call.")
+            assert p.match_index == None
         else:
             self.fail("Did not generate a TIMEOUT exception.")
 

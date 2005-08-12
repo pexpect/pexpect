@@ -55,7 +55,7 @@ Pexpect is intended for UNIX-like operating systems.""")
 
 __version__ = '0.99999'
 __revision__ = '$Revision$'
-__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'TIMEOUT_PATTERN', 'spawn', 'run',
+__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run',
     '__version__', '__revision__']
 
 # Exception classes used by this module.

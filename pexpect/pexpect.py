@@ -107,7 +107,7 @@ class spawn:
     start and control child applications.
     """
 
-    def __init__(self, command, args=[], timeout=30):
+    def __init__(self, command, args=[], timeout=30, maxsearchsize=None):
         """This is the constructor. The command parameter may be a string
         that includes a command and any arguments to the command. For example:
             p = pexpect.spawn ('/usr/bin/ftp')
@@ -161,7 +161,7 @@ class spawn:
         self.maxread = 1 # Max bytes to read at one time
         ### IMPLEMENT THIS FEATURE!!!
         # anything before maxsearchsize point is preserved, but not searched.
-        #self.maxsearchsize = 1000
+        self.maxsearchsize = maxsearchsize
         
         # If command is an int type then it must represent an open file descriptor.
         if type (command) == type(0):
@@ -220,7 +220,10 @@ class spawn:
         string += 'child_fd: ' + str(self.child_fd) + '\n'
         string += 'timeout: ' + str(self.timeout) + '\n'
         string += 'delimiter: ' + str(self.delimiter) + '\n'
-        string += 'log_file: ' + str(self.log_file)
+        string += 'log_file: ' + str(self.log_file) + '\n'
+        string += 'maxread: ' + str(self.maxread) + '\n'
+        string += 'maxsearchsize: ' + str(self.maxsearchsize) + '\n'
+        string += 'buffer: ' + str(self.buffer)
         return string
 
     def __spawn(self):
@@ -632,7 +635,7 @@ class spawn:
 
         return compiled_pattern_list
  
-    def expect(self, pattern, timeout = -1):
+    def expect(self, pattern, timeout = -1, maxsearchsize=None):
         """This seeks through the stream until a pattern is matched.
         The pattern is overloaded and may take several types including a list.
         The pattern can be a StringType, EOF, a compiled re, or
@@ -689,7 +692,7 @@ class spawn:
         If you are trying to optimize for speed then see expect_list().
         """
         compiled_pattern_list = self.compile_pattern_list(pattern)
-        return self.expect_list(compiled_pattern_list, timeout)
+        return self.expect_list(compiled_pattern_list, timeout, maxsearchsize)
 
     def expect_exact (self, pattern_list, timeout = -1):
         """This method is no longer supported or allowed.
@@ -766,7 +769,7 @@ class spawn:
 #            self.buffer = ''
 #            raise
             
-    def expect_list(self, pattern_list, timeout = -1):
+    def expect_list(self, pattern_list, timeout = -1, maxsearchsize = None):
         """
         This takes a list of compiled regular expressions and returns 
         the index into the pattern_list that matched the child's output.
@@ -785,6 +788,8 @@ class spawn:
             end_time = None
         if timeout != None:
             end_time = time.time() + timeout
+        if maxsearchsize is None:
+            maxsearchsize = self.maxsearchsize
  
         try:
             incoming = self.buffer
@@ -795,7 +800,11 @@ class spawn:
                     index = index + 1
                     if cre is EOF or cre is TIMEOUT: 
                         continue # The patterns for PexpectExceptions are handled differently.
-                    match = cre.search(incoming)
+                    if maxsearchsize is not None:
+                        startpos = max(0, len(incoming) - maxsearchsize)
+                        match = cre.search(incoming, startpos)
+                    else:
+                        match = cre.search(incoming)
                     if match is not None:
                         self.buffer = incoming[match.end() : ]
                         self.before = incoming[ : match.start()]

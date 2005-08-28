@@ -12,7 +12,7 @@ should work on any platform that supports the standard Python pty
 module. The Pexpect interface focuses on ease of use so that simple
 tasks are easy.
 
-Pexpect is Open Source, Free, and all Good that stuff.
+Pexpect is Open Source, Free, and all that good stuff.
 License: Python Software Foundation License
          http://www.opensource.org/licenses/PythonSoftFoundation.html
 
@@ -27,6 +27,7 @@ Matt <matt (*) corvil.com>
 Hartmut Goebel
 Chad Schroeder
 Erick Tryzelaar
+Dave Kirby
 (Let me know if I forgot anyone.)
 
 $Revision$
@@ -53,7 +54,7 @@ except ImportError, e:
 A critical module was not found. Probably this operating system does not support it.
 Pexpect is intended for UNIX-like operating systems.""")
 
-__version__ = '0.99999b'
+__version__ = '0.999999'
 __revision__ = '$Revision$'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run',
     '__version__', '__revision__']
@@ -107,7 +108,7 @@ class spawn:
     start and control child applications.
     """
 
-    def __init__(self, command, args=[], timeout=30, maxsearchsize=None):
+    def __init__(self, command, args=[], timeout=30, maxsearchsize=0):
         """This is the constructor. The command parameter may be a string
         that includes a command and any arguments to the command. For example:
             p = pexpect.spawn ('/usr/bin/ftp')
@@ -130,11 +131,9 @@ class spawn:
         for closing it. Spawn will not try to close it and spawn will
         raise an exception if you try to call spawn.close().
         """
-
         self.STDIN_FILENO = pty.STDIN_FILENO
         self.STDOUT_FILENO = pty.STDOUT_FILENO
         self.STDERR_FILENO = pty.STDERR_FILENO
-
         self.stdin = sys.stdin
         self.stdout = sys.stdout
         self.stderr = sys.stderr
@@ -152,17 +151,13 @@ class spawn:
         self.timeout = timeout
         self.delimiter = EOF
         self.log_file = None    
+        self.maxread = 1 # Max bytes to read at one time into buffer.
+        self.buffer = '' # This is the read buffer. See maxread.
+        self.maxsearchsize = maxsearchsize # Anything before maxsearchsize point is preserved, but not searched.
+        self.delay_hack = 0.1 # Sets sleep just after calling expect() method.
         self.softspace = 0 # File-like object.
         self.name = '' # File-like object.
 
-        # This is to support buffering -- the ability to read more than one 
-        # byte from a TTY at a time. See setmaxread() method.
-        self.buffer = ''
-        self.maxread = 1 # Max bytes to read at one time
-        ### IMPLEMENT THIS FEATURE!!!
-        # anything before maxsearchsize point is preserved, but not searched.
-        self.maxsearchsize = maxsearchsize
-        
         # If command is an int type then it must represent an open file descriptor.
         if type (command) == type(0):
             try: # Command is an int, so now check if it is a file descriptor.
@@ -181,7 +176,7 @@ class spawn:
             raise TypeError ('The second argument, args, must be a list.')
 
         if args == []:
-            self.args = _split_command_line(command)
+            self.args = split_command_line(command)
             self.command = self.args[0]
         else:
             self.args = args
@@ -202,29 +197,30 @@ class spawn:
             self.close()
 
     def __str__(self):
-        string = repr(self) + '\n'
+        s = repr(self) + '\n'
         if self.pattern_list is not None:
-            string += 'pattern_list:\n'
+            s += 'pattern_list:\n'
             for p in self.pattern_list:
                 if type(p) is type(re.compile('')):
-                    string += '    ' + p.pattern + '\n'
+                    s += '    ' + p.pattern + '\n'
                 else:
-                    string += '    ' + str(p) + '\n'
-        string += 'before: ' + str(self.before) + '\n'
-        string += 'after: ' + str(self.after) + '\n'
-        string += 'match: ' + str(self.match) + '\n'
-        string += 'match_index: ' + str(self.match_index) + '\n'
-        string += 'exitstatus: ' + str(self.exitstatus) + '\n'
-        string += 'flag_eof: ' + str(self.flag_eof) + '\n'
-        string += 'pid: ' + str(self.pid) + '\n'
-        string += 'child_fd: ' + str(self.child_fd) + '\n'
-        string += 'timeout: ' + str(self.timeout) + '\n'
-        string += 'delimiter: ' + str(self.delimiter) + '\n'
-        string += 'log_file: ' + str(self.log_file) + '\n'
-        string += 'maxread: ' + str(self.maxread) + '\n'
-        string += 'maxsearchsize: ' + str(self.maxsearchsize) + '\n'
-        string += 'buffer: ' + str(self.buffer)
-        return string
+                    s += '    ' + str(p) + '\n'
+        s += 'before (last 1000 characters): ' + str(self.before)[-1000:] + '\n'
+        s += 'after: ' + str(self.after) + '\n'
+        s += 'match: ' + str(self.match) + '\n'
+        s += 'match_index: ' + str(self.match_index) + '\n'
+        s += 'exitstatus: ' + str(self.exitstatus) + '\n'
+        s += 'flag_eof: ' + str(self.flag_eof) + '\n'
+        s += 'pid: ' + str(self.pid) + '\n'
+        s += 'child_fd: ' + str(self.child_fd) + '\n'
+        s += 'timeout: ' + str(self.timeout) + '\n'
+        s += 'delimiter: ' + str(self.delimiter) + '\n'
+        s += 'log_file: ' + str(self.log_file) + '\n'
+        s += 'maxread: ' + str(self.maxread) + '\n'
+        s += 'maxsearchsize: ' + str(self.maxsearchsize) + '\n'
+        s += 'buffer (last 1000 chracters): ' + str(self.buffer)[-1000:] + '\n'
+        s += 'delay_hack: ' + str(self.delay_hack)
+        return s
 
     def __spawn(self):
         """This starts the given command in a child process. This does
@@ -240,14 +236,12 @@ class spawn:
         # That may not necessarily be bad, because you may haved spawned a child
         # that performs some task; creates no stdout output; and then dies.
         # It is a fuzzy edge case. Any child process that you are likely to
-        # want to interact with Pexpect would probably not fall into this
-        # category.
-        # FYI, This essentially does a fork/exec operation.
+        # want to interact with Pexpect would probably not fall into this category.
 
         assert self.pid == None, 'The pid member is not None.'
         assert self.command != None, 'The command member is None.'
 
-        if _which(self.command) == None:
+        if which(self.command) == None:
             raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
 
         try:
@@ -279,7 +273,7 @@ class spawn:
         return self.child_fd
 
     def close (self, wait=1):   # File-like object.
-        """ This closes the connection with the child application.
+        """This closes the connection with the child application.
         It makes no attempt to actually kill the child or wait for its status.
         If the file descriptor was set by passing a file descriptor
         to the constructor then this method raises an exception.
@@ -304,7 +298,7 @@ class spawn:
                     pid, status = os.waitpid (self.pid, 0)
                     if os.WIFEXITED (status):
                         self.exitstatus = os.WEXITSTATUS(status)
-                except OSError, e: ### suggested by Robert Stone
+                except OSError, e:
                     if e[0] == errno.ECHILD:
                         pass
                     else:
@@ -333,24 +327,33 @@ class spawn:
         termios.tcsetattr(self.child_fd, termios.TCSADRAIN, new)
 
     def setlog (self, fileobject):
-        """This sets logging output to go to the given fileobject.
+        """This turns on or off logging.
+        All output will be copied to the given fileobject.
         Set fileobject to None to stop logging. 
-        Example:
+        Set to sys.stdout to echo everything to standard output.
+        Examples:
             child = pexpect.spawn('some_command')
             fout = file('mylog.txt','w')
             child.setlog (fout)
             ...
+            child = pexpect.spawn('some_command')
+            child.setlog (sys.stdout)
         """
         self.log_file = fileobject
 
     def setmaxread (self, maxread):
-        """This sets the maximum number of bytes to read from a TTY at one time.
-        This is used to change the read buffer size. When a pexpect.spawn
-        object is created the default maxread is 1 (unbuffered).
-        Set this value higher to turn on buffer. This should help performance
-        in cases where large amounts of output are read back from the child.
+        """This method is depricated and will be removed.
+        I don't like getters and setters for no good reason.
         """
-        self.maxread = maxread
+#        """
+#        This sets the maximum number of bytes to read from a TTY at one time.
+#        This is used to change the read buffer size. When a pexpect.spawn
+#        object is created the default maxread is 1 (unbuffered).
+#        Set this value higher to turn on buffer. This should help performance
+#        in cases where large amounts of output are read back from the child.
+#        """
+#        self.maxread = maxread
+        raise ExceptionPexpect ('This method is no longer supported or allowed. Just assign a value to the maxread member variable.')
 
     def read_nonblocking (self, size = 1, timeout = None):
         """
@@ -367,7 +370,6 @@ class spawn:
         This is a non-blocking wrapper around os.read().
         It uses select.select() to implement a timeout. 
         """
-        
         if self.child_fd == -1:
             raise ValueError ('I/O operation on closed file in read_nonblocking().')
 
@@ -441,8 +443,7 @@ class spawn:
         you will receive a newline as \\r\\n.
         An empty string is returned when EOF is hit immediately.
         Currently, the size agument is mostly ignored, so this behavior is not
-        standard for a file-like object. If size is 0 then an empty string is
-        returned.
+        standard for a file-like object. If size is 0 then an empty string is returned.
         """
         if size == 0:
             return ''
@@ -452,11 +453,12 @@ class spawn:
         else:
             return self.before
 
-    def __iter__ (self):
+    def __iter__ (self):    # File-like object.
         """This is to support interators over a file-like object.
         """
         return self
-    def next (self):
+
+    def next (self):    # File-like object.
         """This is to support iterators over a file-like object.
         """
         result = self.readline()
@@ -494,6 +496,9 @@ class spawn:
         """This sends a string to the child process.
         This returns the number of bytes written.
         """
+        if self.log_file != None:
+            self.log_file.write (str)
+            self.log_file.flush()
         return os.write(self.child_fd, str)
 
     def sendline(self, str=''):
@@ -769,26 +774,31 @@ class spawn:
 #            self.buffer = ''
 #            raise
             
-    def expect_list(self, pattern_list, timeout = -1, maxsearchsize = None):
+    def expect_list(self, pattern_list, timeout = -1, maxsearchsize = -1):
         """
         This takes a list of compiled regular expressions and returns 
         the index into the pattern_list that matched the child's output.
-        This is called by expect(). It is similar to the expect() method
-        except that expect_list() is not overloaded and it does not have to
-        compile the pattern list on every call. This will help if you are
-        trying to optimize for speed. You must not pass
-        anything except a list of compiled regular expressions.
-        If timeout is -1 then timeout will be set to the self.timeout value.
+        The list may also contain EOF or TIMEOUT (which are not
+        compiled regular expressions). This method is similar to
+        the expect() method except that expect_list() does not
+        recompile the pattern list on every call.
+        This may help if you are trying to optimize for speed, otherwise
+        just use the expect() method.  This is called by expect().
+        If timeout == -1 then the self.timeout value will be used.
+        If maxsearchsize == -1 then the self.maxsearchsize value will be used.
         """
-
         self.pattern_list = pattern_list
 
+        if timeout is None:
+            timeout = 0
         if timeout == -1:
             timeout = self.timeout
             end_time = None
         if timeout != None:
             end_time = time.time() + timeout
         if maxsearchsize is None:
+            maxsearchsize = 0
+        if maxsearchsize == -1:
             maxsearchsize = self.maxsearchsize
  
         try:
@@ -800,17 +810,18 @@ class spawn:
                     index = index + 1
                     if cre is EOF or cre is TIMEOUT: 
                         continue # The patterns for PexpectExceptions are handled differently.
-                    if maxsearchsize is not None:
+                    if maxsearchsize == 0: # search everything
+                        match = cre.search(incoming)
+                    else:
                         startpos = max(0, len(incoming) - maxsearchsize)
                         match = cre.search(incoming, startpos)
-                    else:
-                        match = cre.search(incoming)
                     if match is not None:
                         self.buffer = incoming[match.end() : ]
                         self.before = incoming[ : match.start()]
                         self.after = incoming[match.start() : ]
                         self.match = match
                         self.match_index = index
+                        time.sleep(self.delay_hack)
                         return index
                 # No match, so read more data
                 if timeout != None:
@@ -826,6 +837,7 @@ class spawn:
             if EOF in pattern_list:
                 self.match = EOF
                 self.match_index = pattern_list.index(EOF)
+                time.sleep(self.delay_hack)
                 return self.match_index
             else:
                 self.match = None
@@ -837,6 +849,7 @@ class spawn:
             if TIMEOUT in pattern_list:
                 self.match = TIMEOUT
                 self.match_index = pattern_list.index(TIMEOUT)
+                time.sleep(self.delay_hack)
                 return self.match_index
             else:
                 self.match = None
@@ -929,14 +942,15 @@ class spawn:
                     break
 
 ##############################################################################
-# End of Spawn
+# End of spawn class
 ##############################################################################
 
-def _which (filename):
+def which (filename):
     """This takes a given filename; tries to find it in the
     environment path; then checks if it is executable.
+    This returns the full path to the filename if found and executable.
+    Otherwise this returns None.
     """
-
     # Special case where filename already contains a path.
     if os.path.dirname(filename) != '':
         if os.access (filename, os.X_OK):
@@ -958,7 +972,7 @@ def _which (filename):
             return f
     return None
 
-def _split_command_line(command_line):
+def split_command_line(command_line):
     """This splits a command line into a list of arguments.
     It splits arguments on spaces, but handles
     embedded quotes, doublequotes, and escaped characters.

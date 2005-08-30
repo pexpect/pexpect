@@ -56,7 +56,7 @@ Pexpect is intended for UNIX-like operating systems.""")
 
 __version__ = '0.999999'
 __revision__ = '$Revision$'
-__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run',
+__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which', 'split_command_line',
     '__version__', '__revision__']
 
 # Exception classes used by this module.
@@ -92,14 +92,15 @@ class TIMEOUT(ExceptionPexpect):
 ##class MAXBUFFER(ExceptionPexpect):
 ##    """Raised when a scan buffer fills before matching an expected pattern."""
 
-def run (command, args=[], timeout=30):
-    """This funnction runs the given command; waits for it to finish;
+def run (command, timeout=-1):
+    """This function runs the given command; waits for it to finish;
         then returns all output as a string. STDERR is included in output.
+        If the full path to the command is not given then the path is searched.
         This is a function interface to the spawn class.
         Note that lines are terminated by CR/LF (\\r\\n) combination
         even on UNIX-like systems because this is the standard for pseudo ttys.
     """
-    child = spawn(command, args, timeout)
+    child = spawn(command, [], timeout)
     child.expect (EOF)
     return child.before
 
@@ -108,7 +109,7 @@ class spawn:
     start and control child applications.
     """
 
-    def __init__(self, command, args=[], timeout=30, maxsearchsize=0):
+    def __init__(self, command, args=[], timeout=30, windowsize=None):
         """This is the constructor. The command parameter may be a string
         that includes a command and any arguments to the command. For example:
             p = pexpect.spawn ('/usr/bin/ftp')
@@ -153,7 +154,7 @@ class spawn:
         self.log_file = None    
         self.maxread = 1 # Max bytes to read at one time into buffer.
         self.buffer = '' # This is the read buffer. See maxread.
-        self.maxsearchsize = maxsearchsize # Anything before maxsearchsize point is preserved, but not searched.
+        self.windowsize = windowsize # Anything before windowsize point is preserved, but not searched.
         self.delay_hack = 0.1 # Sets sleep just after calling expect() method.
         self.softspace = 0 # File-like object.
         self.name = '' # File-like object.
@@ -217,14 +218,14 @@ class spawn:
         s += 'delimiter: ' + str(self.delimiter) + '\n'
         s += 'log_file: ' + str(self.log_file) + '\n'
         s += 'maxread: ' + str(self.maxread) + '\n'
-        s += 'maxsearchsize: ' + str(self.maxsearchsize) + '\n'
+        s += 'windowsize: ' + str(self.windowsize) + '\n'
         s += 'buffer (last 1000 chracters): ' + str(self.buffer)[-1000:] + '\n'
         s += 'delay_hack: ' + str(self.delay_hack)
         return s
 
     def __spawn(self):
-        """This starts the given command in a child process. This does
-        all the fork/exec type of stuff for a pty. This is called by
+        """This starts the given command in a child process.
+        This does all the fork/exec type of stuff for a pty. This is called by
         __init__. The args parameter is a list, command is a string.
         """
         # The pid and child_fd of this object get set by this method.
@@ -312,8 +313,7 @@ class spawn:
         pass
 
     def isatty (self):   # File-like object.
-        """This returns 1 if the file descriptor is open and
-        connected to a tty(-like) device, else 0.
+        """This returns 1 if the file descriptor is open and connected to a tty(-like) device, else 0.
         """
         return os.isatty(self.child_fd)
 
@@ -343,7 +343,7 @@ class spawn:
 
     def setmaxread (self, maxread):
         """This method is depricated and will be removed.
-        I don't like getters and setters for no good reason.
+        I don't like getters and setters withtou a good reason.
         """
 #        """
 #        This sets the maximum number of bytes to read from a TTY at one time.
@@ -356,8 +356,7 @@ class spawn:
         raise ExceptionPexpect ('This method is no longer supported or allowed. Just assign a value to the maxread member variable.')
 
     def read_nonblocking (self, size = 1, timeout = None):
-        """
-        This reads at most size characters from the child application.
+        """This reads at most size characters from the child application.
         It includes a timeout. If the read does not complete within the
         timeout period then a TIMEOUT exception is raised.
         If the end of file is read then an EOF exception will be raised.
@@ -640,7 +639,7 @@ class spawn:
 
         return compiled_pattern_list
  
-    def expect(self, pattern, timeout = -1, maxsearchsize=None):
+    def expect(self, pattern, timeout = -1, windowsize=None):
         """This seeks through the stream until a pattern is matched.
         The pattern is overloaded and may take several types including a list.
         The pattern can be a StringType, EOF, a compiled re, or
@@ -697,7 +696,7 @@ class spawn:
         If you are trying to optimize for speed then see expect_list().
         """
         compiled_pattern_list = self.compile_pattern_list(pattern)
-        return self.expect_list(compiled_pattern_list, timeout, maxsearchsize)
+        return self.expect_list(compiled_pattern_list, timeout, windowsize)
 
     def expect_exact (self, pattern_list, timeout = -1):
         """This method is no longer supported or allowed.
@@ -709,74 +708,9 @@ class spawn:
         nearly the same then I will consider adding this make in.
         """
         raise ExceptionPexpect ('This method is no longer supported or allowed.')
-#        """This is similar to expect() except that it takes
-#        list of plain strings instead of regular expressions.
-#        This should be much faster than expect(). It could also be
-#        useful when you don't want to have to worry about escaping
-#        regular expression characters that you want to match.
-#        You may also pass just a string without a list and the string
-#        will be automatically converted to a list with a single string element.
-#        If timeout is -1 then timeout will be set to the self.timeout value.
-#        See also expect_list() for speed optimization.
-#        """
-#        ### This is dumb. It shares most of the code with expect_list.
-#        ### The only different is the comparison method and that
-#        ### self.match is always None after calling this.
-#        if timeout == -1:
-#            timeout = self.timeout
-#
-#        if type(pattern_list) is StringType:
-#            pattern_list = [pattern_list]
-#
-#        try:
-#            #ED# incoming = ''
-#            incoming = self.buffer
-#            while 1: # Keep reading until exception or return.
-#                #ED# c = self.read_nonblocking (1, timeout) 
-#                #ED# incoming = incoming + c
-#
-#                # Sequence through the list of patterns and look for a match.
-#                index = -1
-#                for str_target in pattern_list:
-#                    index = index + 1
-#                    if str_target is EOF or str_target is TIMEOUT: 
-#                        continue # The Exception patterns are handled differently.
-#                    match_index = incoming.find (str_target)
-#                    if match_index >= 0:
-#                        self.before = incoming [ : match_index]
-#                        self.after = incoming [match_index : ]
-#                        self.buffer = incoming [match_index + len(str_target):]
-#                        self.match = None
-#                        return index
-#                c = self.read_nonblocking (self.maxread, timeout) 
-#                incoming = incoming + c
-#                
-#        except EOF:
-#            self.before = incoming
-#            self.after = EOF
-#            if EOF in pattern_list:
-#                #self.buffer = ''
-#                return pattern_list.index(EOF)
-#            else:
-#                raise
-#        except TIMEOUT, TimeOutInst:
-#            self.before = incoming
-#            self.after = TIMEOUT
-#            if TIMEOUT in pattern_list:
-#                #self.buffer = ''
-#                return pattern_list.index(TIMEOUT)
-#            else:
-#                raise TIMEOUT (TimeOutInst.__str__(),pattern_list)
-#        except Exception:
-#            self.before = incoming
-#            self.after = None
-#            self.match = None
-#            self.buffer = ''
-#            raise
-            
-    def expect_list(self, pattern_list, timeout = -1, maxsearchsize = -1):
-        """
-        This takes a list of compiled regular expressions and returns 
+                
+    def expect_list(self, pattern_list, timeout = -1, windowsize = -1):
+        """This takes a list of compiled regular expressions and returns 
         the index into the pattern_list that matched the child's output.
         The list may also contain EOF or TIMEOUT (which are not
         compiled regular expressions). This method is similar to
@@ -785,7 +719,7 @@ class spawn:
         This may help if you are trying to optimize for speed, otherwise
         just use the expect() method.  This is called by expect().
         If timeout == -1 then the self.timeout value will be used.
-        If maxsearchsize == -1 then the self.maxsearchsize value will be used.
+        If windowsize == -1 then the self.windowsize value will be used.
         """
         self.pattern_list = pattern_list
 
@@ -796,10 +730,9 @@ class spawn:
             end_time = None
         if timeout != None:
             end_time = time.time() + timeout
-        if maxsearchsize is None:
-            maxsearchsize = 0
-        if maxsearchsize == -1:
-            maxsearchsize = self.maxsearchsize
+            
+        if windowsize == -1:
+            windowsize = self.windowsize
  
         try:
             incoming = self.buffer
@@ -810,10 +743,10 @@ class spawn:
                     index = index + 1
                     if cre is EOF or cre is TIMEOUT: 
                         continue # The patterns for PexpectExceptions are handled differently.
-                    if maxsearchsize == 0: # search everything
+                    if windowsize is None: # search everything
                         match = cre.search(incoming)
                     else:
-                        startpos = max(0, len(incoming) - maxsearchsize)
+                        startpos = max(0, len(incoming) - windowsize)
                         match = cre.search(incoming, startpos)
                     if match is not None:
                         self.buffer = incoming[match.end() : ]
@@ -863,8 +796,7 @@ class spawn:
             raise
 
     def getwinsize(self):
-        """
-        This returns the window size of the child tty.
+        """This returns the window size of the child tty.
         The return value is a tuple of (rows, cols).
         """
 
@@ -873,8 +805,7 @@ class spawn:
         return struct.unpack('HHHH', x)[0:2]
 
     def setwinsize(self, r, c):
-        """
-        This sets the windowsize of the child tty.
+        """This sets the windowsize of the child tty.
         This will cause a SIGWINCH signal to be sent to the child.
         This does not change the physical window size.
         It changes the size reported to TTY-aware applications like

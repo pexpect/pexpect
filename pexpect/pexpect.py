@@ -1,5 +1,4 @@
-"""
-Pexpect is a Python module for spawning child applications;
+"""Pexpect is a Python module for spawning child applications;
 controlling them; and responding to expected patterns in their output.
 Pexpect can be used for automating interactive applications such as
 ssh, ftp, passwd, telnet, etc. It can be used to a automate setup scripts
@@ -61,7 +60,8 @@ __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which', 'split
 
 # Exception classes used by this module.
 class ExceptionPexpect(Exception):
-    """Base class for all exceptions raised by this module."""
+    """Base class for all exceptions raised by this module.
+    """
     def __init__(self, value):
         self.value = value
     def __str__(self):
@@ -80,9 +80,11 @@ class ExceptionPexpect(Exception):
         else:
             return False
 class EOF(ExceptionPexpect):
-    """Raised when EOF is read from a child."""
+    """Raised when EOF is read from a child.
+    """
 class TIMEOUT(ExceptionPexpect):
-    """Raised when a read time exceeds the timeout."""
+    """Raised when a read time exceeds the timeout.
+    """
 ##class TIMEOUT_PATTERN(TIMEOUT):
 ##    """Raised when the pattern match time exceeds the timeout.
 ##    This is different than a read TIMEOUT because the child process may
@@ -206,7 +208,7 @@ class spawn:
                     s += '    ' + p.pattern + '\n'
                 else:
                     s += '    ' + str(p) + '\n'
-        s += 'before (last 1000 characters): ' + str(self.before)[-1000:] + '\n'
+        s += 'before (last 100 characters): ' + str(self.before)[-100:] + '\n'
         s += 'after: ' + str(self.after) + '\n'
         s += 'match: ' + str(self.match) + '\n'
         s += 'match_index: ' + str(self.match_index) + '\n'
@@ -219,7 +221,7 @@ class spawn:
         s += 'log_file: ' + str(self.log_file) + '\n'
         s += 'maxread: ' + str(self.maxread) + '\n'
         s += 'windowsize: ' + str(self.windowsize) + '\n'
-        s += 'buffer (last 1000 chracters): ' + str(self.buffer)[-1000:] + '\n'
+        s += 'buffer (last 100 chracters): ' + str(self.buffer)[-100:] + '\n'
         s += 'delay_hack: ' + str(self.delay_hack)
         return s
 
@@ -270,7 +272,8 @@ class spawn:
         self.__child_fd_owner = 1
 
     def fileno (self):   # File-like object.
-        """This returns the file descriptor of the pty for the child."""
+        """This returns the file descriptor of the pty for the child.
+        """
         return self.child_fd
 
     def close (self, wait=1):   # File-like object.
@@ -318,7 +321,8 @@ class spawn:
         return os.isatty(self.child_fd)
 
     def setecho (self, on):
-        """This sets the terminal echo mode on or off."""
+        """This sets the terminal echo mode on or off.
+        """
         new = termios.tcgetattr(self.child_fd)
         if on:
             new[3] = new[3] | termios.ECHO # lflags

@@ -141,6 +141,34 @@ class spawn:
         object is created the default maxread is 1 (unbuffered).
         Set this value higher to turn on buffering. This should help performance
         in cases where large amounts of output are read back from the child.
+        
+        The logfile member turns on or off logging.
+        All output will be copied to the given fileobject.
+        Set logfile to None to stop logging. This is the default.
+        Set logfile to sys.stdout to echo everything to standard output.
+        The logfile is flushed after each write.
+        Example 1:
+            child = pexpect.spawn('some_command')
+            fout = file('mylog.txt','w')
+            child.logfile = fout
+        Example 2:
+            child = pexpect.spawn('some_command')
+            child.logfile = sys.stdout
+            
+        The human_delay helps overcome weird behavior that many users were experiencing.
+        The typical problem was that a user would expect() a "Password:" prompt and
+        then immediately call sendline() to send the password. The user would then
+        see that their password was echoed back to them. Of course, passwords don't
+        normally echo. The problem is caused by the fact that most applications
+        print out the "Password" prompt and then turn off stdin echo, but if you
+        send your password before the application turned off echo, then you get
+        your password echoed. Normally this wouldn't be a problem when interacting
+        with a human at a real heyboard.
+        If you introduce a slight delay just before writing then this seems to clear up the problem.
+        This was a common problem for many people, so I decided that the default pexpect behavior
+        should be to sleep just before writing.
+        1/10th of a second (100 ms) seems to be enough to clear up the problem.
+        You can set human_delay to 0 to return to the old behavior.
         """
         self.STDIN_FILENO = pty.STDIN_FILENO
         self.STDOUT_FILENO = pty.STDOUT_FILENO
@@ -165,7 +193,7 @@ class spawn:
         self.maxread = maxread # Max bytes to read at one time into buffer.
         self.buffer = '' # This is the read buffer. See maxread.
         self.searchwindowsize = searchwindowsize # Anything before searchwindowsize point is preserved, but not searched.
-        self.delay_hack = 0.1 # Sets sleep time used just after calling expect() method.
+        self.human_delay = 0.1 # Sets sleep time used just after calling expect() method.
         self.softspace = 0 # File-like object.
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.
@@ -234,7 +262,7 @@ class spawn:
         s += 'maxread: ' + str(self.maxread) + '\n'
         s += 'searchwindowsize: ' + str(self.searchwindowsize) + '\n'
         s += 'buffer (last 100 chracters): ' + str(self.buffer)[-100:] + '\n'
-        s += 'delay_hack: ' + str(self.delay_hack)
+        s += 'human_delay: ' + str(self.human_delay)
         return s
 
     def __spawn(self):
@@ -343,26 +371,6 @@ class spawn:
             new[3] = new[3] & ~termios.ECHO # lflags
         termios.tcsetattr(self.child_fd, termios.TCSADRAIN, new)
 
-    def setlog (self, fileobject):
-        """This turns on or off logging.
-        All output will be copied to the given fileobject.
-        Set fileobject to None to stop logging. 
-        Set to sys.stdout to echo everything to standard output.
-        Examples:
-            child = pexpect.spawn('some_command')
-            fout = file('mylog.txt','w')
-            child.setlog (fout)
-            ...
-            child = pexpect.spawn('some_command')
-            child.setlog (sys.stdout)
-        """
-        self.logfile = fileobject
-
-    def setmaxread (self, maxread):
-        """This method is depricated and will be removed.
-        I don't like getters and setters without a good reason.
-        """
-        raise ExceptionPexpect ('This method is no longer supported or allowed. Just assign a value to the maxread member variable.')
 
     def read_nonblocking (self, size = 1, timeout = -1):
         """This reads at most size characters from the child application.
@@ -516,6 +524,7 @@ class spawn:
         This returns the number of bytes written.
         If a log file was set then the data is also written to the log.
         """
+        time.sleep(self.human_delay)
         if self.logfile != None:
             self.logfile.write (str)
             self.logfile.flush()
@@ -719,17 +728,6 @@ class spawn:
         compiled_pattern_list = self.compile_pattern_list(pattern)
         return self.expect_list(compiled_pattern_list, timeout, searchwindowsize)
 
-    def expect_exact (self, pattern_list, timeout = -1):
-        """This method is no longer supported or allowed.
-        It was too hard to maintain and keep it up to date with expect_list.
-        Few people used this method. Most people favored reliability over speed.
-        The implementation is left in comments in case anyone needs to hack this
-        feature back into their copy.
-        If someone wants to diff this with expect_list and make them work
-        nearly the same then I will consider adding this make in.
-        """
-        raise ExceptionPexpect ('This method is no longer supported or allowed.')
-                
     def expect_list(self, pattern_list, timeout = -1, searchwindowsize = -1):
         """This takes a list of compiled regular expressions and returns 
         the index into the pattern_list that matched the child's output.
@@ -771,7 +769,6 @@ class spawn:
                         self.after = incoming[match.start() : ]
                         self.match = match
                         self.match_index = index
-                        time.sleep(self.delay_hack)
                         return index
                 # No match at this point
                 if timeout is not None and timeout < 0:
@@ -788,7 +785,6 @@ class spawn:
             if EOF in pattern_list:
                 self.match = EOF
                 self.match_index = pattern_list.index(EOF)
-                time.sleep(self.delay_hack)
                 return self.match_index
             else:
                 self.match = None
@@ -800,7 +796,6 @@ class spawn:
             if TIMEOUT in pattern_list:
                 self.match = TIMEOUT
                 self.match_index = pattern_list.index(TIMEOUT)
-                time.sleep(self.delay_hack)
                 return self.match_index
             else:
                 self.match = None
@@ -887,6 +882,28 @@ class spawn:
                 self.__interact_writen(self.child_fd, data)
                 if escape_character in data:
                     break
+##############################################################################
+# The following methods are no longer supported or allowed..                
+    def setmaxread (self, maxread):
+        """This method is no longer supported or allowed.
+        I don't like getters and setters without a good reason.
+        """
+        raise ExceptionPexpect ('This method is no longer supported or allowed. Just assign a value to the maxread member variable.')
+    def expect_exact (self, pattern_list, timeout = -1):
+        """This method is no longer supported or allowed.
+        It was too hard to maintain and keep it up to date with expect_list.
+        Few people used this method. Most people favored reliability over speed.
+        The implementation is left in comments in case anyone needs to hack this
+        feature back into their copy.
+        If someone wants to diff this with expect_list and make them work
+        nearly the same then I will consider adding this make in.
+        """
+        raise ExceptionPexpect ('This method is no longer supported or allowed.')
+    def setlog (self, fileobject):
+        """This method is no longer supported or allowed.
+        """
+        raise ExceptionPexpect ('This method is no longer supported or allowed. Just assign a value to the logfile member variable.')
+
 
 ##############################################################################
 # End of spawn class

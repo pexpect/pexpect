@@ -93,20 +93,31 @@ class TIMEOUT(ExceptionPexpect):
 ##class MAXBUFFER(ExceptionPexpect):
 ##    """Raised when a scan buffer fills before matching an expected pattern."""
 
-def run (command, timeout=-1):
+def run (command, timeout=-1, withexitstatus=0):
     """This function runs the given command; waits for it to finish;
         then returns all output as a string. STDERR is included in output.
         If the full path to the command is not given then the path is searched.
         This is a function interface to the spawn class.
         Note that lines are terminated by CR/LF (\\r\\n) combination
         even on UNIX-like systems because this is the standard for pseudo ttys.
+        If you set withexitstatus to true, then run will return a tuple of
+        (command_output, exitstatus).
+        Example 1:
+            from pexpect import run
+            print run ('ls -l /bin')
+        Example 2:
+            from pexpect import run
+            (command_output, exitstatus) = run ('ls -l /bin', withexitstatus=1)
     """
     if timeout == -1:
         child = spawn(command)
     else:
         child = spawn(command, timeout=timeout)
     child.expect (EOF)
-    return (child.before, child.exitstatus)
+    if withexitstatus:
+        return (child.before, child.exitstatus)
+    else:
+        return child.before
 
 class spawn:
     """This is the main class interface for Pexpect.

@@ -241,6 +241,7 @@ class spawn:
         """This returns the current state of the pexpect object as a string.
         """
         s = repr(self) + '\n'
+        s += 'version: ' + __version__ + ' (' + __revision__ + ')\n'
         if self.pattern_list is not None:
             s += 'pattern_list:\n'
             for p in self.pattern_list:

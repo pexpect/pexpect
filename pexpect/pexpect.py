@@ -106,7 +106,7 @@ def run (command, timeout=-1):
     else:
         child = spawn(command, timeout=timeout)
     child.expect (EOF)
-    return child.before
+    return (child.before, child.exitstatus)
 
 class spawn:
     """This is the main class interface for Pexpect.

@@ -16,9 +16,10 @@ class ExpectTestCase(unittest.TestCase):
 
     def test_run (self):
         the_old_way = commands.getoutput('ls -l /bin')
-        the_new_way = pexpect.run ('ls -l /bin')
+        (the_new_way, exitstatus) = pexpect.run ('ls -l /bin')
         the_new_way = the_new_way.replace('\r','')[:-1]
         assert the_old_way == the_new_way
+        assert exitstatus == 0
 
 if __name__ == '__main__':
     unittest.main()

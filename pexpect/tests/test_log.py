@@ -14,9 +14,9 @@ class TestCaseLog(unittest.TestCase):
         filename = tempfile.mktemp()
         mylog = open (filename, 'w')
         p = pexpect.spawn('echo', [log_message])
-        p.setlog (mylog)
+        p.logfile = mylog
         p.expect (pexpect.EOF)
-        p.setlog (None)
+        p.logfile = None
         mylog.close()
         
         l = open(filename).read()

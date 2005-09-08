@@ -93,7 +93,7 @@ class TIMEOUT(ExceptionPexpect):
 ##class MAXBUFFER(ExceptionPexpect):
 ##    """Raised when a scan buffer fills before matching an expected pattern."""
 
-def run (command, new_timeout=-1):
+def run (command, timeout=-1):
     """This function runs the given command; waits for it to finish;
         then returns all output as a string. STDERR is included in output.
         If the full path to the command is not given then the path is searched.
@@ -101,10 +101,10 @@ def run (command, new_timeout=-1):
         Note that lines are terminated by CR/LF (\\r\\n) combination
         even on UNIX-like systems because this is the standard for pseudo ttys.
     """
-    if new_timeout == -1:
+    if timeout == -1:
         child = spawn(command)
     else:
-        child = spawn(command, timeout=new_timeout)
+        child = spawn(command, timeout=timeout)
     child.expect (EOF)
     return child.before
 

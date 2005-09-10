@@ -11,6 +11,19 @@ should work on any platform that supports the standard Python pty
 module. The Pexpect interface focuses on ease of use so that simple
 tasks are easy.
 
+There are two main interfaces to Pexpect. You can call the function:
+        pexpect.run()
+to execute a command and return the output.
+Do no use this on interactive commands that expect input.
+This is a handy replacment for os.system().
+The more useful interface is the class:
+        pexpect.spawn()
+This creates a spawn instance. This will start the command that you specify.
+You can then interact with the child command through the spawn instance.
+Most commands, including ssh, cannot tell that they are being run inside
+of a script. This works even for commands that ask for passwords or
+other input outside of the normal stdio streams.
+
 Pexpect is Open Source, Free, and all that good stuff.
 License: Python Software Foundation License
          http://www.opensource.org/licenses/PythonSoftFoundation.html
@@ -139,19 +152,30 @@ class spawn:
         send() and sendline().
 
         If the command parameter is an integer AND a valid file descriptor
-        then spawn will talk to the file descriptor instead. This can be
-        used to act expect features to any file descriptor. For example:
+        then spawn will talk to the file descriptor instead 
+        of opening a new child command. This allows you to use expect features 
+        on any file descriptor. For example:
             fd = os.open ('somefile.txt', os.O_RDONLY)
             s = pexpect.spawn (fd)
         The original creator of the file descriptor is responsible
         for closing it. Spawn will not try to close it and spawn will
         raise an exception if you try to call spawn.close().
         
-        The maxread attribute sets the maximum number of bytes to read from a TTY at one time.
-        This is used to change the read buffer size. When a pexpect.spawn
-        object is created the default maxread is 1 (unbuffered).
-        Set this value higher to turn on buffering. This should help performance
-        in cases where large amounts of output are read back from the child.
+        The maxread attribute sets the read buffer size.
+        This is maximum number of bytes that Pexpect will try to read from a TTY at one time.
+        The default buffer size is 1 (unbuffered). Setting this value higher
+        will help performance in cases where large amounts of output are read back from the child.
+        This feature is useful in conjunction with searchwindowsize.
+        
+        The searchwindowsize attribute sets the how far back in
+        the incomming seach buffer Pexpect will search for pattern matches.
+        Every time Pexpect reads some data from the child it will append the data to
+        the incomming buffer. The default is to search from the beginning of the
+        imcomming buffer each time new data is read from the child.
+        But this is very inefficient if you are running a command that
+        generates a large amount of data where you want to match
+        The searchwindowsize does not effect the size of the incomming data buffer.
+        You will still have access to the full buffer after expect() returns.
         
         The logfile member turns on or off logging.
         All output will be copied to the given fileobject.
@@ -174,12 +198,15 @@ class spawn:
         print out the "Password" prompt and then turn off stdin echo, but if you
         send your password before the application turned off echo, then you get
         your password echoed. Normally this wouldn't be a problem when interacting
-        with a human at a real heyboard.
-        If you introduce a slight delay just before writing then this seems to clear up the problem.
-        This was a common problem for many people, so I decided that the default pexpect behavior
-        should be to sleep just before writing.
+        with a human at a real heyboard. If you introduce a slight delay just before 
+        writing then this seems to clear up the problem. This was such a common problem 
+        for many users that I decided that the default pexpect behavior
+        should be to sleep just before writing to the child application.
         1/10th of a second (100 ms) seems to be enough to clear up the problem.
         You can set human_delay to 0 to return to the old behavior.
+        
+        Note that spawn is clever about finding commands on your path.
+        It uses the same logic that "which" uses to find executables.
         """
         self.STDIN_FILENO = pty.STDIN_FILENO
         self.STDOUT_FILENO = pty.STDOUT_FILENO
@@ -337,12 +364,12 @@ class spawn:
         This emulates standard Python behavior with files.
         If wait is set to True then close will wait
         for the exit status of the process. Doing a wait is a blocking call,
-        but this usually takes almost no time at all. Generally,
+        but this usually takes almost no time at all, so usually,
         you don't have to worry about this. If you are
         creating lots of children then you usually want to call wait.
         Only set wait to false if you know the child will
-        continue to run after closing the controlling TTY.
-        Otherwise you will end up with defunct (zombie) processes.
+        continue to run after closing the controlling TTY; otherwise,
+        you will end up with defunct (zombie) processes.
         """
         if self.child_fd != -1:
             if not self.__child_fd_owner:

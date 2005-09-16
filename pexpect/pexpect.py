@@ -121,6 +121,8 @@ def run (command, timeout=-1, withexitstatus=0):
         Example 2:
             from pexpect import run
             (command_output, exitstatus) = run ('ls -l /bin', withexitstatus=1)
+            print command_output
+            print exitstatus
     """
     if timeout == -1:
         child = spawn(command, maxread=2000)
@@ -789,11 +791,6 @@ class spawn:
         if searchwindowsize == -1:
             searchwindowsize = self.searchwindowsize
 
-        optimized_pattern_list = pattern_list
-        #if pattern_list==[EOF] or pattern_list==[TIMEOUT] or (len(self.pattern_list)==2 and EOF in pattern_list and TIMEOUT in pattern_list):
-        #    optimized_pattern_list = []
-        #    print "DEBUG"
- 
         try:
             incoming = self.buffer
             while 1: # Keep reading until exception or return.

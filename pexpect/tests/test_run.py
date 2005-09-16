@@ -21,6 +21,10 @@ class ExpectTestCase(unittest.TestCase):
         assert the_old_way == the_new_way
         assert exitstatus == 0
 
+    def test_run_bad_exitstatus (self):
+        (the_new_way, exitstatus) = pexpect.run ('ls -l /najoeufhdnzkxjd', withexitstatus=1)
+        assert exitstatus != 0
+
 if __name__ == '__main__':
     unittest.main()
 

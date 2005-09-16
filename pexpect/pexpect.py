@@ -123,11 +123,12 @@ def run (command, timeout=-1, withexitstatus=0):
             (command_output, exitstatus) = run ('ls -l /bin', withexitstatus=1)
     """
     if timeout == -1:
-        child = spawn(command)
+        child = spawn(command, maxread=2000)
     else:
-        child = spawn(command, timeout=timeout)
+        child = spawn(command, timeout=timeout, maxread=2000)
     child.expect (EOF)
     if withexitstatus:
+        child.close()
         return (child.before, child.exitstatus)
     else:
         return child.before
@@ -137,7 +138,7 @@ class spawn:
     Use this class to start and control child applications.
     """
 
-    def __init__(self, command, args=[], timeout=30, maxread=1, searchwindowsize=None, logfile=None):
+    def __init__(self, command, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None):
         """This is the constructor. The command parameter may be a string
         that includes a command and any arguments to the command. For example:
             p = pexpect.spawn ('/usr/bin/ftp')
@@ -787,14 +788,17 @@ class spawn:
             end_time = time.time() + timeout 
         if searchwindowsize == -1:
             searchwindowsize = self.searchwindowsize
+
+        optimized_pattern_list = pattern_list
+        #if pattern_list==[EOF] or pattern_list==[TIMEOUT] or (len(self.pattern_list)==2 and EOF in pattern_list and TIMEOUT in pattern_list):
+        #    optimized_pattern_list = []
+        #    print "DEBUG"
  
         try:
             incoming = self.buffer
             while 1: # Keep reading until exception or return.
                 # Sequence through the list of patterns looking for a match.
-                index = -1
-                for cre in self.pattern_list:
-                    index = index + 1
+                for cre in pattern_list:
                     if cre is EOF or cre is TIMEOUT: 
                         continue # The patterns for PexpectExceptions are handled differently.
                     if searchwindowsize is None: # search everything
@@ -807,10 +811,10 @@ class spawn:
                         self.before = incoming[ : match.start()]
                         self.after = incoming[match.start() : ]
                         self.match = match
-                        self.match_index = index
-                        return index
+                        self.match_index = pattern_list.index(cre)
+                        return self.match_index
                 # No match at this point
-                if timeout is not None and timeout < 0:
+                if timeout < 0 and timeout is not None:
                     raise TIMEOUT ('Timeout exceeded in expect_list().')
                 # Still have time left, so read more data
                 c = self.read_nonblocking (self.maxread, timeout)

@@ -806,7 +806,7 @@ class spawn:
                     if match is not None:
                         self.buffer = incoming[match.end() : ]
                         self.before = incoming[ : match.start()]
-                        self.after = incoming[match.start() : ]
+                        self.after = incoming[match.start() : match.end()]
                         self.match = match
                         self.match_index = pattern_list.index(cre)
                         return self.match_index

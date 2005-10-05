@@ -60,6 +60,7 @@ try:
     import fcntl
     import errno
     import traceback
+    import signal
 except ImportError, e:
     raise ImportError (str(e) + """
 A critical module was not found. Probably this operating system does not support it.
@@ -336,7 +337,7 @@ class spawn:
 
         if self.pid == 0: # Child
             try: # Some platforms do not like setwinsize (Cygwin).
-                self.child_fd = sys.stdout.fileno()
+                self.child_fd = sys.stdout.fileno() # used by setwinsize()
                 self.setwinsize(24, 80)
             except:
                 pass
@@ -347,6 +348,10 @@ class spawn:
                     os.close (i)
                 except OSError:
                     pass
+
+            # I don't know why this works, but ignoring SIGHUP fixes a
+	    # problem when trying to start a Java daemon with sudo (specifically, Tomcat)
+            signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
             os.execvp(self.command, self.args)
 
@@ -466,12 +471,14 @@ class spawn:
                 s = os.read(self.child_fd, size)
             except OSError, e:
                 self.flag_eof = 1
+                # Linux does this
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Exception style platform.')
             if s == '':
                 self.flag_eof = 1
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Empty string style platform.')
             
             if self.logfile != None:
+                self.logfile.write ('in >')
                 self.logfile.write (s)
                 self.logfile.flush()
                 
@@ -568,6 +575,7 @@ class spawn:
         """
         time.sleep(self.human_delay)
         if self.logfile != None:
+            self.logfile.write ('out>')
             self.logfile.write (str)
             self.logfile.flush()
         return os.write(self.child_fd, str)

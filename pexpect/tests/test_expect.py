@@ -4,9 +4,9 @@ import unittest
 import commands
 import sys
 
-# Many of these test cases blindly assume that sequential
-# listing of the /bin directory will yield the same results.
-# This may not always be true, but seems adequate for testing now.
+# Many of these test cases blindly assume that sequential directory
+# listings of the /bin directory will yield the same results.
+# This may not be true, but seems adequate for testing now.
 # I should fix this at some point.
 
 class ExpectTestCase(unittest.TestCase):
@@ -14,16 +14,36 @@ class ExpectTestCase(unittest.TestCase):
         print self.id()
         unittest.TestCase.setUp(self)
 
-    def test_exp (self):
+    def test_expect_basic (self):
         p = pexpect.spawn('cat')
         p.sendline ('Hello')
         p.sendline ('there')
         p.sendline ('Mr. Python')
-        p.expect (['Hello'])
-        p.expect (['there'])
-        p.expect (['Mr. Python'])
+        p.expect ('Hello')
+        p.expect ('there')
+        p.expect ('Mr. Python')
         p.sendeof () 
         p.expect (pexpect.EOF)
+
+    def test_expect_index (self):
+        p = pexpect.spawn('cat')
+	p.sendline ('1234')
+	index = p.expect (['abcd','xyz','1234',pexpect.EOF])
+	assert index == 2
+	p.sendline ('abcd')
+	index = p.expect ([pexpect.TIMEOUT,'abcd','xyz','1234',pexpect.EOF])
+	assert index == 1
+	p.sendline ('xyz')
+	print str(p)
+	index = p.expect (['54321',pexpect.TIMEOUT,'abcd','xyz','1234',pexpect.EOF], timeout=5)
+	print str(p)
+	assert index == 3
+	#p.sendline ('$*!@?')
+	#index = p.expect (['54321',pexpect.TIMEOUT,'abcd','xyz','1234',pexpect.EOF], timeout=5)
+	#assert index == 1
+	#p.sendeof ()
+	#index = p.expect (['54321',pexpect.TIMEOUT,'abcd','xyz','1234',pexpect.EOF], timeout=5)
+	#assert index == 5
 
     def test_expect (self):
         the_old_way = commands.getoutput('ls -l /bin')
@@ -57,7 +77,7 @@ class ExpectTestCase(unittest.TestCase):
         the_old_way = commands.getoutput('ls -l /bin')
 
         p = pexpect.spawn('ls -l /bin')
-        p.expect(pexpect.EOF) # This basically tells it to read everything.
+        p.expect(pexpect.EOF) # This basically tells it to read everything. Same as pexpect.run() function.
         the_new_way = p.before
         the_new_way = the_new_way.replace('\r','')
         the_new_way = the_new_way[:-1]

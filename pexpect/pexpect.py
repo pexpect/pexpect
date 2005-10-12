@@ -182,7 +182,7 @@ class spawn:
         You will still have access to the full buffer after expect() returns.
         
         The logfile member turns on or off logging.
-        All output will be copied to the given fileobject.
+        All input and output will be copied to the given file object.
         Set logfile to None to stop logging. This is the default.
         Set logfile to sys.stdout to echo everything to standard output.
         The logfile is flushed after each write.
@@ -194,7 +194,7 @@ class spawn:
             child = pexpect.spawn('some_command')
             child.logfile = sys.stdout
             
-        The human_delay helps overcome weird behavior that many users were experiencing.
+        The delay_before_send helps overcome weird behavior that many users were experiencing.
         The typical problem was that a user would expect() a "Password:" prompt and
         then immediately call sendline() to send the password. The user would then
         see that their password was echoed back to them. Of course, passwords don't
@@ -207,7 +207,7 @@ class spawn:
         for many users that I decided that the default pexpect behavior
         should be to sleep just before writing to the child application.
         1/10th of a second (100 ms) seems to be enough to clear up the problem.
-        You can set human_delay to 0 to return to the old behavior.
+        You can set delay_before_send to 0 to return to the old behavior.
         
         Note that spawn is clever about finding commands on your path.
         It uses the same logic that "which" uses to find executables.
@@ -235,7 +235,7 @@ class spawn:
         self.maxread = maxread # Max bytes to read at one time into buffer.
         self.buffer = '' # This is the read buffer. See maxread.
         self.searchwindowsize = searchwindowsize # Anything before searchwindowsize point is preserved, but not searched.
-        self.human_delay = 0.1 # Sets sleep time used just after calling expect() method.
+        self.delay_before_send = 0.1 # Sets sleep time used just after calling expect() method.
         self.softspace = 0 # File-like object.
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.
@@ -305,13 +305,13 @@ class spawn:
         s += 'maxread: ' + str(self.maxread) + '\n'
         s += 'searchwindowsize: ' + str(self.searchwindowsize) + '\n'
         s += 'buffer (last 100 chracters): ' + str(self.buffer)[-100:] + '\n'
-        s += 'human_delay: ' + str(self.human_delay)
+        s += 'delay_before_send: ' + str(self.delay_before_send)
         return s
 
     def __spawn(self):
         """This starts the given command in a child process.
-        This does all the fork/exec type of stuff for a pty. This is called by
-        __init__. The args parameter is a list, command is a string.
+        This does all the fork/exec type of stuff for a pty.
+        This is called by __init__. 
         """
         # The pid and child_fd of this object get set by this method.
         # Note that it is difficult for this method to fail.
@@ -350,7 +350,7 @@ class spawn:
                     pass
 
             # I don't know why this works, but ignoring SIGHUP fixes a
-	    # problem when trying to start a Java daemon with sudo (specifically, Tomcat)
+            # problem when trying to start a Java daemon with sudo (specifically, Tomcat).
             signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
             os.execvp(self.command, self.args)
@@ -413,11 +413,10 @@ class spawn:
         """
         new = termios.tcgetattr(self.child_fd)
         if on:
-            new[3] = new[3] | termios.ECHO # lflags
+            new[3] = new[3] | termios.ECHO
         else:
-            new[3] = new[3] & ~termios.ECHO # lflags
-        termios.tcsetattr(self.child_fd, termios.TCSADRAIN, new)
-
+            new[3] = new[3] & ~termios.ECHO
+        termios.tcsetattr(self.child_fd, termios.TCSANOW, new)
 
     def read_nonblocking (self, size = 1, timeout = -1):
         """This reads at most size characters from the child application.
@@ -478,7 +477,6 @@ class spawn:
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Empty string style platform.')
             
             if self.logfile != None:
-                self.logfile.write ('in >')
                 self.logfile.write (s)
                 self.logfile.flush()
                 
@@ -573,12 +571,12 @@ class spawn:
         This returns the number of bytes written.
         If a log file was set then the data is also written to the log.
         """
-        time.sleep(self.human_delay)
+        time.sleep(self.delay_before_send)
         if self.logfile != None:
-            self.logfile.write ('out>')
             self.logfile.write (str)
             self.logfile.flush()
-        return os.write(self.child_fd, str)
+        c = os.write(self.child_fd, str)
+        return c
 
     def sendline(self, str=''):
         """This is like send(), but it adds a line feed (os.linesep).
@@ -951,7 +949,6 @@ class spawn:
         """This method is no longer supported or allowed.
         """
         raise ExceptionPexpect ('This method is no longer supported or allowed. Just assign a value to the logfile member variable.')
-
 
 ##############################################################################
 # End of spawn class

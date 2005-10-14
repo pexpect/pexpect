@@ -608,7 +608,7 @@ class spawn:
         try:
             # EOF is recognized when ICANON is set, so make sure it is set.
             termios.tcsetattr(fd, termios.TCSADRAIN, new)
-            os.write (self.child_fd, '%c' % termios.CEOF)
+            os.write (self.child_fd, '%c' % 0x04) # termios.CEOF)
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old) # restore state
 
@@ -858,8 +858,12 @@ class spawn:
         """This returns the window size of the child tty.
         The return value is a tuple of (rows, cols).
         """
+        if 'TIOCGWINSZ' in dir(termios):
+            TIOCGWINSZ = termios.TIOCGWINSZ
+        else:
+            TIOCGWINSZ = 1074295912L # Assume
         s = struct.pack('HHHH', 0, 0, 0, 0)
-        x = fcntl.ioctl(self.fileno(), termios.TIOCGWINSZ, s)
+        x = fcntl.ioctl(self.fileno(), TIOCGWINSZ, s)
         return struct.unpack('HHHH', x)[0:2]
 
     def setwinsize(self, r, c):
@@ -877,7 +881,10 @@ class spawn:
         # TIOCSWINSZ and they don't have a truncate problem.
         # Newer versions of Linux have totally different values for TIOCSWINSZ.
         # Note that this fix is a hack.
-        TIOCSWINSZ = termios.TIOCSWINSZ
+        if 'TIOCSWINSZ' in dir(termios):
+            TIOCSWINSZ = termios.TIOCSWINSZ
+        else:
+            TIOCSWINSZ = -2146929561
         if TIOCSWINSZ == 2148037735L: # L is not required in Python >= 2.2.
             TIOCSWINSZ = -2146929561 # Same bits, but with sign.
         # Note, assume ws_xpixel and ws_ypixel are zero.

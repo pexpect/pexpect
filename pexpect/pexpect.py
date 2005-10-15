@@ -265,8 +265,15 @@ class spawn:
             self.args = args
             self.args.insert (0, command)
             self.command = command
-        self.name = '<' + reduce(lambda x, y: x+' '+y, self.args) + '>'
+        #self.name = '<' + reduce(lambda x, y: x+' '+y, self.args) + '>'
 
+	command_with_path = which(self.command)
+        if command_with_path == None:
+            raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
+	self.command = command_with_path
+	self.args[0] = self.command
+
+	self.name = '<' + ' '.join (self.args) + '>'
         self.__spawn()
 
     def __del__(self):
@@ -282,31 +289,36 @@ class spawn:
     def __str__(self):
         """This returns the current state of the pexpect object as a string.
         """
-        s = repr(self) + '\n'
-        s += 'version: ' + __version__ + ' (' + __revision__ + ')\n'
-        if self.pattern_list is not None:
-            s += 'pattern_list:\n'
+        s = []
+        s.append(repr(self))
+        s.append('version: ' + __version__ + ' (' + __revision__ + ')')
+        s.append('command: ' + str(self.command))
+        s.append('args: ' + str(self.args))
+        if self.pattern_list is None:
+            s.append('pattern_list: None')
+        else:
+            s.append('pattern_list:')
             for p in self.pattern_list:
                 if type(p) is type(re.compile('')):
-                    s += '    ' + p.pattern + '\n'
+                    s.append('    ' + str(p.pattern))
                 else:
-                    s += '    ' + str(p) + '\n'
-        s += 'before (last 100 characters): ' + str(self.before)[-100:] + '\n'
-        s += 'after: ' + str(self.after) + '\n'
-        s += 'match: ' + str(self.match) + '\n'
-        s += 'match_index: ' + str(self.match_index) + '\n'
-        s += 'exitstatus: ' + str(self.exitstatus) + '\n'
-        s += 'flag_eof: ' + str(self.flag_eof) + '\n'
-        s += 'pid: ' + str(self.pid) + '\n'
-        s += 'child_fd: ' + str(self.child_fd) + '\n'
-        s += 'timeout: ' + str(self.timeout) + '\n'
-        s += 'delimiter: ' + str(self.delimiter) + '\n'
-        s += 'logfile: ' + str(self.logfile) + '\n'
-        s += 'maxread: ' + str(self.maxread) + '\n'
-        s += 'searchwindowsize: ' + str(self.searchwindowsize) + '\n'
-        s += 'buffer (last 100 chracters): ' + str(self.buffer)[-100:] + '\n'
-        s += 'delay_before_send: ' + str(self.delay_before_send)
-        return s
+                    s.append('    ' + str(p))
+        s.append('buffer (last 100 chars): ' + str(self.buffer)[-100:])
+        s.append('before (last 100 chars): ' + str(self.before)[-100:])
+        s.append('after: ' + str(self.after))
+        s.append('match: ' + str(self.match))
+        s.append('match_index: ' + str(self.match_index))
+        s.append('exitstatus: ' + str(self.exitstatus))
+        s.append('flag_eof: ' + str(self.flag_eof))
+        s.append('pid: ' + str(self.pid))
+        s.append('child_fd: ' + str(self.child_fd))
+        s.append('timeout: ' + str(self.timeout))
+        s.append('delimiter: ' + str(self.delimiter))
+        s.append('logfile: ' + str(self.logfile))
+        s.append('maxread: ' + str(self.maxread))
+        s.append('searchwindowsize: ' + str(self.searchwindowsize))
+        s.append('delay_before_send: ' + str(self.delay_before_send))
+        return '\n'.join(s)
 
     def __spawn(self):
         """This starts the given command in a child process.
@@ -321,14 +333,9 @@ class spawn:
         # EOF immediately then it means that the child is already dead.
         # That may not necessarily be bad because you may haved spawned a child
         # that performs some task; creates no stdout output; and then dies.
-        # This is a fuzzy edge case. Any child process that you are likely to
-        # want to interact with Pexpect would probably not fall into this category.
 
         assert self.pid == None, 'The pid member is not None.'
         assert self.command != None, 'The command member is None.'
-
-        if which(self.command) == None:
-            raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
 
         try:
             self.pid, self.child_fd = pty.fork()
@@ -350,10 +357,11 @@ class spawn:
                     pass
 
             # I don't know why this works, but ignoring SIGHUP fixes a
-            # problem when trying to start a Java daemon with sudo (specifically, Tomcat).
+            # problem when trying to start a Java daemon with sudo
+	    # (specifically, Tomcat).
             signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
-            os.execvp(self.command, self.args)
+            os.execv(self.command, self.args)
 
         # Parent
         self.__child_fd_owner = 1
@@ -606,9 +614,12 @@ class spawn:
         new[3] = new[3] | termios.ICANON # lflags
         # use try/finally to ensure state gets restored
         try:
-            # EOF is recognized when ICANON is set, so make sure it is set.
+            # ICANON must be set to recognize EOF
             termios.tcsetattr(fd, termios.TCSADRAIN, new)
-            os.write (self.child_fd, '%c' % 0x04) # termios.CEOF)
+            if 'CEOF' in dir(termios):
+                os.write (self.child_fd, '%c' % termios.CEOF)
+            else:
+                os.write (self.child_fd, '%c' % 4) # CTRL-D
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old) # restore state
 

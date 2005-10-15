@@ -35,29 +35,57 @@ class ExpectTestCase(unittest.TestCase):
         p.sendeof () 
         p.expect (pexpect.EOF)
 
+    def test_expect_order (self):
+        """This tests that patterns are matched in the order of the pattern_list.
+        """
+        p = pexpect.spawn('cat')
+        p.setecho(0) # Turn off tty echo
+        p.sendline ('1234') # Should see this twice (once from tty echo and again from cat).
+        p.sendline ('abcd') # Now, should only see this once.
+        p.sendline ('wxyz') # This should also be only once.
+        p.sendline ('7890') # Should see this twice.
+        p.sendeof () 
+        index = p.expect (['1234','abcd','wxyz',pexpect.EOF])
+        assert index == 0, "index="+str(index)
+        index = p.expect (['1234','abcd','wxyz',pexpect.EOF])
+        assert index == 0, "index="+str(index)
+        index = p.expect ([pexpect.EOF,pexpect.TIMEOUT,'abcd','wxyz','1234'])
+        assert index == 2, "index="+str(index)
+        index = p.expect (['54321',pexpect.TIMEOUT,'1234','abcd','wxyz',pexpect.EOF], timeout=5)
+        assert index == 3, "index="+str(index)
+        index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
+        assert index == 3, "index="+str(index)
+        index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
+        assert index == 3, "index="+str(index)
+        index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
+        assert index == 0, "index="+str(index)
+        
     def test_expect_echo (self):
         """This tests that echo can be turned on and off.
         """
         p = pexpect.spawn('cat')
         p.sendline ('1234') # Should see this twice (once from tty echo and again from cat).
-        p.setecho(True) # Turn off tty echo
+        p.setecho(0) # Turn off tty echo
         p.sendline ('abcd') # Now, should only see this once.
         p.sendline ('wxyz') # This should also be only once.
-        p.setecho(False) # Turn on tty echo
+        p.setecho(1) # Turn on tty echo
         p.sendline ('7890') # Should see this twice.
-        index = p.expect (['abcd','wxyz','1234',pexpect.EOF])
-        assert index == 2
-        index = p.expect (['abcd','wxyz','1234',pexpect.EOF])
-        assert index == 2
-        index = p.expect ([pexpect.TIMEOUT,'abcd','wxyz','1234',pexpect.EOF])
-        assert index == 1
-        index = p.expect (['54321',pexpect.TIMEOUT,'abcd','wxyz','1234',pexpect.EOF], timeout=5)
-        assert index == 3
-        index = p.expect (['abcd','wxyz','7890',pexpect.EOF])
-        assert index == 2
-        index = p.expect (['abcd','wxyz','7890',pexpect.EOF])
-        assert index == 2
-        
+        p.sendeof () 
+        index = p.expect (['1234','abcd','wxyz',pexpect.EOF])
+        assert index == 0, "index="+str(index)
+        index = p.expect (['1234','abcd','wxyz',pexpect.EOF])
+        assert index == 0, "index="+str(index)
+        index = p.expect ([pexpect.EOF,pexpect.TIMEOUT,'abcd','wxyz','1234'])
+        assert index == 2, "index="+str(index)
+        index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
+        assert index == 2, "index="+str(index)
+        index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
+        assert index == 3, "index="+str(index)
+        index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
+        assert index == 3, "index="+str(index)
+        index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
+        assert index == 0, "index="+str(index)
+ 
     def test_expect_index (self):
         """This tests that mixed list of regex strings, TIMEOUT, and EOF all
         return the correct index when matched.
@@ -67,19 +95,19 @@ class ExpectTestCase(unittest.TestCase):
         p.setecho(0)
         p.sendline ('1234')
         index = p.expect (['abcd','wxyz','1234',pexpect.EOF])
-        assert index == 2
+        assert index == 2, "index="+str(index)
         p.sendline ('abcd')
         index = p.expect ([pexpect.TIMEOUT,'abcd','wxyz','1234',pexpect.EOF])
-        assert index == 1
+        assert index == 1, "index="+str(index)
         p.sendline ('wxyz')
         index = p.expect (['54321',pexpect.TIMEOUT,'abcd','wxyz','1234',pexpect.EOF], timeout=5)
-        assert index == 3 # Expect 'wxyz'
+        assert index == 3, "index="+str(index) # Expect 'wxyz'
         p.sendline ('$*!@?')
         index = p.expect (['54321',pexpect.TIMEOUT,'abcd','wxyz','1234',pexpect.EOF], timeout=5)
-        assert index == 1 # Expect TIMEOUT
+        assert index == 1, "index="+str(index) # Expect TIMEOUT
         p.sendeof ()
         index = p.expect (['54321',pexpect.TIMEOUT,'abcd','wxyz','1234',pexpect.EOF], timeout=5)
-        assert index == 5 # Expect EOF
+        assert index == 5, "index="+str(index) # Expect EOF
 
     def test_expect (self):
         the_old_way = commands.getoutput('ls -l /bin')
@@ -110,8 +138,8 @@ class ExpectTestCase(unittest.TestCase):
 #        assert the_old_way == the_new_way
 #
     def test_expect_eof (self):
-        the_old_way = commands.getoutput('ls -l /bin')
-        p = pexpect.spawn('ls -l /bin')
+        the_old_way = commands.getoutput('/bin/ls -l /bin')
+        p = pexpect.spawn('/bin/ls -l /bin')
         p.expect(pexpect.EOF) # This basically tells it to read everything. Same as pexpect.run() function.
         the_new_way = p.before
         the_new_way = the_new_way.replace('\r','') # Remember, pty line endings are '\r\n'.

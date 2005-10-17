@@ -3,6 +3,7 @@ import pexpect
 import unittest
 import PexpectTestCase
 import time
+import sys
 
 class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
     def setUp(self):
@@ -14,7 +15,9 @@ class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
         This tests that the child process can set and get the windows size.
         This makes use of an external script sigwinch_report.py.
         """
+        print self.PYTHONBIN
         p1 = pexpect.spawn('%s sigwinch_report.py' % self.PYTHONBIN)
+        p1.logfile = sys.stdout
         time.sleep(1)
         p1.setwinsize (11,22)
         index = p1.expect ([pexpect.TIMEOUT, 'SIGWINCH: \(([0-9]*), ([0-9]*)\)'], timeout=10)
@@ -31,6 +34,9 @@ class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
         r = p1.match.group(1)
         c = p1.match.group(2)
         assert (r=="24" and c=="80")
+        p1.send('\x03')
+        p1.close()
+        print p1.exitstatus
 
 if __name__ == '__main__':
     unittest.main()

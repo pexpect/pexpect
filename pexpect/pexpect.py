@@ -239,14 +239,14 @@ class spawn:
         self.softspace = 0 # File-like object.
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.
-        self.closed = 0 # File-like object.
+        self.closed = 1 # File-like object.
         
         # If command is an int type then it must represent an open file descriptor.
         if type (command) == type(0):
             try: # Command is an int, so now check if it is a file descriptor.
                 os.fstat(command)
             except OSError:
-                raise ExceptionPexpect ('The "command" argument is an int type, yet it is not a valid file descriptor.')
+                raise ExceptionPexpect ('The "command" argument is an int type, but it is not a valid file descriptor.')
             self.pid = -1 
             self.child_fd = command
             self.__child_fd_owner = 0 # Sets who is reponsible for the child_fd
@@ -267,13 +267,13 @@ class spawn:
             self.command = command
         #self.name = '<' + reduce(lambda x, y: x+' '+y, self.args) + '>'
 
-	command_with_path = which(self.command)
+        command_with_path = which(self.command)
         if command_with_path == None:
             raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
-	self.command = command_with_path
-	self.args[0] = self.command
+        self.command = command_with_path
+        self.args[0] = self.command
 
-	self.name = '<' + ' '.join (self.args) + '>'
+        self.name = '<' + ' '.join (self.args) + '>'
         self.__spawn()
 
     def __del__(self):
@@ -283,6 +283,8 @@ class spawn:
         If the child file descriptor was opened outside of this class
         (passed to the constructor) then this does not close it.
         """
+        if self.closed:
+            return
         if self.__child_fd_owner:
             self.close()
 
@@ -358,13 +360,14 @@ class spawn:
 
             # I don't know why this works, but ignoring SIGHUP fixes a
             # problem when trying to start a Java daemon with sudo
-	    # (specifically, Tomcat).
+            # (specifically, Tomcat).
             signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
             os.execv(self.command, self.args)
 
         # Parent
         self.__child_fd_owner = 1
+        self.closed = 0
 
     def fileno (self):   # File-like object.
         """This returns the file descriptor of the pty for the child.
@@ -373,7 +376,7 @@ class spawn:
 
     def close (self, wait=1):   # File-like object.
         """This closes the connection with the child application.
-        It makes no attempt to actually kill the child or wait for its status.
+        It makes no attempt to actually kill the child.
         If the file descriptor was set by passing a file descriptor
         to the constructor then this method raises an exception.
         Note that calling close() more than once is valid.
@@ -386,6 +389,10 @@ class spawn:
         Only set wait to false if you know the child will
         continue to run after closing the controlling TTY; otherwise,
         you will end up with defunct (zombie) processes.
+        On some platforms waitpid will block because a process might
+        no longer exist. This may be true if you spawn applications
+        that exec children or daemonize themselves. In this case,
+        close will wait for up to 1 second before giving up.
         """
         if self.child_fd != -1:
             if not self.__child_fd_owner:
@@ -394,7 +401,11 @@ class spawn:
             os.close (self.child_fd)
             if wait:
                 try:
-                    pid, status = os.waitpid (self.pid, 0)
+                    for tries in range (0,5):
+                        pid, status = os.waitpid (self.pid, os.WNOHANG)
+                        if (pid, status) != (0,0):
+                            time.sleep (0.2)
+                            break
                     if os.WIFEXITED (status):
                         self.exitstatus = os.WEXITSTATUS(status)
                 except OSError, e:

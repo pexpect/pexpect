@@ -40,6 +40,7 @@ Hartmut Goebel
 Chad Schroeder
 Erick Tryzelaar
 Dave Kirby
+Ids vander Molen
 (Let me know if I forgot anyone.)
 
 $Revision$
@@ -262,10 +263,9 @@ class spawn:
             self.args = split_command_line(command)
             self.command = self.args[0]
         else:
-            self.args = args
+            self.args = args[:] # work with a copy
             self.args.insert (0, command)
             self.command = command
-        #self.name = '<' + reduce(lambda x, y: x+' '+y, self.args) + '>'
 
         command_with_path = which(self.command)
         if command_with_path == None:

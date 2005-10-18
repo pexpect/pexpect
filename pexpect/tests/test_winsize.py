@@ -34,7 +34,7 @@ class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
         c = p1.match.group(2)
         assert (r=="24" and c=="80")
         #p1.send('\x03')
-        p1.close(force=True)
+        p1.close()
         print p1.exitstatus
 
 if __name__ == '__main__':

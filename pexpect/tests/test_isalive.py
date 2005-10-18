@@ -5,18 +5,18 @@ import sys, os, time
 import PexpectTestCase
 
 class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
-    def test_expect_isalive1 (self):
+    def test_expect_isalive_dead_after_normal_termination (self):
         p = pexpect.spawn('ls')
         p.expect(pexpect.EOF)
         time.sleep(1) # allow kernel status time to catch up with state.
         if p.isalive():
             self.fail ('Child process is not dead. It should be.')
 
-    def test_expect_isalive2 (self):
+    def test_expect_isalive_dead_after_SIGINT (self):
         p = pexpect.spawn('cat', timeout=5)
         if not p.isalive():
             self.fail ('Child process is not alive. It should be.')
-        p.kill(1)
+        p.terminate()
         # Solaris is kind of slow.
         # Without this delay then p.expect(...) will not see
         # that the process is dead and it will timeout.
@@ -25,7 +25,7 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
         if p.isalive():
             self.fail ('Child process is not dead. It should be.')
 
-    def test_expect_isalive3 (self):
+    def test_expect_isalive_dead_after_SIGKILL (self):
         p = pexpect.spawn('cat', timeout=3)
         if not p.isalive():
             self.fail ('Child process is not alive. It should be.')
@@ -36,15 +36,10 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
         time.sleep(1)
         p.expect(pexpect.EOF)
         if p.isalive():
-#            pid, sts = os.waitpid(p.pid, 0)#, os.WNOHANG)
-#            print 'p.pid, pid, sts:', p.pid, pid, sts
-#            pp = pexpect.spawn('ps -p %d' % p.pid)
-#            pp.expect (pexpect.EOF)
-#            print pp.before
             self.fail ('Child process is not dead. It should be.')
 
 ### Some platforms allow this. Some reset status after call to waitpid.
-    def OFF_test_expect_isalive4 (self):
+    def test_expect_isalive_consistent_multiple_calls (self):
         """This tests that multiple calls to isalive() return same value.
         """
         p = pexpect.spawn('cat')

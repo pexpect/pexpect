@@ -67,7 +67,7 @@ except ImportError, e:
 A critical module was not found. Probably this operating system does not support it.
 Pexpect is intended for UNIX-like operating systems.""")
 
-__version__ = '0.999999'
+__version__ = '0.999999c'
 __revision__ = '$Revision$'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which', 'split_command_line',
     '__version__', '__revision__']
@@ -90,9 +90,9 @@ class ExceptionPexpect(Exception):
         return ''.join(tblist)
     def __filter_not_pexpect(self, trace_list_item):
         if trace_list_item[0].find('pexpect.py') == -1:
-            return True
+            return 1
         else:
-            return False
+            return 0
 class EOF(ExceptionPexpect):
     """Raised when EOF is read from a child.
     """
@@ -226,7 +226,7 @@ class spawn:
         self.after = None
         self.match = None
         self.match_index = None
-        self.terminated = True
+        self.terminated = 1
         self.exitstatus = None
         self.signalstatus = None
         self.status = None
@@ -354,7 +354,7 @@ class spawn:
             os.execv(self.command, self.args)
 
         # Parent
-        self.terminated = False
+        self.terminated = 0
         self.closed = 0
 
     def fileno (self):   # File-like object.
@@ -362,11 +362,11 @@ class spawn:
         """
         return self.child_fd
 
-    def close (self, force=False):   # File-like object.
+    def close (self, force=0):   # File-like object.
         """This closes the connection with the child application.
         Note that calling close() more than once is valid.
         This emulates standard Python behavior with files.
-        Set force to True if you want to make sure that the child is terminated
+        Set force to 1 if you want to make sure that the child is terminated
         (SIGKILL is sent if the child ignores SIGHUP and SIGINT).
         """
         if self.child_fd != -1:
@@ -596,9 +596,9 @@ class spawn:
         """
         return self.flag_eof
 
-    def terminate(self, force=False):
+    def terminate(self, force=0):
         """This forces a child process to terminate.
-        It starts nicely with SIGHUP and SIGINT. If "force" is True then
+        It starts nicely with SIGHUP and SIGINT. If "force" is 1 then
         moves onto SIGKILL is sent otherwise an exception is generated.
         """
         if not self.isalive():
@@ -622,7 +622,7 @@ class spawn:
                 return
             else:
                 raise ExceptionPexpect ('terminate() sent a SIGKILL, but the child is still reported as alive.')
-        raise ExceptionPexpect ('terminate() could not terminate child process. Try terminate(force=True)?')
+        raise ExceptionPexpect ('terminate() could not terminate child process. Try terminate(force=1)?')
         
     def isalive(self):
         """This tests if the child process is running or not.
@@ -632,7 +632,7 @@ class spawn:
         It can take literally SECONDS for Solaris to return the right status.
         """
         if self.terminated:
-            return False
+            return 0
 
         if self.flag_eof:
             # This is for Linux, which requires the blocking form of waitpid to get
@@ -646,7 +646,7 @@ class spawn:
             pid, status = os.waitpid(self.pid, waitpid_options)
         except OSError, e: # No child processes
             if e[0] == errno.ECHILD:
-                raise ExceptionPexpect ('isalive() encountered condition where "terminated" is False, but there was no child process. Did someone else call waitpid() on our process?')
+                raise ExceptionPexpect ('isalive() encountered condition where "terminated" is 0, but there was no child process. Did someone else call waitpid() on our process?')
             else:
                 raise e
 
@@ -658,27 +658,27 @@ class spawn:
             try:
                 pid, status = os.waitpid(self.pid, os.WNOHANG) # Solaris!
             except OSError, e: # This is crufty. When does this happen?
-                return False
+                return 0
             # If pid and status is still 0 after two calls to waitpid() then
             # the process really is alive. This seems to work on all platforms.
             if pid == 0:
-                return True
+                return 1
 
         if pid == 0:
-            return True
+            return 1
 
         if os.WIFEXITED (status):
             self.status = status
             self.exitstatus = os.WEXITSTATUS(status)
             self.signalstatus = None
-            self.terminated = True
-            return False
+            self.terminated = 1
+            return 0
         elif os.WIFSIGNALED (status):
             self.status = status
             self.exitstatus = None
             self.signalstatus = os.WTERMSIG(status)
-            self.terminated = True
-            return False
+            self.terminated = 1
+            return 0
         elif os.WIFSTOPPED (status):
             raise ExceptionPexpect ('isalive() encountered condition where child process is stopped. This is not supported. Is some other process attempting job control with our child pid?')
 

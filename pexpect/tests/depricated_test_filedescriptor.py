@@ -39,17 +39,17 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         assert not s.isatty()
         os.close(fd)
 
-    def test_close_does_not_close_fd (self):
-        """Calling close() on a pexpect.spawn object should not
-                close the underlying file descriptor.
-        """
-        fd = os.open ('TESTDATA.txt', os.O_RDONLY)
-        s = pexpect.spawn (fd)
-        try:
-            s.close()
-            self.fail('Expected an Exception.')
-        except pexpect.ExceptionPexpect, e:
-            pass
+###    def test_close_does_not_close_fd (self):
+###        """Calling close() on a pexpect.spawn object should not
+###                close the underlying file descriptor.
+###        """
+###        fd = os.open ('TESTDATA.txt', os.O_RDONLY)
+###        s = pexpect.spawn (fd)
+###        try:
+###            s.close()
+###            self.fail('Expected an Exception.')
+###        except pexpect.ExceptionPexpect, e:
+###            pass
 
 if __name__ == '__main__':
     unittest.main()

@@ -640,7 +640,7 @@ class spawn:
             # been set in read_nonblocking(), so this should be safe.
             waitpid_options = 0
         else:
-            waitpid_options = os.WNOHANG|os.WUNTRACED
+            waitpid_options = os.WNOHANG
             
         try:
             pid, status = os.waitpid(self.pid, waitpid_options)
@@ -649,6 +649,20 @@ class spawn:
                 raise ExceptionPexpect ('isalive() encountered condition where "terminated" is False, but there was no child process. Did someone else call waitpid() on our process?')
             else:
                 raise e
+
+        # I have to do this twice for Solaris. I can't even believe that I figured this out...
+        # If waitpid() returns 0 it means that no child process wishes to
+        # report, and the value of status is undefined.
+        #        if pid == 0 and status == 0:
+        if pid == 0:
+            try:
+                pid, status = os.waitpid(self.pid, os.WNOHANG) # Solaris!
+            except OSError, e: # This is crufty. When does this happen?
+                return False
+            # If pid and status is still 0 after two calls to waitpid() then
+            # the process really is alive. This seems to work on all platforms.
+            if pid == 0:
+                return True
 
         if pid == 0:
             return True
@@ -669,22 +683,6 @@ class spawn:
             raise ExceptionPexpect ('isalive() encountered condition where child process is stopped. This is not supported. Is some other process attempting job control with our child pid?')
 
         raise ExceptionPexpect ('isalive() reached unexpected condition where waitpid matched child pid, but status was not matched by WIFEXITED, WIFSIGNALED, or WIFSTOPPED.')
-
-#        # I have to do this twice for Solaris. I can't even believe that I figured this out...
-#        # If waitpid() returns 0 it means that no child process wishes to
-#        # report, and the value of status is undefined.
-#        #        if pid == 0 and status == 0:
-#        if pid == 0:
-#            try:
-#                pid, status = os.waitpid(self.pid, os.WNOHANG|os.WUNTRACED)
-#                #print 'Solaris sucks'
-#            except OSError: # This is crufty. When does this happen?
-#                return 0
-#            # If pid and status is still 0 after two calls to waitpid() then
-#            # the process really is alive. This seems to work on all platforms.
-#            #            if pid == 0 and status == 0:
-#            if pid == 0:
-#                return 1
 
 
     def kill(self, sig):

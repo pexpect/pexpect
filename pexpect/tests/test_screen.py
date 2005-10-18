@@ -2,6 +2,7 @@
 
 import screen
 import unittest
+import PexpectTestCase
 
 fill1_target='XXXXXXXXXX\n' + \
 'XOOOOOOOOX\n' + \
@@ -56,11 +57,7 @@ insert_target = 'ZXZZZZZZXZ\n' +\
 'ZZ/2.4.6ZZ\n'
 get_region_target = ['......', '.\\/...', './\\...', '......']
 
-class screenTestCase (unittest.TestCase):
-    def setUp(self):
-        print self.id()
-        unittest.TestCase.setUp(self)
-
+class screenTestCase (PexpectTestCase.PexpectTestCase):
     def make_screen_with_put (self):
         s = screen.screen(10,10)
         s.fill ('.')

@@ -6,9 +6,6 @@ import time
 import sys
 
 class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
-    def setUp(self):
-        print self.id()
-        PexpectTestCase.PexpectTestCase.setUp(self)
 
     def test_winsize (self):
         """
@@ -34,7 +31,6 @@ class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
         assert (r=="24" and c=="80")
         #p1.send('\x03')
         p1.close()
-        print p1.exitstatus
 
 if __name__ == '__main__':
     unittest.main()

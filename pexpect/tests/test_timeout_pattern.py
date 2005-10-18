@@ -2,12 +2,9 @@
 import pexpect
 import unittest
 import sys, os, time
+import PexpectTestCase
 
-class Exp_TimeoutTestCase(unittest.TestCase):
-    def setUp(self):
-        print self.id()
-        unittest.TestCase.setUp(self)
-
+class Exp_TimeoutTestCase(PexpectTestCase.PexpectTestCase):
     def test_matches_exp_timeout (self):
         """This tests that we can raise and catch TIMEOUT.
         """

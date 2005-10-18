@@ -42,6 +42,7 @@ def find_modules_and_add_paths (root_path):
             sys.path.append (path)
         if not os.path.dirname(path) in sys.path:
             sys.path.append (os.path.dirname(path))
+    module_list.sort()
     return module_list
 
 def suite(): 

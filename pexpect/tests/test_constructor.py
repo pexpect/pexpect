@@ -2,11 +2,9 @@
 import pexpect
 import unittest
 import time
+import PexpectTestCase
 
-class TestCaseConstructor(unittest.TestCase):
-    def setUp(self):
-        print self.id()
-        unittest.TestCase.setUp(self)
+class TestCaseConstructor(PexpectTestCase.PexpectTestCase):
     def test_constructor (self):
         """This tests that the constructor will work and give
         the same results for different styles of invoking __init__().

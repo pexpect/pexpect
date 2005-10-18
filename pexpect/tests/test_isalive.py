@@ -2,12 +2,9 @@
 import pexpect
 import unittest
 import sys, os, time
+import PexpectTestCase
 
-class IsAliveTestCase(unittest.TestCase):
-    def setUp(self):
-        print self.id()
-        unittest.TestCase.setUp(self)
-        
+class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
     def test_expect_isalive1 (self):
         p = pexpect.spawn('ls')
         p.expect(pexpect.EOF)

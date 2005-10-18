@@ -3,12 +3,9 @@ import pexpect
 import unittest
 import os
 import tempfile 
+import PexpectTestCase
 
-class TestCaseLog(unittest.TestCase):
-    def setUp(self):
-        print self.id()
-        unittest.TestCase.setUp(self)
-        
+class TestCaseLog(PexpectTestCase.PexpectTestCase):
     def test_log (self):
         log_message = 'This is a test. This is a test.'
         filename = tempfile.mktemp()

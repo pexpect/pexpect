@@ -1,12 +1,8 @@
 #!/usr/bin/env python
 import pexpect
 import unittest
-
-class SplitCommandLineTestCase(unittest.TestCase):
-    def setUp(self):
-        print self.id()
-        unittest.TestCase.setUp(self)
-
+import PexpectTestCase
+class SplitCommandLineTestCase(PexpectTestCase.PexpectTestCase):
     def testSplitSizes(self):
         assert len(pexpect.split_command_line(r'')) == 0
         assert len(pexpect.split_command_line(r'one')) == 1

@@ -2,6 +2,7 @@
 
 import ANSI
 import unittest
+import PexpectTestCase
 
 write_target = 'I\'ve got a ferret sticking up my nose.                           \n' +\
 '(He\'s got a ferret sticking up his nose.)                        \n' +\
@@ -58,11 +59,7 @@ tetris_target='                           XX            XXXX    XX              
 '  J->LEFT  K->ROTATE  L->RIGHT  SPACE->DROP  P->PAUSE  Q->QUIT                  \n' +\
 '                                                                                \n'
 
-class ansiTestCase (unittest.TestCase):
-    def setUp(self):
-        print self.id()
-        unittest.TestCase.setUp(self)
-
+class ansiTestCase (PexpectTestCase.PexpectTestCase):
     def test_write (self):
         s = ANSI.ANSI (6,65)
         s.fill('.')
@@ -72,7 +69,7 @@ class ansiTestCase (unittest.TestCase):
         assert str(s) == write_target
     def test_tetris (self):
         s = ANSI.ANSI (24,80)
-        tetris_text = open ('tests/tetris.data').read()
+        tetris_text = open ('tetris.data').read()
         for c in tetris_text:
             s.process (c)
         assert str(s) == tetris_target
@@ -81,5 +78,4 @@ if __name__ == '__main__':
     unittest.main()
 
 suite = unittest.makeSuite(ansiTestCase,'test')
-
 

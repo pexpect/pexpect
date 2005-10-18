@@ -3,6 +3,7 @@ import pexpect
 import unittest
 import commands
 import sys
+import PexpectTestCase
 #import pdb
 
 # Many of these test cases blindly assume that sequential directory
@@ -10,10 +11,7 @@ import sys
 # This may not be true, but seems adequate for testing now.
 # I should fix this at some point.
 
-class ExpectTestCase(unittest.TestCase):
-    def setUp(self):
-        print self.id()
-        unittest.TestCase.setUp(self)
+class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_expect_basic (self):
         p = pexpect.spawn('cat')

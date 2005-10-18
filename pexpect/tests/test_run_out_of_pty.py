@@ -3,12 +3,9 @@ import pexpect
 import unittest
 import commands
 import sys
+import PexpectTestCase
 
-class ExpectTestCase(unittest.TestCase):
-    def setUp(self):
-        print self.id()
-        unittest.TestCase.setUp(self)
-        
+class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def off_test_run_out (self):
         """This assumes that the tested platform has < 10000 pty devices.
         This test currently does not work under Solaris.
@@ -16,7 +13,6 @@ class ExpectTestCase(unittest.TestCase):
         ld.so starts to barf:
             ld.so.1: pt_chmod: fatal: /usr/lib/libc.so.1: Too many open files
         """
-
         plist=[]
         for count in range (0,10000):
                 try:
@@ -33,11 +29,4 @@ if __name__ == '__main__':
     unittest.main()
 
 suite = unittest.makeSuite(ExpectTestCase,'test')
-
-#fout = open('delete_me_1','wb')
-#fout.write(the_old_way)
-#fout.close
-#fout = open('delete_me_2', 'wb')
-#fout.write(the_new_way)
-#fout.close
 

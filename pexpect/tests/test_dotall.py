@@ -3,13 +3,10 @@ import pexpect
 import unittest
 import os
 import re
+import PexpectTestCase
 
 testdata = 'BEGIN\nHello world\nEND'
-class TestCaseDotall(unittest.TestCase):
-    def setUp(self):
-        print self.id()
-        unittest.TestCase.setUp(self)
-        
+class TestCaseDotall(PexpectTestCase.PexpectTestCase):
     def test_dotall (self):
         p = pexpect.spawn('echo "%s"' % testdata)
         i = p.expect (['BEGIN(.*)END', pexpect.EOF])

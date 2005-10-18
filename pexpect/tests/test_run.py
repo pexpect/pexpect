@@ -3,19 +3,16 @@ import pexpect
 import unittest
 import commands
 import sys
+import PexpectTestCase
 
 # Many of these test cases blindly assume that sequential
 # listing of the /bin directory will yield the same results.
 # This may not always be true, but seems adequate for testing now.
 # I should fix this at some point.
 
-class ExpectTestCase(unittest.TestCase):
-    def setUp(self):
-        print self.id()
-        unittest.TestCase.setUp(self)
-
+class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def test_run_exit (self):
-        (data, exitstatus) = pexpect.run ('python ./tests/exit1.py', withexitstatus=1)
+        (data, exitstatus) = pexpect.run ('python exit1.py', withexitstatus=1)
         assert exitstatus == 1, "Exit status of 'python exit1.py' should be 1."
 
     def test_run (self):

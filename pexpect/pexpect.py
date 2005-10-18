@@ -324,8 +324,8 @@ class spawn:
         # That may not necessarily be bad because you may haved spawned a child
         # that performs some task; creates no stdout output; and then dies.
 
-        assert self.pid == None, 'The pid member is not None.'
-        assert self.command != None, 'The command member is None.'
+        assert self.pid == None, 'The pid member should be None.'
+        assert self.command != None, 'The command member should not be None.'
 
         try:
             self.pid, self.child_fd = pty.fork()
@@ -421,11 +421,11 @@ class spawn:
         """
         if self.child_fd == -1:
             raise ValueError ('I/O operation on closed file in read_nonblocking().')
-        
+
         if timeout == -1:
             timeout = self.timeout
-            
-        # Note that some systems like Solaris don't seem to ever give
+
+        # Note that some systems such as Solaris don't seem to ever give
         # an EOF when the child dies. In fact, you can still try to read
         # from the child_fd -- it will block forever or until TIMEOUT.
         # For this case, I test isalive() before doing any reading.
@@ -453,11 +453,11 @@ class spawn:
             if s == '':
                 self.flag_eof = 1
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Empty string style platform.')
-            
+
             if self.logfile != None:
                 self.logfile.write (s)
                 self.logfile.flush()
-                
+
             return s
 
         raise ExceptionPexpect ('Reached an unexpected state in read_nonblocking().')

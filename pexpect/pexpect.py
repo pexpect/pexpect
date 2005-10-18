@@ -156,16 +156,6 @@ class spawn:
         will be ready to talk to. For normal use, see expect() and 
         send() and sendline().
 
-        If the command parameter is an integer AND a valid file descriptor
-        then spawn will talk to the file descriptor instead 
-        of opening a new child command. This allows you to use expect features 
-        on any file descriptor. For example:
-            fd = os.open ('somefile.txt', os.O_RDONLY)
-            s = pexpect.spawn (fd)
-        The original creator of the file descriptor is responsible
-        for closing it. Spawn will not try to close it and spawn will
-        raise an exception if you try to call spawn.close().
-        
         The maxread attribute sets the read buffer size.
         This is maximum number of bytes that Pexpect will try to read from a TTY at one time.
         The default buffer size is 1 (unbuffered). Setting this value higher
@@ -212,6 +202,17 @@ class spawn:
         
         Note that spawn is clever about finding commands on your path.
         It uses the same logic that "which" uses to find executables.
+
+        If you wish to get the exit status of the child you must call
+        the close() method. The exit or signal status of the child will be
+        stored in self.exitstatus or self.signalstatus.
+        If the child exited normally then exitstatus will store the exit return code and
+        signalstatus will be None.
+        If the child was terminated abnormally with a signal then signalstatus will store
+        the signal value and exitstatus will be None.
+        If you need more detail you can also read the self.status member which stores
+        the status returned by os.waitpid. You can interpret this using
+        os.WIFEXITED/os.WEXITSTATUS or os.WIFSIGNALED/os.TERMSIG.
         """
         self.STDIN_FILENO = pty.STDIN_FILENO
         self.STDOUT_FILENO = pty.STDOUT_FILENO
@@ -225,37 +226,25 @@ class spawn:
         self.after = None
         self.match = None
         self.match_index = None
+        self.terminated = True
         self.exitstatus = None
+        self.signalstatus = None
+        self.status = None
         self.flag_eof = 0
         self.pid = None
         self.child_fd = -1 # initially closed
-        self.__child_fd_owner = None
         self.timeout = timeout
         self.delimiter = EOF
         self.logfile = logfile    
         self.maxread = maxread # Max bytes to read at one time into buffer.
         self.buffer = '' # This is the read buffer. See maxread.
         self.searchwindowsize = searchwindowsize # Anything before searchwindowsize point is preserved, but not searched.
-        self.delay_before_send = 0.1 # Sets sleep time used just after calling expect() method.
+        self.delay_before_send = 0.1 # Sets sleep time used just before sending data to child.
         self.softspace = 0 # File-like object.
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.
         self.closed = 1 # File-like object.
         
-        # If command is an int type then it must represent an open file descriptor.
-        if type (command) == type(0):
-            try: # Command is an int, so now check if it is a file descriptor.
-                os.fstat(command)
-            except OSError:
-                raise ExceptionPexpect ('The "command" argument is an int type, but it is not a valid file descriptor.')
-            self.pid = -1 
-            self.child_fd = command
-            self.__child_fd_owner = 0 # Sets who is reponsible for the child_fd
-            self.args = None
-            self.command = None
-            self.name = '<file descriptor>'
-            return
-
         if type (args) != type([]):
             raise TypeError ('The second argument, args, must be a list.')
 
@@ -285,8 +274,7 @@ class spawn:
         """
         if self.closed:
             return
-        if self.__child_fd_owner:
-            self.close()
+        self.close()
 
     def __str__(self):
         """This returns the current state of the pexpect object as a string.
@@ -366,7 +354,7 @@ class spawn:
             os.execv(self.command, self.args)
 
         # Parent
-        self.__child_fd_owner = 1
+        self.terminated = False
         self.closed = 0
 
     def fileno (self):   # File-like object.
@@ -374,48 +362,20 @@ class spawn:
         """
         return self.child_fd
 
-    def close (self, wait=1):   # File-like object.
+    def close (self, force=False):   # File-like object.
         """This closes the connection with the child application.
-        It makes no attempt to actually kill the child.
-        If the file descriptor was set by passing a file descriptor
-        to the constructor then this method raises an exception.
         Note that calling close() more than once is valid.
         This emulates standard Python behavior with files.
-        If wait is set to True then close will wait
-        for the exit status of the process. Doing a wait is a blocking call,
-        but this usually takes almost no time at all, so usually,
-        you don't have to worry about this. If you are
-        creating lots of children then you usually want to call wait.
-        Only set wait to false if you know the child will
-        continue to run after closing the controlling TTY; otherwise,
-        you will end up with defunct (zombie) processes.
-        On some platforms waitpid will block because a process might
-        no longer exist. This may be true if you spawn applications
-        that exec children or daemonize themselves. In this case,
-        close will wait for up to 1 second before giving up.
+        Set force to True if you want to make sure that the child is terminated
+        (SIGKILL is sent if the child ignores SIGHUP and SIGINT).
         """
         if self.child_fd != -1:
-            if not self.__child_fd_owner:
-                raise ExceptionPexpect ('This file descriptor cannot be closed because it was not created by spawn. The original creator is responsible for closing it.')
             self.flush()
             os.close (self.child_fd)
-            if wait:
-                try:
-                    for tries in range (0,5):
-                        pid, status = os.waitpid (self.pid, os.WNOHANG)
-                        if (pid, status) != (0,0):
-                            time.sleep (0.2)
-                            break
-                    if os.WIFEXITED (status):
-                        self.exitstatus = os.WEXITSTATUS(status)
-                except OSError, e:
-                    if e[0] == errno.ECHILD:
-                        pass
-                    else:
-                        raise e
             self.child_fd = -1
             self.closed = 1
-            self.__child_fd_owner = None
+            if self.isalive():
+                self.terminate(force)
 
     def flush (self):   # File-like object.
         """This does nothing. It is here to support the interface for a File-like object.
@@ -487,9 +447,8 @@ class spawn:
         if self.child_fd in r:
             try:
                 s = os.read(self.child_fd, size)
-            except OSError, e:
+            except OSError, e: # Linux does this
                 self.flag_eof = 1
-                # Linux does this
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Exception style platform.')
             if s == '':
                 self.flag_eof = 1
@@ -622,75 +581,106 @@ class spawn:
         fd = sys.stdin.fileno()
         old = termios.tcgetattr(fd) # remember current state
         new = termios.tcgetattr(fd)
-        new[3] = new[3] | termios.ICANON # lflags
-        # use try/finally to ensure state gets restored
-        try:
-            # ICANON must be set to recognize EOF
+        new[3] = new[3] | termios.ICANON # ICANON must be set to recognize EOF
+        try: # use try/finally to ensure state gets restored
             termios.tcsetattr(fd, termios.TCSADRAIN, new)
             if 'CEOF' in dir(termios):
                 os.write (self.child_fd, '%c' % termios.CEOF)
             else:
-                os.write (self.child_fd, '%c' % 4) # CTRL-D
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old) # restore state
+                os.write (self.child_fd, '%c' % 4) # Silly platform does not define CEOF so assume CTRL-D
+        finally: # restore state
+            termios.tcsetattr(fd, termios.TCSADRAIN, old)
 
     def eof (self):
         """This returns 1 if the EOF exception was raised at some point.
         """
         return self.flag_eof
 
+    def terminate(self, force=False):
+        """This forces a child process to terminate. It starts nicely with SIGHUP and SIGINT.
+        If "force" is True then moves onto SIGKILL is sent otherwise an exception is generated.
+        """
+        if not self.isalive():
+            return
+        self.kill(signal.SIGHUP)
+        if not self.isalive():
+            return
+        self.kill(signal.SIGCONT)
+        if not self.isalive():
+            return
+        self.kill(signal.SIGINT)
+        if not self.isalive():
+            return
+        if force:
+            self.kill(signal.SIGKILL)
+            if not self.isalive():
+                return
+            else:
+                raise ExceptionPexpect ('terminate() sent a SIGKILL, but the child is still reported as alive.')
+        raise ExceptionPexpect ('terminate() could not terminate child process. Try terminate(force=True)?')
+        
     def isalive(self):
         """This tests if the child process is running or not.
+        This is non-blocking. If the child was terminated then this
+        will read the exitstatus or signalstatus of the child.
         This returns 1 if the child process appears to be running or 0 if not.
-        This also sets the exitstatus attribute.
         It can take literally SECONDS for Solaris to return the right status.
-        This is the most wiggly part of Pexpect, but I think I've almost got
-        it nailed down.
         """
-        # I can't use signals. Signals on UNIX suck and they
-        # mess up Python pipes (setting SIGCHLD to SIGIGNORE).
+        if self.terminated:
+            return False
 
-        # If this class was created from an existing file descriptor then
-        # I just check to see if the file descriptor is still valid.
-        if self.pid == -1 and not self.__child_fd_owner: 
-            try:
-                os.fstat(self.child_fd)
-                return 1
-            except:
-                return 0
-
-        try:
-            pid, status = os.waitpid(self.pid, os.WNOHANG)
-        except OSError:
-            return 0
-
-        # I have to do this twice for Solaris.
-        # I can't even believe that I figured this out...
-        # If waitpid() returns 0 it means that no child process wishes to
-        # report, and the value of status is undefined.
-        #        if pid == 0 and status == 0:
-        if pid == 0:
-            try:
-                pid, status = os.waitpid(self.pid, os.WNOHANG)
-                #print 'Solaris sucks'
-            except OSError: # This is crufty. When does this happen?
-                return 0
-            # If pid and status is still 0 after two calls to waitpid() then
-            # the process really is alive. This seems to work on all platforms.
-            #            if pid == 0 and status == 0:
-            if pid == 0:
-                return 1
-
-        # I do not OR this together because I want hooks for debugging.
-        if os.WIFEXITED (status):
-            self.exitstatus = os.WEXITSTATUS(status)
-            return 0
-        elif os.WIFSTOPPED (status):
-            return 0
-        elif os.WIFSIGNALED (status):
-            return 0
+        if self.flag_eof:
+            # This is for Linux, which requires the blocking form of waitpid to get
+            # status of a defunct process. This is super-lame. The flag_eof would have
+            # been set in read_nonblocking(), so this should be safe.
+            waitpid_options = 0
         else:
-            return 0 # Can I ever get here?
+            waitpid_options = os.WNOHANG|os.WUNTRACED
+            
+        try:
+            pid, status = os.waitpid(self.pid, waitpid_options)
+        except OSError, e: # No child processes
+            if e[0] == errno.ECHILD:
+                raise ExceptionPexpect ('isalive() encountered condition where "terminated" is False, but there was no child process. Did someone else call waitpid() on our process?')
+            else:
+                raise e
+
+        if pid == 0:
+            return True
+
+        if os.WIFEXITED (status):
+            self.status = status
+            self.exitstatus = os.WEXITSTATUS(status)
+            self.signalstatus = None
+            self.terminated = True
+            return False
+        elif os.WIFSIGNALED (status):
+            self.status = status
+            self.exitstatus = None
+            self.signalstatus = os.WTERMSIG(status)
+            self.terminated = True
+            return False
+        elif os.WIFSTOPPED (status):
+            raise ExceptionPexpect ('isalive() encountered condition where child process is stopped. This is not supported. Is some other process attempting job control with our child pid?')
+
+        raise ExceptionPexpect ('isalive() reached unexpected condition where waitpid matched child pid, but status was not matched by WIFEXITED, WIFSIGNALED, or WIFSTOPPED.')
+
+#        # I have to do this twice for Solaris. I can't even believe that I figured this out...
+#        # If waitpid() returns 0 it means that no child process wishes to
+#        # report, and the value of status is undefined.
+#        #        if pid == 0 and status == 0:
+#        if pid == 0:
+#            try:
+#                pid, status = os.waitpid(self.pid, os.WNOHANG|os.WUNTRACED)
+#                #print 'Solaris sucks'
+#            except OSError: # This is crufty. When does this happen?
+#                return 0
+#            # If pid and status is still 0 after two calls to waitpid() then
+#            # the process really is alive. This seems to work on all platforms.
+#            #            if pid == 0 and status == 0:
+#            if pid == 0:
+#                return 1
+
 
     def kill(self, sig):
         """This sends the given signal to the child application.

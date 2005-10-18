@@ -14,6 +14,10 @@ class ExpectTestCase(unittest.TestCase):
         print self.id()
         unittest.TestCase.setUp(self)
 
+    def test_run_exit (self):
+        (data, exitstatus) = pexpect.run ('python ./tests/exit1.py', withexitstatus=1)
+        assert exitstatus == 1, "Exit status of 'python exit1.py' should be 1."
+
     def test_run (self):
         the_old_way = commands.getoutput('ls -l /bin')
         (the_new_way, exitstatus) = pexpect.run ('ls -l /bin', withexitstatus=1)

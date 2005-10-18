@@ -17,7 +17,6 @@ class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
         """
         print self.PYTHONBIN
         p1 = pexpect.spawn('%s sigwinch_report.py' % self.PYTHONBIN)
-        p1.logfile = sys.stdout
         time.sleep(1)
         p1.setwinsize (11,22)
         index = p1.expect ([pexpect.TIMEOUT, 'SIGWINCH: \(([0-9]*), ([0-9]*)\)'], timeout=10)

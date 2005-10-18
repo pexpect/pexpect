@@ -14,15 +14,13 @@ class TestCaseConstructor(PexpectTestCase.PexpectTestCase):
         p2 = pexpect.spawn('/bin/ls' ,['-l', '/bin'])
         p1.expect (pexpect.EOF)
         p2.expect (pexpect.EOF)
-	print p1.before
-	print p2.before
         assert (p1.before == p2.before)
 
     def test_named_parameters (self):
         """This tests that named parameters work.
         """
         p = pexpect.spawn ('/bin/ls',timeout=10)
-        p = pexpect.spawn (timeout=10, command='ls')
+        p = pexpect.spawn (timeout=10, command='/bin/ls')
         p = pexpect.spawn (args=[], command='/bin/ls')
 
 if __name__ == '__main__':

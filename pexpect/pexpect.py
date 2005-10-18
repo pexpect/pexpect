@@ -597,22 +597,27 @@ class spawn:
         return self.flag_eof
 
     def terminate(self, force=False):
-        """This forces a child process to terminate. It starts nicely with SIGHUP and SIGINT.
-        If "force" is True then moves onto SIGKILL is sent otherwise an exception is generated.
+        """This forces a child process to terminate.
+        It starts nicely with SIGHUP and SIGINT. If "force" is True then
+        moves onto SIGKILL is sent otherwise an exception is generated.
         """
         if not self.isalive():
             return
         self.kill(signal.SIGHUP)
+        time.sleep(0.1)
         if not self.isalive():
             return
         self.kill(signal.SIGCONT)
+        time.sleep(0.1)
         if not self.isalive():
             return
         self.kill(signal.SIGINT)
+        time.sleep(0.1)
         if not self.isalive():
             return
         if force:
             self.kill(signal.SIGKILL)
+            time.sleep(0.1)
             if not self.isalive():
                 return
             else:

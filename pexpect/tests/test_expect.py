@@ -13,7 +13,7 @@ import PexpectTestCase
 
 class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
-    def Xtest_expect_basic (self):
+    def test_expect_basic (self):
         p = pexpect.spawn('cat')
         p.sendline ('Hello')
         p.sendline ('there')
@@ -24,7 +24,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.sendeof () 
         p.expect (pexpect.EOF)
 
-    def Xtest_expect_ignore_case(self):
+    def test_expect_ignore_case(self):
         p = pexpect.spawn('cat')
         p.sendline ('HELLO')
         p.sendline ('there')
@@ -33,7 +33,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.sendeof () 
         p.expect (pexpect.EOF)
 
-    def Xtest_expect_order (self):
+    def test_expect_order (self):
         """This tests that patterns are matched in the order of the pattern_list.
         """
         p = pexpect.spawn('cat')
@@ -85,7 +85,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
         assert index == 0, "index="+str(index)
  
-    def Xtest_expect_index (self):
+    def test_expect_index (self):
         """This tests that mixed list of regex strings, TIMEOUT, and EOF all
         return the correct index when matched.
         """
@@ -108,7 +108,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         index = p.expect (['54321',pexpect.TIMEOUT,'abcd','wxyz','1234',pexpect.EOF], timeout=5)
         assert index == 5, "index="+str(index) # Expect EOF
 
-    def Xtest_expect (self):
+    def test_expect (self):
         the_old_way = commands.getoutput('ls -l /bin')
         p = pexpect.spawn('ls -l /bin')
         the_new_way = ''
@@ -136,7 +136,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 #
 #        assert the_old_way == the_new_way
 #
-    def Xtest_expect_eof (self):
+    def test_expect_eof (self):
         the_old_way = commands.getoutput('/bin/ls -l /bin')
         p = pexpect.spawn('/bin/ls -l /bin')
         p.expect(pexpect.EOF) # This basically tells it to read everything. Same as pexpect.run() function.
@@ -145,12 +145,12 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         the_new_way = the_new_way[:-1]
         assert the_old_way == the_new_way
 
-    def Xtest_expect_timeout (self):
+    def test_expect_timeout (self):
         p = pexpect.spawn('ed', timeout=10)
         i = p.expect(pexpect.TIMEOUT) # This tells it to wait for timeout.
         assert p.after == pexpect.TIMEOUT
 
-    def Xtest_unexpected_eof (self):
+    def test_unexpected_eof (self):
         p = pexpect.spawn('ls -l /bin')
         try:
             p.expect('_Z_XY_XZ') # Probably never see this in ls output.

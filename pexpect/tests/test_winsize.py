@@ -13,7 +13,6 @@ class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
         This makes use of an external script sigwinch_report.py.
         """
         p1 = pexpect.spawn('%s sigwinch_report.py' % self.PYTHONBIN)
-	p1.logfile = sys.stdout
         time.sleep(10)
         p1.setwinsize (11,22)
         time.sleep(3)

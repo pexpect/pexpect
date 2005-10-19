@@ -395,8 +395,8 @@ class spawn:
             new[3] = new[3] | termios.ECHO
         else:
             new[3] = new[3] & ~termios.ECHO
-        #termios.tcsetattr(self.child_fd, termios.TCSANOW, new)
-        termios.tcsetattr(self.child_fd, termios.TCSAFLUSH, new)
+        termios.tcsetattr(self.child_fd, termios.TCSANOW, new)
+        #termios.tcsetattr(self.child_fd, termios.TCSAFLUSH, new)
 
     def read_nonblocking (self, size = 1, timeout = -1):
         """This reads at most size characters from the child application.

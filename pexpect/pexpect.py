@@ -947,6 +947,9 @@ class spawn:
             r, w, e = select.select([self.child_fd, self.STDIN_FILENO], [], [])
             if self.child_fd in r:
                 data = self.__interact_read(self.child_fd)
+                if self.logfile != None:
+                    self.logfile.write (data)
+                    self.logfile.flush()
                 os.write(self.STDOUT_FILENO, data)
             if self.STDIN_FILENO in r:
                 data = self.__interact_read(self.STDIN_FILENO)

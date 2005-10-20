@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 """This is for cleaning up binary files improperly added to CVS.
-This script scans the given path to find binary files; then
-check with CVS to see if the sticky options are set to -kb;
-finally if sticky options are not -kb then use 'cvs admin' to
-set the -kb option. It ignores CVS directories, symbolic links,
+This script scans the given path to find binary files; 
+checks with CVS to see if the sticky options are set to -kb;
+finally if sticky options are not -kb then uses 'cvs admin' to
+set the -kb option.
+
+This script ignores CVS directories, symbolic links,
 and files not known under CVS control (cvs status is 'Unknown').
 
 Run this on a CHECKED OUT module sandbox, not on the repository itself.

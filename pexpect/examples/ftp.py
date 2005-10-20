@@ -8,13 +8,13 @@ directory. You can easily modify this for other sites.
 import pexpect
 import sys
 
-child = pexpect.spawn('/usr/bin/ftp ftp.openbsd.org')
-child.expect('Name .*: ')
+child = pexpect.spawn('ftp ftp.openbsd.org')
+child.expect('(?i)name .*: ')
 child.sendline('anonymous')
-child.expect('Password:')
+child.expect('(?i)password')
 child.sendline('pexpect@sourceforge.net')
 child.expect('ftp> ')
-child.sendline('cd /pub/OpenBSD/3.1/packages/i386')
+child.sendline('cd /pub/OpenBSD/3.7/packages/i386')
 child.expect('ftp> ')
 child.sendline('bin')
 child.expect('ftp> ')
@@ -31,17 +31,15 @@ child.interact() # Escape character defaults to ^]
 # to each other now.
 
 # At this point the script is running again.
-print 'Left interact mode.'
+print 'Left interactve mode.'
 
 #
 # The rest is not strictly necessary. This just demonstrates a few functions.
 # This makes sure the child is dead; although it would be killed when Python exits.
-#
 if child.isalive():
     child.sendline('bye') # Try to ask ftp child to exit.
-    child.kill(1) # Then try to force it.
+    child.close()
 # Print the final state of the child. Normally isalive() should be FALSE.
-print
 if child.isalive():
     print 'Child did not exit gracefully.'
 else:

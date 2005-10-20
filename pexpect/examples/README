@@ -1,0 +1,48 @@
+This directory contains scripts that give examples of using Pexpect.
+
+script.py
+    This implements a command similar to the classic BSD "script" commnad.
+    This will start a subshell and log all input and output to a file.
+    This demonstrates the interact() method of Pexpect.
+
+fix_cvs_files.py
+    This is for cleaning up binary files improperly added to CVS.
+    This script scans the given path to find binary files;
+    checks with CVS to see if the sticky options are set to -kb;
+    finally if sticky options are not -kb then uses 'cvs admin' to
+    set the -kb option. 
+
+ftp.py
+    This demonstrates an FTP "bookmark".
+    This connects to an ftp site; does a few ftp stuff; and then gives the user
+    interactive control over the session. In this case the "bookmark" is to a
+    directory on the OpenBSD ftp server. It puts you in the i386 packages
+    directory. You can easily modify this for other sites.
+    This demonstrates the interact() method of Pexpect.
+
+monitor.py
+    This runs a sequence of commands on a remote host using SSH.
+    It runs a simple system checks such as uptime and free to monitor
+    the state of the remote host.
+
+passmass.py
+    This will login to each given server and change the password of the
+    given user. This demonstrates scripting logins and 
+
+python.py
+    This starts the python interpreter and prints the greeting message backwards.
+    It then gives the user iteractive control of Python. It's pretty useless!
+
+sshls.py
+    This lists a directory on a remote machine.
+
+ssh_tunnel.py
+    This starts an SSH tunnel to a remote machine. It monitors the connection
+    and restarts the tunnel if it goes down.
+
+uptime.py
+    This will run the uptime command and parse the output into variables.
+    This demonstrates using a single regular expression to match the output
+    of a command and capturing different variable in match groups.
+    The regular expression takes into account a wide variety of different
+    formats for uptime output.

@@ -185,7 +185,7 @@ class spawn:
             child = pexpect.spawn('some_command')
             child.logfile = sys.stdout
             
-        The delay_before_send helps overcome weird behavior that many users were experiencing.
+        The delaybeforesend helps overcome weird behavior that many users were experiencing.
         The typical problem was that a user would expect() a "Password:" prompt and
         then immediately call sendline() to send the password. The user would then
         see that their password was echoed back to them. Of course, passwords don't
@@ -198,7 +198,7 @@ class spawn:
         for many users that I decided that the default pexpect behavior
         should be to sleep just before writing to the child application.
         1/10th of a second (100 ms) seems to be enough to clear up the problem.
-        You can set delay_before_send to 0 to return to the old behavior.
+        You can set delaybeforesend to 0 to return to the old behavior.
         
         Note that spawn is clever about finding commands on your path.
         It uses the same logic that "which" uses to find executables.
@@ -221,7 +221,7 @@ class spawn:
         self.stdout = sys.stdout
         self.stderr = sys.stderr
 
-        self.pattern_list = None
+        self.patterns = None
         self.before = None
         self.after = None
         self.match = None
@@ -239,7 +239,7 @@ class spawn:
         self.maxread = maxread # Max bytes to read at one time into buffer.
         self.buffer = '' # This is the read buffer. See maxread.
         self.searchwindowsize = searchwindowsize # Anything before searchwindowsize point is preserved, but not searched.
-        self.delay_before_send = 0.1 # Sets sleep time used just before sending data to child.
+        self.delaybeforesend = 0.1 # Sets sleep time used just before sending data to child.
         self.softspace = 0 # File-like object.
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.
@@ -284,11 +284,11 @@ class spawn:
         s.append('version: ' + __version__ + ' (' + __revision__ + ')')
         s.append('command: ' + str(self.command))
         s.append('args: ' + str(self.args))
-        if self.pattern_list is None:
-            s.append('pattern_list: None')
+        if self.patterns is None:
+            s.append('patterns: None')
         else:
-            s.append('pattern_list:')
-            for p in self.pattern_list:
+            s.append('patterns:')
+            for p in self.patterns:
                 if type(p) is type(re.compile('')):
                     s.append('    ' + str(p.pattern))
                 else:
@@ -307,7 +307,7 @@ class spawn:
         s.append('logfile: ' + str(self.logfile))
         s.append('maxread: ' + str(self.maxread))
         s.append('searchwindowsize: ' + str(self.searchwindowsize))
-        s.append('delay_before_send: ' + str(self.delay_before_send))
+        s.append('delaybeforesend: ' + str(self.delaybeforesend))
         return '\n'.join(s)
 
     def __spawn(self):
@@ -552,7 +552,7 @@ class spawn:
         This returns the number of bytes written.
         If a log file was set then the data is also written to the log.
         """
-        time.sleep(self.delay_before_send)
+        time.sleep(self.delaybeforesend)
         if self.logfile != None:
             self.logfile.write (str)
             self.logfile.flush()
@@ -806,7 +806,7 @@ class spawn:
         If timeout==-1 then the self.timeout value is used.
         If searchwindowsize==-1 then the self.searchwindowsize value is used.
         """
-        self.pattern_list = pattern_list
+        self.patterns = pattern_list
 
         if timeout == -1:
             timeout = self.timeout

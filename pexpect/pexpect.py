@@ -426,8 +426,8 @@ class spawn:
         if timeout == -1:
             timeout = self.timeout
 
-        # Note that some systems such as Solaris don't seem to ever give
-        # an EOF when the child dies. In fact, you can still try to read
+        # Note that some systems such as Solaris do not give an EOF when
+        # the child dies. In fact, you can still try to read
         # from the child_fd -- it will block forever or until TIMEOUT.
         # For this case, I test isalive() before doing any reading.
         # If isalive() is false, then I pretend that this is the same as EOF.
@@ -436,14 +436,22 @@ class spawn:
             if not r:
                 self.flag_eof = 1
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Braindead platform.')
-
+        elif 'irix' in sys.platform:
+	    # This is a hack for Irix. It seems that Irix requires a long delay before checking isalive.
+            r, w, e = select.select([self.child_fd], [], [], 2)
+            if not r and not self.isalive():
+                self.flag_eof = 1
+                raise EOF ('End Of File (EOF) in read_nonblocking(). Pokey platform.')
+            
         r, w, e = select.select([self.child_fd], [], [], timeout)
         if not r:
-            raise TIMEOUT ('Timeout exceeded in read_nonblocking().')
-            #            if not self.isalive():
-            #                raise EOF ('End of File (EOF) in read_nonblocking(). Really dumb platform.')
-            #            else:
-            #                raise TIMEOUT ('Timeout exceeded in read_nonblocking().')
+            if not self.isalive():
+                # Some platforms such as Irix will say they are alive; then timeout on the select;
+                # and then say they are not alive.
+                self.flag_eof = 1
+                raise EOF ('End of File (EOF) in read_nonblocking(). Very pokey platform.')
+            else:
+                raise TIMEOUT ('Timeout exceeded in read_nonblocking().')
 
         if self.child_fd in r:
             try:
@@ -453,8 +461,8 @@ class spawn:
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Exception style platform.')
             if s == '': # BSD style
                 self.flag_eof = 1
-		print "Empty string style platform."
-		print str(self)
+                print "Empty string style platform."
+                print str(self)
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Empty string style platform.')
 
             if self.logfile != None:
@@ -656,14 +664,19 @@ class spawn:
         # I have to do this twice for Solaris. I can't even believe that I figured this out...
         # If waitpid() returns 0 it means that no child process wishes to
         # report, and the value of status is undefined.
-        #        if pid == 0 and status == 0:
         if pid == 0:
             try:
-                pid, status = os.waitpid(self.pid, os.WNOHANG) # Solaris!
-            except OSError, e: # This is crufty. When does this happen?
-                return 0
-            # If pid and status is still 0 after two calls to waitpid() then
-            # the process really is alive. This seems to work on all platforms.
+                pid, status = os.waitpid(self.pid, waitpid_options) ### os.WNOHANG) # Solaris!
+            except OSError, e: # This should never happen...
+                if e[0] == errno.ECHILD:
+                    raise ExceptionPexpect ('isalive() encountered condition that should never happen. There was no child process. Did someone else call waitpid() on our process?')
+                else:
+                    raise e
+
+            # If pid is still 0 after two calls to waitpid() then
+            # the process really is alive. This seems to work on all platforms, except
+            # for Irix which seems to require a blocking call on waitpid or select, so I let read_nonblocking
+            # take care of this situation (unfortunately, this requires waiting through the timeout).
             if pid == 0:
                 return 1
 

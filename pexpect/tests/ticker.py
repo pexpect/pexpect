@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
-import time
+import time, sys
 
-for i in range(10):
+for i in range(5):
   print "tick"
   time.sleep(1)
+
+sys.exit(0)

@@ -37,26 +37,25 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         """This tests that patterns are matched in the order of the pattern_list.
         """
         p = pexpect.spawn('cat')
-        p.setecho(0) # Turn off tty echo
         p.sendline ('1234') # Should see this twice (once from tty echo and again from cat).
+        p.setecho(0) # Turn off tty echo
         p.sendline ('abcd') # Now, should only see this once.
         p.sendline ('wxyz') # This should also be only once.
+        p.setecho(1) # Turn off tty echo
         p.sendline ('7890') # Should see this twice.
         p.sendeof () 
         index = p.expect (['1234','abcd','wxyz',pexpect.EOF])
         assert index == 0, "index="+str(index)
         index = p.expect (['1234','abcd','wxyz',pexpect.EOF])
         assert index == 0, "index="+str(index)
-        index = p.expect ([pexpect.EOF,pexpect.TIMEOUT,'abcd','wxyz','1234'])
-        assert index == 2, "index="+str(index)
+        index = p.expect ([pexpect.EOF,pexpect.TIMEOUT,'wxyz','abcd','1234'])
+        assert index == 3, "index="+str(index)
         index = p.expect (['54321',pexpect.TIMEOUT,'1234','abcd','wxyz',pexpect.EOF], timeout=5)
-        assert index == 3, "index="+str(index)
+        assert index == 4, "index="+str(index)
         index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
         assert index == 3, "index="+str(index)
         index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
         assert index == 3, "index="+str(index)
-        index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
-        assert index == 0, "index="+str(index)
         
     def test_expect_echo (self):
         """This tests that echo can be turned on and off.

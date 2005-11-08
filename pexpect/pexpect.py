@@ -832,6 +832,7 @@ class spawn:
             incoming = self.buffer
             while 1: # Keep reading until exception or return.
                 # Sequence through the list of patterns looking for a match.
+                first_match = -1
                 for cre in pattern_list:
                     if cre is EOF or cre is TIMEOUT: 
                         continue # The patterns for PexpectExceptions are handled differently.
@@ -840,13 +841,17 @@ class spawn:
                     else:
                         startpos = max(0, len(incoming) - searchwindowsize)
                         match = cre.search(incoming, startpos)
-                    if match is not None:
-                        self.buffer = incoming[match.end() : ]
-                        self.before = incoming[ : match.start()]
-                        self.after = incoming[match.start() : match.end()]
+                    if match is None:
+                        continue
+                    if first_match > match.start() or first_match == -1:
+                        first_match = match.start()
                         self.match = match
                         self.match_index = pattern_list.index(cre)
-                        return self.match_index
+                if first_match > -1:
+                    self.buffer = incoming[self.match.end() : ]
+                    self.before = incoming[ : self.match.start()]
+                    self.after = incoming[self.match.start() : self.match.end()]
+                    return self.match_index
                 # No match at this point
                 if timeout < 0 and timeout is not None:
                     raise TIMEOUT ('Timeout exceeded in expect_list().')
@@ -934,8 +939,8 @@ class spawn:
         """
         # Flush the buffer.
         self.stdout.write (self.buffer)
-        self.buffer = ''
         self.stdout.flush()
+        self.buffer = ''
         mode = tty.tcgetattr(self.STDIN_FILENO)
         tty.setraw(self.STDIN_FILENO)
         try:

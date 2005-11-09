@@ -41,6 +41,8 @@ Chad Schroeder
 Erick Tryzelaar
 Dave Kirby
 Ids vander Molen
+George Todd
+Noel Taylor
 (Let me know if I forgot anyone.)
 
 $Revision$
@@ -387,16 +389,26 @@ class spawn:
         """
         return os.isatty(self.child_fd)
 
-    def setecho (self, on):
+    def setecho (self, on, drain=1):
         """This sets the terminal echo mode on or off.
+            If drain is true then the stream will be drained
+            before the echo mode is set (data will not be lost, but does not
+            work on every platform). Drain is the better way.
+            If drain to false then the echo mode will be set now
+            (data will be lost, but works on most platforms).
+            Some platforms seem to flush even if drain is true.
+            In this case the child may not see all data sent to it
+            prior to setting echo on or off.
         """
         new = termios.tcgetattr(self.child_fd)
         if on:
             new[3] = new[3] | termios.ECHO
         else:
             new[3] = new[3] & ~termios.ECHO
-        termios.tcsetattr(self.child_fd, termios.TCSANOW, new)
-        #termios.tcsetattr(self.child_fd, termios.TCSAFLUSH, new)
+        if drain:
+            termios.tcsetattr(self.child_fd, termios.TCSADRAIN, new)
+        else:
+            termios.tcsetattr(self.child_fd, termios.TCSANOW, new)
 
     def read_nonblocking (self, size = 1, timeout = -1):
         """This reads at most size characters from the child application.
@@ -437,7 +449,7 @@ class spawn:
                 self.flag_eof = 1
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Braindead platform.')
         elif 'irix' in sys.platform:
-	    # This is a hack for Irix. It seems that Irix requires a long delay before checking isalive.
+            # This is a hack for Irix. It seems that Irix requires a long delay before checking isalive.
             r, w, e = select.select([self.child_fd], [], [], 2)
             if not r and not self.isalive():
                 self.flag_eof = 1
@@ -461,8 +473,6 @@ class spawn:
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Exception style platform.')
             if s == '': # BSD style
                 self.flag_eof = 1
-                print "Empty string style platform."
-                print str(self)
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Empty string style platform.')
 
             if self.logfile != None:

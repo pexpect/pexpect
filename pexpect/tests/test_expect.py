@@ -37,19 +37,21 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         """This tests that patterns are matched in the order of the pattern_list.
         """
         p = pexpect.spawn('cat')
-        p.sendline ('1234') # Should see this twice (once from tty echo and again from cat).
-        p.setecho(0) # Turn off tty echo
-        p.sendline ('abcd') # Now, should only see this once.
-        p.sendline ('wxyz') # This should also be only once.
-        p.setecho(1) # Turn off tty echo
-        p.sendline ('7890') # Should see this twice.
+        p.sendline ('1234') 
+        p.sendline ('abcd') 
+        p.sendline ('wxyz') 
+        p.sendline ('7890') 
         p.sendeof () 
-        index = p.expect (['1234','abcd','wxyz',pexpect.EOF])
+        index = p.expect (['1234','abcd','wxyz',pexpect.EOF,'7890'])
         assert index == 0, "index="+str(index)
-        index = p.expect (['1234','abcd','wxyz',pexpect.EOF])
+        index = p.expect (['1234','abcd','wxyz',pexpect.EOF,'7890'])
         assert index == 0, "index="+str(index)
         index = p.expect ([pexpect.EOF,pexpect.TIMEOUT,'wxyz','abcd','1234'])
         assert index == 3, "index="+str(index)
+        index = p.expect (['54321',pexpect.TIMEOUT,'1234','abcd','wxyz',pexpect.EOF], timeout=5)
+        assert index == 3, "index="+str(index)
+        index = p.expect (['54321',pexpect.TIMEOUT,'1234','abcd','wxyz',pexpect.EOF], timeout=5)
+        assert index == 4, "index="+str(index)
         index = p.expect (['54321',pexpect.TIMEOUT,'1234','abcd','wxyz',pexpect.EOF], timeout=5)
         assert index == 4, "index="+str(index)
         index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
@@ -65,7 +67,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.setecho(0) # Turn off tty echo
         p.sendline ('abcd') # Now, should only see this once.
         p.sendline ('wxyz') # This should also be only once.
-        p.setecho(1) # Turn on tty echo
+        #p.setecho(1) # Turn on tty echo
         p.sendline ('7890') # Should see this twice.
         #p.sendeof () 
         index = p.expect (['1234','abcd','wxyz',pexpect.EOF,pexpect.TIMEOUT])
@@ -75,7 +77,8 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         index = p.expect ([pexpect.EOF,pexpect.TIMEOUT,'abcd','wxyz','1234'])
         assert index == 2, "index="+str(index)
         index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
-        assert index == 2, "index="+str(index)
+        assert index == 2, "index="+str(index) #1
+
         index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
         assert index == 3, "index="+str(index)
         index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])

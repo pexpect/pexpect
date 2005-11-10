@@ -64,28 +64,24 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         """
         p = pexpect.spawn('cat', timeout=10)
         p.sendline ('1234') # Should see this twice (once from tty echo and again from cat).
-        p.setecho(0) # Turn off tty echo
-        p.sendline ('abcd') # Now, should only see this once.
-        p.sendline ('wxyz') # This should also be only once.
-        #p.setecho(1) # Turn on tty echo
-        p.sendline ('7890') # Should see this twice.
-        #p.sendeof () 
         index = p.expect (['1234','abcd','wxyz',pexpect.EOF,pexpect.TIMEOUT])
         assert index == 0, "index="+str(index)+"\n"+p.before
         index = p.expect (['1234','abcd','wxyz',pexpect.EOF])
         assert index == 0, "index="+str(index)
+        p.setecho(0) # Turn off tty echo
+        p.sendline ('abcd') # Now, should only see this once.
+        p.sendline ('wxyz') # Should also be only once.
         index = p.expect ([pexpect.EOF,pexpect.TIMEOUT,'abcd','wxyz','1234'])
         assert index == 2, "index="+str(index)
         index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
-        assert index == 2, "index="+str(index) #1
-
+        assert index == 2, "index="+str(index)
+        p.setecho(1) # Turn on tty echo
+        p.sendline ('7890') # Should see this twice.
         index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
         assert index == 3, "index="+str(index)
         index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
         assert index == 3, "index="+str(index)
-	p.sendeof()
-        index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
-        assert index == 0, "index="+str(index)
+        p.sendeof()
  
     def test_expect_index (self):
         """This tests that mixed list of regex strings, TIMEOUT, and EOF all

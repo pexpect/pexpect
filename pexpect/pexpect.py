@@ -43,6 +43,7 @@ Dave Kirby
 Ids vander Molen
 George Todd
 Noel Taylor
+Nicolas D. Cesar
 (Let me know if I forgot anyone.)
 
 $Revision$
@@ -149,13 +150,41 @@ def run_pw (command, timeout=-1, withexitstatus=0, password=''):
         child = spawn(command, maxread=2000)
     else:
         child = spawn(command, timeout=timeout, maxread=2000)
-    done = 0
-    while not done:
+    while 1:
         index = child.expect (['(?i)password', EOF])
-        if index == 1:
-            done = 1
+        if index == 1: # Done
+            break
         else:
             child.sendline(password)
+    if withexitstatus:
+        child.close()
+        return (child.before, child.exitstatus)
+    else:
+        return child.before
+
+def run_progress (command, timeout=-1, withexitstatus=0, callback=None):
+    """
+    """
+    if timeout == -1:
+        child = spawn(command, maxread=2000)
+    else:
+        child = spawn(command, timeout=timeout, maxread=2000)
+
+    while 1:
+        try:
+            if callback is not None:
+                callback_result = callback ()
+                sys.stdout.flush()
+                if callback_result:
+                    break
+            child_result = child.read()
+        if child_result == '':
+            break
+        except Exception, e:
+            if e is EOF:
+                break
+            if e is TIMEOUT:
+                continue
     if withexitstatus:
         child.close()
         return (child.before, child.exitstatus)
@@ -984,6 +1013,20 @@ class spawn:
         The default for escape_character is ^] (ASCII 29).
         This simply echos the child stdout and child stderr to the real
         stdout and it echos the real stdin to the child stdin.
+
+        Note that if you change the window size of the parent
+        the SIGWINCH signal will not be passed through to the child.
+        If you want the child window size to change when the parent's
+        window size changes then do something like the following example:
+            import pexpect, struct, fcntl, termios, signal, sys
+            def sigwinch_passthrough (sig, data):
+                s = struct.pack("HHHH", 0, 0, 0, 0)
+                a = struct.unpack('hhhh', fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ , s))
+                global p
+                p.setwinsize(a[0],a[1])
+            p = pexpect.spawn('/bin/bash') # Note this is global
+            signal.signal(signal.SIGWINCH, sigwinch_passthrough)
+            p.interact()
         """
         # Flush the buffer.
         self.stdout.write (self.buffer)
@@ -1010,7 +1053,11 @@ class spawn:
         """This is used by the interact() method.
         """
         while self.isalive():
-            r, w, e = select.select([self.child_fd, self.STDIN_FILENO], [], [])
+            try:
+                r, w, e = select.select([self.child_fd, self.STDIN_FILENO], [], [])
+            except select.errno, e:
+                if e[0] != errno.EINTR:
+                    raise
             if self.child_fd in r:
                 data = self.__interact_read(self.child_fd)
                 if self.logfile != None:

@@ -389,26 +389,41 @@ class spawn:
         """
         return os.isatty(self.child_fd)
 
-    def setecho (self, on, drain=1):
+    def setecho (self, on):
         """This sets the terminal echo mode on or off.
-            If drain is true then the stream will be drained
-            before the echo mode is set (data will not be lost, but does not
-            work on every platform). Drain is the better way.
-            If drain to false then the echo mode will be set now
-            (data will be lost, but works on most platforms).
-            Some platforms seem to flush even if drain is true.
-            In this case the child may not see all data sent to it
-            prior to setting echo on or off.
+        Note that anything the child sent before the echo will be lost, so
+        you should be sure that your input buffer is empty before you setecho.
+        For example, the following will work.
+                p = pexpect.spawn('cat')
+                p.sendline ('1234') # We will see this twice (once from tty echo and again from cat).
+                p.expect (['1234'])
+                p.expect (['1234'])
+                p.setecho(0) # Turn off tty echo
+                p.sendline ('abcd') # We will set this only once (echoed by cat).
+                p.sendline ('wxyz') # We will set this only once (echoed by cat)
+                p.expect (['abcd'])
+                p.expect (['wxyz'])
+        The following WILL NOT WORK because the lines sent before the setecho
+        will be lost:
+                p = pexpect.spawn('cat')
+                p.sendline ('1234') # We will see this twice (once from tty echo and again from cat).
+                p.setecho(0) # Turn off tty echo
+                p.sendline ('abcd') # We will set this only once (echoed by cat).
+                p.sendline ('wxyz') # We will set this only once (echoed by cat)
+                p.expect (['1234'])
+                p.expect (['1234'])
+                p.expect (['abcd'])
+                p.expect (['wxyz'])
         """
+        self.child_fd
         new = termios.tcgetattr(self.child_fd)
         if on:
             new[3] = new[3] | termios.ECHO
         else:
             new[3] = new[3] & ~termios.ECHO
-        if drain:
-            termios.tcsetattr(self.child_fd, termios.TCSADRAIN, new)
-        else:
-            termios.tcsetattr(self.child_fd, termios.TCSANOW, new)
+        # I tried TCSADRAIN and TCSAFLUSH, but these were inconsistent
+        # and blocked on some platforms. TCSADRAIN is probably ideal if it worked.
+        termios.tcsetattr(self.child_fd, termios.TCSANOW, new)
 
     def read_nonblocking (self, size = 1, timeout = -1):
         """This reads at most size characters from the child application.

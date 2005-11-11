@@ -100,5 +100,5 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(TestCaseDestructor,'test')
+suite = unittest.makeSuite(TestCaseMisc,'test')
 

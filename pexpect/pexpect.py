@@ -139,6 +139,29 @@ def run (command, timeout=-1, withexitstatus=0):
     else:
         return child.before
 
+def run_pw (command, timeout=-1, withexitstatus=0, password=''):
+    """This is just like pexpect.run(), but adds automatic password sending.
+    This sits in a loop and waits for either 'password' or EOF.
+    Whenever it sees 'password' it will send the given password and then
+    go back to waiting. When it sees EOF it will return.
+    """
+    if timeout == -1:
+        child = spawn(command, maxread=2000)
+    else:
+        child = spawn(command, timeout=timeout, maxread=2000)
+    done = 0
+    while not done:
+        index = child.expect (['(?i)password', EOF])
+        if index == 1:
+            done = 1
+        else:
+            child.sendline(password)
+    if withexitstatus:
+        child.close()
+        return (child.before, child.exitstatus)
+    else:
+        return child.before
+
 class spawn:
     """This is the main class interface for Pexpect.
     Use this class to start and control child applications.

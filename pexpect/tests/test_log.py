@@ -7,7 +7,7 @@ import PexpectTestCase
 
 class TestCaseLog(PexpectTestCase.PexpectTestCase):
     def test_log (self):
-        log_message = 'This is a test. This is a test.'
+        log_message = 'This is a test.'
         filename = tempfile.mktemp()
         mylog = open (filename, 'w')
         p = pexpect.spawn('echo', [log_message])
@@ -15,11 +15,25 @@ class TestCaseLog(PexpectTestCase.PexpectTestCase):
         p.expect (pexpect.EOF)
         p.logfile = None
         mylog.close()
-        
-        l = open(filename).read()
-        l = l[:-2]
+        lf = open(filename).read()
+        lf = lf[:-2]
         os.unlink (filename)
-        assert l == log_message
+        assert lf == log_message
+    def test_log2 (self):
+        log_message = 'This is a test.'
+        filename = tempfile.mktemp()
+        mylog = open (filename, 'w')
+        p = pexpect.spawn('cat')
+        p.logfile = mylog
+        p.sendline(log_message)
+        p.sendeof()
+        p.expect (pexpect.EOF)
+        p.logfile = None
+        mylog.close()
+        lf = open(filename).read()
+        os.unlink (filename)
+        print repr(lf)
+        assert lf == 'This is a test.\nThis is a test.\r\nThis is a test.\r\n'
 
 if __name__ == '__main__':
     unittest.main()

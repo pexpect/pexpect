@@ -72,7 +72,7 @@ Pexpect is intended for UNIX-like operating systems.""")
 
 __version__ = '0.999999c'
 __revision__ = '$Revision$'
-__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which', 'split_command_line',
+__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'arun', 'which', 'split_command_line',
     '__version__', '__revision__']
 
 # Exception classes used by this module.
@@ -119,7 +119,8 @@ def run (command, timeout=-1, withexitstatus=0):
         Note that lines are terminated by CR/LF (\\r\\n) combination
         even on UNIX-like systems because this is the standard for pseudo ttys.
         If you set withexitstatus to true, then run will return a tuple of
-        (command_output, exitstatus).
+        (command_output, exitstatus). If withexitstatus is false then this
+        returns just command_output.
         Example 1:
             from pexpect import run
             print run ('ls -l /bin')
@@ -162,34 +163,41 @@ def run_pw (command, timeout=-1, withexitstatus=0, password=''):
     else:
         return child.before
 
-def run_progress (command, timeout=-1, withexitstatus=0, callback=None):
-    """
+def arun (command, timeout=-1, withexitstatus=0, events=None, timeout_callback=None):
+    """This function runs the given command; waits for it to finish;
     """
     if timeout == -1:
         child = spawn(command, maxread=2000)
     else:
         child = spawn(command, timeout=timeout, maxread=2000)
 
+    # remove EOF and TIMEOUT from events.
+
+    child_result = ''
+    timout_count = 0
     while 1:
         try:
-            if callback is not None:
-                callback_result = callback ()
+            if timeout_callback is not None:
+                callback_result = timeout_callback (locals())
                 sys.stdout.flush()
                 if callback_result:
                     break
-            child_result = child.read()
-        if child_result == '':
+            index = child.expect (['(?i)password'], timeout=5)
+            child_result = child_result + child.before + child.after
+            child.sendline(events)
+        except TIMEOUT, e:
+            child_result = child_result + child.before
+            timeout_count = timeout_count + 1
+            continue
+        except EOF, e:
+            child_result = child_result + child.before
             break
-        except Exception, e:
-            if e is EOF:
-                break
-            if e is TIMEOUT:
-                continue
+
+    child.close()
     if withexitstatus:
-        child.close()
-        return (child.before, child.exitstatus)
+        return (child_result, child.exitstatus)
     else:
-        return child.before
+        return child_result
 
 class spawn:
     """This is the main class interface for Pexpect.

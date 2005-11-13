@@ -57,7 +57,7 @@ try:
     import re
     import struct
     import resource
-    from types import *
+    import types
     import pty
     import tty
     import termios
@@ -72,7 +72,7 @@ Pexpect is intended for UNIX-like operating systems.""")
 
 __version__ = '0.999999c'
 __revision__ = '$Revision$'
-__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'arun', 'which', 'split_command_line',
+__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which', 'split_command_line',
     '__version__', '__revision__']
 
 # Exception classes used by this module.
@@ -111,7 +111,7 @@ class TIMEOUT(ExceptionPexpect):
 ##class MAXBUFFER(ExceptionPexpect):
 ##    """Raised when a scan buffer fills before matching an expected pattern."""
 
-def run (command, timeout=-1, withexitstatus=0):
+def old_run (command, timeout=-1, withexitstatus=0):
     """This function runs the given command; waits for it to finish;
         then returns all output as a string. STDERR is included in output.
         If the full path to the command is not given then the path is searched.
@@ -141,59 +141,94 @@ def run (command, timeout=-1, withexitstatus=0):
     else:
         return child.before
 
-def run_pw (command, timeout=-1, withexitstatus=0, password=''):
-    """This is just like pexpect.run(), but adds automatic password sending.
-    This sits in a loop and waits for either 'password' or EOF.
-    Whenever it sees 'password' it will send the given password and then
-    go back to waiting. When it sees EOF it will return.
-    """
-    if timeout == -1:
-        child = spawn(command, maxread=2000)
-    else:
-        child = spawn(command, timeout=timeout, maxread=2000)
-    while 1:
-        index = child.expect (['(?i)password', EOF])
-        if index == 1: # Done
-            break
-        else:
-            child.sendline(password)
-    if withexitstatus:
-        child.close()
-        return (child.before, child.exitstatus)
-    else:
-        return child.before
-
-def arun (command, timeout=-1, withexitstatus=0, events=None, timeout_callback=None):
+def run (command, timeout=-1, withexitstatus=0, events=None, extra_args=None):
     """This function runs the given command; waits for it to finish;
+    then returns all output as a string. STDERR is included in output.
+    If the full path to the command is not given then the path is searched.
+
+    Note that lines are terminated by CR/LF (\\r\\n) combination
+    even on UNIX-like systems because this is the standard for pseudo ttys.
+    If you set withexitstatus to true, then run will return a tuple of
+    (command_output, exitstatus). If withexitstatus is false then this
+    returns just command_output.
+
+    Examples:
+    Start the apache daemon on the local machine:
+        from pexpect import *
+        run ("/usr/local/apache/bin/apachectl start")
+    Check in a file using SVN:
+        from pexpect import *
+        run ("svn ci -m 'automatic commit' my_file.py")
+    Run a command and capture exit status:
+        from pexpect import *
+        (command_output, exitstatus) = run ('ls -l /bin', withexitstatus=1)
+
+    Tricky Examples:   
+    The following will run SSH and execute 'ls -l' on the remote machine.
+    The password 'secret' will be sent if the '(?i)password' pattern is ever seen.
+        run ("ssh username@machine.example.com 'ls -l'", events={'(?i)password':'secret\n'})
+
+    This will start mencoder to rip a video from DVD. This will also display
+    progress ticks every 5 seconds as it runs.
+        from pexpect import *
+        def print_ticks(d):
+            print d['event_count'],
+        run ("mencoder dvd://1 -o video.avi -oac copy -ovc copy", events={TIMEOUT:print_ticks}, timeout=5)
+
+    The 'events' argument should be a dictionary of patterns and responses.
+    Whenever one of the patterns is seen in the command out
+    run() will send the associated response string. Note that you should
+    put newlines in your string if Enter is necessary.
+    The responses may also contain callback functions.
+    Any callback is function that takes a dictionary as an argument.
+    The dictionary contains all the locals from the run() function, so
+    you can access the child spawn object or any other variable defined
+    in run() (event_count, child, and extra_args are the most useful).
+    A callback may return True to stop the current run process otherwise
+    run() continues until the next event.
+    A callback may also return a string which will be sent to the child.
+    'extra_args' is not used by directly run(). It provides a way to pass data to
+    a callback function through run() through the locals dictionary passed to a callback.
     """
     if timeout == -1:
         child = spawn(command, maxread=2000)
     else:
         child = spawn(command, timeout=timeout, maxread=2000)
-
-    # remove EOF and TIMEOUT from events.
-
-    child_result = ''
-    timout_count = 0
+    if events is not None:
+        patterns = events.keys()
+        responses = events.values()
+    else:
+        patterns=None # We assume that EOF or TIMEOUT will save us.
+        responses=None
+    child_result_list = []
+    event_count = 0
     while 1:
         try:
-            if timeout_callback is not None:
-                callback_result = timeout_callback (locals())
+            index = child.expect (patterns, timeout=5)
+            if type(child.after) is types.StringType:
+                child_result_list.append(child.before + child.after)
+            else: # child.after may have been a TIMEOUT or EOF, so don't cat those.
+                child_result_list.append(child.before)
+            if type(responses[index]) is types.StringType:
+                child.send(responses[index])
+            elif type(responses[index]) is types.FunctionType:
+                callback_result = responses[index](locals())
                 sys.stdout.flush()
-                if callback_result:
+                if type(callback_result) is types.StringType:
+                    child.send(callback_result)
+                elif callback_result:
                     break
-            index = child.expect (['(?i)password'], timeout=5)
-            child_result = child_result + child.before + child.after
-            child.sendline(events)
+            else:
+                raise TypeError ('The callback must be a string or function type.')
+            event_count = event_count + 1
         except TIMEOUT, e:
-            child_result = child_result + child.before
-            timeout_count = timeout_count + 1
-            continue
-        except EOF, e:
-            child_result = child_result + child.before
+            child_result_list.append(child.before)
             break
-
+        except EOF, e:
+            child_result_list.append(child.before)
+            break
     child.close()
+    child_result = ''.join(child_result_list)
     if withexitstatus:
         return (child_result, child.exitstatus)
     else:
@@ -799,7 +834,8 @@ class spawn:
     def compile_pattern_list(self, patterns):
         """This compiles a pattern-string or a list of pattern-strings.
         Patterns must be a StringType, EOF, TIMEOUT, SRE_Pattern, or 
-        a list of those.
+        a list of those. Patterns may also be None which results in
+        an empty list.
 
         This is used by expect() when calling expect_list().
         Thus expect() is nothing more than::
@@ -815,12 +851,14 @@ class spawn:
                 i = self.expect_list(clp, timeout)
                 ...
         """
-        if type(patterns) is not ListType:
+        if patterns is None:
+            return []
+        if type(patterns) is not types.ListType:
             patterns = [patterns]
 
         compiled_pattern_list = []
         for p in patterns:
-            if type(p) is StringType:
+            if type(p) is types.StringType:
                 compiled_pattern_list.append(re.compile(p, re.DOTALL))
             elif p is EOF:
                 compiled_pattern_list.append(EOF)

@@ -33,18 +33,19 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.sendline ("abc")
         child.sendline ("123")
         child.sendeof()
+        # Don't use "".join() because we want to test the ITERATOR.
         page = ""
         for line in child:
             page = page + line
-        assert page == 'abc\r\nabc\r\n123\r\n123\r\n', "iterator did not work"
+        assert page == 'abc\r\nabc\r\n123\r\n123\r\n', "iterator did not work. page=%s"%repr(page)
     def test_readlines(self):
         child = pexpect.spawn('cat')
         child.sendline ("abc")
         child.sendline ("123")
         child.sendeof()
-        x = child.readlines()
-        x = ''.join(x)
-        assert x == 'abc\r\nabc\r\n123\r\n123\r\n', "readlines() did not work"
+        page = child.readlines()
+        page = ''.join(page)
+        assert page == 'abc\r\nabc\r\n123\r\n123\r\n', "readlines() did not work. page=%s"%repr(page)
     def test_write (self):
         child = pexpect.spawn('cat')
         child.write('a')
@@ -54,7 +55,8 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat')
         child.writelines(['abc','123','xyz','\r'])
         child.sendeof()
-        assert child.readline() == 'abc123xyz\r\n', "writelines() did not work"
+        line = child.readline()
+        assert line == 'abc123xyz\r\n', "writelines() did not work. line=%s"%repr(line)
     def test_eof(self):
         child = pexpect.spawn('cat')
         child.sendeof()
@@ -87,7 +89,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
     def test_bad_type_in_expect(self):
         child = pexpect.spawn('cat')
         try:
-            child.expect({})
+            child.expect({}) # We don't support dicts yet. Should give TypeError
         except TypeError, e:
             pass
         except:

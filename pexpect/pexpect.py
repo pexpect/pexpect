@@ -472,7 +472,8 @@ class spawn:
             self.child_fd = -1
             self.closed = 1
             if self.isalive():
-                self.terminate(force)
+                if not self.terminate(force):
+                    raise ExceptionPexpect ('close() could not terminate the child using terminate()')
 
     def flush (self):   # File-like object.
         """This does nothing. It is here to support the interface for a File-like object.
@@ -488,27 +489,27 @@ class spawn:
         """This sets the terminal echo mode on or off.
         Note that anything the child sent before the echo will be lost, so
         you should be sure that your input buffer is empty before you setecho.
-        For example, the following will work.
-                p = pexpect.spawn('cat')
-                p.sendline ('1234') # We will see this twice (once from tty echo and again from cat).
-                p.expect (['1234'])
-                p.expect (['1234'])
-                p.setecho(0) # Turn off tty echo
-                p.sendline ('abcd') # We will set this only once (echoed by cat).
-                p.sendline ('wxyz') # We will set this only once (echoed by cat)
-                p.expect (['abcd'])
-                p.expect (['wxyz'])
+        For example, the following will work as expected.
+            p = pexpect.spawn('cat')
+            p.sendline ('1234') # We will see this twice (once from tty echo and again from cat).
+            p.expect (['1234'])
+            p.expect (['1234'])
+            p.setecho(0) # Turn off tty echo
+            p.sendline ('abcd') # We will set this only once (echoed by cat).
+            p.sendline ('wxyz') # We will set this only once (echoed by cat)
+            p.expect (['abcd'])
+            p.expect (['wxyz'])
         The following WILL NOT WORK because the lines sent before the setecho
         will be lost:
-                p = pexpect.spawn('cat')
-                p.sendline ('1234') # We will see this twice (once from tty echo and again from cat).
-                p.setecho(0) # Turn off tty echo
-                p.sendline ('abcd') # We will set this only once (echoed by cat).
-                p.sendline ('wxyz') # We will set this only once (echoed by cat)
-                p.expect (['1234'])
-                p.expect (['1234'])
-                p.expect (['abcd'])
-                p.expect (['wxyz'])
+            p = pexpect.spawn('cat')
+            p.sendline ('1234') # We will see this twice (once from tty echo and again from cat).
+            p.setecho(0) # Turn off tty echo
+            p.sendline ('abcd') # We will set this only once (echoed by cat).
+            p.sendline ('wxyz') # We will set this only once (echoed by cat)
+            p.expect (['1234'])
+            p.expect (['1234'])
+            p.expect (['abcd'])
+            p.expect (['wxyz'])
         """
         self.child_fd
         new = termios.tcgetattr(self.child_fd)
@@ -560,6 +561,7 @@ class spawn:
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Braindead platform.')
         elif 'irix' in sys.platform:
             # This is a hack for Irix. It seems that Irix requires a long delay before checking isalive.
+            # This adds a 2 second delay, but only when the child is terminated
             r, w, e = select.select([self.child_fd], [], [], 2)
             if not r and not self.isalive():
                 self.flag_eof = 1
@@ -568,8 +570,8 @@ class spawn:
         r, w, e = select.select([self.child_fd], [], [], timeout)
         if not r:
             if not self.isalive():
-                # Some platforms such as Irix will say they are alive; then timeout on the select;
-                # and then say they are not alive.
+                # Some platforms, such as Irix, will claim that their processes are alive;
+                # then timeout on the select; and then finally admit that they are not alive.
                 self.flag_eof = 1
                 raise EOF ('End of File (EOF) in read_nonblocking(). Very pokey platform.')
             else:
@@ -612,6 +614,8 @@ class spawn:
         # I would catch any bugs early and ensure consistant behavior.
         # It's a little less efficient, but there is less for me to
         # worry about if I have to later modify read() or expect().
+        # Note, it's OK if size==-1 in the regex. That just means it
+        # will never match anything in which case we stop only on EOF.
         cre = re.compile('.{%d}' % size, re.DOTALL) 
         index = self.expect ([cre, self.delimiter]) # delimiter default is EOF
         if index == 0:
@@ -730,30 +734,33 @@ class spawn:
     def terminate(self, force=0):
         """This forces a child process to terminate.
         It starts nicely with SIGHUP and SIGINT. If "force" is 1 then
-        moves onto SIGKILL is sent otherwise an exception is generated.
+        moves onto SIGKILL.
+        This returns true if the child was terminated.
+        This returns false if the child could not be terminated.
         """
         if not self.isalive():
-            return
+            return 1
         self.kill(signal.SIGHUP)
         time.sleep(0.1)
         if not self.isalive():
-            return
+            return 1
         self.kill(signal.SIGCONT)
         time.sleep(0.1)
         if not self.isalive():
-            return
+            return 1
         self.kill(signal.SIGINT)
         time.sleep(0.1)
         if not self.isalive():
-            return
+            return 1
         if force:
             self.kill(signal.SIGKILL)
             time.sleep(0.1)
             if not self.isalive():
-                return
+                return 1
             else:
-                raise ExceptionPexpect ('terminate() sent a SIGKILL, but the child is still reported as alive.')
-        raise ExceptionPexpect ('terminate() could not terminate child process. Try terminate(force=1)?')
+                return 0
+        return 0
+        #raise ExceptionPexpect ('terminate() could not terminate child process. Try terminate(force=1)?')
         
     def isalive(self):
         """This tests if the child process is running or not.

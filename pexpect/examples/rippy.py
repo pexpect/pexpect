@@ -23,11 +23,6 @@ Note that mplayer has poor handling of mixing MP3 files to AVI format.
 I have had better luck with Metroshka (MKV) format containers.
 Currently only MKV format is supported. Hopefully I can fix AVI later.
 
-Remember:
-    a 180MB CDR (21 minutes) holds 193536000 bytes.
-    a 550MB CDR (63 minutes) holds 580608000 bytes.
-    a 650MB CDR (74 minutes) holds 681984000 bytes.
-    a 700MB CDR (80 minutes) holds 737280000 bytes.
 
 2005 Noah Spurrier [noah@noah.org]
 """
@@ -51,7 +46,7 @@ def convert (options):
     apply_smart (compress_audio, options)
 
     if options['video_bitrate']=='calc':
-        options['video_bitrate'] = apply_smart (calc_video_bitrate, options) 
+        options['video_bitrate'] = options['video_bitrate_fudge_factor'] * apply_smart (calc_video_bitrate, options) 
     print "# video bitrate : ", options['video_bitrate']
 
     if options['video_crop_area']=='detect':
@@ -81,9 +76,21 @@ def exit_with_usage(exit_code=1):
     print globals()['__doc__']
     os._exit(exit_code)
 
-def input_option (message, default_value="", help=None):
+def input_option (message, default_value="", help=None, level=0, max_level=0):
+    """This is a fancy raw_input function.
+    If the user enters '?' then the contents of help is printed.
+    
+    The 'level' and 'max_level' are used to adjust which advanced options
+    are printed. 'max_level' is the level of options that the user wants
+    to see. 'level' is the level of difficulty for this particular option.
+    If this level is <= the max_level the user wants then the
+    message is printed and user input is allowed; otherwise, the
+    default value is returned automatically without user input.
+    """
     if default_value != '':
         message = "%s [%s] " % (message, default_value)
+    if level > max_level:
+        return default_value
     while 1:
         user_input = raw_input (message)
         if user_input=='?':
@@ -166,12 +173,11 @@ def get_length (audio_raw_filename):
         return -1
     return int(idl[0])
 
-def calc_video_bitrate (video_final_target_size, audio_compressed_filename, video_length, extra_space=0):
-    """This gives an estimate of the video bitrate
-    necessary to fit the final target size.
-    This will take into account room to fit the audio_compressed_filename
-    and extra space if given.
-    video_final_target_size is in MB,
+def calc_video_bitrate (video_target_size, audio_compressed_filename, video_length, extra_space=0):
+    """This gives an estimate of the video bitrate necessary to
+    fit the final target size.  This will take into account room to
+    fit the audio_compressed_filename and extra space if given.
+    video_target_size is in MB,
     audio_compressed_filename is a string, 
     video_length is in seconds,
     extra_space is in bytes.
@@ -182,9 +188,8 @@ def calc_video_bitrate (video_final_target_size, audio_compressed_filename, vide
     """
     if extra_space is None: extra_space = 0
     audio_size = os.stat(audio_compressed_filename)[stat.ST_SIZE]
-#a 700MB CDR holds 737280000 bytes.
-    video_final_target_size = 737280000 - audio_size - extra_space
-    return calc_video_kbitrate (video_final_target_size, video_length)
+    video_target_size = video_target_size - audio_size - extra_space
+    return (int)(calc_video_kbitrate (video_target_size, video_length))
 
 def calc_video_kbitrate (target_size, length_secs):
     """Given a target byte size free for video data, this returns the bitrate in kBit/S.
@@ -193,7 +198,7 @@ def calc_video_kbitrate (target_size, length_secs):
         target_size = bitrate * 125 * length_secs
         bitrate     = target_size/(125*length_secs)
     """
-    return int(1.2 * target_size / (125.0 * length_secs))
+    return int(target_size / (125.0 * length_secs))
 
 def crop_detect (video_source_filename, video_length):
     """This attempts to figure out the best crop for the given video file.
@@ -314,18 +319,18 @@ prompts = {
 'video_source_filename':("dvd://1", 'Video source filename?', """This is the filename of the video that you want to convert from.
 It can be any file that mencoder supports.
 You can also choose a DVD device using the dvd://1 syntax.
-Title 1 is usually the main title on a DVD."""),
+Title 1 is usually the main title on a DVD.""",0),
 'video_transcoded_filename':("~video.avi", 'Video transcoded filename?', """This is the temporary file where the video will be stored in the new format.
-This is before the audio track is mixed into the final video container."""),
-'video_final_filename':("video_final", "Video final filename?", """This is the name of the final video."""),
+This is before the audio track is mixed into the final video container.""",1),
+'video_final_filename':("video_final", "Video final filename?", """This is the name of the final video.""",0),
 'audio_raw_filename':("audiodump.wav", "Audio raw filename?", """This is the audio raw PCM filename. This is prior to compression.
 Note that mplayer automatically names this audiodump.wav, so
-normally you should not change this."""),
+normally you should not change this.""",2),
 'audio_compressed_filename':("audiodump.mp3","Audio compressed filename?", """This is the name of the compressed audio that will be mixed
-into the final video. Normally you don't need to change this."""),
+into the final video. Normally you don't need to change this.""",2),
 'video_length':("calc","Video length in seconds?","""This sets the length of the video in seconds. Set to 'calc' to calculate the length from the
 raw audio stream. That's a hack because mplayer cannot get the length of
-the video from the source video file. Normally you don't need to change this."""),
+the video from the source video file. Normally you don't need to change this.""",1),
 'video_scale':("none","Video scale?","""This scales the video to the given output size. The default is to do no scaling.
 You may type in a resolution such as 320x240 or you may use presets.
   qntsc:   352x240 (NTSC quarter screen)
@@ -333,55 +338,67 @@ You may type in a resolution such as 320x240 or you may use presets.
   ntsc:    720x480 (standard NTSC)
   pal:     720x576 (standard PAL)
   sntsc:   640x480 (square pixel NTSC)
-  spal:    768x576 (square pixel PAL)"""),
+  spal:    768x576 (square pixel PAL)""",1),
 'video_codec':("mpeg4","Video codec?","""This is the video compression to use. This is passed directly to mencoded, so
 any format that it recognizes will work. For DivX use 'mpeg4'.
 Some common codecs include:
 mjpeg, h263, h263p, h264, mpeg4, msmpeg4, wmv1, wmv2, mpeg1video, mpeg2video, huffyuv, ffv1.
-See mencoder manual for details."""),
+See mencoder manual for details.""",1),
 'video_encode_passes':("2","Encode passes?","""This sets how many passes to use to encode the video. You can choose 1 or 2.
 Using two pases takes twice as long as one pass, but produces a better
-quality video. I found that the effect is not that noticable."""),
+quality video. I found that the effect is not that noticable.""",1),
 'video_key_interval':("12","Video key-frame interval?","""This sets how often a key-frame is inserted into the stream.
-Normally you don't need to change this."""),
+Normally you don't need to change this.""",2),
 'verbose_flag':("Y","Verbose output?","""This sets verbose output. If true then all commands and arguments are printed
-before they are run. This is useful to see exactly how commands are run."""),
+before they are run. This is useful to see exactly how commands are run.""",1),
 'dry_run_flag':("N","Dry run?","""This sets 'dry run' mode. If true then commands are not run. This is useful
-if you want to see what would happen by running the script."""),
-'video_final_target_size':("700","Video final target size in MB?","""This sets the final video target size that you want to end up with.
+if you want to see what would happen by running the script.""",1),
+'video_bitrate':("calc","Video bitrate","""This sets the video bitrate. This over-rides video_target_size.
+Set to 'calc' to automatically estimate the bitrate based on the
+video final target size.""",1),
+'video_target_size':("700","Video final target size in MB?","""This sets the target video size that you want to end up with.
+This is over-ridden by video_bitrate. In other words, if you specify
+video_bitrate then video_target_size is ignored.
 Due to the unpredictable nature of compression the final video size may not
-exactly match. Most CDRs hold 650MB or 700MB. Mini-CDRs hold 180MB."""),
-'video_bitrate':("calc","Video bitrate","""This sets the video bitrate. Set to 'calc' to automatically estimate
-the bitrate necessary to fill the video final target size."""),
+exactly match. The following are common CDR sizes:
+    180MB CDR (21 minutes) holds 193536000 bytes
+    550MB CDR (63 minutes) holds 580608000 bytes
+    650MB CDR (74 minutes) holds 681984000 bytes
+    700MB CDR (80 minutes) holds 737280000 bytes""",0),
+'video_bitrate_fudge_factor':("1.2","Bitrate fudge factor?","""Mencoder overestimates the bitrate.
+Again, bitrate calculations are unpredictable. I found that a factor of 1.2
+produces video files that are just under the target size. If you specify
+video_bitrate then the fudge factor is ignored.""",2),
 'video_crop_area':("detect","Crop area?","""This sets the crop area to remove black bars from the top and sides of the video.
 This helps save space. Set to 'detect' to automatically detect the crop area.
-Set to 'none' to not crop the video. Normally you don't need to change this."""),
+Set to 'none' to not crop the video. Normally you don't need to change this.""",1),
 'video_container_format':('mkv',"Final video format (avi or mkv)?","""This sets the final video container format. Metroshka is 'mkv' format.
-Currently 'avi' format doesn't work due to a bug in mencoder."""),
+Currently 'avi' format doesn't work due to a bug in mencoder.""",1),
 'video_deinterlace_flag':("N","Is the video interlaced?","""This sets the deinterlace flag. If set then mencoder will be instructed
-to filter out interlace artifacts."""),
-'video_gray_flag':("N","Is the video black and white (gray)?","""This improves output for black and white video."""),
+to filter out interlace artifacts.""",0),
+'video_gray_flag':("N","Is the video black and white (gray)?","""This improves output for black and white video.""",0),
 'audio_id':("128","Audio ID stream?","""This selects the audio stream to extract from the source video.
 If your source is a VOB file (DVD) then stream IDs start at 128.
 Normally, 128 is the main audio track for a DVD.
-Tracks with higher numbers may be other language dubs or audio commentary."""),
+Tracks with higher numbers may be other language dubs or audio commentary.""",0),
 'audio_sample_rate':("32","Audio sample rate (kHz) 48, 44.1, 32, 24, 12","""This sets the rate at which the compressed audio will be resampled.
 DVD audio is 48 kHz whereas music CDs use 44.1 kHz. The higher the sample rate
 the more space the audio track will take. That will leave less space for video.
-32 kHz is a good trade-off if you are trying to fit a video onto a CD."""),
+32 kHz is a good trade-off if you are trying to fit a video onto a CD.""",1),
 'audio_bitrate':("96","Audio bitrate (kbit/s) 192, 128, 96?","""This sets the bitrate for MP3 audio compression.
 The higher the bitrate the more space the audio track will take.
 That will leave less space for video. Most people find music to be acceptable
-at 128 kBitS. 96 kBitS is a good trade-off if you are trying to fit a video onto a CD."""),
+at 128 kBitS. 96 kBitS is a good trade-off if you are trying to fit a video onto a CD.""",1),
 'audio_lowpass_filter':("16","Audio lowpass filter (kHz)?","""This sets the low-pass filter for the audio.
 Normally this should be half of the audio sample rate.
 This improves audio compression and quality.
-Normally you don't need to change this."""),
+Normally you don't need to change this.""",1),
 'delete_tmp_files_flag':("N","Delete temporary files when finished?","""If Y then video_transcoded_filename, audio_raw_filename, audio_compressed_filename,
-and 'divx2pass.log' will be deleted at the end.""")
+and 'divx2pass.log' will be deleted at the end.""",1)
 }
 prompts_key_order = ('video_source_filename','video_transcoded_filename','video_final_filename','audio_raw_filename',
-'audio_compressed_filename','video_length','video_scale','video_codec','video_encode_passes','video_key_interval','verbose_flag','dry_run_flag','video_final_target_size','video_bitrate','video_crop_area',
+'audio_compressed_filename','video_length','video_scale','video_codec','video_encode_passes','video_key_interval',
+'verbose_flag','dry_run_flag','video_bitrate','video_target_size','video_bitrate_fudge_factor','video_crop_area',
 'video_container_format','video_deinterlace_flag','video_gray_flag','audio_id','audio_sample_rate','audio_bitrate',
 'audio_lowpass_filter','delete_tmp_files_flag')
 
@@ -389,9 +406,13 @@ def interactive_convert ():
     global prompts, prompts_key_order
 
     print globals()['__doc__']
-    print
-    print """Enter '?' at any question to get extra help."""
-    print
+    print "============================================"
+    print "Enter '?' for any question to get extra help"
+    print "============================================"
+    
+    c = input_option("Prompt level (0, 1, or 2)?", "0", """This the level for advanced options prompts. Set 0 for simple, 1 for advanced, or 2 for expert.""")
+    MAX_PROMPT_LEVEL = int(c)
+
     options = {}
     for k in prompts_key_order:
         if k == 'audio_id':
@@ -401,14 +422,19 @@ def interactive_convert ():
                 for aid in aid_list:
                     print "    " + aid
             else:
-                print "Unable to get the list of audio streams from the vide. Setting default to 128."
+                print "WARNING!"
+                print "Unable to get the list of audio streams from the video (is the DVD busy?)."
+                print "Setting default to 128."
                 aid_list=["128"]
-            options[k] = input_option (prompts[k][1], aid_list[0], prompts[k][2])
+            options[k] = input_option (prompts[k][1], aid_list[0], prompts[k][2], prompts[k][3], MAX_PROMPT_LEVEL)
         elif k == 'audio_lowpass_filter':
             lowpass_default =  "%.1f" % (math.floor(float(options['audio_sample_rate']) / 2.0))
-            options[k] = input_option (prompts[k][1], lowpass_default, prompts[k][2])
+            options[k] = input_option (prompts[k][1], lowpass_default, prompts[k][2], prompts[k][3], MAX_PROMPT_LEVEL)
         else:
-            options[k] = input_option (prompts[k][1], prompts[k][0], prompts[k][2])
+            # Don't bother asking for target size if bitrate was set
+            if (k=='video_target_size' or k=='video_bitrate_fudge_factor') and options['video_bitrate']!='calc':
+                continue
+            options[k] = input_option (prompts[k][1], prompts[k][0], prompts[k][2], prompts[k][3], MAX_PROMPT_LEVEL)
 
     options['video_final_filename'] = options['video_final_filename'] + "." + options['video_container_format']
 
@@ -421,7 +447,8 @@ def interactive_convert ():
 
     print
     c = input_option("Continue?", "Y")
-    if c != 'Y':
+    c = c.strip().lower()
+    if c[0] != 'y':
         print "Exiting..."
         os._exit(1)
     return options
@@ -430,6 +457,10 @@ def clean_options (d):
     """This validates and cleans up the options dictionary.
     After reading options interactively or from a conf file
     we need to make sure that the values are converted or make sense.
+    Values are normalized "No", "None", "none" all become "none".
+    "Calcluate", "c", "CALC" all become "calc".
+    Any key with "_flag" in it becomes a boolean True or False.
+    This is a rather annoying function, but then so it most cleanup work.
     """
     for k in d:
         d[k] = d[k].strip()
@@ -439,7 +470,18 @@ def clean_options (d):
                     d[k] = 1
                 else:
                     d[k] = 0
-    d['video_bitrate'] = int(d['video_bitrate'])
+    d['video_bitrate'] = d['video_bitrate'].lower()
+    if d['video_bitrate'][0]=='c':
+        d['video_bitrate']='calc'
+    else:
+        d['video_bitrate'] = int(d['video_bitrate'])
+    try:
+        d['video_target_size'] = int(d['video_target_size'])
+    except:
+        d['video_target_size'] = 'none'
+
+    assert (d['video_bitrate']=='calc' and d['video_target_size']!='none') or (d['video_bitrate']!='calc' and d['video_target_size']=='none')
+
     d['video_scale'] = d['video_scale'].lower()
     if d['video_scale'][0]=='n':
         d['video_scale']='none'

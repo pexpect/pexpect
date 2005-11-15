@@ -10,6 +10,12 @@ import PexpectTestCase
 # This may not always be true, but seems adequate for testing now.
 # I should fix this at some point.
 
+def timeout_callback (d):
+    print d["event_count"],
+    if d["event_count"]>5:
+        return 1
+    return 0
+
 class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def test_run_exit (self):
         (data, exitstatus) = pexpect.run ('python exit1.py', withexitstatus=1)
@@ -21,6 +27,9 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         the_new_way = the_new_way.replace('\r','')[:-1]
         assert the_old_way == the_new_way
         assert exitstatus == 0
+
+    def test_run_callback (self):
+        pexpect.run("cat", timeout=1, events={pexpect.TIMEOUT:timeout_callback})
 
     def test_run_bad_exitstatus (self):
         (the_new_way, exitstatus) = pexpect.run ('ls -l /najoeufhdnzkxjd', withexitstatus=1)

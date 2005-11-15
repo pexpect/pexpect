@@ -377,7 +377,7 @@ Normally you don't need to change this.""",2),
 before they are run. This is useful to see exactly how commands are run.""",1),
 'dry_run_flag':("N","Dry run?","""This sets 'dry run' mode. If true then commands are not run. This is useful
 if you want to see what would happen by running the script.""",1),
-'video_bitrate':("calc","Video bitrate","""This sets the video bitrate. This over-rides video_target_size.
+'video_bitrate':("calc","Video bitrate?","""This sets the video bitrate. This over-rides video_target_size.
 Set to 'calc' to automatically estimate the bitrate based on the
 video final target size.""",1),
 'video_target_size':("700","Video final target size in MB?","""This sets the target video size that you want to end up with.
@@ -420,9 +420,9 @@ Normally you don't need to change this.""",1),
 'delete_tmp_files_flag':("N","Delete temporary files when finished?","""If Y then video_transcoded_filename, audio_raw_filename, audio_compressed_filename,
 and 'divx2pass.log' will be deleted at the end.""",1)
 }
-prompts_key_order = ('video_source_filename','video_transcoded_filename','video_final_filename','audio_raw_filename',
-'audio_compressed_filename','video_length','video_scale','video_codec','video_encode_passes','video_key_interval',
-'verbose_flag','dry_run_flag','video_bitrate','video_target_size','video_bitrate_fudge_factor','video_crop_area',
+prompts_key_order = ('verbose_flag','dry_run_flag','video_source_filename','video_transcoded_filename','video_final_filename',
+'audio_raw_filename','audio_compressed_filename','video_length','video_scale','video_codec','video_encode_passes',
+'video_key_interval','video_bitrate','video_target_size','video_bitrate_fudge_factor','video_crop_area',
 'video_container_format','video_deinterlace_flag','video_gray_flag','audio_id','audio_sample_rate','audio_bitrate',
 'audio_lowpass_filter','delete_tmp_files_flag')
 
@@ -433,8 +433,20 @@ def interactive_convert ():
     print "============================================"
     print "Enter '?' for any question to get extra help"
     print "============================================"
-    
-    c = input_option("Prompt level (0, 1, or 2)?", "0", """This the level for advanced options prompts. Set 0 for simple, 1 for advanced, or 2 for expert.""")
+  
+    # Ask for the level of options the user wants. 
+    # A lot of code just to print a string!
+    level_sort = {0:'', 1:'', 2:''} 
+    for k in prompts:
+        level = prompts[k][3]
+        if level < 0 or level > 2:
+            continue
+        level_sort[level] += "    " + prompts[k][1] + "\n"
+    level_sort_string = "This the level for advanced options prompts. Set 0 for simple, 1 for advanced, or 2 for expert.\n"
+    level_sort_string += "[0] Basic options:\n" + str(level_sort[0]) + "\n"
+    level_sort_string += "[1] Advanced options:\n" + str(level_sort[1]) + "\n"
+    level_sort_string += "[2] Expert options:\n" + str(level_sort[2])
+    c = input_option("Prompt level (0, 1, or 2)?", "0", level_sort_string)
     MAX_PROMPT_LEVEL = int(c)
 
     options = {}
@@ -455,7 +467,7 @@ def interactive_convert ():
             lowpass_default =  "%.1f" % (math.floor(float(options['audio_sample_rate']) / 2.0))
             options[k] = input_option (prompts[k][1], lowpass_default, prompts[k][2], prompts[k][3], MAX_PROMPT_LEVEL)
         else:
-            # Don't bother asking for target size if bitrate was set
+            # Don't bother asking for video_target_size or video_bitrate_fudge_factor if bitrate was set
             if (k=='video_target_size' or k=='video_bitrate_fudge_factor') and options['video_bitrate']!='calc':
                 continue
             options[k] = input_option (prompts[k][1], prompts[k][0], prompts[k][2], prompts[k][3], MAX_PROMPT_LEVEL)

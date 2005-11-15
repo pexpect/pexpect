@@ -584,7 +584,7 @@ def main ():
         options = interactive_convert ()
         options = clean_options(options)
         convert (options)
-    print "Done!"
+    print "# Done!"
     
 if __name__ == "__main__":
     try:

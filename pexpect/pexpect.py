@@ -559,7 +559,7 @@ class spawn:
             if not r:
                 self.flag_eof = 1
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Braindead platform.')
-        elif 'irix' in sys.platform:
+        elif sys.platform.lower().find('irix') >= 0:
             # This is a hack for Irix. It seems that Irix requires a long delay before checking isalive.
             # This adds a 2 second delay, but only when the child is terminated
             r, w, e = select.select([self.child_fd], [], [], 2)

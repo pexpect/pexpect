@@ -76,6 +76,23 @@ def exit_with_usage(exit_code=1):
     print globals()['__doc__']
     os._exit(exit_code)
 
+def check_missing_requirements ():
+    """This list of missing requirements (mencoder, mplayer, lame, and mkvmerge).
+    Returns None if all requirements are in the execution path.
+    """
+    missing = []
+    if which("mencoder") is None:
+        missing.append("mencoder")
+    if which("mplayer") is None:
+        missing.append("mplayer")
+    if which("lame") is None:
+        missing.append("lame")
+    if which("mkvmerge") is None:
+        missing.append("mkvmerge")
+    if len(missing)==0:
+        return None
+    return missing
+
 def input_option (message, default_value="", help=None, level=0, max_level=0):
     """This is a fancy raw_input function.
     If the user enters '?' then the contents of help is printed.
@@ -102,6 +119,9 @@ def input_option (message, default_value="", help=None, level=0, max_level=0):
     return user_input
 
 def progress_callback (d=None):
+    """This callback simply prints a dot to show activity.
+    This is used when running external commands with pexpect.run.
+    """
     print ".",
 
 def apply_smart (func, args):
@@ -173,7 +193,7 @@ def get_length (audio_raw_filename):
         return -1
     return int(idl[0])
 
-def calc_video_bitrate (video_target_size, audio_compressed_filename, video_length, extra_space=0):
+def calc_video_bitrate (video_target_size, audio_compressed_filename, video_length, extra_space=0, dry_run_flag=0):
     """This gives an estimate of the video bitrate necessary to
     fit the final target size.  This will take into account room to
     fit the audio_compressed_filename and extra space if given.
@@ -186,6 +206,8 @@ def calc_video_bitrate (video_target_size, audio_compressed_filename, video_leng
     a 650MB CDR (74 minutes) holds 681984000 bytes.
     a 700MB CDR (80 minutes) holds 737280000 bytes.
     """
+    if dry_run_flag:
+        return -1
     if extra_space is None: extra_space = 0
     audio_size = os.stat(audio_compressed_filename)[stat.ST_SIZE]
     video_target_size = video_target_size - audio_size - extra_space
@@ -200,7 +222,7 @@ def calc_video_kbitrate (target_size, length_secs):
     """
     return int(target_size / (125.0 * length_secs))
 
-def crop_detect (video_source_filename, video_length):
+def crop_detect (video_source_filename, video_length, dry_run_flag=0):
     """This attempts to figure out the best crop for the given video file.
     Basically it runs crop detect for 5 seconds on three different places in the video.
     It picks the crop area that was most often detected.
@@ -210,6 +232,8 @@ def crop_detect (video_source_filename, video_length):
     cmd1 = "mencoder %s -quiet -ss %d -endpos %d -o /dev/null -nosound -ovc lavc -vf cropdetect" % (video_source_filename,   skip, sample_length)
     cmd2 = "mencoder %s -quiet -ss %d -endpos %d -o /dev/null -nosound -ovc lavc -vf cropdetect" % (video_source_filename, 2*skip, sample_length)
     cmd3 = "mencoder %s -quiet -ss %d -endpos %d -o /dev/null -nosound -ovc lavc -vf cropdetect" % (video_source_filename, 3*skip, sample_length)
+    if dry_run_flag:
+        return "0:0:0:0"
     result1 = run(cmd1)
     result2 = run(cmd2)
     result3 = run(cmd3)
@@ -313,8 +337,8 @@ def delete_tmp_files (video_transcoded_filename, audio_raw_filename, audio_compr
         print
     
 ##############################################################################
-
 # This defines the prompts and defaults used for interactive mode.
+##############################################################################
 prompts = {
 'video_source_filename':("dvd://1", 'Video source filename?', """This is the filename of the video that you want to convert from.
 It can be any file that mencoder supports.
@@ -333,12 +357,12 @@ raw audio stream. That's a hack because mplayer cannot get the length of
 the video from the source video file. Normally you don't need to change this.""",1),
 'video_scale':("none","Video scale?","""This scales the video to the given output size. The default is to do no scaling.
 You may type in a resolution such as 320x240 or you may use presets.
-  qntsc:   352x240 (NTSC quarter screen)
-  qpal:    352x288 (PAL quarter screen)
-  ntsc:    720x480 (standard NTSC)
-  pal:     720x576 (standard PAL)
-  sntsc:   640x480 (square pixel NTSC)
-  spal:    768x576 (square pixel PAL)""",1),
+    qntsc: 352x240 (NTSC quarter screen)
+    qpal:  352x288 (PAL quarter screen)
+    ntsc:  720x480 (standard NTSC)
+    pal:   720x576 (standard PAL)
+    sntsc: 640x480 (square pixel NTSC)
+    spal:  768x576 (square pixel PAL)""",1),
 'video_codec':("mpeg4","Video codec?","""This is the video compression to use. This is passed directly to mencoded, so
 any format that it recognizes will work. For DivX use 'mpeg4'.
 Some common codecs include:
@@ -480,6 +504,8 @@ def clean_options (d):
     except:
         d['video_target_size'] = 'none'
 
+    d['video_bitrate_fudge_factor'] = float(d['video_bitrate_fudge_factor'])
+
     assert (d['video_bitrate']=='calc' and d['video_target_size']!='none') or (d['video_bitrate']!='calc' and d['video_target_size']=='none')
 
     d['video_scale'] = d['video_scale'].lower()
@@ -507,6 +533,22 @@ def main ():
     if [elem for elem in command_line_options if elem in ['-h','--h','-?','--?','--help']]:
         exit_with_usage(0)
 
+    missing = check_missing_requirements()
+    if missing is not None:
+        print
+        print "=========================================================================="
+        print "ERROR!"
+        print "Some required external commands are missing."
+        print "please install the following packages:"
+        print str(missing)
+        print "=========================================================================="
+        print
+        c = input_option("Continue?", "Y")
+        c = c.strip().lower()
+        if c[0] != 'y':
+            print "Exiting..."
+            os._exit(1)
+
     if len(args) > 0:
         options = dict(re.findall('([^: \t\n]*)\s*:\s*(".*"|[^ \t\n]*)', file(args[0]).read()))
         options = clean_options(options)
@@ -521,9 +563,10 @@ if __name__ == "__main__":
     try:
         main ()
     except Exception, e:
+        print "=========================================================================="
         print "ERROR -- Unexpected exception in script."
         print str(e)
         traceback.print_exc()
-        exit_with_usage(2)
-        os._exit(3)
+        print "=========================================================================="
+        exit_with_usage(3)
 

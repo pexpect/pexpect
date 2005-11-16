@@ -49,8 +49,10 @@ pexpect-examples.tgz: examples/*
 clean:
 	rm -f *.pyc
 	rm -f tests/*.pyc
+	rm -f tools/*.pyc
 	rm -f *.cover
 	rm -f tests/*.cover
+	rm -f tools/*.cover
 	rm -f dist/pexpect-$(VERSION).tar.gz
 	cd dist;rm -rf pexpect-$(VERSION)/
 	rm -f pexpect-$(VERSION).tgz

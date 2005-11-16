@@ -8,34 +8,40 @@
 
 import pexpect
 import getpass
+import sys, os
 
 X = getpass.getpass('Password: ')
 
-p = pexpect.spawn ('ssh noah@use-pr-shell1.sourceforge.net "cd htdocs;rm -f index.html;wget http://www.noah.org/python/pexpect/index.html"')
+p = pexpect.spawn ('scp www/index.html noah@use-pr-shell1.sourceforge.net:htdocs/index.html')
+p.logfile = sys.stdout
 p.expect ('password:')
 p.sendline (X)
 p.expect (pexpect.EOF)
 print p.before
 
-p = pexpect.spawn ('ssh noah@use-pr-shell1.sourceforge.net "cd htdocs;rm -f clean.css;wget http://www.noah.org/python/pexpect/clean.css"')
+p = pexpect.spawn ('scp www/clean.css noah@use-pr-shell1.sourceforge.net:htdocs/clean.css')
+p.logfile = sys.stdout
 p.expect ('password:')
 p.sendline (X)
 p.expect (pexpect.EOF)
 print p.before
 
 p = pexpect.spawn ('scp pexpect-doc.tgz noah@use-pr-shell1.sourceforge.net:htdocs/pexpect-doc.tgz')
+p.logfile = sys.stdout
 p.expect ('password:')
 p.sendline (X)
 p.expect (pexpect.EOF)
 print p.before
 
 p = pexpect.spawn ('ssh noah@use-pr-shell1.sourceforge.net "cd htdocs;tar zxvf pexpect-doc.tgz"')
+p.logfile = sys.stdout
 p.expect ('password:')
 p.sendline (X)
 p.expect (pexpect.EOF)
 print p.before
 
 p = pexpect.spawn ('scp pexpect-current.tgz noah@use-pr-shell1.sourceforge.net:htdocs/pexpect-current.tgz')
+p.logfile = sys.stdout
 p.expect ('password:')
 p.sendline (X)
 p.expect (pexpect.EOF)

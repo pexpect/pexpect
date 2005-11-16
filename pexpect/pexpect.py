@@ -441,6 +441,7 @@ class spawn:
             os.close (self.child_fd)
             self.child_fd = -1
             self.closed = 1
+            time.sleep(0.1) # Give kernel time to update process status.
             if self.isalive():
                 if not self.terminate(force):
                     raise ExceptionPexpect ('close() could not terminate the child using terminate()')

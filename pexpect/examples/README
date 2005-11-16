@@ -1,7 +1,7 @@
 This directory contains scripts that give examples of using Pexpect.
 
 script.py
-    This implements a command similar to the classic BSD "script" commnad.
+    This implements a command similar to the classic BSD "script" command.
     This will start a subshell and log all input and output to a file.
     This demonstrates the interact() method of Pexpect.
 

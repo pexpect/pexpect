@@ -12,7 +12,7 @@ import sys, os
 
 X = getpass.getpass('Password: ')
 
-p = pexpect.spawn ('scp doc/*.html noah@use-pr-shell1.sourceforge.net:htdocs/.')
+p = pexpect.spawn ('scp -r doc/. noah@use-pr-shell1.sourceforge.net:htdocs/.')
 p.logfile = sys.stdout
 p.expect ('password:')
 p.sendline (X)

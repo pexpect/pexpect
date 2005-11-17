@@ -52,7 +52,7 @@ class pxssh (spawn):
         if i==0: # New certificate -- always accept it. This is what you if SSH does not have the remote host's public key stored in the cache.
             self.sendline("yes")
             i = self.expect(["(?i)are you sure you want to continue connecting", original_prompts, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
-        if i==2: password
+        if i==2: # password
             self.sendline(password)
             i = self.expect(["(?i)are you sure you want to continue connecting", original_prompts, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
         if i==4:

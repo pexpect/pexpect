@@ -10,7 +10,7 @@ MANIFEST_LINES := $(shell cat MANIFEST)
 
 all: dist examples docs
 
-# *.py README.txt MANIFEST
+# *.py README MANIFEST
 
 # I had to add the chmod 644 and 755 because cvs sucks.
 # I accidentally checked in some files with the wrong permissions

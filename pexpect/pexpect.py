@@ -174,7 +174,7 @@ def run (command, timeout=-1, withexitstatus=0, events=None, extra_args=None):
     event_count = 0
     while 1:
         try:
-            index = child.expect (patterns, timeout=5)
+            index = child.expect (patterns)
             if type(child.after) is types.StringType:
                 child_result_list.append(child.before + child.after)
             else: # child.after may have been a TIMEOUT or EOF, so don't cat those.
@@ -197,9 +197,9 @@ def run (command, timeout=-1, withexitstatus=0, events=None, extra_args=None):
         except EOF, e:
             child_result_list.append(child.before)
             break
-    child.close()
     child_result = ''.join(child_result_list)
     if withexitstatus:
+        child.close()
         return (child_result, child.exitstatus)
     else:
         return child_result

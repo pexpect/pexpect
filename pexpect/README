@@ -1,5 +1,4 @@
-Pexpect
-a Pure Python Expect-like module
+Pexpect is a Pure Python Expect-like module
 
 Pexpect makes Python a better tool for controlling other applications.
 

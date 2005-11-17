@@ -1,7 +1,7 @@
 README.txt
 setup.py
 pexpect.py
-pexpect_ssh.py
+pxssh.py
 screen.py
 ANSI.py
 FSM.py

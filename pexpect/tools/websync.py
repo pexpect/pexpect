@@ -12,14 +12,14 @@ import sys, os
 
 X = getpass.getpass('Password: ')
 
-p = pexpect.spawn ('scp www/index.html noah@use-pr-shell1.sourceforge.net:htdocs/index.html')
+p = pexpect.spawn ('scp doc/*.html noah@use-pr-shell1.sourceforge.net:htdocs/.')
 p.logfile = sys.stdout
 p.expect ('password:')
 p.sendline (X)
 p.expect (pexpect.EOF)
 print p.before
 
-p = pexpect.spawn ('scp www/clean.css noah@use-pr-shell1.sourceforge.net:htdocs/clean.css')
+p = pexpect.spawn ('scp doc/clean.css noah@use-pr-shell1.sourceforge.net:htdocs/clean.css')
 p.logfile = sys.stdout
 p.expect ('password:')
 p.sendline (X)

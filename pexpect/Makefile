@@ -45,9 +45,9 @@ pexpect-doc.tgz: doc/*
 	-rm -f `ls doc/*.html | sed -e 's/doc\/index\.html//'` 
 	#$(DOCGENERATOR) `echo "$(MANIFEST_LINES)" | sed -e "s/\.py//g" -e "s/setup *//" -e "s/README *//"`
 	#mv *.html doc/
-	cd doc
-	$(DOCGENERATOR) ../pexpect.py ../pxssh.py ../FSM.py ../ANSI.py ../screen.py
-	cd ..
+	cd doc;\
+	$(DOCGENERATOR) ../pexpect.py ../pxssh.py ../FSM.py ../ANSI.py ../screen.py;\
+	cd ..;\
 	tar zcf pexpect-doc.tgz doc/
 
 examples: pexpect-examples.tgz

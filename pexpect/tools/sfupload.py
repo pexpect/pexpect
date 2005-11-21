@@ -6,6 +6,7 @@ import pexpect
 import sys
 
 child = pexpect.spawn('ftp upload.sourceforge.net')
+child.logfile = sys.stdout
 child.expect('Name .*: ')
 child.sendline('anonymous')
 child.expect('Password:')

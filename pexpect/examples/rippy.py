@@ -121,7 +121,7 @@ at 128 kBitS. 96 kBitS is a good trade-off if you are trying to fit a video onto
 Normally this should be half of the audio sample rate.
 This improves audio compression and quality.
 Normally you don't need to change this.""",1),
-'delete_tmp_files_flag':("N","Delete temporary files when finished?","""If Y then video_transcoded_filename, audio_raw_filename, audio_compressed_filename,
+'delete_tmp_files_flag':("Y","Delete temporary files when finished?","""If Y then video_transcoded_filename, audio_raw_filename, audio_compressed_filename,
 and 'divx2pass.log' will be deleted at the end.""",1)
 }
 

@@ -38,8 +38,8 @@ h3 {
 	}
 p
 {
-	font:11px/20px verdana, arial, helvetica, sans-serif;
 	margin:0px 0px 16px 0px;
+	font:11px/20px verdana, arial, helvetica, sans-serif;
 	padding:0px;
 }
 table 
@@ -55,7 +55,7 @@ th.pymenu {color: #ffffff; background-color: #003366}
 .code 
 {
 	font-family: "Lucida Console", monospace; font-weight: bold;
-	color: #007700; background-color: #dddddd
+	color: #007700; background-color: #eeeeee
 }
 
 #Content>p {margin:0px;}

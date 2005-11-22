@@ -4,13 +4,13 @@ $Date$
 '''
 from distutils.core import setup
 setup (name='pexpect',
-    version='2.0',
-    py_modules=['pexpect'],
+    version='2.1',
+    py_modules=['pexpect', 'pxssh'],
     description='Pexpect is a pure Python Expect. It allows easy control of other applications.',
     author='Noah Spurrier',
     author_email='noah@noah.org',
     url='http://pexpect.sourceforge.net/',
-    license='Python Software Foundation License',
+    license='MIT license',
     platforms='UNIX',
 )
 

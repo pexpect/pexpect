@@ -11,45 +11,68 @@ should work on any platform that supports the standard Python pty
 module. The Pexpect interface focuses on ease of use so that simple
 tasks are easy.
 
-There are two main interfaces to Pexpect. You can call the function:
-        pexpect.run()
-to execute a command and return the output.
-Do no use this on interactive commands that expect input.
-This is a handy replacment for os.system().
-The more useful interface is the class:
-        pexpect.spawn()
-This creates a spawn instance. This will start the command that you specify.
-You can then interact with the child command through the spawn instance.
-Most commands, including ssh, cannot tell that they are being run inside
-of a script. This works even for commands that ask for passwords or
-other input outside of the normal stdio streams.
+There are two main interfaces to Pexpect -- the function, run() and
+the class, spawn. You can call the run() function to execute a command
+and return the output. This is a handy replacement for os.system().
+For example:
+    pexpect.run('ls -la')
+The more powerful interface is the spawn class. You can create an
+insteance of an external command and use spawn to interact with
+the
+You can use this to spawn an external child command and then
+interact with the child by sending lines and expecting responses.
+For example:
+    child = pexpect.spawn('scp foo myname@host.example.com:.')
+    child.expect ('Password:')
+    child.sendline (mypassword)
+This works even for commands that ask for passwords or other input
+outside of the normal stdio streams.
 
-Pexpect is Open Source, Free, and all that good stuff.
-License: Python Software Foundation License
-         http://www.opensource.org/licenses/PythonSoftFoundation.html
-
-Noah Spurrier
-Richard Holden
-Marco Molteni
-Kimberley Burchett 
-Robert Stone
-Mike Snitzer
-Marti Raudsepp
-Matt <matt (*) corvil.com>
-Hartmut Goebel
-Chad Schroeder
-Erick Tryzelaar
-Dave Kirby
-Ids vander Molen
-George Todd
-Noel Taylor
-Nicolas D. Cesar
+Credits:
+    Noah Spurrier
+    Richard Holden
+    Marco Molteni
+    Kimberley Burchett 
+    Robert Stone
+    Mike Snitzer
+    Marti Raudsepp
+    Matt <matt (*) corvil.com>
+    Hartmut Goebel
+    Chad Schroeder
+    Erick Tryzelaar
+    Dave Kirby
+    Ids vander Molen
+    George Todd
+    Noel Taylor
+    Nicolas D. Cesar
 (Let me know if I forgot anyone.)
+
+Free, open source, and all that good stuff.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Pexpect Copyright (c) 2005 Noah Spurrier
+http://pexpect.sourceforge.net/
 
 $Revision$
 $Date$
 """
-
 try:
     import os, sys, time
     import select
@@ -70,7 +93,7 @@ except ImportError, e:
 A critical module was not found. Probably this operating system does not support it.
 Pexpect is intended for UNIX-like operating systems.""")
 
-__version__ = '2.0'
+__version__ = '2.1'
 __revision__ = '$Revision$'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which', 'split_command_line',
     '__version__', '__revision__']
@@ -121,6 +144,17 @@ def run (command, timeout=-1, withexitstatus=0, events=None, extra_args=None):
     If you set withexitstatus to true, then run will return a tuple of
     (command_output, exitstatus). If withexitstatus is false then this
     returns just command_output.
+
+    The run() function can often be used instead of creating a spawn instance.
+    For example, the following code uses spawn:
+        from pexpect import *
+        child = spawn('scp foo myname@host.example.com:.')
+        child.expect ('(?i)password')
+        child.sendline (mypassword)
+    The previous code can be replace with the following, which you may
+    or may not find simpler:
+        from pexpect import *
+        run ('scp foo myname@host.example.com:.', events={'(?i)password': mypassword})
 
     Examples:
     Start the apache daemon on the local machine:

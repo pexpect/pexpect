@@ -169,6 +169,11 @@ def main():
     child.expect (COMMAND_PROMPT)
     print child.before
     
+    # Run lsof.
+    child.sendline ('lsof')
+    child.expect (COMMAND_PROMPT)
+    print child.before
+
 #    # Run netstat
 #    child.sendline ('netstat')
 #    child.expect (COMMAND_PROMPT)

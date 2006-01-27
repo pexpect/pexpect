@@ -54,3 +54,8 @@ uptime.py
     The regular expression takes into account a wide variety of different
     formats for uptime output.
 
+df.py
+    This collects filesystem capacity info using the 'df' command.
+    Tuples of filesystem name and percentage are stored in a list.
+    A simple report is printed. Filesystems over 95% capacity are highlighted.
+

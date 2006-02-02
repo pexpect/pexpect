@@ -11,6 +11,16 @@ import PexpectTestCase
 # This may not be true, but seems adequate for testing now.
 # I should fix this at some point.
 
+FILTER=''.join([(len(repr(chr(x)))==3) and chr(x) or '.' for x in range(256)])
+def hex_dump(src, length=8):
+    result=[]
+    for i in xrange(0, len(src), length):
+       s = src[i:i+length]
+       hexa = ' '.join(["%02X"%ord(x) for x in s])
+       printable = s.translate(FILTER)
+       result.append("%04X   %-*s   %s\n" % (i, length*3, hexa, printable))
+    return ''.join(result)
+
 class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_expect_basic (self):
@@ -117,7 +127,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
                         break
         the_new_way = the_new_way[:-1]
         the_new_way = the_new_way.replace('\r','\n')
-        assert the_old_way == the_new_way
+        assert the_old_way == the_new_way, hex_dump(the_new_way) + "\n" + hex_dump(the_old_way)
 
 #    def test_expect_exact (self):
 #        the_old_way = commands.getoutput('ls -l /bin')

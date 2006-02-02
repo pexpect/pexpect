@@ -330,7 +330,7 @@ class spawn:
         self.terminated = 1
         self.exitstatus = None
         self.signalstatus = None
-        self.status = None
+        self.status = None # status returned by os.waitpid 
         self.flag_eof = 0
         self.pid = None
         self.child_fd = -1 # initially closed
@@ -341,6 +341,8 @@ class spawn:
         self.buffer = '' # This is the read buffer. See maxread.
         self.searchwindowsize = searchwindowsize # Anything before searchwindowsize point is preserved, but not searched.
         self.delaybeforesend = 0.1 # Sets sleep time used just before sending data to child.
+        self.delayafterclose = 0.1 # Sets delay in close() method to allow kernel time to update process status.
+        self.delayafterterminate = 0.1 # Sets delay in terminate() method to allow kernel time to update process status.
         self.softspace = 0 # File-like object.
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.
@@ -475,7 +477,7 @@ class spawn:
             os.close (self.child_fd)
             self.child_fd = -1
             self.closed = 1
-            time.sleep(0.1) # Give kernel time to update process status.
+            time.sleep(self.delayafterclose) # Give kernel time to update process status.
             if self.isalive():
                 if not self.terminate(force):
                     raise ExceptionPexpect ('close() could not terminate the child using terminate()')
@@ -746,20 +748,20 @@ class spawn:
         if not self.isalive():
             return 1
         self.kill(signal.SIGHUP)
-        time.sleep(0.1)
+        time.sleep(self.delayafterterminate)
         if not self.isalive():
             return 1
         self.kill(signal.SIGCONT)
-        time.sleep(0.1)
+        time.sleep(self.delayafterterminate)
         if not self.isalive():
             return 1
         self.kill(signal.SIGINT)
-        time.sleep(0.1)
+        time.sleep(self.delayafterterminate)
         if not self.isalive():
             return 1
         if force:
             self.kill(signal.SIGKILL)
-            time.sleep(0.1)
+            time.sleep(self.delayafterterminate)
             if not self.isalive():
                 return 1
             else:

@@ -323,15 +323,16 @@ class spawn:
         self.stderr = sys.stderr
 
         self.patterns = None
+        self.ignorecase = False
         self.before = None
         self.after = None
         self.match = None
         self.match_index = None
-        self.terminated = 1
+        self.terminated = True
         self.exitstatus = None
         self.signalstatus = None
         self.status = None # status returned by os.waitpid 
-        self.flag_eof = 0
+        self.flag_eof = False
         self.pid = None
         self.child_fd = -1 # initially closed
         self.timeout = timeout
@@ -409,8 +410,11 @@ class spawn:
         s.append('delimiter: ' + str(self.delimiter))
         s.append('logfile: ' + str(self.logfile))
         s.append('maxread: ' + str(self.maxread))
+        s.append('ignorecase: ' + str(self.ignorecase))
         s.append('searchwindowsize: ' + str(self.searchwindowsize))
         s.append('delaybeforesend: ' + str(self.delaybeforesend))
+        s.append('delayafterclose: ' + str(self.delayafterclose))
+        s.append('delayafterterminate: ' + str(self.delayafterterminate))
         return '\n'.join(s)
 
     def __spawn(self):
@@ -870,10 +874,13 @@ class spawn:
         if type(patterns) is not types.ListType:
             patterns = [patterns]
 
+        compile_flags = re.DOTALL # Allow dot to match \n
+        if self.ignorecase:
+            compile_flags = compile_flags | re.IGNORECASE
         compiled_pattern_list = []
         for p in patterns:
             if type(p) is types.StringType:
-                compiled_pattern_list.append(re.compile(p, re.DOTALL))
+                compiled_pattern_list.append(re.compile(p, compile_flags))
             elif p is EOF:
                 compiled_pattern_list.append(EOF)
             elif p is TIMEOUT:

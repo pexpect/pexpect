@@ -35,6 +35,9 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.expect (pexpect.EOF)
 
     def test_expect_ignore_case(self):
+        """This test that the ignorecase flag will match patterns
+        even if case is different using the regex (?i) directive.
+        """
         p = pexpect.spawn('cat')
         p.sendline ('HELLO')
         p.sendline ('there')
@@ -43,8 +46,21 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.sendeof () 
         p.expect (pexpect.EOF)
 
+    def test_expect_ignore_case_flag(self):
+        """This test that the ignorecase flag will match patterns
+        even if case is different using the ignorecase flag.
+        """
+        p = pexpect.spawn('cat')
+        p.ignorecase = True
+        p.sendline ('HELLO')
+        p.sendline ('there')
+        p.expect ('hello')
+        p.expect ('THERE')
+        p.sendeof () 
+        p.expect (pexpect.EOF)
+
     def test_expect_order (self):
-        """This tests that patterns are matched in the order of the pattern_list.
+        """This tests that patterns are matched in the same order as given in the pattern_list.
         """
         p = pexpect.spawn('cat')
         p.sendline ('1234') 

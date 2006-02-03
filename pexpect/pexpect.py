@@ -238,7 +238,7 @@ def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None
     else:
         return child_result
 
-class spawn:
+class spawn (object):
     """This is the main class interface for Pexpect.
     Use this class to start and control child applications.
     """

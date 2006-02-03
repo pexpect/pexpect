@@ -12,7 +12,7 @@ import PexpectTestCase
 # I should fix this at some point.
 
 FILTER=''.join([(len(repr(chr(x)))==3) and chr(x) or '.' for x in range(256)])
-def hex_dump(src, length=8):
+def hex_dump(src, length=16):
     result=[]
     for i in xrange(0, len(src), length):
        s = src[i:i+length]
@@ -143,6 +143,8 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
                         break
         the_new_way = the_new_way[:-1]
         the_new_way = the_new_way.replace('\r','\n')
+        # For some reason I get an extra newline under OS X evey once in a while.
+        # I found it by looking through the hex_dump().
         assert the_old_way == the_new_way, hex_dump(the_new_way) + "\n" + hex_dump(the_old_way)
 
 #    def test_expect_exact (self):

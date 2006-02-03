@@ -116,9 +116,9 @@ class ExceptionPexpect(Exception):
         return ''.join(tblist)
     def __filter_not_pexpect(self, trace_list_item):
         if trace_list_item[0].find('pexpect.py') == -1:
-            return 1
+            return True
         else:
-            return 0
+            return False
 class EOF(ExceptionPexpect):
     """Raised when EOF is read from a child.
     """
@@ -134,7 +134,7 @@ class TIMEOUT(ExceptionPexpect):
 ##class MAXBUFFER(ExceptionPexpect):
 ##    """Raised when a scan buffer fills before matching an expected pattern."""
 
-def run (command, timeout=-1, withexitstatus=0, events=None, extra_args=None):
+def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None):
     """This function runs the given command; waits for it to finish;
     then returns all output as a string. STDERR is included in output.
     If the full path to the command is not given then the path is searched.
@@ -344,10 +344,10 @@ class spawn:
         self.delaybeforesend = 0.1 # Sets sleep time used just before sending data to child.
         self.delayafterclose = 0.1 # Sets delay in close() method to allow kernel time to update process status.
         self.delayafterterminate = 0.1 # Sets delay in terminate() method to allow kernel time to update process status.
-        self.softspace = 0 # File-like object.
+        self.softspace = False # File-like object.
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.
-        self.closed = 1 # File-like object.
+        self.closed = True # File-like object.
         
         if type (args) != type([]):
             raise TypeError ('The second argument, args, must be a list.')
@@ -461,26 +461,26 @@ class spawn:
             os.execv(self.command, self.args)
 
         # Parent
-        self.terminated = 0
-        self.closed = 0
+        self.terminated = False
+        self.closed = False
 
     def fileno (self):   # File-like object.
         """This returns the file descriptor of the pty for the child.
         """
         return self.child_fd
 
-    def close (self, force=0):   # File-like object.
+    def close (self, force=True):   # File-like object.
         """This closes the connection with the child application.
         Note that calling close() more than once is valid.
         This emulates standard Python behavior with files.
-        Set force to 1 if you want to make sure that the child is terminated
+        Set force to True if you want to make sure that the child is terminated
         (SIGKILL is sent if the child ignores SIGHUP and SIGINT).
         """
         if self.child_fd != -1:
             self.flush()
             os.close (self.child_fd)
             self.child_fd = -1
-            self.closed = 1
+            self.closed = True
             time.sleep(self.delayafterclose) # Give kernel time to update process status.
             if self.isalive():
                 if not self.terminate(force):
@@ -492,11 +492,11 @@ class spawn:
         pass
 
     def isatty (self):   # File-like object.
-        """This returns 1 if the file descriptor is open and connected to a tty(-like) device, else 0.
+        """This returns True if the file descriptor is open and connected to a tty(-like) device, else False.
         """
         return os.isatty(self.child_fd)
 
-    def setecho (self, on):
+    def setecho (self, state):
         """This sets the terminal echo mode on or off.
         Note that anything the child sent before the echo will be lost, so
         you should be sure that your input buffer is empty before you setecho.
@@ -505,7 +505,7 @@ class spawn:
             p.sendline ('1234') # We will see this twice (once from tty echo and again from cat).
             p.expect (['1234'])
             p.expect (['1234'])
-            p.setecho(0) # Turn off tty echo
+            p.setecho(False) # Turn off tty echo
             p.sendline ('abcd') # We will set this only once (echoed by cat).
             p.sendline ('wxyz') # We will set this only once (echoed by cat)
             p.expect (['abcd'])
@@ -514,7 +514,7 @@ class spawn:
         will be lost:
             p = pexpect.spawn('cat')
             p.sendline ('1234') # We will see this twice (once from tty echo and again from cat).
-            p.setecho(0) # Turn off tty echo
+            p.setecho(False) # Turn off tty echo
             p.sendline ('abcd') # We will set this only once (echoed by cat).
             p.sendline ('wxyz') # We will set this only once (echoed by cat)
             p.expect (['1234'])
@@ -524,7 +524,7 @@ class spawn:
         """
         self.child_fd
         new = termios.tcgetattr(self.child_fd)
-        if on:
+        if state:
             new[3] = new[3] | termios.ECHO
         else:
             new[3] = new[3] & ~termios.ECHO
@@ -568,14 +568,14 @@ class spawn:
         if not self.isalive():
             r, w, e = select.select([self.child_fd], [], [], 0) # timeout of 0 means "poll"
             if not r:
-                self.flag_eof = 1
+                self.flag_eof = True
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Braindead platform.')
         elif sys.platform.lower().find('irix') >= 0:
             # This is a hack for Irix. It seems that Irix requires a long delay before checking isalive.
             # This adds a 2 second delay, but only when the child is terminated
             r, w, e = select.select([self.child_fd], [], [], 2)
             if not r and not self.isalive():
-                self.flag_eof = 1
+                self.flag_eof = True
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Pokey platform.')
             
         r, w, e = select.select([self.child_fd], [], [], timeout)
@@ -583,7 +583,7 @@ class spawn:
             if not self.isalive():
                 # Some platforms, such as Irix, will claim that their processes are alive;
                 # then timeout on the select; and then finally admit that they are not alive.
-                self.flag_eof = 1
+                self.flag_eof = True
                 raise EOF ('End of File (EOF) in read_nonblocking(). Very pokey platform.')
             else:
                 raise TIMEOUT ('Timeout exceeded in read_nonblocking().')
@@ -592,10 +592,10 @@ class spawn:
             try:
                 s = os.read(self.child_fd, size)
             except OSError, e: # Linux does this
-                self.flag_eof = 1
+                self.flag_eof = True
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Exception style platform.')
             if s == '': # BSD style
-                self.flag_eof = 1
+                self.flag_eof = True
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Empty string style platform.')
 
             if self.logfile != None:
@@ -669,7 +669,7 @@ class spawn:
         the lines thus read. The optional "sizehint" argument is ignored.
         """        
         lines = []
-        while 1:
+        while True:
             line = self.readline()
             if not line:
                 break
@@ -738,50 +738,50 @@ class spawn:
             termios.tcsetattr(fd, termios.TCSADRAIN, old)
 
     def eof (self):
-        """This returns 1 if the EOF exception was raised at some point.
+        """This returns True if the EOF exception was ever raised.
         """
         return self.flag_eof
 
-    def terminate(self, force=0):
+    def terminate(self, force=False):
         """This forces a child process to terminate.
-        It starts nicely with SIGHUP and SIGINT. If "force" is 1 then
+        It starts nicely with SIGHUP and SIGINT. If "force" is True then
         moves onto SIGKILL.
-        This returns true if the child was terminated.
-        This returns false if the child could not be terminated.
+        This returns True if the child was terminated.
+        This returns False if the child could not be terminated.
         """
         if not self.isalive():
-            return 1
+            return True
         self.kill(signal.SIGHUP)
         time.sleep(self.delayafterterminate)
         if not self.isalive():
-            return 1
+            return True
         self.kill(signal.SIGCONT)
         time.sleep(self.delayafterterminate)
         if not self.isalive():
-            return 1
+            return True
         self.kill(signal.SIGINT)
         time.sleep(self.delayafterterminate)
         if not self.isalive():
-            return 1
+            return True
         if force:
             self.kill(signal.SIGKILL)
             time.sleep(self.delayafterterminate)
             if not self.isalive():
-                return 1
+                return True
             else:
-                return 0
-        return 0
-        #raise ExceptionPexpect ('terminate() could not terminate child process. Try terminate(force=1)?')
+                return False
+        return False
+        #raise ExceptionPexpect ('terminate() could not terminate child process. Try terminate(force=True)?')
         
     def isalive(self):
         """This tests if the child process is running or not.
         This is non-blocking. If the child was terminated then this
         will read the exitstatus or signalstatus of the child.
-        This returns 1 if the child process appears to be running or 0 if not.
+        This returns True if the child process appears to be running or False if not.
         It can take literally SECONDS for Solaris to return the right status.
         """
         if self.terminated:
-            return 0
+            return False
 
         if self.flag_eof:
             # This is for Linux, which requires the blocking form of waitpid to get
@@ -816,23 +816,23 @@ class spawn:
             # for Irix which seems to require a blocking call on waitpid or select, so I let read_nonblocking
             # take care of this situation (unfortunately, this requires waiting through the timeout).
             if pid == 0:
-                return 1
+                return True
 
         if pid == 0:
-            return 1
+            return True
 
         if os.WIFEXITED (status):
             self.status = status
             self.exitstatus = os.WEXITSTATUS(status)
             self.signalstatus = None
-            self.terminated = 1
-            return 0
+            self.terminated = True
+            return False
         elif os.WIFSIGNALED (status):
             self.status = status
             self.exitstatus = None
             self.signalstatus = os.WTERMSIG(status)
-            self.terminated = 1
-            return 0
+            self.terminated = True
+            return False
         elif os.WIFSTOPPED (status):
             raise ExceptionPexpect ('isalive() encountered condition where child process is stopped. This is not supported. Is some other process attempting job control with our child pid?')
 
@@ -974,7 +974,7 @@ class spawn:
 
         try:
             incoming = self.buffer
-            while 1: # Keep reading until exception or return.
+            while True: # Keep reading until exception or return.
                 # Sequence through the list of patterns looking for a match.
                 first_match = -1
                 for cre in pattern_list:

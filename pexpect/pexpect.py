@@ -348,7 +348,14 @@ class spawn (object):
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.
         self.closed = True # File-like object.
-        
+        self.__irix_hack = sys.platform.lower().find('irix') >= 0 # This flags if we are running on irix
+
+        # allow dummy instances for subclasses that might not use command or args.
+        if command == None:
+            self.command = None
+            self.args = None
+            return
+ 
         if type (args) != type([]):
             raise TypeError ('The second argument, args, must be a list.')
 
@@ -570,9 +577,9 @@ class spawn (object):
             if not r:
                 self.flag_eof = True
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Braindead platform.')
-        elif sys.platform.lower().find('irix') >= 0:
+        elif self.__irix_hack:
             # This is a hack for Irix. It seems that Irix requires a long delay before checking isalive.
-            # This adds a 2 second delay, but only when the child is terminated
+            # This adds a 2 second delay, but only when the child is terminated.
             r, w, e = select.select([self.child_fd], [], [], 2)
             if not r and not self.isalive():
                 self.flag_eof = True

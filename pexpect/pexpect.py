@@ -656,12 +656,13 @@ class spawn (object):
     def readline (self, size = -1):    # File-like object.
         """This reads and returns one entire line. A trailing newline is kept in
         the string, but may be absent when a file ends with an incomplete line. 
-        Note: This readline() looks for a \\r\\n pair even on UNIX because this is 
-        what the pseudo tty device returns. So contrary to what you may be used to
-        you will receive a newline as \\r\\n.
+        Note: This readline() looks for a \\r\\n pair even on UNIX because
+        this is what the pseudo tty device returns. So contrary to what you
+        may expect you will receive the newline as \\r\\n.
         An empty string is returned when EOF is hit immediately.
         Currently, the size agument is mostly ignored, so this behavior is not
-        standard for a file-like object. If size is 0 then an empty string is returned.
+        standard for a file-like object. If size is 0 then an empty string
+        is returned.
         """
         if size == 0:
             return ''
@@ -672,7 +673,7 @@ class spawn (object):
             return self.before
 
     def __iter__ (self):    # File-like object.
-        """This is to support interators over a file-like object.
+        """This is to support iterators over a file-like object.
         """
         return self
 

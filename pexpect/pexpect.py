@@ -539,7 +539,7 @@ class spawn (object):
         # and blocked on some platforms. TCSADRAIN is probably ideal if it worked.
         termios.tcsetattr(self.child_fd, termios.TCSANOW, new)
 
-	def __select (self, fd, timeout=-1):
+	def __select (self, iwtd, owtd, ewtd, timeout=-1)
 		"""
 			timeout may be 0 to poll (never wait).
 			timeout may be None to never timeout.
@@ -552,6 +552,7 @@ class spawn (object):
 		while True:
 			try:
 				r,w,e = select.select (r,w,e, timeout)
+				return r,w,e
 			except select.error, e:
 				# ignore EINTR from sigwinch (terminal resize).
 				if e[0] != EINTR:
@@ -559,7 +560,7 @@ class spawn (object):
 				else:
 					break
 					if timeout < 0 and timeout is not None:
-						raise TIMEOUT ('Timeout exceeded in __select().')
+						return [],[],[]
 					if timeout is not None:
 						timeout = end_time - time.time()
 

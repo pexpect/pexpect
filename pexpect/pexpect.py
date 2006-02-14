@@ -539,6 +539,31 @@ class spawn (object):
         # and blocked on some platforms. TCSADRAIN is probably ideal if it worked.
         termios.tcsetattr(self.child_fd, termios.TCSANOW, new)
 
+	def __select (self, fd, timeout=-1):
+		"""
+			timeout may be 0 to poll (never wait).
+			timeout may be None to never timeout.
+			timeout may be -1 to use the default instance timeout.
+		"""
+        if timeout == -1:
+            timeout = self.timeout
+        if timeout != None:
+            end_time = time.time() + timeout 
+		while True:
+			try:
+				r,w,e = select.select (r,w,e, timeout)
+			except select.error, e:
+				# ignore EINTR from sigwinch (terminal resize).
+				if e[0] != EINTR:
+					raise
+				else:
+					break
+					if timeout < 0 and timeout is not None:
+						raise TIMEOUT ('Timeout exceeded in __select().')
+					if timeout is not None:
+						timeout = end_time - time.time()
+
+	
     def read_nonblocking (self, size = 1, timeout = -1):
         """This reads at most size characters from the child application.
         It includes a timeout. If the read does not complete within the

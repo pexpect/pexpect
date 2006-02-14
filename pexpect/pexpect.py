@@ -573,19 +573,32 @@ class spawn (object):
         # For this case, I test isalive() before doing any reading.
         # If isalive() is false, then I pretend that this is the same as EOF.
         if not self.isalive():
-            r, w, e = select.select([self.child_fd], [], [], 0) # timeout of 0 means "poll"
+            try:
+                r, w, e = select.select([self.child_fd], [], [], 0) # timeout of 0 means "poll"
+            except select.error, e: # ignore EINTR from sigwinch (terminal resize).
+                if e[0] != errno.EINTR:
+                    raise
             if not r:
                 self.flag_eof = True
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Braindead platform.')
         elif self.__irix_hack:
             # This is a hack for Irix. It seems that Irix requires a long delay before checking isalive.
             # This adds a 2 second delay, but only when the child is terminated.
-            r, w, e = select.select([self.child_fd], [], [], 2)
+            try:
+                r, w, e = select.select([self.child_fd], [], [], 2)
+            except select.error, e: # ignore EINTR from sigwinch (terminal resize).
+                if e[0] != errno.EINTR:
+                    raise
             if not r and not self.isalive():
                 self.flag_eof = True
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Pokey platform.')
             
-        r, w, e = select.select([self.child_fd], [], [], timeout)
+        try:
+            r, w, e = select.select([self.child_fd], [], [], timeout)
+        except select.error, e: # ignore EINTR from sigwinch (terminal resize).
+            if e[0] != errno.EINTR:
+                raise
+        
         if not r:
             if not self.isalive():
                 # Some platforms, such as Irix, will claim that their processes are alive;
@@ -1129,7 +1142,7 @@ class spawn (object):
         while self.isalive():
             try:
                 r, w, e = select.select([self.child_fd, self.STDIN_FILENO], [], [])
-            except select.errno, e:
+            except select.error, e: # ignore EINTR from sigwinch (terminal resize).
                 if e[0] != errno.EINTR:
                     raise
             if self.child_fd in r:

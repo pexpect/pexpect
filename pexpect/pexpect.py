@@ -351,7 +351,7 @@ class spawn (object):
         self.__irix_hack = sys.platform.lower().find('irix') >= 0 # This flags if we are running on irix
 
         # allow dummy instances for subclasses that might not use command or args.
-        if command == None:
+        if command is None:
             self.command = None
             self.args = None
             return
@@ -368,7 +368,7 @@ class spawn (object):
             self.command = command
 
         command_with_path = which(self.command)
-        if command_with_path == None:
+        if command_with_path is None:
             raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
         self.command = command_with_path
         self.args[0] = self.command
@@ -438,8 +438,8 @@ class spawn (object):
         # That may not necessarily be bad because you may haved spawned a child
         # that performs some task; creates no stdout output; and then dies.
 
-        assert self.pid == None, 'The pid member should be None.'
-        assert self.command != None, 'The command member should not be None.'
+        assert self.pid is None, 'The pid member should be None.'
+        assert self.command is not None, 'The command member should not be None.'
 
         try:
             self.pid, self.child_fd = pty.fork()
@@ -539,32 +539,7 @@ class spawn (object):
         # and blocked on some platforms. TCSADRAIN is probably ideal if it worked.
         termios.tcsetattr(self.child_fd, termios.TCSANOW, new)
 
-	def __select (self, iwtd, owtd, ewtd, timeout=-1)
-		"""
-			timeout may be 0 to poll (never wait).
-			timeout may be None to never timeout.
-			timeout may be -1 to use the default instance timeout.
-		"""
-        if timeout == -1:
-            timeout = self.timeout
-        if timeout != None:
-            end_time = time.time() + timeout 
-		while True:
-			try:
-				r,w,e = select.select (r,w,e, timeout)
-				return r,w,e
-			except select.error, e:
-				# ignore EINTR from sigwinch (terminal resize).
-				if e[0] != EINTR:
-					raise
-				else:
-					break
-					if timeout < 0 and timeout is not None:
-						return [],[],[]
-					if timeout is not None:
-						timeout = end_time - time.time()
-
-	
+    
     def read_nonblocking (self, size = 1, timeout = -1):
         """This reads at most size characters from the child application.
         It includes a timeout. If the read does not complete within the
@@ -599,31 +574,19 @@ class spawn (object):
         # For this case, I test isalive() before doing any reading.
         # If isalive() is false, then I pretend that this is the same as EOF.
         if not self.isalive():
-            try:
-                r, w, e = select.select([self.child_fd], [], [], 0) # timeout of 0 means "poll"
-            except select.error, e: # ignore EINTR from sigwinch (terminal resize).
-                if e[0] != errno.EINTR:
-                    raise
+            r,w,e = self.__select([self.child_fd], [], [], 0) # timeout of 0 means "poll"
             if not r:
                 self.flag_eof = True
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Braindead platform.')
         elif self.__irix_hack:
             # This is a hack for Irix. It seems that Irix requires a long delay before checking isalive.
             # This adds a 2 second delay, but only when the child is terminated.
-            try:
-                r, w, e = select.select([self.child_fd], [], [], 2)
-            except select.error, e: # ignore EINTR from sigwinch (terminal resize).
-                if e[0] != errno.EINTR:
-                    raise
+            r, w, e = self.__select([self.child_fd], [], [], 2)
             if not r and not self.isalive():
                 self.flag_eof = True
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Pokey platform.')
             
-        try:
-            r, w, e = select.select([self.child_fd], [], [], timeout)
-        except select.error, e: # ignore EINTR from sigwinch (terminal resize).
-            if e[0] != errno.EINTR:
-                raise
+        r,w,e = self.__select([self.child_fd], [], [], timeout)
         
         if not r:
             if not self.isalive():
@@ -644,7 +607,7 @@ class spawn (object):
                 self.flag_eof = True
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Empty string style platform.')
 
-            if self.logfile != None:
+            if self.logfile is not None:
                 self.logfile.write (s)
                 self.logfile.flush()
 
@@ -743,7 +706,7 @@ class spawn (object):
         If a log file was set then the data is also written to the log.
         """
         time.sleep(self.delaybeforesend)
-        if self.logfile != None:
+        if self.logfile is not None:
             self.logfile.write (str)
             self.logfile.flush()
         c = os.write(self.child_fd, str)
@@ -1014,7 +977,7 @@ class spawn (object):
 
         if timeout == -1:
             timeout = self.timeout
-        if timeout != None:
+        if timeout is not None:
             end_time = time.time() + timeout 
         if searchwindowsize == -1:
             searchwindowsize = self.searchwindowsize
@@ -1167,14 +1130,10 @@ class spawn (object):
         """This is used by the interact() method.
         """
         while self.isalive():
-            try:
-                r, w, e = select.select([self.child_fd, self.STDIN_FILENO], [], [])
-            except select.error, e: # ignore EINTR from sigwinch (terminal resize).
-                if e[0] != errno.EINTR:
-                    raise
+            r,w,e = self.__select([self.child_fd, self.STDIN_FILENO], [], [])
             if self.child_fd in r:
                 data = self.__interact_read(self.child_fd)
-                if self.logfile != None:
+                if self.logfile is not None:
                     self.logfile.write (data)
                     self.logfile.flush()
                 os.write(self.STDOUT_FILENO, data)
@@ -1183,6 +1142,28 @@ class spawn (object):
                 self.__interact_writen(self.child_fd, data)
                 if escape_character in data:
                     break
+    def __select (self, iwtd, owtd, ewtd, timeout=None):
+        """This is a wrapper around select.select() that ignores signals.
+        If select.select raises a select.error exception and errno is an EINTR error then
+        it is ignored. Mainly this is used to ignore sigwinch (terminal resize).
+        """
+        # if select() is interrupted by a signal (errno==EINTR) then
+        # we loop back and enter the select() again.
+        if timeout is not None:
+            end_time = time.time() + timeout 
+        while True:
+            try:
+                return select.select (iwtd, owtd, ewtd, timeout)
+            except select.error, e:
+                if e[0] == EINTR:
+                    # if we loop back we have to subtract the amount of time we already waited.
+                    if timeout is not None:
+                        timeout = end_time - time.time()
+                        if timeout < 0:
+                            return ([],[],[])
+                else: # something else caused the select.error, so this really is an exception
+                    raise
+
 ##############################################################################
 # The following methods are no longer supported or allowed..                
     def setmaxread (self, maxread):

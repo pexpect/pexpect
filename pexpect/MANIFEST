@@ -2,6 +2,7 @@ README
 LICENSE
 setup.py
 pexpect.py
+fdpexpect.py
 pxssh.py
 screen.py
 ANSI.py

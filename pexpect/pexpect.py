@@ -350,14 +350,19 @@ class spawn (object):
         self.closed = True # File-like object.
         self.__irix_hack = sys.platform.lower().find('irix') >= 0 # This flags if we are running on irix
 
-        # allow dummy instances for subclasses that might not use command or args.
+        # allow dummy instances for subclasses that may not use command or args.
         if command is None:
             self.command = None
             self.args = None
+            self.name = '<pexpect factory incomplete>'
             return
- 
+
+        # If command is an int type then it may represent a file descriptor.
+        if type(command) == type(0):
+            raise ExceptionPexpect ('Command is an int type. If this is a file descriptor then maybe you want to use fdpexpect.fdspawn which takes an existing file descriptor instead of a command string.')
+
         if type (args) != type([]):
-            raise TypeError ('The second argument, args, must be a list.')
+            raise TypeError ('The argument, args, must be a list.')
 
         if args == []:
             self.args = split_command_line(command)
@@ -1045,7 +1050,7 @@ class spawn (object):
             raise
 
     def getwinsize(self):
-        """This returns the window size of the child tty.
+        """This returns the terminal window size of the child tty.
         The return value is a tuple of (rows, cols).
         """
         if 'TIOCGWINSZ' in dir(termios):
@@ -1057,7 +1062,7 @@ class spawn (object):
         return struct.unpack('HHHH', x)[0:2]
 
     def setwinsize(self, r, c):
-        """This sets the window size of the child tty.
+        """This sets the terminal window size of the child tty.
         This will cause a SIGWINCH signal to be sent to the child.
         This does not change the physical window size.
         It changes the size reported to TTY-aware applications like

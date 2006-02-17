@@ -11,6 +11,7 @@ TODO:
 """
 from pexpect import *
 import os, sys, getopt, shutil
+import signal, struct, fcntl, termios
 from time import sleep
 
 
@@ -25,28 +26,41 @@ PROMPT = "\[PEXPECT\]\$ "
 # backslash in front of $. The $ doesn't need to be escaped, but it doesn't
 # hurt and serves to make the set command different than the regex.
 
+def handle_sigwinch(sig, data):
+    ### TODO:sospecho que entra en conflicto con newt
+    ### TODO:I suspect that it enters conflict with newt
+    # Check for buggy platforms (see pexpect.setwinsize()).
+    if 'TIOCGWINSZ' in dir(termios):
+        TIOCGWINSZ = termios.TIOCGWINSZ
+    else:
+        TIOCGWINSZ = 1074295912 # assume
+    s = struct.pack ("HHHH", 0, 0, 0, 0)
+    a = struct.unpack ('hhhh', fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ , s))
+    setwinsize_all (a[0],a[1])
+    return True
+
+signal.signal(signal.SIGWINCH, handle_sigwinch)
+
+def setwinsize_all(a,b):
+    """This sets the terminal window size of all instances of pxssh.
+    """
+    for p in pxssh.instances:
+        p.setwinsize(a,b)        
+ 
 class pxssh (spawn):
     """This extends the spawn class to specialize for running 'ssh' command-line client.
         This adds methods to login, logout, and expect_prompt.
     """
-    def __init__(self):
+    instances = []
+    def __init__ (self):
         self.PROMPT = "\[PEXPECT\]\$ "
-        pass
-    def logout(self):
-        """This sends exit. If there are stopped jobs then this sends exit twice.
-        """
-        self.sendline("exit")
-        index = self.expect([EOF, "(?i)there are stopped jobs"])
-        if index==1:
-            self.sendline("exit")
-            self.expect(EOF)
 
     # I need to draw a better flow chart for this.
-    # This is getting messy and I'm pretty sure this isn't perfect.
-    def login(self,server,username,password,terminal_type='ansi'):
+    ### TODO: This is getting messy and I'm pretty sure this isn't perfect.
+    def login (self,server,username,password,terminal_type='ansi'):
         original_prompts = r"][#$]|~[#$]|bash.*?[#$]"
         cmd = "ssh -l %s %s" % (username, server)
-        self = spawn(cmd, timeout=300)
+        spawn.__init__(self, cmd, timeout=300)
         #, "(?i)no route to host"])
         i = self.expect(["(?i)are you sure you want to continue connecting", original_prompts, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
         if i==0: # New certificate -- always accept it. This is what you if SSH does not have the remote host's public key stored in the cache.
@@ -64,7 +78,7 @@ class pxssh (spawn):
             self.close()
             return False
         elif i==1: # can occur if you have a public key pair set to authenticate. 
-            ### May NOT be OK if expect false matched a prompt.
+            ### TODO: May NOT be OK if expect false matched a prompt.
             pass
         elif i==2: # password prompt again
             # Some ssh servers will ask again for password, others print permission denied right away.
@@ -89,7 +103,21 @@ class pxssh (spawn):
         if not self.set_unique_prompt():
             self.close()
             return False
+        pxssh.instances.append(self)
         return True
+
+    def logout (self):
+        """This sends exit. If there are stopped jobs then this sends exit twice.
+        """
+        self.sendline("exit")
+        index = self.expect([EOF, "(?i)there are stopped jobs"])
+        if index==1:
+            self.sendline("exit")
+            self.expect(EOF)
+
+    def close (self):
+        pxssh.instances.remove(self)
+        return spawn.close(self)
 
     def prompt (self):
         """This expects the prompt.

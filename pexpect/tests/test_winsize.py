@@ -32,8 +32,16 @@ class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
         assert (r=="24" and c=="80")
         p1.close()
 
+    def test_parent_resize (self):
+        pid = os.getpid()
+        p1 = pexpect.spawn('%s sigwinch_report.py' % self.PYTHONBIN)
+        time.sleep(10)
+        p1.setwinsize (11,22)
+        os.kill (pid, signal.SIGINT)
+
 if __name__ == '__main__':
     unittest.main()
 
 suite = unittest.makeSuite(TestCaseWinsize,'test')
+
 

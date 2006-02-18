@@ -1133,7 +1133,7 @@ class spawn (object):
                 a = struct.unpack('hhhh', fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ , s))
                 global p
                 p.setwinsize(a[0],a[1])
-            p = pexpect.spawn('/bin/bash') # Note this is global
+            p = pexpect.spawn('/bin/bash') # Note this is global and used in sigwinch_passthrough.
             signal.signal(signal.SIGWINCH, sigwinch_passthrough)
             p.interact()
         """
@@ -1187,7 +1187,7 @@ class spawn (object):
             try:
                 return select.select (iwtd, owtd, ewtd, timeout)
             except select.error, e:
-                if e[0] == EINTR:
+                if e[0] == errno.EINTR:
                     # if we loop back we have to subtract the amount of time we already waited.
                     if timeout is not None:
                         timeout = end_time - time.time()

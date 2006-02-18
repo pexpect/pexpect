@@ -14,7 +14,6 @@ import os, sys, getopt, shutil
 import signal, struct, fcntl, termios
 from time import sleep
 
-
 # used to set shell command-line prompt to something more unique.
 PROMPT = "\[PEXPECT\]\$ "
 # SUBTLE HACK ALERT!
@@ -30,8 +29,6 @@ class pxssh (spawn):
     """This extends the spawn class to specialize for running 'ssh' command-line client.
         This adds methods to login, logout, and expect_prompt.
     """
-
-    instances = [] # This is a list of all pxssh instances that are active.
 
     def __init__ (self):
         self.PROMPT = "\[PEXPECT\]\$ "
@@ -84,7 +81,6 @@ class pxssh (spawn):
         if not self.set_unique_prompt():
             self.close()
             return False
-        pxssh.instances.append(self)
         return True
 
     def logout (self):
@@ -96,10 +92,6 @@ class pxssh (spawn):
             self.sendline("exit")
             self.expect(EOF)
 
-    def close (self):
-        pxssh.instances.remove(self)
-        return spawn.close(self)
-
     def prompt (self):
         """This expects the prompt.
         """
@@ -107,7 +99,7 @@ class pxssh (spawn):
         
     def set_unique_prompt (self, optional_prompt=None):
         """This attempts to reset the shell prompt to something more unique.
-            This makes it easier to match in the future.
+            This makes it easier to match.
         """
         if optional_prompt is not None:
             self.prompt = optional_prompt
@@ -123,7 +115,7 @@ class pxssh (spawn):
 def setwinsize_all(a,b):
     """This sets the terminal window size of all instances of pxssh.
     """
-    for p in pxssh.instances:
+    for p in pexpect.instances:
         p.setwinsize(a,b)        
 
 def handle_sigwinch(sig, data):
@@ -135,9 +127,8 @@ def handle_sigwinch(sig, data):
     else:
         TIOCGWINSZ = 1074295912 # assume
     s = struct.pack ("HHHH", 0, 0, 0, 0)
-    a = struct.unpack ('hhhh', fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ , s))
+    a = struct.unpack ('HHHH', fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ , s))
     setwinsize_all (a[0],a[1])
-    return True
 
 def install_sigwinch_passthrough ():
     """This installs a signal handler for SIGWINCH which echos the signal to

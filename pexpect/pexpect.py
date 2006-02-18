@@ -392,10 +392,10 @@ class spawn (object):
         If the child file descriptor was opened outside of this class
         (passed to the constructor) then this does not close it.
         """
+        spawn.instances.remove(self)
         if self.closed:
             return
         self.close()
-        pexpect.instances.remove(self)
 
     def __str__(self):
         """This returns the current state of the pexpect object as a string.
@@ -423,6 +423,7 @@ class spawn (object):
         s.append('flag_eof: ' + str(self.flag_eof))
         s.append('pid: ' + str(self.pid))
         s.append('child_fd: ' + str(self.child_fd))
+        s.append('closed: ' + str(self.closed))
         s.append('timeout: ' + str(self.timeout))
         s.append('delimiter: ' + str(self.delimiter))
         s.append('logfile: ' + str(self.logfile))
@@ -484,7 +485,7 @@ class spawn (object):
         self.terminated = False
         self.closed = False
         # This needs to happen after any 'raise' exceptions.
-        pexpect.instances.append(self)
+        spawn.instances.append(self)
 
     def fileno (self):   # File-like object.
         """This returns the file descriptor of the pty for the child.
@@ -498,7 +499,7 @@ class spawn (object):
         Set force to True if you want to make sure that the child is terminated
         (SIGKILL is sent if the child ignores SIGHUP and SIGINT).
         """
-        if self.child_fd != -1:
+        if not self.closed:
             self.flush()
             os.close (self.child_fd)
             self.child_fd = -1
@@ -577,7 +578,7 @@ class spawn (object):
         This is a wrapper around os.read().
         It uses select.select() to implement a timeout. 
         """
-        if self.child_fd == -1:
+        if self.closed:
             raise ValueError ('I/O operation on closed file in read_nonblocking().')
 
         if timeout == -1:

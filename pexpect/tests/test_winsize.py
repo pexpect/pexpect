@@ -3,7 +3,7 @@ import pexpect
 import unittest
 import PexpectTestCase
 import time
-import sys
+import sys, os, signal
 
 class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
 
@@ -37,7 +37,7 @@ class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
         p1 = pexpect.spawn('%s sigwinch_report.py' % self.PYTHONBIN)
         time.sleep(10)
         p1.setwinsize (11,22)
-        os.kill (pid, signal.SIGINT)
+        os.kill (pid, signal.SIGWINCH)
 
 if __name__ == '__main__':
     unittest.main()

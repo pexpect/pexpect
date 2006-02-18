@@ -26,32 +26,13 @@ PROMPT = "\[PEXPECT\]\$ "
 # backslash in front of $. The $ doesn't need to be escaped, but it doesn't
 # hurt and serves to make the set command different than the regex.
 
-def handle_sigwinch(sig, data):
-    ### TODO:sospecho que entra en conflicto con newt
-    ### TODO:I suspect that it enters conflict with newt
-    # Check for buggy platforms (see pexpect.setwinsize()).
-    if 'TIOCGWINSZ' in dir(termios):
-        TIOCGWINSZ = termios.TIOCGWINSZ
-    else:
-        TIOCGWINSZ = 1074295912 # assume
-    s = struct.pack ("HHHH", 0, 0, 0, 0)
-    a = struct.unpack ('hhhh', fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ , s))
-    setwinsize_all (a[0],a[1])
-    return True
-
-signal.signal(signal.SIGWINCH, handle_sigwinch)
-
-def setwinsize_all(a,b):
-    """This sets the terminal window size of all instances of pxssh.
-    """
-    for p in pxssh.instances:
-        p.setwinsize(a,b)        
- 
 class pxssh (spawn):
     """This extends the spawn class to specialize for running 'ssh' command-line client.
         This adds methods to login, logout, and expect_prompt.
     """
-    instances = []
+
+    instances = [] # This is a list of all pxssh instances that are active.
+
     def __init__ (self):
         self.PROMPT = "\[PEXPECT\]\$ "
 
@@ -138,4 +119,29 @@ class pxssh (spawn):
             if i == 0:
                 return 0
         return 1
+
+def setwinsize_all(a,b):
+    """This sets the terminal window size of all instances of pxssh.
+    """
+    for p in pxssh.instances:
+        p.setwinsize(a,b)        
+
+def handle_sigwinch(sig, data):
+    ### TODO:sospecho que entra en conflicto con newt
+    ### TODO:I suspect that it enters conflict with newt
+    # Check for buggy platforms (see pexpect.setwinsize()).
+    if 'TIOCGWINSZ' in dir(termios):
+        TIOCGWINSZ = termios.TIOCGWINSZ
+    else:
+        TIOCGWINSZ = 1074295912 # assume
+    s = struct.pack ("HHHH", 0, 0, 0, 0)
+    a = struct.unpack ('hhhh', fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ , s))
+    setwinsize_all (a[0],a[1])
+    return True
+
+def install_sigwinch_passthrough ():
+    """This installs a signal handler for SIGWINCH which echos the signal to
+        any child pxssh instances.
+    """
+    signal.signal(signal.SIGWINCH, handle_sigwinch)
 

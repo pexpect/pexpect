@@ -45,6 +45,7 @@ Credits:
     George Todd
     Noel Taylor
     Nicolas D. Cesar
+    Alexander Gattin
 (Let me know if I forgot anyone.)
 
 Free, open source, and all that good stuff.
@@ -243,7 +244,7 @@ class spawn (object):
     Use this class to start and control child applications.
     """
 
-    def __init__(self, command, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None):
+    def __init__(self, command, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None, env=None):
         """This is the constructor. The command parameter may be a string
         that includes a command and any arguments to the command. For example:
             p = pexpect.spawn ('/usr/bin/ftp')
@@ -348,6 +349,7 @@ class spawn (object):
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.
         self.closed = True # File-like object.
+        self.env = env
         self.__irix_hack = sys.platform.lower().find('irix') >= 0 # This flags if we are running on irix
 
         # allow dummy instances for subclasses that may not use command or args.
@@ -470,7 +472,10 @@ class spawn (object):
             # (specifically, Tomcat).
             signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
-            os.execv(self.command, self.args)
+            if self.env is None:
+                os.execv(self.command, self.args)
+            else:
+                os.execvpe(self.command, self.args, self.env)
 
         # Parent
         self.terminated = False
@@ -787,7 +792,33 @@ class spawn (object):
                 return False
         return False
         #raise ExceptionPexpect ('terminate() could not terminate child process. Try terminate(force=True)?')
-        
+     
+    def wait(self):
+        """This waits until the child exits. This is a blocking call.
+            This will not read any data from the child, so this will block forever
+            if the child has unread output and has terminated. In other words, the child
+            may have printed output then called exit(); but, technically, the child is
+            still alive until its output is read.
+        """
+        if self.isalive():
+            pid, status = os.waitpid(self.pid, 0)
+        else:
+            raise ExceptionPexpect ('Cannot wait for dead child process.')
+        self.exitstatus = os.WEXITSTATUS(status)
+        if os.WIFEXITED (status):
+            self.status = status
+            self.exitstatus = os.WEXITSTATUS(status)
+            self.signalstatus = None
+            self.terminated = True
+        elif os.WIFSIGNALED (status):
+            self.status = status
+            self.exitstatus = None
+            self.signalstatus = os.WTERMSIG(status)
+            self.terminated = True
+        elif os.WIFSTOPPED (status):
+            raise ExceptionPexpect ('Wait was called for a child process that is stopped. This is not supported. Is some other process attempting job control with our child pid?')
+        return self.exitstatus
+   
     def isalive(self):
         """This tests if the child process is running or not.
         This is non-blocking. If the child was terminated then this
@@ -841,18 +872,14 @@ class spawn (object):
             self.exitstatus = os.WEXITSTATUS(status)
             self.signalstatus = None
             self.terminated = True
-            return False
         elif os.WIFSIGNALED (status):
             self.status = status
             self.exitstatus = None
             self.signalstatus = os.WTERMSIG(status)
             self.terminated = True
-            return False
         elif os.WIFSTOPPED (status):
             raise ExceptionPexpect ('isalive() encountered condition where child process is stopped. This is not supported. Is some other process attempting job control with our child pid?')
-
-        raise ExceptionPexpect ('isalive() reached unexpected condition where waitpid matched child pid, but status was not matched by WIFEXITED, WIFSIGNALED, or WIFSTOPPED.')
-
+        return False
 
     def kill(self, sig):
         """This sends the given signal to the child application.
@@ -1056,7 +1083,7 @@ class spawn (object):
         if 'TIOCGWINSZ' in dir(termios):
             TIOCGWINSZ = termios.TIOCGWINSZ
         else:
-            TIOCGWINSZ = 1074295912L # Assume
+            TIOCGWINSZ = 1074295912L # assume if not defined
         s = struct.pack('HHHH', 0, 0, 0, 0)
         x = fcntl.ioctl(self.fileno(), TIOCGWINSZ, s)
         return struct.unpack('HHHH', x)[0:2]

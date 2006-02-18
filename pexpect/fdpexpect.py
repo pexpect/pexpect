@@ -1,13 +1,16 @@
-"""This is like pexpect.spawn but allows you to supply your own,
-already open file descriptor. For example, you could use it to
-read through a file looking for patterns, or to control a modem or
-serial device.
-
-TODO: This is BETA.
 """
+TODO: This is BETA. When it gets stable I will move it into the pexpect.py file.
+"""
+
 from pexpect import *
+import os
 
 class fdspawn (spawn):
+    """This is like pexpect.spawn but allows you to supply your own,
+    already open file descriptor. For example, you could use it to
+    read through a file looking for patterns, or to control a modem or
+    serial device.
+    """
     def __init__ (self, fd, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None):
         """This takes a file descriptor (an int) or an object that support the fileno() method
             (returning an int). All Python file-like objects support fileno().
@@ -22,7 +25,7 @@ class fdspawn (spawn):
             raise ExceptionPexpect ('The fd argument is not an int. If this is a command string then maybe you want to use pexpect.spawn.')
 
         try: # make sure fd is a valid file descriptor
-            os.fstat(command)
+            os.fstat(fd)
         except OSError:
             raise ExceptionPexpect, 'The fd argument is not a valid file descriptor.'
 
@@ -49,14 +52,20 @@ class fdspawn (spawn):
             self.closed = True
 
     def isalive (self):
-        print "isalive()"
-        return True
+        """This checks if the file descriptor is still valid.
+            If os.fstat() does not raise an exception then we assume it is alive.
+        """
+        if self.child_fd == -1:
+            return False
+        try:
+            os.fstat(self.child_fd)
+            return True
+        except:
+            return False
 
     def terminate (self, force=False):
-        print "terminate()"
-        return
+        raise ExceptionPexpect ('This method is not valid for file descriptors.')
 
     def kill (self, sig):
-        print "kill()"
         return
 

@@ -14,8 +14,11 @@ Example:
         ./script.py -a -c bash my_session.log
 """
 import os, sys, time, getopt
+import signal, fcntl, termios, struct
 import traceback
 import pexpect
+
+global_pexpect_instance = None # Used by signal handler
 
 def exit_with_usage():
     print globals()['__doc__']
@@ -23,7 +26,7 @@ def exit_with_usage():
 
 def main():
     ######################################################################
-    ## Parse the options, arguments, get ready, etc.
+    # Parse the options, arguments, get ready, etc.
     ######################################################################
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'h?ac:', ['help','h','?'])
@@ -55,14 +58,29 @@ def main():
     fout.write ('# %4d%02d%02d.%02d%02d%02d \n' % time.localtime()[:-3])
     
     ######################################################################
-    ## Start the interactive session
+    # Start the interactive session
     ######################################################################
     p = pexpect.spawn(command)
     p.logfile = fout
+    global global_pexpect_instance
+    global_pexpect_instance = p
+    signal.signal(signal.SIGWINCH, sigwinch_passthrough)
+
     print "Script recording started. Type ^] (ASCII 29) to escape from the script shell."
     p.interact(chr(29))
     fout.close()
     return 0
+
+def sigwinch_passthrough (sig, data):
+    # Check for buggy platforms (see pexpect.setwinsize()).
+    if 'TIOCGWINSZ' in dir(termios):
+        TIOCGWINSZ = termios.TIOCGWINSZ
+    else:
+        TIOCGWINSZ = 1074295912 # assume
+    s = struct.pack ("HHHH", 0, 0, 0, 0)
+    a = struct.unpack ('HHHH', fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ , s))
+    global global_pexpect_instance
+    global_pexpect_instance.setwinsize(a[0],a[1])
 
 if __name__ == "__main__":
     try:

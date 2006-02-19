@@ -112,27 +112,3 @@ class pxssh (spawn):
                 return 0
         return 1
 
-def setwinsize_all(a,b):
-    """This sets the terminal window size of all instances of pxssh.
-    """
-    for p in pexpect.instances:
-        p.setwinsize(a,b)        
-
-def handle_sigwinch(sig, data):
-    ### TODO:sospecho que entra en conflicto con newt
-    ### TODO:I suspect that it enters conflict with newt
-    # Check for buggy platforms (see pexpect.setwinsize()).
-    if 'TIOCGWINSZ' in dir(termios):
-        TIOCGWINSZ = termios.TIOCGWINSZ
-    else:
-        TIOCGWINSZ = 1074295912 # assume
-    s = struct.pack ("HHHH", 0, 0, 0, 0)
-    a = struct.unpack ('HHHH', fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ , s))
-    setwinsize_all (a[0],a[1])
-
-def install_sigwinch_passthrough ():
-    """This installs a signal handler for SIGWINCH which echos the signal to
-        any child pxssh instances.
-    """
-    signal.signal(signal.SIGWINCH, handle_sigwinch)
-

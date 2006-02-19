@@ -244,8 +244,6 @@ class spawn (object):
     Use this class to start and control child applications.
     """
 
-    instances = [] # This is a list of all pexpect.spawn instances.
-
     def __init__(self, command, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None, env=None):
         """This is the constructor. The command parameter may be a string
         that includes a command and any arguments to the command. For example:
@@ -392,10 +390,8 @@ class spawn (object):
         If the child file descriptor was opened outside of this class
         (passed to the constructor) then this does not close it.
         """
-        spawn.instances.remove(self)
-        if self.closed:
-            return
-        self.close()
+        if not self.closed:
+            self.close()
 
     def __str__(self):
         """This returns the current state of the pexpect object as a string.
@@ -484,8 +480,6 @@ class spawn (object):
         # Parent
         self.terminated = False
         self.closed = False
-        # This needs to happen after any 'raise' exceptions.
-        spawn.instances.append(self)
 
     def fileno (self):   # File-like object.
         """This returns the file descriptor of the pty for the child.

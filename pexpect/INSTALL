@@ -1,0 +1,9 @@
+This is a standard Python Distutil distribution. To install simply run:
+
+    python setup.py install
+
+This makes Pexpect available to any script on the machine. You need
+root access to install it this way. If you do not have root access or
+if you do not wish to install Pexpect so that is available to any script
+then you can just copy the pexpect.py file to same directory as your script.
+

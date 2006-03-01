@@ -41,21 +41,21 @@ pexpect-current.tgz: dist/pexpect-$(VERSION).tar.gz
 docs: pexpect-doc.tgz
 
 pexpect-doc.tgz: doc/*
-	rm -f pexpect-doc.tgz
+	rm -f pexpect-*-doc.tgz
 	-rm -f `ls doc/*.html | sed -e 's/doc\/index\.html//'` 
 	#$(DOCGENERATOR) `echo "$(MANIFEST_LINES)" | sed -e "s/\.py//g" -e "s/setup *//" -e "s/README *//"`
 	#mv *.html doc/
 	cd doc;\
 	$(DOCGENERATOR) ../pexpect.py ../pxssh.py ../FSM.py ../ANSI.py ../screen.py;\
 	cd ..;\
-	tar zcf pexpect-doc.tgz doc/
+	tar zcf pexpect-$(VERSION)-doc.tgz doc/
 
 examples: pexpect-examples.tgz
 
 pexpect-examples.tgz: examples/*
-	rm -f pexpect-examples.tgz
+	rm -f pexpect-*-examples.tgz
 	chmod 755 examples/*.py
-	tar zcf pexpect-examples.tgz examples/
+	tar zcf pexpect-$(VERSION)-examples.tgz examples/
 
 clean:
 	rm -f *.pyc
@@ -71,8 +71,8 @@ clean:
 	cd dist;rm -rf pexpect-$(VERSION)/
 	rm -f pexpect-$(VERSION).tgz
 	rm -f pexpect-current.tgz
-	rm -f pexpect-examples.tgz
-	rm -f pexpect-doc.tgz
+	rm -f pexpect-$(VERSION)-examples.tgz
+	rm -f pexpect-$(VERSION)-doc.tgz
 	-rm -f `ls doc/*.html | sed -e 's/doc\/index\.html//'` 
 	rm -f python.core
 	rm -f core

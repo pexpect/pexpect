@@ -5,6 +5,8 @@ TODO: This is BETA. When it gets stable I will move it into the pexpect.py file.
 from pexpect import *
 import os
 
+__all__ = ['fdspawn'[
+
 class fdspawn (spawn):
     """This is like pexpect.spawn but allows you to supply your own,
     already open file descriptor. For example, you could use it to

@@ -1,5 +1,6 @@
 README
 LICENSE
+INSTALL
 setup.py
 pexpect.py
 fdpexpect.py

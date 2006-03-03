@@ -35,10 +35,9 @@ class pxssh (spawn):
 
     # I need to draw a better flow chart for this.
     ### TODO: This is getting messy and I'm pretty sure this isn't perfect.
-    def login (self,server,username,password,terminal_type='ansi'):
-        original_prompts = r"][#$]|~[#$]|bash.*?[#$]"
+    def login (self,server,username,password,terminal_type='ansi',original_prompts=r"][#$]|~[#$]|bash.*?[#$]"):
         cmd = "ssh -l %s %s" % (username, server)
-        spawn.__init__(self, cmd, timeout=300)
+        spawn.__init__(self, cmd, timeout=10)
         #, "(?i)no route to host"])
         i = self.expect(["(?i)are you sure you want to continue connecting", original_prompts, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
         if i==0: # New certificate -- always accept it. This is what you if SSH does not have the remote host's public key stored in the cache.

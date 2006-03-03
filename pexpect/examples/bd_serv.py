@@ -1,13 +1,25 @@
 #!/usr/bin/env python
-import socket, pexpect, ANSI
-import time, sys, os
+"""Back door shell server
+
+This exposes a shell terminal emulator on a socket.
+
+    --hostname : sets the remote host name to open an ssh connection to.
+    --username : sets the user name to login with
+    --password : (optional) sets the password to login with
+    --port     : set the local port for the server to listen on
+"""
+import pxssh, pexpect, ANSI
+import socket
+import time, sys, os, getopt, getpass
 
 # Clearly having the password on the command line is not a good idea, but
 # then this entire enterprise is probably not the most security concious thing
 # I've ever built. This should be considered an experimental tool.
-#    USER = sys.argv[1]
-#    PASSWORD = sys.argv[2]
-#    PORT = sys.argv[3]
+##############################################################################
+
+def exit_with_usage(exit_code=1):
+    print globals()['__doc__']
+    os._exit(exit_code)
 
 def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     '''This forks the current process into a daemon.
@@ -73,31 +85,54 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
 def add_cursor_blink (response, row, col):
     i = (row-1) * 80 + col
     return response[:i]+'<img src="http://www.noah.org/cursor.gif">'+response[i:]
+
 def main ():
-    USER = sys.argv[1]
-    PASSWORD = sys.argv[2]
-    PORT = int(sys.argv[3])
+    try:
+        optlist, args = getopt.getopt(sys.argv[1:], 'h?', ['help','h','?', 'hostname', 'username', 'password', 'port'])
+    except Exception, e:
+        print str(e)
+        exit_with_usage()
+    command_line_options = dict(optlist)
+    options = dict(optlist)
+    # There are a million ways to cry for help. These are but a few of them.
+    if [elem for elem in command_line_options if elem in ['-h','--h','-?','--?','--help']]:
+        exit_with_usage(0)
+
+    if '--hostname' in options:
+        hostname = options['--hostname']
+    else:
+        hostname = raw_input('hostname: ')
+    if '--username' in options:
+        username = options['--username']
+    else:
+        username = raw_input('username: ')
+    if '--password' in options:
+        password = options['--password']
+    else:
+        password = getpass.getpass('password: ')
+    if '--port' in options:
+        port = int(options['--port'])
+    else:
+        port = int(raw_input('port: '))
     
     #daemonize ()
     #daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')
-
-    sys.stdout.write ('Daemon started with pid %d\n' % os.getpid() )
+    sys.stdout.write ('server started with pid %d\n' % os.getpid() )
 
     vs = ANSI.ANSI (24,80)
-    p = pexpect.spawn ('ssh %(USER)s@localhost'%locals(), timeout=3)
-    p.expect ('assword')
-    p.sendline (PASSWORD)
-    time.sleep (0.2)
+    p = pxssh.pxssh()
+    p.login (hostname, username, password)
+    print 'created shell. command line prompts is', p.PROMPT
     #p.sendline ('stty -echo')
     #time.sleep (0.2)
-    p.sendline ('export PS1="HAON "')
-    time.sleep (0.2)
-    p.expect (pexpect.TIMEOUT)
+    #p.sendline ('export PS1="HAON "')
+    #time.sleep (0.2)
+    #p.expect (pexpect.TIMEOUT)
     print p.before
     vs.process_list (p.before)
-    HOST = '' # Symbolic name meaning the local host
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.bind((HOST, PORT))
+    localhost = '127.0.0.1' # symbolic name meaning the local host
+    s.bind((localhost, port))
     print 'Listen'
     s.listen(1)
     print 'Accept'
@@ -120,7 +155,7 @@ def main ():
             vs.process_list (sh_response)
 
         if not data == 'REFRESH':
-            p.expect (['HAON ',pexpect.TIMEOUT])
+            p.prompt()
             #response = p.before
             sh_response = p.before.replace ('\r', '')
             vs.process_list (sh_response)
@@ -134,7 +169,6 @@ def main ():
         sent = conn.send(response)
         if sent < len (response):
             print "Sent is too short"
-
 
 if __name__ == "__main__":
 #    daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')

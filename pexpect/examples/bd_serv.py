@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+
+# Clearly having the password on the command line is not a good idea, but
+# then this entire project is probably not the most security concious thing
+# I've ever built. This should be considered an experimental tool.
 """Back door shell server
 
 This exposes a shell terminal emulator on a socket.
@@ -11,11 +15,6 @@ This exposes a shell terminal emulator on a socket.
 import pxssh, pexpect, ANSI
 import socket
 import time, sys, os, getopt, getpass
-
-# Clearly having the password on the command line is not a good idea, but
-# then this entire enterprise is probably not the most security concious thing
-# I've ever built. This should be considered an experimental tool.
-##############################################################################
 
 def exit_with_usage(exit_code=1):
     print globals()['__doc__']
@@ -92,6 +91,7 @@ def main ():
     except Exception, e:
         print str(e)
         exit_with_usage()
+
     command_line_options = dict(optlist)
     options = dict(optlist)
     # There are a million ways to cry for help. These are but a few of them.
@@ -119,60 +119,63 @@ def main ():
     #daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')
     sys.stdout.write ('server started with pid %d\n' % os.getpid() )
 
-    vs = ANSI.ANSI (24,80)
-    p = pxssh.pxssh()
-    p.login (hostname, username, password)
-    print 'created shell. command line prompts is', p.PROMPT
-    #p.sendline ('stty -echo')
+    virtual_screen = ANSI.ANSI (24,80) 
+    child = pxssh.pxssh()
+    child.login (hostname, username, password)
+    print 'created shell. command line prompts is', child.PROMPT
+    #child.sendline ('stty -echo')
     #time.sleep (0.2)
-    #p.sendline ('export PS1="HAON "')
+    #child.sendline ('export PS1="HAON "')
     #time.sleep (0.2)
-    #p.expect (pexpect.TIMEOUT)
-    print p.before
-    vs.process_list (p.before)
+    #child.expect (pexpect.TIMEOUT)
+    print child.before
+    virtual_screen.process_list (child.before)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     localhost = '127.0.0.1' # symbolic name meaning the local host
     s.bind((localhost, port))
     print 'Listen'
     s.listen(1)
     print 'Accept'
-    while 1:
-        conn, addr = s.accept()
-        print 'Connected by', addr
-        data = conn.recv(1024)
-        print data
+    try:
+        while True:
+            conn, addr = s.accept()
+            print 'Connected by', addr
+            data = conn.recv(1024)
+            request = data.split('\x01')#('\n')
+            cmd = request[0]
+            arg = request[1]
 
-        if data == 'exit':
-            p.sendline (exit)
-            s.close()
-            break
-        if not data in ['NEXT','REFRESH','SKIP']: #== 'NEXT' and not data == 'REFRESH':
-            p.sendline (data)
-            time.sleep (0.1)
-        if data == 'SKIP':
-            p.expect (pexpect.TIMEOUT)
-            sh_response = p.before.replace ('\r', '')
-            vs.process_list (sh_response)
-
-        if not data == 'REFRESH':
-            p.prompt()
-            #response = p.before
-            sh_response = p.before.replace ('\r', '')
-            vs.process_list (sh_response)
-            if p.after is not pexpect.TIMEOUT:
-                vs.process_list (p.after)
-        response = str (vs)
-        row = vs.cur_r
-        col = vs.cur_c
-        response = add_cursor_blink (response, row, col)
-        print response
-        sent = conn.send(response)
-        if sent < len (response):
-            print "Sent is too short"
-
+            if cmd == 'COMMAND':
+                child.sendline (arg)
+                child.prompt()
+                virtual_screen.process_list (child.before.replace('\r',''))
+                if arg == 'exit':
+                    s.close()
+                    break
+            elif cmd == 'REFRESH':
+                pass
+            elif data == 'SKIP':
+            # Wait until the TIMEOUT then throw away all data from the child.
+                child.expect (pexpect.TIMEOUT)
+                sh_response = child.before.replace ('\r', '')
+                virtual_screen.process_list (sh_response)
+            response = []
+            response.append ('%03d' % virtual_screen.cols)
+            response.append ('%03d' % virtual_screen.rows)
+            response.append (virtual_screen.dump())
+            print 'cols:', virtual_screen.cols
+            print 'rows:', virtual_screen.rows
+            print 'screen size:', len(response[2])
+            #response = add_cursor_blink (response, row, col)
+            sent = conn.send('\n'.join(response))
+            if sent < len (response):
+                print "Sent is too short. Some data was cut off."
+            conn.close()
+    finally:
+        print "cleaning up socket"
+        s.close()
+ 
 if __name__ == "__main__":
 #    daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')
     main()
-
-
 

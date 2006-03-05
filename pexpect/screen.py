@@ -26,8 +26,8 @@ DEL = 127  # Fill character; ignored on input.
 SPACE = chr(32) # Space or blank character.
 
 def constrain (n, min, max):
-    '''This returns n constrained to the min and max bounds.
-    '''
+    """This returns n constrained to the min and max bounds.
+    """
     if n < min:
         return min
     if n > max:
@@ -35,6 +35,14 @@ def constrain (n, min, max):
     return n
 
 class screen:
+    """This maintains the state of a virtual text screen.
+        This maintains a cursor position and handles
+        scrolling as characters are added.
+        This supports most of the methods needed by an
+        ANSI text screen.
+        Row and column indexes are 1-based (not zero-based,
+        like arrays).
+    """
     def __init__ (self, r=24,c=80):
         self.rows = r
         self.cols = c
@@ -47,12 +55,19 @@ class screen:
         self.w = [ [SPACE] * self.cols for c in range(self.rows)]
 
     def __str__ (self):
-        s = ''
+        s = []
         for r in range (1, self.rows + 1):
             for c in range (1, self.cols + 1):
-                s = s + self.get_abs(r,c)
-            s = s + '\n'
-        return s
+                s.append (self.get_abs(r,c))
+            s.append('\n')
+        return ''.join(s)
+
+    def dump (self):
+        """This returns a copy of the screen as a string.
+            This is similar to __str__ except that lines
+            are not terminated with line feeds.
+        """
+        return ''.join ([ ''.join(c) for c in self.w ])
 
     def fill (self, ch=SPACE):
         self.fill_region (1,1,self.rows,self.cols, ch)
@@ -82,12 +97,18 @@ class screen:
         if old_r == self.cur_r:
             self.scroll_up ()
             self.erase_line()
+
     def crlf (self):
         '''This advances the cursor with CRLF properties.
         The cursor will line wrap and the screen may scroll.
         '''
         self.cr ()
         self.lf ()
+
+    def newline (self):
+        """This is an alias for crlf().
+        """
+        self.crlf()
 
     def put_abs (self, r, c, ch):
         '''Screen array starts at 1 index.'''
@@ -96,6 +117,8 @@ class screen:
         ch = str(ch)[0]
         self.w[r-1][c-1] = ch
     def put (self, ch):
+        """This puts a characters at the current cursor position.
+        """
         self.put_abs (self.cur_r, self.cur_c, ch)
 
     def insert_abs (self, r, c, ch):

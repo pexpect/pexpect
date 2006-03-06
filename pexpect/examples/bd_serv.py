@@ -137,7 +137,7 @@ def main ():
             conn, addr = s.accept()
             print 'Connected by', addr
             data = conn.recv(1024)
-            request = data.split('\x01')
+            request = data.split(' ', 1)
             if len(request) < 2:
                 conn.send(error_response('request did not have enough arguments.'))
                 conn.close()

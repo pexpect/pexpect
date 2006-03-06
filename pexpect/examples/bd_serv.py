@@ -97,23 +97,23 @@ def main ():
     # There are a million ways to cry for help. These are but a few of them.
     if [elem for elem in command_line_options if elem in ['-h','--h','-?','--?','--help']]:
         exit_with_usage(0)
+  
+    hostname = "127.0.0.1"
+    port = 1664
+    username = os.getenv('USER')
+    password = ""
 
     if '--hostname' in options:
         hostname = options['--hostname']
-    else:
-        hostname = raw_input('hostname: ')
+    if '--port' in options:
+        port = int(options['--port'])
     if '--username' in options:
         username = options['--username']
-    else:
-        username = raw_input('username: ')
+    print "Login for %s@%s:%s" % (username, hostname, port)
     if '--password' in options:
         password = options['--password']
     else:
         password = getpass.getpass('password: ')
-    if '--port' in options:
-        port = int(options['--port'])
-    else:
-        port = int(raw_input('port: '))
     
     #daemonize ()
     #daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')
@@ -124,14 +124,10 @@ def main ():
     child.login (hostname, username, password)
     print 'created shell. command line prompts is', child.PROMPT
     #child.sendline ('stty -echo')
-    #time.sleep (0.2)
-    #child.sendline ('export PS1="HAON "')
-    #time.sleep (0.2)
-    #child.expect (pexpect.TIMEOUT)
-    print child.before
     virtual_screen.process_list (child.before)
+    virtual_screen.process_list (child.after)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    localhost = '127.0.0.1' # symbolic name meaning the local host
+    localhost = '127.0.0.1'
     s.bind((localhost, port))
     print 'Listen'
     s.listen(1)
@@ -141,40 +137,66 @@ def main ():
             conn, addr = s.accept()
             print 'Connected by', addr
             data = conn.recv(1024)
-            request = data.split('\x01')#('\n')
-            cmd = request[0]
-            arg = request[1]
+            request = data.split('\x01')
+            if len(request) < 2:
+                conn.send(error_response('request did not have enough arguments.'))
+                conn.close()
+                continue   
+            cmd = request[0].strip()
+            arg = request[1].strip()
 
-            if cmd == 'COMMAND':
+            if cmd == 'command' or cmd == 'pretty':
                 child.sendline (arg)
                 child.prompt()
                 virtual_screen.process_list (child.before.replace('\r',''))
-                if arg == 'exit':
-                    s.close()
-                    break
-            elif cmd == 'REFRESH':
+                virtual_screen.process_list (child.after.replace('\r',''))
+            elif cmd == 'refresh':
                 pass
-            elif data == 'SKIP':
+            elif cmd == 'skip':
             # Wait until the TIMEOUT then throw away all data from the child.
+            # Use to catch up the screen with the shell if state gets out of sync.
                 child.expect (pexpect.TIMEOUT)
                 sh_response = child.before.replace ('\r', '')
                 virtual_screen.process_list (sh_response)
+            if cmd == 'command':
+                shell_window = virtual_screen.dump()
+            elif cmd == 'pretty':
+                shell_window = pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))
             response = []
-            response.append ('%03d' % virtual_screen.cols)
             response.append ('%03d' % virtual_screen.rows)
-            response.append (virtual_screen.dump())
-            print 'cols:', virtual_screen.cols
-            print 'rows:', virtual_screen.rows
-            print 'screen size:', len(response[2])
+            response.append ('%03d' % virtual_screen.cols)
+            response.append (shell_window)
             #response = add_cursor_blink (response, row, col)
             sent = conn.send('\n'.join(response))
             if sent < len (response):
                 print "Sent is too short. Some data was cut off."
             conn.close()
+            if arg == 'exit':
+                s.close()
+                break
     finally:
         print "cleaning up socket"
         s.close()
- 
+
+def pretty_box (rows, cols, s):
+    top_bot = '+' + '-'*cols + '+\n'
+    return top_bot + '\n'.join(['|'+line+'|' for line in s.split('\n')]) + '\n' + top_bot
+    
+def error_response (msg):
+    response = []
+    response.append ('000')
+    response.append ('000')
+    response.append ("""{REQUEST}^A{ARGUMENT}
+{REQUEST} may be one of the following:
+    command : Run the ARGUMENT as a shell command. Returns raw screen array.
+    pretty  : Like 'command', but formats the screen array for printing.
+    skip    : Use to catch up the screen with the shell if state gets out of sync.
+Example:
+    pretty^Als -l
+""")
+    response.append (msg)
+    return '\n'.join(response)
+     
 if __name__ == "__main__":
 #    daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')
     main()

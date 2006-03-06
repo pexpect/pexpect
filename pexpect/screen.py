@@ -55,12 +55,7 @@ class screen:
         self.w = [ [SPACE] * self.cols for c in range(self.rows)]
 
     def __str__ (self):
-        s = []
-        for r in range (1, self.rows + 1):
-            for c in range (1, self.cols + 1):
-                s.append (self.get_abs(r,c))
-            s.append('\n')
-        return ''.join(s)
+        return '\n'.join ([ ''.join(c) for c in self.w ])
 
     def dump (self):
         """This returns a copy of the screen as a string.

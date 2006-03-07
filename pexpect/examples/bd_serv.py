@@ -124,8 +124,8 @@ def main ():
     child.login (hostname, username, password)
     print 'created shell. command line prompts is', child.PROMPT
     #child.sendline ('stty -echo')
-    virtual_screen.process_list (child.before)
-    virtual_screen.process_list (child.after)
+    virtual_screen.write (child.before)
+    virtual_screen.write (child.after)
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     localhost = '127.0.0.1'
     s.bind((localhost, port))
@@ -146,10 +146,11 @@ def main ():
             arg = request[1].strip()
 
             if cmd == 'command' or cmd == 'pretty':
+                child.logfile=virtual_screen
                 child.sendline (arg)
                 child.prompt()
-                virtual_screen.process_list (child.before.replace('\r',''))
-                virtual_screen.process_list (child.after.replace('\r',''))
+                #virtual_screen.write (child.before.replace('\r',''))
+                #virtual_screen.write (child.after.replace('\r',''))
             elif cmd == 'refresh':
                 pass
             elif cmd == 'skip':
@@ -157,7 +158,7 @@ def main ():
             # Use to catch up the screen with the shell if state gets out of sync.
                 child.expect (pexpect.TIMEOUT)
                 sh_response = child.before.replace ('\r', '')
-                virtual_screen.process_list (sh_response)
+                virtual_screen.write (sh_response)
             if cmd == 'command':
                 shell_window = virtual_screen.dump()
             elif cmd == 'pretty':

@@ -35,9 +35,14 @@ class pxssh (spawn):
 
     # I need to draw a better flow chart for this.
     ### TODO: This is getting messy and I'm pretty sure this isn't perfect.
-    def login (self,server,username,password,terminal_type='ansi',original_prompts=r"][#$]|~[#$]|bash.*?[#$]"):
+    def login (self,server,username,password,terminal_type='ansi',original_prompts=r"][#$]|~[#$]|bash.*?[#$]| [#$] ",login_timeout=10):
+        """This logs the user into the given server.
+            By default the prompy is rather optimistic and should be considered more of an example.
+            It's better to try to match the prompt as exactly as possible to prevent any false matches
+            by a login Message Of The Day or something.
+        """
         cmd = "ssh -l %s %s" % (username, server)
-        spawn.__init__(self, cmd, timeout=10)
+        spawn.__init__(self, cmd, timeout=login_timeout)
         #, "(?i)no route to host"])
         i = self.expect(["(?i)are you sure you want to continue connecting", original_prompts, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
         if i==0: # New certificate -- always accept it. This is what you if SSH does not have the remote host's public key stored in the cache.
@@ -91,10 +96,14 @@ class pxssh (spawn):
             self.sendline("exit")
             self.expect(EOF)
 
-    def prompt (self):
-        """This expects the prompt.
+    def prompt (self, prompt_timeout=20):
+        """This expects the prompt. This returns True if the prompt was matched.
+        This returns False if there was a timeout.
         """
-        i = self.expect(self.PROMPT)
+        i = self.expect([self.PROMPT, TIMEOUT], timeout=prompt_timeout)
+        if i==1:
+            return True
+        return False
         
     def set_unique_prompt (self, optional_prompt=None):
         """This attempts to reset the shell prompt to something more unique.

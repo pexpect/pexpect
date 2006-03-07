@@ -19,7 +19,7 @@ import string
 
 def Emit (fsm):
         screen = fsm.something[0]
-        screen.write(fsm.input_symbol)
+        screen.write_ch(fsm.input_symbol)
 def StartNumber (fsm):
         fsm.something.append (fsm.input_symbol)
 def BuildNumber (fsm):
@@ -202,30 +202,23 @@ class ANSI (term):
     def process (self, c):
         self.state.process(c)
     def process_list (self, l):
-        for c in l:
-            self.process (c)
-
-    def test (self):
-        import sys
-        dump = file('dump').read()
-        for c in dump:
-                self.state.process(c)
-                sys.stdout.write (c)
-                sys.stdout.flush()
-        print str(self)
-
-
-    def write (self, ch):
+        self.write(l)
+    def write (self, s):
+        for c in s:
+            self.process(c)
+    def flush (self):
+        pass
+    def write_ch (self, ch):
         '''Puts a character at the current cursor position.
         cursor position if moved forward with wrap-around, but
         no scrolling is done if the cursor hits the lower-right corner
         of the screen.
-        \r and \n both produce a call to crlf().
         '''
+        #\r and \n both produce a call to crlf().
         ch = ch[0]
 
         if ch == '\r':
-            self.crlf()
+        #    self.crlf()
             return
         if ch == '\n':
             self.crlf()
@@ -239,7 +232,6 @@ class ANSI (term):
             fout = open ('log', 'a')
             fout.write ('Nonprint: ' + str(ord(ch)))
             fout.close()
-
             return
         self.put_abs(self.cur_r, self.cur_c, ch)
         old_r = self.cur_r
@@ -253,6 +245,37 @@ class ANSI (term):
                 self.scroll_up ()
                 self.cursor_home (self.cur_r, 1)
                 self.erase_line()
+
+    def test (self):
+        import sys
+        write_text = 'I\'ve got a ferret sticking up my nose.\n' + \
+        '(He\'s got a ferret sticking up his nose.)\n' + \
+        'How it got there I can\'t tell\n' + \
+        'But now it\'s there it hurts like hell\n' + \
+        'And what is more it radically affects my sense of smell.\n' + \
+        '(His sense of smell.)\n' + \
+        'I can see a bare-bottomed mandril.\n' + \
+        '(Slyly eyeing his other nostril.)\n' + \
+        'If it jumps inside there too I really don\'t know what to do\n' + \
+        'I\'ll be the proud posessor of a kind of nasal zoo.\n' + \
+        '(A nasal zoo.)\n' + \
+        'I\'ve got a ferret sticking up my nose.\n' + \
+        '(And what is worst of all it constantly explodes.)\n' + \
+        '"Ferrets don\'t explode," you say\n' + \
+        'But it happened nine times yesterday\n' + \
+        'And I should know for each time I was standing in the way.\n' + \
+        'I\'ve got a ferret sticking up my nose.\n' + \
+        '(He\'s got a ferret sticking up his nose.)\n' + \
+        'How it got there I can\'t tell\n' + \
+        'But now it\'s there it hurts like hell\n' + \
+        'And what is more it radically affects my sense of smell.\n' + \
+        '(His sense of smell.)'
+        self.fill('.')
+        self.cursor_home()
+        for c in write_text:
+            self.write_ch (c)
+        print str(self)
+
 if __name__ == '__main__':
-    t = ANSI()
+    t = ANSI(6,65)
     t.test()

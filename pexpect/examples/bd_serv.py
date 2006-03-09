@@ -87,7 +87,7 @@ def add_cursor_blink (response, row, col):
 
 def main ():
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'h?', ['help','h','?', 'hostname', 'username', 'password', 'port'])
+        optlist, args = getopt.getopt(sys.argv[1:], 'h?d', ['help','h','?', 'hostname', 'username', 'password', 'port'])
     except Exception, e:
         print str(e)
         exit_with_usage()
@@ -103,6 +103,11 @@ def main ():
     username = os.getenv('USER')
     password = ""
 
+    if '-d' in options:
+        daemon_mode = True
+    else:
+        daemon_mode = False
+
     if '--hostname' in options:
         hostname = options['--hostname']
     if '--port' in options:
@@ -114,9 +119,11 @@ def main ():
         password = options['--password']
     else:
         password = getpass.getpass('password: ')
-    
-    #daemonize ()
+   
+    if daemon_mode: 
+        daemonize ()
     #daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')
+    
     sys.stdout.write ('server started with pid %d\n' % os.getpid() )
 
     virtual_screen = ANSI.ANSI (24,80) 

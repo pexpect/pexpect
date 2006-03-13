@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-
-# Clearly having the password on the command line is not a good idea, but
-# then this entire project is probably not the most security concious thing
-# I've ever built. This should be considered an experimental tool.
 """Back door shell server
 
 This exposes a shell terminal emulator on a socket.
@@ -12,13 +8,36 @@ This exposes a shell terminal emulator on a socket.
     --password : (optional) sets the password to login with
     --port     : set the local port for the server to listen on
 """
+# Having the password on the command line is not a good idea, but
+# then this entire project is probably not the most security concious thing
+# I've ever built. This should be considered an experimental tool.
 import pxssh, pexpect, ANSI
 import socket
 import time, sys, os, getopt, getpass
+import threading
 
 def exit_with_usage(exit_code=1):
     print globals()['__doc__']
     os._exit(exit_code)
+
+class roller (threading.Thread):
+    """This runs a function in a loop in a thread."""
+    def __init__(self, interval, function, args=[], kwargs={}):
+        """The interval parameter defines time between each call to the function.
+        """
+        threading.Thread.__init__(self)
+        self.interval = interval
+        self.function = function
+        self.args = args
+        self.kwargs = kwargs
+        self.finished = threading.Event()
+    def cancel(self):
+        """Stop the roller."""
+        self.finished.set()
+    def run(self):
+        while not self.finished.isSet():
+            # self.finished.wait(self.interval)
+            self.function(*self.args, **self.kwargs)
 
 def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     '''This forks the current process into a daemon.
@@ -85,6 +104,15 @@ def add_cursor_blink (response, row, col):
     i = (row-1) * 80 + col
     return response[:i]+'<img src="http://www.noah.org/cursor.gif">'+response[i:]
 
+def endless_poll (child, prompt, screen, refresh_timeout=1):
+    """This keeps the screen updated with the output of the child.
+        This runs in a separate thread.
+    """
+    child.logfile = screen
+    while True:
+        child.prompt (prompt_timeout=refresh_timeout)
+        #i = child.expect ([prompt, pexpect.TIMEOUT], timeout=refresh_timeout)
+
 def main ():
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'h?d', ['help','h','?', 'hostname', 'username', 'password', 'port'])
@@ -120,8 +148,9 @@ def main ():
     else:
         password = getpass.getpass('password: ')
    
-    if daemon_mode: 
-        daemonize ()
+    #if daemon_mode: 
+    #    print "daemonizing server"
+    #    daemonize ()
     #daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')
     
     sys.stdout.write ('server started with pid %d\n' % os.getpid() )
@@ -129,16 +158,23 @@ def main ():
     virtual_screen = ANSI.ANSI (24,80) 
     child = pxssh.pxssh()
     child.login (hostname, username, password)
-    print 'created shell. command line prompts is', child.PROMPT
+    print 'created shell. command line prompt is', child.PROMPT
     #child.sendline ('stty -echo')
     virtual_screen.write (child.before)
     virtual_screen.write (child.after)
+
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     localhost = '127.0.0.1'
     s.bind((localhost, port))
     print 'Listen'
     s.listen(1)
     print 'Accept'
+
+    r = roller (0.01, endless_poll, (child, child.PROMPT, virtual_screen))
+    r.start()
+    print "screen poll updater started in background thread"
+    sys.stdout.flush()
+
     try:
         while True:
             conn, addr = s.accept()
@@ -155,11 +191,13 @@ def main ():
             if cmd == 'command' or cmd == 'pretty':
                 child.logfile=virtual_screen
                 child.sendline (arg)
-                child.prompt()
+                time.sleep(1)
+          #      child.prompt()
                 #virtual_screen.write (child.before.replace('\r',''))
                 #virtual_screen.write (child.after.replace('\r',''))
             elif cmd == 'refresh':
                 pass
+                shell_window = pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))
             elif cmd == 'skip':
             # Wait until the TIMEOUT then throw away all data from the child.
             # Use to catch up the screen with the shell if state gets out of sync.
@@ -187,6 +225,8 @@ def main ():
         s.close()
 
 def pretty_box (rows, cols, s):
+    """This puts an ASCII text box around the given string, s.
+    """
     top_bot = '+' + '-'*cols + '+\n'
     return top_bot + '\n'.join(['|'+line+'|' for line in s.split('\n')]) + '\n' + top_bot
     
@@ -194,13 +234,13 @@ def error_response (msg):
     response = []
     response.append ('000')
     response.append ('000')
-    response.append ("""{REQUEST}^A{ARGUMENT}
+    response.append ("""{REQUEST} {ARGUMENT}
 {REQUEST} may be one of the following:
     command : Run the ARGUMENT as a shell command. Returns raw screen array.
     pretty  : Like 'command', but formats the screen array for printing.
     skip    : Use to catch up the screen with the shell if state gets out of sync.
 Example:
-    pretty^Als -l
+    pretty ls -l
 """)
     response.append (msg)
     return '\n'.join(response)

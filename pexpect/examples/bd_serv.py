@@ -110,7 +110,7 @@ def endless_poll (child, prompt, screen, refresh_timeout=1):
     """
     child.logfile = screen
     while True:
-        child.prompt (prompt_timeout=refresh_timeout)
+        child.prompt (timeout=refresh_timeout)
         #i = child.expect ([prompt, pexpect.TIMEOUT], timeout=refresh_timeout)
 
 def main ():
@@ -189,12 +189,8 @@ def main ():
             arg = request[1].strip()
 
             if cmd == 'command' or cmd == 'pretty':
-                child.logfile=virtual_screen
                 child.sendline (arg)
-                time.sleep(1)
-          #      child.prompt()
-                #virtual_screen.write (child.before.replace('\r',''))
-                #virtual_screen.write (child.after.replace('\r',''))
+                child.prompt(timeout=1)
             elif cmd == 'refresh':
                 pass
                 shell_window = pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))

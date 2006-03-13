@@ -96,11 +96,11 @@ class pxssh (spawn):
             self.sendline("exit")
             self.expect(EOF)
 
-    def prompt (self, prompt_timeout=20):
+    def prompt (self, timeout=20):
         """This expects the prompt. This returns True if the prompt was matched.
         This returns False if there was a timeout.
         """
-        i = self.expect([self.PROMPT, TIMEOUT], timeout=prompt_timeout)
+        i = self.expect([self.PROMPT, TIMEOUT], timeout=timeout)
         if i==1:
             return True
         return False

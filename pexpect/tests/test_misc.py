@@ -3,8 +3,10 @@ import pexpect
 import unittest
 import PexpectTestCase
 import time
+import os
 
 class TestCaseMisc(PexpectTestCase.PexpectTestCase):
+        
     def test_isatty (self):
         child = pexpect.spawn('cat')
         assert child.isatty(), "Not returning True. Should always be True."
@@ -98,6 +100,19 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat')
         child.setwinsize(10,13)
         assert child.getwinsize()==(10,13), "getwinsize() did not return (10,13)"
+    def test_which (self):
+        p = os.defpath
+        ep = os.environ['PATH']
+        os.defpath = ":/tmp"
+        os.environ['PATH'] = ":/tmp"
+        wp = pexpect.which ("ticker.py")
+        assert wp == 'ticker.py', "Should return a string. Returned %s" % wp
+        os.defpath = "/tmp"
+        os.environ['PATH'] = "/tmp"
+        wp = pexpect.which ("ticker.py")
+        assert wp == None, "Executable should not be found. Returned %s" % wp
+        os.defpath = p
+        os.environ['PATH'] = ep
         
 if __name__ == '__main__':
     unittest.main()

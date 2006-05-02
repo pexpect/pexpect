@@ -259,9 +259,11 @@ class spawn (object):
         send() and sendline().
 
         The maxread attribute sets the read buffer size.
-        This is maximum number of bytes that Pexpect will try to read from a TTY at one time.
-        The default buffer size is 1 (unbuffered). Setting this value higher
-        will help performance in cases where large amounts of output are read back from the child.
+        This is maximum number of bytes that Pexpect will try to read
+        from a TTY at one time.
+        Seeting the maxread size to 1 will turn off buffering.
+        Setting the maxread value higher may help performance in cases
+        where large amounts of output are read back from the child.
         This feature is useful in conjunction with searchwindowsize.
         
         The searchwindowsize attribute sets the how far back in
@@ -1043,6 +1045,7 @@ class spawn (object):
                     raise TIMEOUT ('Timeout exceeded in expect_list().')
                 # Still have time left, so read more data
                 c = self.read_nonblocking (self.maxread, timeout)
+                time.sleep (0.0001)
                 incoming = incoming + c
                 if timeout is not None:
                     timeout = end_time - time.time()

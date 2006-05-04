@@ -13,7 +13,7 @@ fill1_target='XXXXXXXXXX\n' + \
 'XO:oooo:OX\n' + \
 'XO::::::OX\n' + \
 'XOOOOOOOOX\n' + \
-'XXXXXXXXXX\n'
+'XXXXXXXXXX'
 fill2_target = 'XXXXXXXXXXX\n' + \
 'XOOOOOOOOOX\n' + \
 'XO:::::::OX\n' + \
@@ -24,7 +24,7 @@ fill2_target = 'XXXXXXXXXXX\n' + \
 'XO:ooooo:OX\n' + \
 'XO:::::::OX\n' + \
 'XOOOOOOOOOX\n' + \
-'XXXXXXXXXXX\n'
+'XXXXXXXXXXX'
 put_target = '\\.3.5.7.9/\n' + \
 '.........2\n' + \
 '3.........\n' + \
@@ -34,7 +34,7 @@ put_target = '\\.3.5.7.9/\n' + \
 '7.........\n' + \
 '.........8\n' + \
 '9.........\n' + \
-'/2.4.6.8.\\\n'
+'/2.4.6.8.\\'
 scroll_target = '\\.3.5.7.9/\n' + \
 '\\.3.5.7.9/\n' + \
 '\\.3.5.7.9/\n' + \
@@ -44,7 +44,7 @@ scroll_target = '\\.3.5.7.9/\n' + \
 '/2.4.6.8.\\\n' + \
 '/2.4.6.8.\\\n' + \
 '/2.4.6.8.\\\n' + \
-'/2.4.6.8.\\\n'
+'/2.4.6.8.\\'
 insert_target = 'ZXZZZZZZXZ\n' +\
 '.........2\n' +\
 '3.........\n' +\
@@ -54,7 +54,7 @@ insert_target = 'ZXZZZZZZXZ\n' +\
 '7.........\n' +\
 '.........8\n' +\
 '9.........\n' +\
-'ZZ/2.4.6ZZ\n'
+'ZZ/2.4.6ZZ'
 get_region_target = ['......', '.\\/...', './\\...', '......']
 
 class screenTestCase (PexpectTestCase.PexpectTestCase):

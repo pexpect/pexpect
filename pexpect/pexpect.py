@@ -289,10 +289,10 @@ class spawn (object):
             child = pexpect.spawn('some_command')
             child.logfile = sys.stdout
             
-        The delaybeforesend helps overcome weird behavior that many users were experiencing.
+        The delaybeforesend helps overcome a weird behavior that many users were experiencing.
         The typical problem was that a user would expect() a "Password:" prompt and
         then immediately call sendline() to send the password. The user would then
-        see that their password was echoed back to them. Of course, passwords don't
+        see that their password was echoed back to them. Passwords don't
         normally echo. The problem is caused by the fact that most applications
         print out the "Password" prompt and then turn off stdin echo, but if you
         send your password before the application turned off echo, then you get
@@ -353,6 +353,8 @@ class spawn (object):
         self.closed = True # File-like object.
         self.env = env
         self.__irix_hack = sys.platform.lower().find('irix') >= 0 # This flags if we are running on irix
+        self.use_native_pty_fork = not (sys.platform.lower().find('solaris') >= 0) # Solaris uses internal __fork_pty(). All other use pty.fork().
+        #self.use_native_pty_fork = sys.platform.lower().find('linux') >= 0 # Linux uses pty.fork(). All others use internal __fork_pty().
 
         # allow dummy instances for subclasses that may not use command or args.
         if command is None:
@@ -450,16 +452,23 @@ class spawn (object):
         assert self.pid is None, 'The pid member should be None.'
         assert self.command is not None, 'The command member should not be None.'
 
-        try:
-            self.pid, self.child_fd = pty.fork()
-        except OSError, e:
-            raise ExceptionPexpect('Pexpect: pty.fork() failed: ' + str(e))
+        if self.use_native_pty_fork:
+            try:
+                self.pid, self.child_fd = pty.fork()
+            except OSError, e:
+                raise ExceptionPexpect('Error! pty.fork() failed: ' + str(e))
+        else: # Use internal __fork_pty
+            self.pid, self.child_fd = self.__fork_pty() 
 
         if self.pid == 0: # Child
-            try: # Some platforms do not like setwinsize (Cygwin).
+            try: 
                 self.child_fd = sys.stdout.fileno() # used by setwinsize()
                 self.setwinsize(24, 80)
-            except:
+            except: 
+                # Some platforms do not like setwinsize (Cygwin).
+                # This will cause problem when running applications that
+                # are very picky about window size.
+                # This is a serious limitation, but not a show stopper.
                 pass
             # Do not allow child to inherit open file descriptors from parent.
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
@@ -483,6 +492,79 @@ class spawn (object):
         self.terminated = False
         self.closed = False
 
+    def __fork_pty(self):
+        """This implements a substitute for the forkpty system call.
+        This should be more portable than the pty.fork() function.
+        Specifically, this should work on Solaris.
+        
+        Modified 10.06.05 by Geoff Marshall:
+            Implemented __fork_pty() method to resolve the issue with Python's 
+            pty.fork() not supporting Solaris, particularly ssh.
+        Based on patch to posixmodule.c authored by Noah Spurrier:
+            http://mail.python.org/pipermail/python-dev/2003-May/035281.html
+        """
+        parent_fd, child_fd = os.openpty()
+        if parent_fd < 0 or child_fd < 0:
+            raise ExceptionPexpect, "Error! Could not open pty with os.openpty()."
+        
+        pid = os.fork()
+        if pid < 0:
+            raise ExceptionPexpect, "Error! Failed os.fork()."
+        elif pid == 0:
+            # Child.
+            os.close(parent_fd)
+            self.__pty_make_controlling_tty(child_fd)
+            
+            os.dup2(child_fd, 0)
+            os.dup2(child_fd, 1)
+            os.dup2(child_fd, 2)
+            
+            if child_fd > 2:
+                os.close(child_fd)
+        else:
+            # Parent.
+            os.close(child_fd)
+        
+        return pid, parent_fd
+                
+    def __pty_make_controlling_tty(self, tty_fd):
+        """This makes the pseudo-terminal the controlling tty.
+        This should be more portable than the pty.fork() function.
+        Specifically, this should work on Solaris.
+        """
+        child_name = os.ttyname(tty_fd)
+        
+        # Disconnect from controlling tty if still connected.
+        fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY);
+        if fd >= 0:
+            os.close(fd)
+            
+        os.setsid()
+        
+        # Verify we are disconnected from controlling tty
+        try:
+            fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY);
+            if fd >= 0:
+                os.close(fd)
+                raise ExceptionPexpect, "Error! We are not disconnected from a controlling tty."
+        except:
+            # Good! We are disconnected from a controlling tty.
+            pass
+        
+        # Verify we can open child pty.
+        fd = os.open(child_name, os.O_RDWR);
+        if fd < 0:
+            raise ExceptionPexpect, "Error! Could not open child pty, " + child_name
+        else:
+            os.close(fd)
+
+        # Verify we now have a controlling tty.
+        fd = os.open("/dev/tty", os.O_WRONLY)
+        if fd < 0:
+            raise ExceptionPexpect, "Error! Could not open controlling tty, /dev/tty"
+        else:
+            os.close(fd)
+         
     def fileno (self):   # File-like object.
         """This returns the file descriptor of the pty for the child.
         """
@@ -550,7 +632,6 @@ class spawn (object):
         # I tried TCSADRAIN and TCSAFLUSH, but these were inconsistent
         # and blocked on some platforms. TCSADRAIN is probably ideal if it worked.
         termios.tcsetattr(self.child_fd, termios.TCSANOW, new)
-
     
     def read_nonblocking (self, size = 1, timeout = -1):
         """This reads at most size characters from the child application.

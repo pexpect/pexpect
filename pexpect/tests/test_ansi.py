@@ -9,7 +9,7 @@ write_target = 'I\'ve got a ferret sticking up my nose.                         
 'How it got there I can\'t tell                                    \n' +\
 'But now it\'s there it hurts like hell                            \n' +\
 'And what is more it radically affects my sense of smell.         \n' +\
-'(His sense of smell.)                                            \n'
+'(His sense of smell.)                                            '
 
 write_text = 'I\'ve got a ferret sticking up my nose.\n' + \
 '(He\'s got a ferret sticking up his nose.)\n' + \
@@ -57,7 +57,7 @@ tetris_target='                           XX            XXXX    XX              
 '                           XXXXXXXXXXXXXXXXXXXXXXXX                             \n' +\
 '                                                                                \n' +\
 '  J->LEFT  K->ROTATE  L->RIGHT  SPACE->DROP  P->PAUSE  Q->QUIT                  \n' +\
-'                                                                                \n'
+'                                                                                '
 
 class ansiTestCase (PexpectTestCase.PexpectTestCase):
     def test_write (self):

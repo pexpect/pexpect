@@ -137,7 +137,7 @@ class TIMEOUT(ExceptionPexpect):
 ##class MAXBUFFER(ExceptionPexpect):
 ##    """Raised when a scan buffer fills before matching an expected pattern."""
 
-def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None):
+def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None, logfile=None):
     """This function runs the given command; waits for it to finish;
     then returns all output as a string. STDERR is included in output.
     If the full path to the command is not given then the path is searched.
@@ -198,9 +198,9 @@ def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None
     a callback function through run() through the locals dictionary passed to a callback.
     """
     if timeout == -1:
-        child = spawn(command, maxread=2000)
+        child = spawn(command, maxread=2000, logfile=logfile)
     else:
-        child = spawn(command, timeout=timeout, maxread=2000)
+        child = spawn(command, timeout=timeout, maxread=2000, logfile=logfile)
     if events is not None:
         patterns = events.keys()
         responses = events.values()

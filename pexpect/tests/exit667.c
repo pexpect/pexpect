@@ -1,6 +1,6 @@
 #include <stdio.h>
 int main ()
 {
-	printf ("Hello world!\n");
-	exit(7);
+    printf ("Hello world!\n");
+    exit(7);
 }

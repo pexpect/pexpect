@@ -48,6 +48,7 @@ Credits:
     Alexander Gattin
     Geoffrey Marshall
     Francisco Lourenco
+    Glen Mabey
 (Let me know if I forgot anyone.)
 
 Free, open source, and all that good stuff.

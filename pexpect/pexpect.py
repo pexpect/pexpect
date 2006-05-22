@@ -36,7 +36,7 @@ Credits:
     Robert Stone
     Mike Snitzer
     Marti Raudsepp
-    Matt <matt (*) corvil.com>
+    Matt (<matt (*) corvil.com>)
     Hartmut Goebel
     Chad Schroeder
     Erick Tryzelaar
@@ -49,6 +49,7 @@ Credits:
     Geoffrey Marshall
     Francisco Lourenco
     Glen Mabey
+    Karthik Gurusamy
 (Let me know if I forgot anyone.)
 
 Free, open source, and all that good stuff.
@@ -1199,7 +1200,7 @@ class spawn (object):
         s = struct.pack('HHHH', r, c, 0, 0)
         fcntl.ioctl(self.fileno(), TIOCSWINSZ, s)
 
-    def interact(self, escape_character = chr(29)):
+    def interact(self, escape_character = chr(29), input_filter = None, output_filter = None):
         """This gives control of the child process to the interactive user
         (the human at the keyboard).
         Keystrokes are sent to the child process, and the stdout and stderr
@@ -1212,6 +1213,12 @@ class spawn (object):
         for historical merit because this is the character used
         by 'telnet' as the escape character. The escape_character will
         not be sent to the child process.
+
+        You may pass in optional input and output filter functions.
+        These functions should take a string and return a string.
+        The output_filter will be passed all the output from the child process.
+        The input_filter will be passed all the keyboard input from the user.
+        The input_filter is run BEFORE the check for the escape_character.
 
         Note that if you change the window size of the parent
         the SIGWINCH signal will not be passed through to the child.
@@ -1234,7 +1241,7 @@ class spawn (object):
         mode = tty.tcgetattr(self.STDIN_FILENO)
         tty.setraw(self.STDIN_FILENO)
         try:
-            self.__interact_copy(escape_character)
+            self.__interact_copy(escape_character, input_filter, output_filter)
         finally:
             tty.tcsetattr(self.STDIN_FILENO, tty.TCSAFLUSH, mode)
 
@@ -1248,19 +1255,21 @@ class spawn (object):
         """This is used by the interact() method.
         """
         return os.read(fd, 1000)
-    def __interact_copy(self, escape_character = None):
+    def __interact_copy(self, escape_character = None, input_filter = None, output_filter = None):
         """This is used by the interact() method.
         """
         while self.isalive():
             r,w,e = self.__select([self.child_fd, self.STDIN_FILENO], [], [])
             if self.child_fd in r:
                 data = self.__interact_read(self.child_fd)
+                if output_filter: data = output_filter(data)
                 if self.logfile is not None:
                     self.logfile.write (data)
                     self.logfile.flush()
                 os.write(self.STDOUT_FILENO, data)
             if self.STDIN_FILENO in r:
                 data = self.__interact_read(self.STDIN_FILENO)
+                if input_filter: data = input_filter(data)
                 i = data.rfind(escape_character)
                 if i != -1:
                     data = data[:i]

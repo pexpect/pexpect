@@ -46,6 +46,8 @@ Credits:
     Noel Taylor
     Nicolas D. Cesar
     Alexander Gattin
+    Geoffrey Marshall
+    Francisco Lourenco
 (Let me know if I forgot anyone.)
 
 Free, open source, and all that good stuff.
@@ -68,7 +70,7 @@ DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
 USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-Pexpect Copyright (c) 2005 Noah Spurrier
+Pexpect Copyright (c) 2006 Noah Spurrier
 http://pexpect.sourceforge.net/
 
 $Revision$
@@ -354,7 +356,6 @@ class spawn (object):
         self.env = env
         self.__irix_hack = sys.platform.lower().find('irix') >= 0 # This flags if we are running on irix
         self.use_native_pty_fork = not (sys.platform.lower().find('solaris') >= 0) # Solaris uses internal __fork_pty(). All other use pty.fork().
-        #self.use_native_pty_fork = sys.platform.lower().find('linux') >= 0 # Linux uses pty.fork(). All others use internal __fork_pty().
 
         # allow dummy instances for subclasses that may not use command or args.
         if command is None:
@@ -1202,10 +1203,14 @@ class spawn (object):
         (the human at the keyboard).
         Keystrokes are sent to the child process, and the stdout and stderr
         output of the child process is printed.
-        When the user types the escape_character this method will stop.
-        The default for escape_character is ^] (ASCII 29).
         This simply echos the child stdout and child stderr to the real
         stdout and it echos the real stdin to the child stdin.
+        When the user types the escape_character this method will stop.
+        The default for escape_character is ^]. This should not be confused
+        with ASCII 27 -- the ESC character. ASCII 29 was chosen
+        for historical merit because this is the character used
+        by 'telnet' as the escape character. The escape_character will
+        not be sent to the child process.
 
         Note that if you change the window size of the parent
         the SIGWINCH signal will not be passed through to the child.
@@ -1255,9 +1260,12 @@ class spawn (object):
                 os.write(self.STDOUT_FILENO, data)
             if self.STDIN_FILENO in r:
                 data = self.__interact_read(self.STDIN_FILENO)
-                self.__interact_writen(self.child_fd, data)
-                if escape_character in data:
+                i = data.rfind(escape_character)
+                if i != -1:
+                    data = data[:i]
+                    self.__interact_writen(self.child_fd, data)
                     break
+                self.__interact_writen(self.child_fd, data)
     def __select (self, iwtd, owtd, ewtd, timeout=None):
         """This is a wrapper around select.select() that ignores signals.
         If select.select raises a select.error exception and errno is an EINTR error then

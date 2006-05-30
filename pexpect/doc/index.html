@@ -75,17 +75,15 @@ http://pexpect.sourceforge.net/
  href="http://sourceforge.net/project/showfiles.php?group_id=59762">Download</a></h1>
 <p>Download the <a
  href="http://sourceforge.net/project/showfiles.php?group_id=59762">
-current version here</a> from the SourceForge site. Grab the tarball <span
- class="code">pexpect-current.tgz</span>. You should also grab the <span
- class="code">pexpect-examples.tgz</span> tarball as this is the best
+current version here</a> from the SourceForge site. Grab the current Pexpect tarball.
+You should also grab the Pexpect examples tarball as this is the best
 way to learn to use Pexpect.</p>
 <h2>Installing Pexpect</h2>
-<p>The <span class="code">pexpect-current.tgz</span> tarball is a
-standard Python Distutil distribution.</p>
+<p>The Pexpect tarball is a standard Python Distutil distribution.</p>
 <ol>
-  <li>download <span class="code">pexpect-current.tgz</span></li>
-  <li><span class="code">tar zxf pexpect-current.tgz</span></li>
-  <li><span class="code">cd pexpect-current</span></li>
+  <li>download <span class="code">pexpect-<i>current</i>.tgz</span></li>
+  <li><span class="code">tar zxf pexpect-<i>current</i>.tgz</span></li>
+  <li><span class="code">cd pexpect-<i>current</i></span></li>
   <li><span class="code">python setup.py install</span></li>
 </ol>
 <hr noshade="noshade" size="1">
@@ -97,7 +95,7 @@ standard Python Distutil distribution.</p>
 <a href="FSM.html">FSM</a> This is a finite state machine used by ANSI.<br>
 </p>
 <h2>Examples</h2>
-<p>The <span class="code">pexpect-examples.tgz</span> tarball contains
+<p>The Pexpect examples tarball contains
 the following scripts that give examples of how Pexpect can be used.<br>
 </p>
 <blockquote>
@@ -201,20 +199,20 @@ variety of different
 <p></p>
 <hr noshade="noshade" size="1">
 <h1><a name="status"></a>Project Status</h1>
-<p>This is mature, quality code. Automated pyunit tests reach over 80%
+<p>This is mature code. Automated pyunit tests reach over 80%
 code coverage on pexpect.py. I regularly test on Linux and BSD
 platforms. I occaisonally test on Solaris and Irix. Generally
 everything works pretty well. The <a href="#download">examples</a>
 tarball has several sample scripts.<br>
 </p>
-<p>I also built a protoype a screen scraper. I have a working ANSI
+<p>I also built a prototype screen scraper. I have a working ANSI
 terminal emulator (VT100 compatible), it is not extensively tested with
 real-world applications.</p>
 <hr noshade="noshade" size="1">
 <h1><a name="requirements"></a>Requirements for use of Pexpect</h1>
 <h2>Python</h2>
 <blockquote>
-  <p>Pexpect was written and tested with Python 2.1. It should work on
+  <p>Pexpect was written and tested with Python 2.4. It should work on
 earlier versions that have the <span class="code">pty</span> module. I
 sometimes even manually test it with Python 1.5.2, but I can't easily
 run the PyUnit test framework against Python 1.5.2, so I have less
@@ -226,11 +224,11 @@ confidence in Pexpect on Python 1.5.2.</p>
 module should be able to run Pexpect. The <span class="code">pty</span>
 module is part of the Standard Python Library, so if you are running on
 a POSIX system you should have it. The <span class="code">pty</span>
-module does not run the same on all platforms. I have taken effort to
-try to smooth the wrinkles out of the different platforms. To learn more
+module does not run the same on all platforms. It should be solid on Linux
+and BSD systems. I have taken effort to try to smooth the wrinkles out of the different platforms. To learn more
 about the wrinkles see <a href="#bugs">Bugs</a> and <a href="#testing">Testing</a>.</p>
 </blockquote>
-<p>Pexpect does not currently work on the standard Windows Python(see
+<p>Pexpect does not currently work on the standard Windows Python (see
 the pty requirement); however, it seems to work fine using <a
  href="http://www.cygwin.com/">Cygwin</a>. It is possible to build
 something like a pty for Windows, but it would have to use a different
@@ -250,42 +248,47 @@ easy to use. Here is an example of Pexpect in action:</p>
  class="code">ftplib</span> module, but this is just a demonstration.
 You can use this technique with any application. This is especially
 handy if you are writing automated test tools.</p>
-<p>There are two common methods in Pexpect -- <span class="code"><b>expect()</b></span>
+
+<p>There are two important methods in Pexpect -- <span class="code"><b>expect()</b></span>
 and <span class="code"><b>send()</b></span> (or <span class="code">sendline()</span>
-which is like <span class="code">send()</span> with a linefeed). With
-the <span class="code">expect()</span> command you cause your script
-to wait for the child application to return a string. The string can be
-regular expression. The <span class="code"><b>send()</b></span> method
+which is like <span class="code">send()</span> with a linefeed). 
+The <span class="code">expect()</span> method waits for the child application
+to return a given strong. The string you specify is a regular expression, so
+you can match complicated patterns. The <span class="code"><b>send()</b></span> method
 writes a string to the child application. From the child's point of
 view it looks just like someone typed the text from a terminal. After
 each call to <span class="code"><b>expect()</b></span> the <span
  class="code"><b>before</b></span> and <span class="code"><b>after</b></span>
 properties will be set to the text printed by child application. The <span
  class="code"><b>before</b></span> property will contain all text up to
-the expected string. The <span class="code"><b>after</b></span> string
-will contain the text that was matched (remember, the expected string
-is a regular expression, so the matched string does not equal the
-expected string necessarily). The <span class="code">match</span>
-property is set to the <span class="code">re MatchObject</span> if
-there is a successful match. If the child has died and you have read
-all the child's output then expect will raise an <span class="code">EOF</span>
-exception. You can read everything up to the EOF without generating an
-exception by using the <span class="code"> expect(pexpect.EOF)</span>.
-In this case everything the child has output will be available in the <span
- class="code">before</span> property.</p>
-<p>An example of Pexpect in action may be more clear. This example uses
+the expected string pattern. The <span class="code"><b>after</b></span> string
+will contain the text that was matched by the expected pattern.
+The <span class="code">match</span> property is set to the <span class="code">re MatchObject</span>.
+</p>
+
+<p>An example of Pexpect in action may make things more clear. This example uses
 <span class="code">ftp</span> to login to the OpenBSD site; list files
 in a directory; and then pass interactive control of the ftp session to
 the human user.</p>
 <blockquote>
   <pre class="code">import pexpect<br>child = pexpect.spawn ('ftp ftp.openbsd.org')<br>child.expect ('Name .*: ')<br>child.sendline ('anonymous')<br>child.expect ('Password:')<br>child.sendline ('noah@example.com')<br>child.expect ('ftp&gt; ')<br>child.sendline ('ls /pub/OpenBSD/')<br>child.expect ('ftp&gt; ')<br>print child.before   # Print the result of the ls command.<br>child.interact()     # Give control of the child to the user.<br></pre>
 </blockquote>
-<p>The pattern given to <span class="code">expect()</span> is a
-regular expression. It can also be a list of regular expression. This
-allows you to match multiple responses. The <span class="code">expect()</span>
+<h2>Special EOF and TIMEOUT patterns</h2>
+There are two special patterns to match the End Of File or a Timeout condition.
+You you can pass these patterns to <span class="code">expect()</span>.
+These patterns are not regular expressions. Use them like predefined constants.
+<p>If the child has died and you have read all the child's output then ordinarily
+<span class="code">expect()</span> will raise an <span class="code">EOF</span>
+exception. You can read everything up to the EOF without generating an
+exception by using the EOF pattern <span class="code">expect(pexpect.EOF)</span>.
+In this case everything the child has output will be available in the <span
+ class="code">before</span> property.</p>
+<p>The pattern given to <span class="code">expect()</span> may be a
+regular expression or it may also be a <b>list</b> of regular expressions.
+This allows you to match multiple optional responses. The <span class="code">expect()</span>
 method returns the index of the pattern that was matched. For example,
 say you wanted to login to a server. After entering a password you
-could get various responses from he server. Your password could be
+could get various responses from the server -- your password could be
 rejected; or you could be allowed in and asked for your terminal type;
 or you could be let right in and given a command prompt. The following
 code fragment gives an example of this:</p>
@@ -300,27 +303,27 @@ change this by passing a timeout argument to expect():</p>
 </blockquote>
 <h2>Find the end of line -- CR/LF conventions<br>
 Matching at the end of a line can be tricky<br>
-$ pattern is useless.<br>
+$ regex pattern is useless.<br>
 </h2>
 <p>Pexpect matches regular expressions a little differently than what
-you might be used to. It reads one character from the stream at a time.
-After each character it tests if all of the regular expressions for a
-match. Note, pexpect does have an internal buffer, so reads are faster
-than one character at a time, but from the user's perspective the regex
-test happens one character at a time.<br>
+you might be used to.
 </p>
-<p><i><b>The $ pattern for end of line match is useless</b></i>. With
-Pexpect I have not found any use for the $ pattern. The $ matches the
-end of string which is immediately preceding each newline, but Pexpect
-reads the stream one character at a time, so each character looks like
-the end of a line. Pexpect can't do a look-ahead into the stream. In
-general you would have this situation when using regular expressions
-with any stream.</p>
-<p>So the best way to match the end of a line is to look for the
-newline. </p>
-<p>Pexpect compiles all regular expressions with the DOTALL flag. With
-the DOTALL flag a "." will match a newline. See the Python <a
- href="http://www.python.org/doc/current/lib/node99.html#l2h-733">documentation</a></p>
+<p><i><b>The $ pattern for end of line match is useless</b></i>.
+The $ matches the end of string, but Pexpect reads from the child
+one character at a time, so each character looks like the end of a line.
+Pexpect can't do a look-ahead into the child's output stream.
+In general you would have this situation when using regular expressions
+with any stream.<br>
+<i>Note, pexpect does have an internal buffer, so reads are faster
+than one character at a time, but from the user's perspective the regex
+patterns test happens one character at a time.</i></p>
+<p>The best way to match the end of a line is to look for the
+newline: "\r\n" (CR/LF). Yes, that does appear to be DOS-style.
+It may surprise some UNIX people to learn that terminal TTY device drivers
+(dumb, vt100, ANSI, xterm, etc.) all use the CR/LF combination to signify
+the end of line. Pexpect uses a Pseudo-TTY device to talk to the child application, so
+when the child app prints "\n" you actually see "\r\n".
+</p>
 <p><b>UNIX uses just linefeeds to end lines of text, but not when it
 comes to TTY devices!</b> TTY devices are more like the Windows world.
 Each line of text end with a CR/LF combination. When you intercept data
@@ -354,11 +357,14 @@ look for the CR/LF combination -- not just the LF and not the $ pattern.</p>
 <p>This problem is not limited to Pexpect. This problem happens any
 time you try to perform a regular expression match on a stream. Regular
 expressions need to look ahead. With a stream it is hard to look ahead
-because process generating the stream may not be finished. There is no
+because the process generating the stream may not be finished. There is no
 way to know if the process has paused momentarily or is finished and
 waiting for you. <font color="#cc0000">Pexpect must implicitly always
 do a NON greedy match (minimal) at the end of a input {### already said
 this}.</font> </p>
+<p>Pexpect compiles all regular expressions with the DOTALL flag. With
+the DOTALL flag a "." will match a newline. See the Python <a
+ href="http://www.python.org/doc/current/lib/node99.html#l2h-733">documentation</a></p>
 <h2>Beware of + and * at the end of input.</h2>
 <p>Remember that any time you try to match a pattern that needs
 look-ahead that you will always get a minimal match (non greedy). For
@@ -912,7 +918,7 @@ bug</a>.</p>
 <a href="#changes" title="What's new with Pexpect">Recent Changes</a><br>
 <a href="#testing" title="Test results on various platforms">Testing</a><br>
 <a href="#todo" title="What to do next">To do</a><br>
-<a href="http://cvs.sourceforge.net/viewcvs.py/pexpect/pexpect/" title="browse CVS">Browse CVS</a><br>
+<a href="http://cvs.sourceforge.net/viewcvs.py/pexpect/pexpect/" title="browse SVN">Browse SVN</a><br>
 <br>
 <a href="http://sourceforge.net/projects/pexpect/"
  title="The Pexpect project page on SourceForge.net"> <img

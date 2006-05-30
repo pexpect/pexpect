@@ -25,12 +25,6 @@ dist/pexpect-$(VERSION).tar.gz: $(MANIFEST_LINES)
 	chmod 755 examples/*.py
 	/usr/bin/env python setup.py sdist
 
-install: dist
-	cd dist;\
-	tar zxf pexpect-$(VERSION).tar.gz;\
-	cd pexpect-$(VERSION);\
-	/usr/bin/env python setup.py install
-
 dist: pexpect-current.tgz
 
 pexpect-current.tgz: dist/pexpect-$(VERSION).tar.gz
@@ -61,16 +55,13 @@ clean:
 	rm -f *.pyc
 	rm -f tests/*.pyc
 	rm -f tools/*.pyc
+	rm -f dist/*.pyc
 	rm -f *.cover
 	rm -f tests/*.cover
 	rm -f tools/*.cover
 	rm -f dist/pexpect-$(VERSION).tar.gz
-	chmod 644 *.py
-	chmod 755 setup.py
-	chmod 755 examples/*.py
 	cd dist;rm -rf pexpect-$(VERSION)/
 	rm -f pexpect-$(VERSION).tgz
-	rm -f pexpect-current.tgz
 	rm -f pexpect-$(VERSION)-examples.tgz
 	rm -f pexpect-$(VERSION)-doc.tgz
 	-rm -f `ls doc/*.html | sed -e 's/doc\/index\.html//'` 

@@ -6,7 +6,7 @@
 # The Vaults of Parnasus which requires a direct URL link to a
 # tar ball distribution. I don't advertise the package this way.
 
-import pexpect
+import pexpect, pyed
 import getpass
 import sys, os
 

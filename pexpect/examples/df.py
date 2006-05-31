@@ -4,7 +4,7 @@ Tuples of filesystem name and percentage are stored in a list.
 A simple report is printed. Filesystems over 95% capacity are highlighted.
 Note that this does not parse filesystem names after the first space, so
 names with spaces in them will be truncated. This will produce ambiguous
-results for automount filesystems on OS X.
+results for automount filesystems on Apple OSX.
 """
 import pexpect
 

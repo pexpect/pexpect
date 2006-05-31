@@ -1,32 +1,32 @@
-"""Pexpect is a Python module for spawning child applications;
-controlling them; and responding to expected patterns in their output.
-Pexpect can be used for automating interactive applications such as
-ssh, ftp, passwd, telnet, etc. It can be used to a automate setup scripts
-for duplicating software package installations on different servers.
-It can be used for automated software testing. Pexpect is in the spirit of
-Don Libes' Expect, but Pexpect is pure Python. Other Expect-like
-modules for Python require TCL and Expect or require C extensions to
-be compiled. Pexpect does not use C, Expect, or TCL extensions. It
-should work on any platform that supports the standard Python pty
-module. The Pexpect interface focuses on ease of use so that simple
-tasks are easy.
+"""Pexpect is a Python module for spawning child applications and controlling
+them automatically. Pexpect can be used for automating interactive applications
+such as ssh, ftp, passwd, telnet, etc. It can be used to a automate setup
+scripts for duplicating software package installations on different servers. It
+can be used for automated software testing. Pexpect is in the spirit of Don
+Libes' Expect, but Pexpect is pure Python. Other Expect-like modules for Python
+require TCL and Expect or require C extensions to be compiled. Pexpect does not
+use C, Expect, or TCL extensions. It should work on any platform that supports
+the standard Python pty module. The Pexpect interface focuses on ease of use so
+that simple tasks are easy.
 
-There are two main interfaces to Pexpect -- the function, run() and
-the class, spawn. You can call the run() function to execute a command
-and return the output. This is a handy replacement for os.system().
+There are two main interfaces to Pexpect -- the function, run() and the class,
+spawn. You can call the run() function to execute a command and return the
+output. This is a handy replacement for os.system().
+
 For example:
     pexpect.run('ls -la')
-The more powerful interface is the spawn class. You can create an
-insteance of an external command and use spawn to interact with
-the
-You can use this to spawn an external child command and then
-interact with the child by sending lines and expecting responses.
+
+The more powerful interface is the spawn class. You can use this to spawn an
+external child command and then interact with the child by sending lines and
+expecting responses.
+
 For example:
     child = pexpect.spawn('scp foo myname@host.example.com:.')
     child.expect ('Password:')
     child.sendline (mypassword)
-This works even for commands that ask for passwords or other input
-outside of the normal stdio streams.
+
+This works even for commands that ask for passwords or other input outside of
+the normal stdio streams.
 
 Credits:
     Noah Spurrier
@@ -54,23 +54,23 @@ Credits:
 
 Free, open source, and all that good stuff.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, and to permit persons to whom the Software is furnished to do
+so, subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-USE OR OTHER DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 
 Pexpect Copyright (c) 2006 Noah Spurrier
 http://pexpect.sourceforge.net/

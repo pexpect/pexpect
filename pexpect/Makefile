@@ -4,67 +4,53 @@ VERSION=2.1
 #DOCGENERATOR= happydoc
 DOCGENERATOR= pydoc -w
 # This is for GNU Make. This does not work on BSD Make.
-MANIFEST_LINES := $(shell cat MANIFEST)
+#MANIFEST_LINES := $(shell cat MANIFEST)
 # This is for BSD Make. This does not work on GNU Make.
 #MANIFEST_LINES != cat MANIFEST
 
-all: dist examples docs
+all: merge_templates docs dist
 
-# *.py README MANIFEST
+merge_templates:
+	python tools/merge_templates.py
 
-# I had to add the chmod 644 and 755 because cvs sucks.
-# I accidentally checked in some files with the wrong permissions
-# and now there is no way to fix those (I don't have CVSROOT access
-# becuase I'm using cvs hosted on sourceforge).
-dist/pexpect-$(VERSION).tar.gz: $(MANIFEST_LINES)
-	rm -f *.pyc
-	rm -f pexpect-*.tgz
-	rm -f dist/pexpect-$(VERSION).tar.gz
-	chmod 644 *.py
-	chmod 755 setup.py
-	chmod 755 examples/*.py
-	/usr/bin/env python setup.py sdist
-
-dist: pexpect-current.tgz
-
-pexpect-current.tgz: dist/pexpect-$(VERSION).tar.gz
-	rm -f pexpect-current.tgz
-	cp dist/pexpect-$(VERSION).tar.gz ./pexpect-current.tgz
-	cp dist/pexpect-$(VERSION).tar.gz ./pexpect-$(VERSION).tgz
-
-docs: pexpect-doc.tgz
-
-pexpect-doc.tgz: doc/*
-	rm -f pexpect-*-doc.tgz
-	-rm -f `ls doc/*.html | sed -e 's/doc\/index\.html//'` 
+docs: doc/*
+#	rm -f pexpect-doc-$(VERSION).tar.gz
+	-rm -f `ls doc/*.html | sed -e 's/doc\/index\.template\.html//' | sed -e 's/doc\/index\.html//'` 
 	#$(DOCGENERATOR) `echo "$(MANIFEST_LINES)" | sed -e "s/\.py//g" -e "s/setup *//" -e "s/README *//"`
 	#mv *.html doc/
 	cd doc;\
-	$(DOCGENERATOR) ../pexpect.py ../pxssh.py ../FSM.py ../ANSI.py ../screen.py;\
+	$(DOCGENERATOR) ../pexpect.py ../pxssh.py ../fdpexpect.py ../FSM.py ../screen.py ../ANSI.py;\
 	cd ..;\
-	tar zcf pexpect-$(VERSION)-doc.tgz doc/
+#	tar zcf pexpect-doc-$(VERSION).tar.gz doc/
 
-examples: pexpect-examples.tgz
+dist: dist/pexpect-$(VERSION).tar.gz
 
-pexpect-examples.tgz: examples/*
-	rm -f pexpect-*-examples.tgz
-	chmod 755 examples/*.py
-	tar zcf pexpect-$(VERSION)-examples.tgz examples/
+# $(MANIFEST_LINES)
+
+dist/pexpect-$(VERSION).tar.gz:
+	rm -f *.pyc
+	rm -f pexpect-$(VERSION).tar.gz
+	rm -f dist/pexpect-$(VERSION).tar.gz
+	/usr/bin/env python setup.py sdist
+	cp dist/pexpect-$(VERSION).tar.gz ./pexpect-$(VERSION).tar.gz
 
 clean:
-	rm -f *.pyc
-	rm -f tests/*.pyc
-	rm -f tools/*.pyc
-	rm -f dist/*.pyc
-	rm -f *.cover
-	rm -f tests/*.cover
-	rm -f tools/*.cover
-	rm -f dist/pexpect-$(VERSION).tar.gz
-	cd dist;rm -rf pexpect-$(VERSION)/
-	rm -f pexpect-$(VERSION).tgz
-	rm -f pexpect-$(VERSION)-examples.tgz
-	rm -f pexpect-$(VERSION)-doc.tgz
-	-rm -f `ls doc/*.html | sed -e 's/doc\/index\.html//'` 
-	rm -f python.core
-	rm -f core
+	-rm -f MANIFEST
+	-rm -f *.pyc
+	-rm -f tests/*.pyc
+	-rm -f tools/*.pyc
+	-rm -f dist/*.pyc
+	-rm -f *.cover
+	-rm -f tests/*.cover
+	-rm -f tools/*.cover
+	-rm -f dist/pexpect-$(VERSION).tar.gz
+	-cd dist;rm -rf pexpect-$(VERSION)/
+	-rm -f pexpect-$(VERSION).tar.gz
+	-rm -f pexpect-$(VERSION)-examples.tar.gz
+	-rm -f pexpect-$(VERSION)-doc.tar.gz
+	-rm -f `ls doc/*.html | sed -e 's/doc\/index\.template\.html//'` 
+	-rm -f python.core
+	-rm -f core
+	-rm -f setup.py
+	-rm -f doc/index.html
 	

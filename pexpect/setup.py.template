@@ -5,7 +5,7 @@ $Date$
 from distutils.core import setup
 setup (name='pexpect',
     version='VERSION',
-    py_modules=['pexpect', 'pxssh'],
+    py_modules=['pexpect', 'pxssh', 'fdpexpect'],
     description='Pexpect is a pure Python Expect. It allows easy control of other applications.',
     author='Noah Spurrier',
     author_email='noah@noah.org',

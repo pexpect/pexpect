@@ -31,8 +31,7 @@ dist/pexpect-$(VERSION).tar.gz:
 	rm -f *.pyc
 	rm -f pexpect-$(VERSION).tar.gz
 	rm -f dist/pexpect-$(VERSION).tar.gz
-	/usr/bin/env python setup.py sdist
-	cp dist/pexpect-$(VERSION).tar.gz ./pexpect-$(VERSION).tar.gz
+	python setup.py sdist
 
 clean:
 	-rm -f MANIFEST

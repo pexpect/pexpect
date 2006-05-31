@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-'''This connects to an ftp site; does a few ftp stuff; and 
-then gives the user interactive control over the session.
+'''This uploads the latest pexpect package to sourceforge.
 '''
 import pexpect
 import sys
@@ -18,9 +17,9 @@ child.sendline('bin')
 child.expect('ftp> ')
 child.sendline('prompt')
 child.expect('ftp> ')
-child.sendline('mput pexpect-*.tgz')
+child.sendline('mput pexpect-*.tar.gz')
 child.expect('ftp> ')
-child.sendline('ls pexpect-*')
+child.sendline('ls pexpect*')
 child.expect('ftp> ')
 print child.before
 child.sendline('bye')

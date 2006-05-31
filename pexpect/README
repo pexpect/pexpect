@@ -17,7 +17,7 @@ extensions to be compiled. It should work on any platform that supports the
 standard Python pty module. The Pexpect interface was designed to be easy to use.
 
 Free, open source, and all that good stuff.
-Pexpect Copyright (c) 2005 Noah Spurrier
+Pexpect Copyright (c) 2006 Noah Spurrier
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

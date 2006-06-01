@@ -76,138 +76,42 @@ http://pexpect.sourceforge.net/
 <p>Download the <a
  href="http://sourceforge.net/project/showfiles.php?group_id=59762">
 current version here</a> from the SourceForge site. Grab the current Pexpect tarball.
-You should also grab the Pexpect examples tarball as this is the best
-way to learn to use Pexpect.</p>
+</p>
 <h2>Installing Pexpect</h2>
 <p>The Pexpect tarball is a standard Python Distutil distribution.</p>
 <ol>
-  <li>download <span class="code">pexpect-VERSION.tgz</span></li>
-  <li><span class="code">tar zxf pexpect-VERSION.tgz</span></li>
+  <li>download <span class="code">pexpect-VERSION.tar.gz</span></li>
+  <li><span class="code">tar zxf pexpect-VERSION.tar.gz</span></li>
   <li><span class="code">cd pexpect-VERSION</span></li>
-  <li><span class="code">python setup.py install</span></li>
+  <li><span class="code">python setup.py install</span> <i>do this as root</i></li>
 </ol>
-<hr noshade="noshade" size="1">
-<h1><a name="doc"></a>Documentation</h1>
-<a href="pexpect.html">pexpect.spawn</a> This is the main class that you want.<br>
-<a href="pxssh.html">pxssh.ssh</a> Pexpect SSH is an extension of 'pexpect.spawn' that specializes in SSH.<br>
+<h2>Examples</h2>
+<p>
+Under the <span class="code">pexpect-VERSION</span> directory you should find
+the <span class="code">examples</span> directory.
+This is the best way to learn to use Pexpect.
+See the descriptions of <a href="examples.html">Pexpect Examples</a>.
+</p>
+<h2><a name="doc"></a>API Documentation</h2>
+<p>
+<blockquote>
+<a href="pexpect.html">pexpect</a> This is the main module that you want.<br>
+<a href="pxssh.html">pxssh</a> Pexpect SSH is an extension of 'pexpect.spawn' that specializes in SSH.<br>
+</blockquote>
+the following are experimental extensions to Pexpect<br>
+<blockquote>
+<a href="fdpexpect.html">fdpexpect</a> fdpexpect extension of 'pexpect.spawn' that uses an open file descriptor.<br>
 <a href="screen.html">SCREEN</a> This represents a virtual 'screen'.<br>
 <a href="ANSI.html">ANSI</a> This parses ANSI/VT-100 terminal escape codes.<br>
 <a href="FSM.html">FSM</a> This is a finite state machine used by ANSI.<br>
-</p>
-<h2>Examples</h2>
-<p>The Pexpect examples tarball contains
-the following scripts that give examples of how Pexpect can be used.<br>
-</p>
-<blockquote>
-<p><span class="code">script.py</span></p>
-<p><blockquote>
- This implements a command similar to the classic BSD
-"script" command.
- This will start a subshell and log all input and
-output to a file.
- This demonstrates the interact() method of Pexpect.
-</p></blockquote>
-
-<p><span class="code">fix_cvs_files.py</span></p>
-<p><blockquote>
- This is for cleaning up binary files improperly
-added to CVS.
- This script scans the given path to find binary
-files;
- checks with CVS to see if the sticky options are set
-to -kb;
- finally if sticky options are not -kb then uses 'cvs
-admin' to
- set the -kb option.
-</p></blockquote>
-
-<p><span class="code">ftp.py</span></p>
-<p><blockquote>
- This demonstrates an FTP "bookmark".
- This connects to an ftp site; does a few ftp stuff;
-and then gives the user
- interactive control over the session. In this case
-the "bookmark" is to a
- directory on the OpenBSD ftp server. It puts you in
-the i386 packages
- directory. You can easily modify this for other
-sites.
- This demonstrates the interact() method of Pexpect.
-</p></blockquote>
-
-<p><span class="code">monitor.py</span></p>
-<p><blockquote>
- This runs a sequence of commands on a remote host
-using SSH.
- It runs a simple system checks such as uptime and
-free to monitor
- the state of the remote host.
-</p></blockquote>
-
-<p><span class="code">passmass.py</span></p>
-<p><blockquote>
- This will login to each given server and change the
-password of the
- given user. This demonstrates scripting logins and
-passwords.
-</p></blockquote>
-
-<p><span class="code">python.py</span></p>
-<p><blockquote>
- This starts the python interpreter and prints the
-greeting message backwards.
- It then gives the user iteractive control of Python.
-It's pretty useless!
-</p></blockquote>
-
-<p><span class="code">rippy.py</span></p>
-<p><blockquote>
- This is a wizard for mencoder. It greatly simplifies
-the process of
- ripping a DVD to Divx (mpeg4) format. It can
-transcode from any
- video file to another. It has options for resampling
-the audio stream;
- removing interlace artifacts, fitting to a target
-file size, etc.
- There are lots of options, but the process is simple
-and easy to use.
-</p></blockquote>
-
-<p><span class="code">sshls.py</span></p>
-<p><blockquote>
- This lists a directory on a remote machine.
-</p></blockquote>
-<p><span class="code">ssh_tunnel.py</span></p>
-<p><blockquote>
- This starts an SSH tunnel to a remote machine. It
-monitors the connection
- and restarts the tunnel if it goes down.
-</p></blockquote>
-<p><span class="code">uptime.py</span></p>
-<p><blockquote>
- This will run the uptime command and parse the
-output into variables.
- This demonstrates using a single regular expression
-to match the output
- of a command and capturing different variable in
-match groups.
- The regular expression takes into account a wide
-variety of different
-  </blockquote>
 </blockquote>
-<p></p>
+</p>
 <hr noshade="noshade" size="1">
 <h1><a name="status"></a>Project Status</h1>
-<p>This is mature code. Automated pyunit tests reach over 80%
+<p>Automated pyunit tests reach over 80%
 code coverage on pexpect.py. I regularly test on Linux and BSD
-platforms. I occaisonally test on Solaris and Irix. Generally
-everything works pretty well. The <a href="#download">examples</a>
-tarball has several sample scripts.<br>
+platforms. I try to test on Solaris and Irix. 
 </p>
-<p>I also built a prototype screen scraper. I have a working ANSI
-terminal emulator (VT100 compatible), it is not extensively tested with
-real-world applications.</p>
 <hr noshade="noshade" size="1">
 <h1><a name="requirements"></a>Requirements for use of Pexpect</h1>
 <h2>Python</h2>
@@ -274,9 +178,11 @@ the human user.</p>
   <pre class="code">import pexpect<br>child = pexpect.spawn ('ftp ftp.openbsd.org')<br>child.expect ('Name .*: ')<br>child.sendline ('anonymous')<br>child.expect ('Password:')<br>child.sendline ('noah@example.com')<br>child.expect ('ftp&gt; ')<br>child.sendline ('ls /pub/OpenBSD/')<br>child.expect ('ftp&gt; ')<br>print child.before   # Print the result of the ls command.<br>child.interact()     # Give control of the child to the user.<br></pre>
 </blockquote>
 <h2>Special EOF and TIMEOUT patterns</h2>
+<p>
 There are two special patterns to match the End Of File or a Timeout condition.
 You you can pass these patterns to <span class="code">expect()</span>.
 These patterns are not regular expressions. Use them like predefined constants.
+</p>
 <p>If the child has died and you have read all the child's output then ordinarily
 <span class="code">expect()</span> will raise an <span class="code">EOF</span>
 exception. You can read everything up to the EOF without generating an
@@ -364,7 +270,7 @@ do a NON greedy match (minimal) at the end of a input {### already said
 this}.</font> </p>
 <p>Pexpect compiles all regular expressions with the DOTALL flag. With
 the DOTALL flag a "." will match a newline. See the Python <a
- href="http://www.python.org/doc/current/lib/node99.html#l2h-733">documentation</a></p>
+ href="http://www.python.org/doc/current/lib/node115.html#l2h-733">documentation</a></p>
 <h2>Beware of + and * at the end of input.</h2>
 <p>Remember that any time you try to match a pattern that needs
 look-ahead that you will always get a minimal match (non greedy). For

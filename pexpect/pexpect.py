@@ -29,27 +29,11 @@ This works even for commands that ask for passwords or other input outside of
 the normal stdio streams.
 
 Credits:
-    Noah Spurrier
-    Richard Holden
-    Marco Molteni
-    Kimberley Burchett 
-    Robert Stone
-    Mike Snitzer
-    Marti Raudsepp
-    Matt (<matt (*) corvil.com>)
-    Hartmut Goebel
-    Chad Schroeder
-    Erick Tryzelaar
-    Dave Kirby
-    Ids vander Molen
-    George Todd
-    Noel Taylor
-    Nicolas D. Cesar
-    Alexander Gattin
-    Geoffrey Marshall
-    Francisco Lourenco
-    Glen Mabey
-    Karthik Gurusamy
+Noah Spurrier, Richard Holden, Marco Molteni, Kimberley Burchett, Robert Stone,
+Hartmut Goebel, Chad Schroeder, Erick Tryzelaar, Dave Kirby, Ids vander Molen,
+George Todd, Noel Taylor, Nicolas D. Cesar, Alexander Gattin,
+Geoffrey Marshall, Francisco Lourenco, Glen Mabey, Karthik Gurusamy,
+Fernando Perez 
 (Let me know if I forgot anyone.)
 
 Free, open source, and all that good stuff.
@@ -1021,15 +1005,15 @@ class spawn (object):
         return compiled_pattern_list
  
     def expect(self, pattern, timeout = -1, searchwindowsize=None):
+
         """This seeks through the stream until a pattern is matched.
         The pattern is overloaded and may take several types including a list.
-        The pattern can be a StringType, EOF, a compiled re, or
-        a list of those types. Strings will be compiled to re types.
-        This returns the index into the pattern list. If the pattern was
-        not a list this returns index 0 on a successful match.
-        This may raise exceptions for EOF or TIMEOUT.
-        To avoid the EOF or TIMEOUT exceptions add EOF or TIMEOUT to
-        the pattern list.
+        The pattern can be a StringType, EOF, a compiled re, or a list of
+        those types. Strings will be compiled to re types. This returns the
+        index into the pattern list. If the pattern was not a list this
+        returns index 0 on a successful match. This may raise exceptions for
+        EOF or TIMEOUT. To avoid the EOF or TIMEOUT exceptions add
+        EOF or TIMEOUT to the pattern list.
 
         After a match is found the instance attributes
         'before', 'after' and 'match' will be set.
@@ -1081,7 +1065,7 @@ class spawn (object):
 
     def expect_list(self, pattern_list, timeout = -1, searchwindowsize = -1):
         """This takes a list of compiled regular expressions and returns 
-        the index into the pattern_list that matched the child's output.
+        the index into the pattern_list that matched the child output.
         The list may also contain EOF or TIMEOUT (which are not
         compiled regular expressions). This method is similar to
         the expect() method except that expect_list() does not
@@ -1091,6 +1075,7 @@ class spawn (object):
         If timeout==-1 then the self.timeout value is used.
         If searchwindowsize==-1 then the self.searchwindowsize value is used.
         """
+
         self.patterns = pattern_list
 
         if timeout == -1:

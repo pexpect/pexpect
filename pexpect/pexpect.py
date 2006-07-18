@@ -841,27 +841,37 @@ class spawn (object):
         """
         if not self.isalive():
             return True
-        self.kill(signal.SIGHUP)
-        time.sleep(self.delayafterterminate)
-        if not self.isalive():
-            return True
-        self.kill(signal.SIGCONT)
-        time.sleep(self.delayafterterminate)
-        if not self.isalive():
-            return True
-        self.kill(signal.SIGINT)
-        time.sleep(self.delayafterterminate)
-        if not self.isalive():
-            return True
-        if force:
-            self.kill(signal.SIGKILL)
+        try:
+            self.kill(signal.SIGHUP)
+            time.sleep(self.delayafterterminate)
+            if not self.isalive():
+                return True
+            self.kill(signal.SIGCONT)
+            time.sleep(self.delayafterterminate)
+            if not self.isalive():
+                return True
+            self.kill(signal.SIGINT)
+            time.sleep(self.delayafterterminate)
+            if not self.isalive():
+                return True
+            if force:
+                self.kill(signal.SIGKILL)
+                time.sleep(self.delayafterterminate)
+                if not self.isalive():
+                    return True
+                else:
+                    return False
+            return False
+        except OSError, e:
+            # I think there are kernel timing issues that sometimes cause
+            # this to happen. I think isalive() reports True, but the
+            # process is dead to the kernel.
+            # Make one last attempt to see if the kernel is up to date.
             time.sleep(self.delayafterterminate)
             if not self.isalive():
                 return True
             else:
                 return False
-        return False
-        #raise ExceptionPexpect ('terminate() could not terminate child process. Try terminate(force=True)?')
      
     def wait(self):
         """This waits until the child exits. This is a blocking call.

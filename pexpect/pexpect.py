@@ -82,7 +82,7 @@ except ImportError, e:
 A critical module was not found. Probably this operating system does not support it.
 Pexpect is intended for UNIX-like operating systems.""")
 
-__version__ = '2.1'
+__version__ = '2.2'
 __revision__ = '$Revision$'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which', 'split_command_line',
     '__version__', '__revision__']
@@ -306,6 +306,7 @@ class spawn (object):
         the status returned by os.waitpid. You can interpret this using
         os.WIFEXITED/os.WEXITSTATUS or os.WIFSIGNALED/os.TERMSIG.
         """
+        super(spawn, self).__init__()
         self.STDIN_FILENO = pty.STDIN_FILENO
         self.STDOUT_FILENO = pty.STDOUT_FILENO
         self.STDERR_FILENO = pty.STDERR_FILENO
@@ -329,6 +330,7 @@ class spawn (object):
         self.timeout = timeout
         self.delimiter = EOF
         self.logfile = logfile    
+        sys.stdout.flush()
         self.maxread = maxread # Max bytes to read at one time into buffer.
         self.buffer = '' # This is the read buffer. See maxread.
         self.searchwindowsize = searchwindowsize # Anything before searchwindowsize point is preserved, but not searched.
@@ -350,29 +352,7 @@ class spawn (object):
             self.name = '<pexpect factory incomplete>'
             return
 
-        # If command is an int type then it may represent a file descriptor.
-        if type(command) == type(0):
-            raise ExceptionPexpect ('Command is an int type. If this is a file descriptor then maybe you want to use fdpexpect.fdspawn which takes an existing file descriptor instead of a command string.')
-
-        if type (args) != type([]):
-            raise TypeError ('The argument, args, must be a list.')
-
-        if args == []:
-            self.args = split_command_line(command)
-            self.command = self.args[0]
-        else:
-            self.args = args[:] # work with a copy
-            self.args.insert (0, command)
-            self.command = command
-
-        command_with_path = which(self.command)
-        if command_with_path is None:
-            raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
-        self.command = command_with_path
-        self.args[0] = self.command
-
-        self.name = '<' + ' '.join (self.args) + '>'
-        self.__spawn()
+        self.__spawn (command, args)
 
     def __del__(self):
         """This makes sure that no system resources are left open.
@@ -422,7 +402,7 @@ class spawn (object):
         s.append('delayafterterminate: ' + str(self.delayafterterminate))
         return '\n'.join(s)
 
-    def __spawn(self):
+    def __spawn(self,command,args=[]):
         """This starts the given command in a child process.
         This does all the fork/exec type of stuff for a pty.
         This is called by __init__. 
@@ -435,6 +415,29 @@ class spawn (object):
         # EOF immediately then it means that the child is already dead.
         # That may not necessarily be bad because you may haved spawned a child
         # that performs some task; creates no stdout output; and then dies.
+
+        # If command is an int type then it may represent a file descriptor.
+        if type(command) == type(0):
+            raise ExceptionPexpect ('Command is an int type. If this is a file descriptor then maybe you want to use fdpexpect.fdspawn which takes an existing file descriptor instead of a command string.')
+
+        if type (args) != type([]):
+            raise TypeError ('The argument, args, must be a list.')
+
+        if args == []:
+            self.args = split_command_line(command)
+            self.command = self.args[0]
+        else:
+            self.args = args[:] # work with a copy
+            self.args.insert (0, command)
+            self.command = command
+
+        command_with_path = which(self.command)
+        if command_with_path is None:
+            raise ExceptionPexpect ('The command was not found or was not executable: %s.' % self.command)
+        self.command = command_with_path
+        self.args[0] = self.command
+
+        self.name = '<' + ' '.join (self.args) + '>'
 
         assert self.pid is None, 'The pid member should be None.'
         assert self.command is not None, 'The command member should not be None.'

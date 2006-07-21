@@ -1,5 +1,4 @@
 from pexpect import *
-#import os, sys, getopt, shutil
 
 class pxssh (spawn):
     """This class extends pexpect.spawn to specialize setting up SSH connections.
@@ -23,7 +22,9 @@ class pxssh (spawn):
             s.logout()
     """
 
-    def __init__ (self):
+    def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None, logfile=None, env=None):
+        super(pxssh, self).__init__(None,[],timeout,maxread,searchwindowsize,logfile,env)
+        self.name = '<pxssh>'
         # SUBTLE HACK ALERT!
         # Note that the command to set the prompt uses a slightly different string
         # than the regular expression to match it. This is because when you set the
@@ -50,6 +51,7 @@ class pxssh (spawn):
         we could not match it. We still try to reset the prompt to something
         more unique. If that still fails then we return False.
         """
+        print self.logfile
         cmd = "ssh -l %s %s" % (username, server)
         spawn.__init__(self, cmd, timeout=login_timeout)
         #, "(?i)no route to host"])

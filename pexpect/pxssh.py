@@ -125,7 +125,7 @@ class pxssh (spawn):
             This makes it easier to match unambiguously.
         """
         if optional_prompt is not None:
-            self.prompt = optional_prompt
+            self.PROMPT = optional_prompt
         self.sendline (self.PROMPT_SET_SH) # sh-style
         i = self.expect ([TIMEOUT, self.PROMPT], timeout=10)
         if i == 0: # csh-style

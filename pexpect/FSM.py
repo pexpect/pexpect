@@ -60,9 +60,7 @@ defining a default transition.
 
 Noah Spurrier
 
-$Revision$
-$Date$
-
+$Id$
 '''
 
 class ExceptionFSM(Exception):

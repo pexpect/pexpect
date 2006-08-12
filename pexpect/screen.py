@@ -1,6 +1,5 @@
 '''
-$Revision$
-$Date$
+$Id$
 '''
 
 import copy

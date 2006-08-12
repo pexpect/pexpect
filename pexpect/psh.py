@@ -1,6 +1,7 @@
 """This is a utility class to make shell scripting easier in Python.
 It combines Pexpect and wraps many Standard Python Library functions.
 The goal is to make Python an attractive alternative to Sh scripting.
+$Id$
 """
 import pexpect, os, sys
 

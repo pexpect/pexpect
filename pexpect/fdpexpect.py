@@ -1,5 +1,6 @@
 """
 TODO: This is BETA. When it gets stable I will move it into the pexpect.py file.
+$Id$
 """
 
 from pexpect import *

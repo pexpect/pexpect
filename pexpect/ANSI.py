@@ -1,6 +1,6 @@
 '''
-$Revision$
-$Date$
+$Revision: 374 $
+$Date: 2006-03-06 18:47:28 -0800 (Mon, 06 Mar 2006) $
 
 '''
 # references:

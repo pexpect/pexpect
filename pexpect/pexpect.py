@@ -59,8 +59,7 @@ SOFTWARE.
 Pexpect Copyright (c) 2006 Noah Spurrier
 http://pexpect.sourceforge.net/
 
-$Revision$
-$Date$
+$Id$
 """
 try:
     import os, sys, time
@@ -83,7 +82,7 @@ A critical module was not found. Probably this operating system does not support
 Pexpect is intended for UNIX-like operating systems.""")
 
 __version__ = '2.2'
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 399 $'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which', 'split_command_line',
     '__version__', '__revision__']
 
@@ -100,10 +99,13 @@ class ExceptionPexpect(Exception):
         In other words, the stack trace inside the Pexpect module is not included.
         """
         tblist = traceback.extract_tb(sys.exc_info()[2])
-        tblist = filter(self.__filter_not_pexpect, tblist)
+        #tblist = filter(self.__filter_not_pexpect, tblist)
+        tblist = [item for item in tblist if self.__filter_not_pexpect(item)]
         tblist = traceback.format_list(tblist)
         return ''.join(tblist)
     def __filter_not_pexpect(self, trace_list_item):
+        """This returns True if list item 0 the string 'pexpect.py' in it.
+        """
         if trace_list_item[0].find('pexpect.py') == -1:
             return True
         else:
@@ -350,9 +352,8 @@ class spawn (object):
             self.command = None
             self.args = None
             self.name = '<pexpect factory incomplete>'
-            return
-
-        self.__spawn (command, args)
+        else:
+            self.__spawn (command, args)
 
     def __del__(self):
         """This makes sure that no system resources are left open.
@@ -769,10 +770,10 @@ class spawn (object):
             lines.append(line)
         return lines
 
-    def write(self, str):   # File-like object.
+    def write(self, s):   # File-like object.
         """This is similar to send() except that there is no return value.
         """
-        self.send (str)
+        self.send (s)
 
     def writelines (self, sequence):   # File-like object.
         """This calls write() for each element in the sequence.
@@ -780,26 +781,26 @@ class spawn (object):
         typically a list of strings. This does not add line separators
         There is no return value.
         """
-        for str in sequence:
-            self.write (str)
+        for s in sequence:
+            self.write (s)
 
-    def send(self, str):
+    def send(self, s):
         """This sends a string to the child process.
         This returns the number of bytes written.
         If a log file was set then the data is also written to the log.
         """
         time.sleep(self.delaybeforesend)
         if self.logfile is not None:
-            self.logfile.write (str)
+            self.logfile.write (s)
             self.logfile.flush()
-        c = os.write(self.child_fd, str)
+        c = os.write(self.child_fd, s)
         return c
 
-    def sendline(self, str=''):
+    def sendline(self, s=''):
         """This is like send(), but it adds a line feed (os.linesep).
         This returns the number of bytes written.
         """
-        n = self.send(str)
+        n = self.send(s)
         n = n + self.send (os.linesep)
         return n
 

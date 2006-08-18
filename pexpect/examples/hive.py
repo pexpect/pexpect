@@ -33,9 +33,19 @@ You will be asked for your username and password.
 It is assumed that these will be the same for all hosts
 or that you have key pairs registered for each host.
 
+    --askall : This tells Hive that you want to be prompted for your
+                username and password separately for all machines.
+                This is useful if you have differnet usernames and
+                passwords on each host. This can even be used to connect
+                to different user accounts on a single host. For example:
+                    hive.py --askall host1 host1 host1
+
 $Id $
 Noah Spurrier
 """
+# TODO add feature to support username:password@host combination
+# TODO add feature to log each host output in separate file
+
 import sys, os, re, getopt, traceback, types, time, getpass
 import pexpect, pxssh
 
@@ -45,7 +55,7 @@ def exit_with_usage(exit_code=1):
 
 def main ():
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'h?', ['help','h','?','username','password'])
+        optlist, args = getopt.getopt(sys.argv[1:], 'h?', ['help','h','?','askall','username','password'])
     except Exception, e:
         print str(e)
         exit_with_usage()
@@ -54,19 +64,27 @@ def main ():
     if [elem for elem in options if elem in ['-h','--h','-?','--?','--help']]:
         exit_with_usage(0)
 
-    if '--username' in options:
-        username = options['--username']
+    if '--askall' in options:
+        ask_all_mode = True
     else:
-        username = raw_input('username: ')
-    if '--password' in options:
-        password = options['--password']
-    else:
-        password = getpass.getpass('password: ')
+        ask_all_mode = False
+    if not ask_all_mode:
+        if '--username' in options:
+            username = options['--username']
+        else:
+            username = raw_input('username: ')
+        if '--password' in options:
+            password = options['--password']
+        else:
+            password = getpass.getpass('password: ')
 
     hive = {}
     hive_names = []
     for name in args:
         print 'connecting to', name,
+        if ask_all_mode:
+            username = raw_input('username: ')
+            password = getpass.getpass('password: ')
         try:
             hive[name] = pxssh.pxssh()
             hive[name].login(name, username, password)
@@ -110,10 +128,9 @@ def main ():
     used to synchronize all the hosts. This is useful if you 'su' to
     a different user where Hive would not know the prompt to match.
 
-:sendline my text
-    This will send the 'my text' followed by a CR to the targetted hosts.
+:send my text
+    This will send the 'my text' wihtout a line feed to the targetted hosts.
     This output of the hosts is not automatically synchronized.
-    This is useful if you want send a response to username and password prompts.
 """
 
     synchronous_mode = True
@@ -136,10 +153,10 @@ def main ():
             for name in target_names:
                 hive[name].set_unique_prompt()
             continue
-        elif cmd[:9] == ':sendline':
-            cmd, line = cmd.split(None,1)
+        elif cmd[:5] == ':send':
+            cmd, txt = cmd.split(None,1)
             for name in target_names:
-                hive[name].sendline(line)
+                hive[name].send(txt)
             continue
         elif cmd[:7] == ':expect':
             cmd, pattern = cmd.split(None,1)

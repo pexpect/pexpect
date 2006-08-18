@@ -201,12 +201,29 @@ def resync (hive, hive_names, timeout=2, max_attempts=5):
     so that servers that are already at the prompt will not slow
     things down too much. If a server does match a prompt then
     keep asking until it stops. This is a best effort to consume
-    all input. It's kind of kludgy.
+    all input. It's kind of kludgy. Note that this will always
+    introduce a delay equal to the timeout for each machine. So for
+    10 machines with a 2 second delay you will get AT LEAST a 20 second delay.
     """
+    # TODO This is ideal for threading.
     for name in hive_names:
         for attempts in xrange(0, max_attempts):
             if not hive[name].prompt(timeout=timeout):
                 break
+
+def parse_host_connect_string (hcs):
+    """This parses a host connection string in the form username:password@hostname:port.
+    All fields are options expcet hostname. A dictionary is returned with all four keys.
+    Keys that were not included are set to None. Note that if your password has
+    the '@' character then you must backslash escape it.
+    """
+    if '@' in hcs:
+        p = re.compile (r'(?P<username>[^@:]*)(:?)(?P<password>.*)(?!\\)@(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
+    else:
+        p = re.compile (r'(?P<username>)(?P<password>)(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
+    m = p.search (hcs)
+    d = m.groupdict()
+    return m.groupdict()
 
 if __name__ == "__main__":
     try:

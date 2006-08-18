@@ -2,18 +2,41 @@
 """hivesh -- Hive Shell
 
 This lets you ssh to a group of servers and control them as if they were one.
+Each command you enter is sent to each host in parallel. The response of each
+host is collected and printed. In normal synchronous mode Hive will wait for
+each host to return the shell command line prompt. The shell prompt is used
+to synch output.
+
+Example:
+    $ ./hivesh.py host1.example.com host2.example.net
+    username: noah
+    password: 
+    connecting to host1.example.com - OK
+    connecting to host2.example.net- OK
+    targetting hosts: 63.199.26.226 63.199.26.229
+    CMD (? for help) > uptime
+    =======================================================================
+    host1.example.com
+    -----------------------------------------------------------------------
+    uptime
+    23:49:55 up 74 days,  5:14,  2 users,  load average: 0.15, 0.05, 0.01
+    =======================================================================
+    host2.example.net
+    -----------------------------------------------------------------------
+    uptime
+    23:53:02 up 1 day, 13:36,  2 users,  load average: 0.50, 0.40, 0.46
+    =======================================================================
 
 Usage:
-    hivesh.py server1 server2 server3
-Features:
-    *
-    *
-    *
+    hivesh.py host1 host2 host3 ... hostN
+You will be asked for your username and password.
+It is assumed that these will be the same for all hosts
+or that you have key pairs registered for each host.
 
 $Id $
 Noah Spurrier
 """
-import sys, os, re, math, stat, getopt, traceback, types, time, getpass
+import sys, os, re, getopt, traceback, types, time, getpass
 import pexpect, pxssh
 
 def exit_with_usage(exit_code=1):
@@ -58,33 +81,39 @@ def main ():
 
     CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
 
-:target name1 name2 name3 ... - set list of hosts to target commands
+:target name1 name2 name3 ...
+    set list of hosts to target commands
 
-:target all - reset list of hosts to target all hosts in the hive. 
+:target all
+    reset list of hosts to target all hosts in the hive. 
 
-:sync - set mode to wait for shell prompts after commands are run. This is the
-default. When Hive first logs into a host it sets a special shell prompt
-pattern that it can later look for to synchronize output of the hosts. If you
-'su' to another user then it can upset the synchronization. If you need to run
-something like 'su' then use the following pattern:
+:sync
+    set mode to wait for shell prompts after commands are run. This is the
+    default. When Hive first logs into a host it sets a special shell prompt
+    pattern that it can later look for to synchronize output of the hosts. If
+    you 'su' to another user then it can upset the synchronization. If you need
+    to run something like 'su' then use the following pattern:
 
     CMD (? for help) > :async
     CMD (? for help) > sudo su - root
     CMD (? for help) > :prompt
     CMD (? for help) > :sync
 
-:async - set mode to not expect command line prompts (see :sync). Afterwards
-commands are send to target hosts, but their responses are not read back until
-:sync is run. This is useful to run before commands that will not return with
-the special shell prompt pattern that Hive uses to synchronize.
+:async
+    set mode to not expect command line prompts (see :sync). Afterwards
+    commands are send to target hosts, but their responses are not read back
+    until :sync is run. This is useful to run before commands that will not
+    return with the special shell prompt pattern that Hive uses to synchronize.
 
-:prompt - force each host to reset command line prompt to the special pattern
-used to synchronize all the hosts. This is useful if you 'su' to a different
-user.
+:prompt
+    force each host to reset command line prompt to the special pattern
+    used to synchronize all the hosts. This is useful if you 'su' to
+    a different user where Hive would not know the prompt to match.
 
-:sendline my_text - This will send the 'my_text' followed by a CR to the
-targetted hosts. This output of the hosts is not automatically synchronized.
-This is useful if you want send a response to username and password prompts.
+:sendline my text
+    This will send the 'my text' followed by a CR to the targetted hosts.
+    This output of the hosts is not automatically synchronized.
+    This is useful if you want send a response to username and password prompts.
 """
 
     synchronous_mode = True

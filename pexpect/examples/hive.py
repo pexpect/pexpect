@@ -229,7 +229,8 @@ if __name__ == "__main__":
     try:
         start_time = time.time()
         print time.asctime()
-        main()
+    #    main()
+        print parse_host_connect_string(sys.argv[1])
         print time.asctime()
         print "TOTAL TIME IN MINUTES:",
         print (time.time() - start_time) / 60.0

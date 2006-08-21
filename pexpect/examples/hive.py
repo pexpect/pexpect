@@ -53,51 +53,7 @@ def exit_with_usage(exit_code=1):
     print globals()['__doc__']
     os._exit(exit_code)
 
-def main ():
-    try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'h?', ['help','h','?','askall','username','password'])
-    except Exception, e:
-        print str(e)
-        exit_with_usage()
-    options = dict(optlist)
-    # There are a million ways to cry for help. These are but a few of them.
-    if [elem for elem in options if elem in ['-h','--h','-?','--?','--help']]:
-        exit_with_usage(0)
-
-    if '--askall' in options:
-        ask_all_mode = True
-    else:
-        ask_all_mode = False
-    if not ask_all_mode:
-        if '--username' in options:
-            username = options['--username']
-        else:
-            username = raw_input('username: ')
-        if '--password' in options:
-            password = options['--password']
-        else:
-            password = getpass.getpass('password: ')
-
-    hive = {}
-    hive_names = []
-    for name in args:
-        print 'connecting to', name,
-        if ask_all_mode:
-            username = raw_input('username: ')
-            password = getpass.getpass('password: ')
-        try:
-            hive[name] = pxssh.pxssh()
-            hive[name].login(name, username, password)
-            hive_names.append(name)
-            print '- OK'
-        except Exception, e:
-            print '- ERROR',
-            print str(e)
-            print 'Skipping', name
-            if name in hive:
-                del hive[name]
-
-    CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
+CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
 
 :target name1 name2 name3 ...
     set list of hosts to target commands
@@ -133,9 +89,64 @@ def main ():
     This output of the hosts is not automatically synchronized.
 """
 
+def main ():
+    global CMD_HELP
+
+    try:
+        optlist, args = getopt.getopt(sys.argv[1:], 'h?', ['help','h','?','askall','username','password'])
+    except Exception, e:
+        print str(e)
+        exit_with_usage()
+    options = dict(optlist)
+    # There are a million ways to cry for help. These are but a few of them.
+    if [elem for elem in options if elem in ['-h','--h','-?','--?','--help']]:
+        exit_with_usage(0)
+
+    if '--askall' in options:
+        ask_all_mode = True
+    else:
+        ask_all_mode = False
+    if not ask_all_mode:
+        if '--username' in options:
+            username = options['--username']
+        else:
+            username = raw_input('username: ')
+        if '--password' in options:
+            password = options['--password']
+        else:
+            password = getpass.getpass('password: ')
+
+    hive = {}
+    hive_names = []
+    for host_connect_string in args:
+        hcd = parse_host_connect_string (host_connect_string)
+        hostname = hcd['hostname']
+        username = hcd['username']
+        password = hcd['password']
+        port     = hcd['port']
+        print 'connecting to', hostname
+        if ask_all_mode:
+            if username == '':
+                username = raw_input('username: ')
+            if password == '':
+                password = getpass.getpass('password: ')
+        if port == '':
+            port = None
+        try:
+            hive[hostname] = pxssh.pxssh()
+            hive[hostname].login(hostname, username, password, port)
+            hive_names.append(hostname)
+            print '- OK'
+        except Exception, e:
+            print '- ERROR',
+            print str(e)
+            print 'Skipping', hostname
+            if hostname in hive:
+                del hive[hostname]
+
     synchronous_mode = True
-    target_names = hive_names[:]
-    print 'targetting hosts:', ' '.join(target_names)
+    target_hostnames = hive_names[:]
+    print 'targetting hosts:', ' '.join(target_hostnames)
     while True:
         cmd = raw_input('CMD (? for help) > ')
         cmd = cmd.strip()
@@ -144,38 +155,38 @@ def main ():
             continue
         elif cmd==':sync':
             synchronous_mode = True
-            resync (hive, target_names)
+            resync (hive, target_hostnames)
             continue
         elif cmd==':async':
             synchronous_mode = False
             continue
         elif cmd==':prompt':
-            for name in target_names:
-                hive[name].set_unique_prompt()
+            for hostname in target_hostnames:
+                hive[hostname].set_unique_prompt()
             continue
         elif cmd[:5] == ':send':
             cmd, txt = cmd.split(None,1)
-            for name in target_names:
-                hive[name].send(txt)
+            for hostname in target_hostnames:
+                hive[hostname].send(txt)
             continue
         elif cmd[:7] == ':expect':
             cmd, pattern = cmd.split(None,1)
             print 'looking for', pattern
-            for name in target_names:
-                hive[name].expect(pattern)
-                print hive[name].before
+            for hostname in target_hostnames:
+                hive[hostname].expect(pattern)
+                print hive[hostname].before
             continue
         elif cmd[:7] == ':target':
             # TODO need to check target_list against hive_names
-            target_names = cmd.split()[1:]
-            if len(target_names) == 0 or target_names[0] == 'all':
-                target_names = hive_names[:]
-            print 'targetting hosts:', ' '.join(target_names)
+            target_hostnames = cmd.split()[1:]
+            if len(target_hostnames) == 0 or target_hostnames[0] == 'all':
+                target_hostnames = hive_names[:]
+            print 'targetting hosts:', ' '.join(target_hostnames)
             continue
 
         # Run the command on all targets in parallel
-        for name in target_names:
-            hive[name].sendline (cmd)
+        for hostname in target_hostnames:
+            hive[hostname].sendline (cmd)
             # This is a simple hack to detect if switching users, so we can set the prompt.
             #if cmd[:3] == 'su ' or ' su ' in cmd:
             #    print "hacking prompt"
@@ -185,36 +196,37 @@ def main ():
         if cmd == 'exit':
             break
 
-        # if syncronous then wait for the prompts.
+        # if in synchronous mode then wait for the shell prompt
+        # for each host and print its response.
         if synchronous_mode:
-            for name in target_names:
-                hive[name].prompt()
-                print '=============================================================================='
-                print name
-                print '------------------------------------------------------------------------------'
-                print hive[name].before
+            for hostname in target_hostnames:
+                hive[hostname].prompt()
+                print '/============================================================================='
+                print '| ' + hostname
+                print '\\-----------------------------------------------------------------------------'
+                print hive[hostname].before
             print '=============================================================================='
     
 def resync (hive, hive_names, timeout=2, max_attempts=5):
-    """This expects the prompt for each server in an effort to
-    try to get them all to the same state. The timeout is set low
-    so that servers that are already at the prompt will not slow
-    things down too much. If a server does match a prompt then
-    keep asking until it stops. This is a best effort to consume
-    all input. It's kind of kludgy. Note that this will always
-    introduce a delay equal to the timeout for each machine. So for
-    10 machines with a 2 second delay you will get AT LEAST a 20 second delay.
+    """This waits for the shell prompt for each host in an effort to try to get
+    them all to the same state. The timeout is set low so that hosts that are
+    already at the prompt will not slow things down too much. If a prompt match
+    is made for a hosts then keep asking until it stops matching. This is a
+    best effort to consume all input if it printed more than one prompt. It's
+    kind of kludgy. Note that this will always introduce a delay equal to the
+    timeout for each machine. So for 10 machines with a 2 second delay you will
+    get AT LEAST a 20 second delay.
     """
     # TODO This is ideal for threading.
-    for name in hive_names:
+    for hostname in hive_names:
         for attempts in xrange(0, max_attempts):
-            if not hive[name].prompt(timeout=timeout):
+            if not hive[hostname].prompt(timeout=timeout):
                 break
 
 def parse_host_connect_string (hcs):
     """This parses a host connection string in the form username:password@hostname:port.
     All fields are options expcet hostname. A dictionary is returned with all four keys.
-    Keys that were not included are set to None. Note that if your password has
+    Keys that were not included are set to empty strings ''. Note that if your password has
     the '@' character then you must backslash escape it.
     """
     if '@' in hcs:
@@ -229,8 +241,7 @@ if __name__ == "__main__":
     try:
         start_time = time.time()
         print time.asctime()
-    #    main()
-        print parse_host_connect_string(sys.argv[1])
+        main()
         print time.asctime()
         print "TOTAL TIME IN MINUTES:",
         print (time.time() - start_time) / 60.0

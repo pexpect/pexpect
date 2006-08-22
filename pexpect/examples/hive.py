@@ -235,7 +235,8 @@ def parse_host_connect_string (hcs):
         p = re.compile (r'(?P<username>)(?P<password>)(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
     m = p.search (hcs)
     d = m.groupdict()
-    return m.groupdict()
+    d['password'] = d['password'].replace('\\@','@')
+    return d
 
 if __name__ == "__main__":
     try:

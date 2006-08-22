@@ -108,14 +108,14 @@ def endless_poll (child, prompt, screen, refresh_timeout=1):
     """This keeps the screen updated with the output of the child.
         This runs in a separate thread.
     """
-    child.logfile = screen
+    child.logfile_read = screen
     while True:
         child.prompt (timeout=refresh_timeout)
-        #i = child.expect ([prompt, pexpect.TIMEOUT], timeout=refresh_timeout)
+        time.sleep(1)
 
 def main ():
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'h?d', ['help','h','?', 'hostname', 'username', 'password', 'port'])
+        optlist, args = getopt.getopt(sys.argv[1:], 'h?d', ['help','h','?', 'hostname=', 'username=', 'password=', 'port='])
     except Exception, e:
         print str(e)
         exit_with_usage()
@@ -130,12 +130,9 @@ def main ():
     port = 1664
     username = os.getenv('USER')
     password = ""
-
+    daemon_mode = False
     if '-d' in options:
         daemon_mode = True
-    else:
-        daemon_mode = False
-
     if '--hostname' in options:
         hostname = options['--hostname']
     if '--port' in options:
@@ -160,6 +157,7 @@ def main ():
     child.login (hostname, username, password)
     print 'created shell. command line prompt is', child.PROMPT
     #child.sendline ('stty -echo')
+    #child.setecho(False)
     virtual_screen.write (child.before)
     virtual_screen.write (child.after)
 
@@ -180,36 +178,43 @@ def main ():
             conn, addr = s.accept()
             print 'Connected by', addr
             data = conn.recv(1024)
-            request = data.split(' ', 1)
-            if len(request) < 2:
-                conn.send(error_response('request did not have enough arguments.'))
-                conn.close()
-                continue   
-            cmd = request[0].strip()
-            arg = request[1].strip()
+            #if len(request) < 2:
+            #    conn.send(error_response('request did not have enough arguments.'))
+            #    conn.close()
+            #    continue   
+            if data[0]!=':':
+                cmd = ':command'
+                arg = data.strip()
+            else:
+                request = data.split(' ', 1)
+                if len(request)>1:
+                    cmd = request[0].strip()
+                    arg = request[1].strip()
+                else:
+                    cmd = request[0].strip()
 
-            if cmd == 'command' or cmd == 'pretty':
+            if cmd == ':command':
                 child.sendline (arg)
-                child.prompt(timeout=1)
-            elif cmd == 'refresh':
-                pass
+                child.prompt(timeout=2)
                 shell_window = pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))
-            elif cmd == 'skip':
-            # Wait until the TIMEOUT then throw away all data from the child.
-            # Use to catch up the screen with the shell if state gets out of sync.
-                child.expect (pexpect.TIMEOUT)
-                sh_response = child.before.replace ('\r', '')
-                virtual_screen.write (sh_response)
-            if cmd == 'command':
-                shell_window = virtual_screen.dump()
-            elif cmd == 'pretty':
+            elif cmd == ':send':
+                child.send (arg)
                 shell_window = pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))
+            elif cmd == ':refresh':
+                shell_window = pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))
+            #elif cmd == ':skip':
+            #    # Wait until the TIMEOUT then throw away all data from the child.
+            #    # Use to catch up the screen with the shell if state gets out of sync.
+            #    child.expect (pexpect.TIMEOUT)
+            #    sh_response = child.before.replace ('\r', '')
+            #    virtual_screen.write (sh_response)
             response = []
-            response.append ('%03d' % virtual_screen.rows)
-            response.append ('%03d' % virtual_screen.cols)
+            #response.append ('%03d' % virtual_screen.rows)
+            #response.append ('%03d' % virtual_screen.cols)
             response.append (shell_window)
             #response = add_cursor_blink (response, row, col)
             sent = conn.send('\n'.join(response))
+            print '\n'.join(response)
             if sent < len (response):
                 print "Sent is too short. Some data was cut off."
             conn.close()
@@ -230,16 +235,37 @@ def error_response (msg):
     response = []
     response.append ('000')
     response.append ('000')
-    response.append ("""{REQUEST} {ARGUMENT}
+    response.append ("""All commands start with :
+:{REQUEST} {ARGUMENT}
 {REQUEST} may be one of the following:
-    command : Run the ARGUMENT as a shell command. Returns raw screen array.
-    pretty  : Like 'command', but formats the screen array for printing.
-    skip    : Use to catch up the screen with the shell if state gets out of sync.
+    :command : Run the ARGUMENT as a shell command.
+    :send    : send the characters in the ARGUMENT without a line feed.
+    :refresh : Use to catch up the screen with the shell if state gets out of sync.
 Example:
-    pretty ls -l
+    :command ls -l
+You may also leave off :command and it will be assumed.
+Example:
+    ls -l
+is equivalent to:
+    :command ls -l
 """)
     response.append (msg)
     return '\n'.join(response)
+
+def parse_host_connect_string (hcs):
+    """This parses a host connection string in the form username:password@hostname:port.
+    All fields are options expcet hostname. A dictionary is returned with all four keys.
+    Keys that were not included are set to empty strings ''. Note that if your password has
+    the '@' character then you must backslash escape it.
+    """
+    if '@' in hcs:
+        p = re.compile (r'(?P<username>[^@:]*)(:?)(?P<password>.*)(?!\\)@(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
+    else:
+        p = re.compile (r'(?P<username>)(?P<password>)(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
+    m = p.search (hcs)
+    d = m.groupdict()
+    d['password'] = d['password'].replace('\\@','@')
+    return d
      
 if __name__ == "__main__":
 #    daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')

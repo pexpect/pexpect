@@ -332,6 +332,8 @@ class spawn (object):
         self.timeout = timeout
         self.delimiter = EOF
         self.logfile = logfile    
+        self.logfile_read = None # input from child (read_nonblocking)
+        self.logfile_send = None # output to send (send, sendline)
         sys.stdout.flush()
         self.maxread = maxread # Max bytes to read at one time into buffer.
         self.buffer = '' # This is the read buffer. See maxread.
@@ -395,6 +397,8 @@ class spawn (object):
         s.append('timeout: ' + str(self.timeout))
         s.append('delimiter: ' + str(self.delimiter))
         s.append('logfile: ' + str(self.logfile))
+        s.append('logfile_read: ' + str(self.logfile_read))
+        s.append('logfile_send: ' + str(self.logfile_send))
         s.append('maxread: ' + str(self.maxread))
         s.append('ignorecase: ' + str(self.ignorecase))
         s.append('searchwindowsize: ' + str(self.searchwindowsize))
@@ -694,6 +698,9 @@ class spawn (object):
             if self.logfile is not None:
                 self.logfile.write (s)
                 self.logfile.flush()
+            if self.logfile_read is not None:
+                self.logfile_read.write (s)
+                self.logfile_read.flush()
 
             return s
 
@@ -793,6 +800,9 @@ class spawn (object):
         if self.logfile is not None:
             self.logfile.write (s)
             self.logfile.flush()
+        if self.logfile_send is not None:
+            self.logfile_send.write (s)
+            self.logfile_send.flush()
         c = os.write(self.child_fd, s)
         return c
 

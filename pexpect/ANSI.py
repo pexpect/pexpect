@@ -230,7 +230,7 @@ class ANSI (term):
 
         if ch not in string.printable:
             fout = open ('log', 'a')
-            fout.write ('Nonprint: ' + str(ord(ch)))
+            fout.write ('Nonprint: ' + str(ord(ch)) + '\n')
             fout.close()
             return
         self.put_abs(self.cur_r, self.cur_c, ch)

@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+"""This is a CGI interface to bd_serv.py.
+"""
+
 # #sys.path.insert (0,"/var/www/cgi-bin")
 
 import sys

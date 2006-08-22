@@ -6,9 +6,11 @@ def recv_wrapper(s):
     r,w,e = select.select([s.fileno()],[],[], 2)
     if not r:
         return ''
-    cols = int(s.recv(4))
-    rows = int(s.recv(4))
-    packet_size = cols * rows 
+    #cols = int(s.recv(4))
+    #rows = int(s.recv(4))
+    cols = 80
+    rows = 24
+    packet_size = cols * rows * 2 # double it for good measure
     return s.recv(packet_size)
 
 HOST = '' #'localhost'    # The remote host
@@ -17,7 +19,8 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 s.connect((HOST, PORT))
 time.sleep(1)
 #s.setblocking(0)
-s.send('COMMAND' + '\x01' + sys.argv[1])
+#s.send('COMMAND' + '\x01' + sys.argv[1])
+s.send(':command ' + sys.argv[1])
 print recv_wrapper(s)
 s.close()
 sys.exit()

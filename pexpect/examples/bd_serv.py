@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """Back door shell server
 
-This exposes a shell terminal emulator on a socket.
+This exposes an shell terminal on a socket.
 
     --hostname : sets the remote host name to open an ssh connection to.
     --username : sets the user name to login with
@@ -10,7 +10,7 @@ This exposes a shell terminal emulator on a socket.
 """
 # Having the password on the command line is not a good idea, but
 # then this entire project is probably not the most security concious thing
-# I've ever built. This should be considered an experimental tool.
+# I've ever built. This should be considered an experimental tool -- at best.
 import pxssh, pexpect, ANSI
 import socket
 import time, sys, os, getopt, getpass
@@ -38,6 +38,20 @@ class roller (threading.Thread):
         while not self.finished.isSet():
             # self.finished.wait(self.interval)
             self.function(*self.args, **self.kwargs)
+
+def endless_poll (child, prompt, screen, refresh_timeout=0.1):
+    """This keeps the screen updated with the output of the child.
+        This runs in a separate thread.
+        See roller().
+    """
+    child.logfile_read = screen
+    while True:
+        #child.prompt (timeout=refresh_timeout)
+        try:
+            #child.read_nonblocking(1,timeout=refresh_timeout)
+            child.read_nonblocking(4000, 0.1)
+        except:
+            pass
 
 def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     '''This forks the current process into a daemon.
@@ -104,15 +118,6 @@ def add_cursor_blink (response, row, col):
     i = (row-1) * 80 + col
     return response[:i]+'<img src="http://www.noah.org/cursor.gif">'+response[i:]
 
-def endless_poll (child, prompt, screen, refresh_timeout=1):
-    """This keeps the screen updated with the output of the child.
-        This runs in a separate thread.
-    """
-    child.logfile_read = screen
-    while True:
-        child.prompt (timeout=refresh_timeout)
-        time.sleep(1)
-
 def main ():
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'h?d', ['help','h','?', 'hostname=', 'username=', 'password=', 'port='])
@@ -145,10 +150,10 @@ def main ():
     else:
         password = getpass.getpass('password: ')
    
-    #if daemon_mode: 
-    #    print "daemonizing server"
-    #    daemonize ()
-    #daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')
+    if daemon_mode: 
+        print "daemonizing server"
+        daemonize()
+        #daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')
     
     sys.stdout.write ('server started with pid %d\n' % os.getpid() )
 
@@ -183,7 +188,7 @@ def main ():
             #    conn.close()
             #    continue   
             if data[0]!=':':
-                cmd = ':command'
+                cmd = ':sendline'
                 arg = data.strip()
             else:
                 request = data.split(' ', 1)
@@ -193,15 +198,24 @@ def main ():
                 else:
                     cmd = request[0].strip()
 
-            if cmd == ':command':
+            if cmd == ':exit':
+                r.cancel()
+                break
+            elif cmd == ':sendline':
                 child.sendline (arg)
                 child.prompt(timeout=2)
-                shell_window = pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))
-            elif cmd == ':send':
+                shell_window = str(virtual_screen) #pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))
+            elif cmd == ':send' or cmd==':xsend':
+                if cmd==':xsend':
+                    arg = arg.decode("hex")
                 child.send (arg)
-                shell_window = pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))
+                time.sleep(0.2)
+                shell_window = str(virtual_screen) #pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))
+            elif cmd == ':cursor':
+                shell_window = '%x%x' % (virtual_screen.cur_r, virtual_screen.cur_c)
             elif cmd == ':refresh':
-                shell_window = pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))
+                shell_window = str(virtual_screen) #pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))
+
             #elif cmd == ':skip':
             #    # Wait until the TIMEOUT then throw away all data from the child.
             #    # Use to catch up the screen with the shell if state gets out of sync.
@@ -209,8 +223,6 @@ def main ():
             #    sh_response = child.before.replace ('\r', '')
             #    virtual_screen.write (sh_response)
             response = []
-            #response.append ('%03d' % virtual_screen.rows)
-            #response.append ('%03d' % virtual_screen.cols)
             response.append (shell_window)
             #response = add_cursor_blink (response, row, col)
             sent = conn.send('\n'.join(response))
@@ -218,12 +230,10 @@ def main ():
             if sent < len (response):
                 print "Sent is too short. Some data was cut off."
             conn.close()
-            if arg == 'exit':
-                s.close()
-                break
     finally:
         print "cleaning up socket"
         s.close()
+        print "done!"
 
 def pretty_box (rows, cols, s):
     """This puts an ASCII text box around the given string, s.
@@ -233,21 +243,19 @@ def pretty_box (rows, cols, s):
     
 def error_response (msg):
     response = []
-    response.append ('000')
-    response.append ('000')
     response.append ("""All commands start with :
 :{REQUEST} {ARGUMENT}
 {REQUEST} may be one of the following:
-    :command : Run the ARGUMENT as a shell command.
+    :sendline: Run the ARGUMENT followed by a line feed.
     :send    : send the characters in the ARGUMENT without a line feed.
     :refresh : Use to catch up the screen with the shell if state gets out of sync.
 Example:
-    :command ls -l
+    :sendline ls -l
 You may also leave off :command and it will be assumed.
 Example:
     ls -l
 is equivalent to:
-    :command ls -l
+    :sendline ls -l
 """)
     response.append (msg)
     return '\n'.join(response)
@@ -268,6 +276,15 @@ def parse_host_connect_string (hcs):
     return d
      
 if __name__ == "__main__":
-#    daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')
-    main()
+    try:
+        start_time = time.time()
+        print time.asctime()
+        main()
+        print time.asctime()
+        print "TOTAL TIME IN MINUTES:",
+        print (time.time() - start_time) / 60.0
+    except Exception, e:
+        print str(e)
+        tb_dump = traceback.format_exc()
+        print str(tb_dump)
 

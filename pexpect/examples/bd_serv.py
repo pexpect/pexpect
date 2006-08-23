@@ -12,9 +12,7 @@ This exposes an shell terminal on a socket.
 # then this entire project is probably not the most security concious thing
 # I've ever built. This should be considered an experimental tool -- at best.
 import pxssh, pexpect, ANSI
-import socket
-import time, sys, os, getopt, getpass
-import threading
+import time, sys, os, getopt, getpass, traceback, threading, socket
 
 def exit_with_usage(exit_code=1):
     print globals()['__doc__']

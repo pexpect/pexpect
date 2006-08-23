@@ -7,6 +7,7 @@ This exposes an shell terminal on a socket.
     --username : sets the user name to login with
     --password : (optional) sets the password to login with
     --port     : set the local port for the server to listen on
+    --watch    : show the virtual screen after each client request
 """
 # Having the password on the command line is not a good idea, but
 # then this entire project is probably not the most security concious thing
@@ -42,14 +43,19 @@ def endless_poll (child, prompt, screen, refresh_timeout=0.1):
         This runs in a separate thread.
         See roller().
     """
-    child.logfile_read = screen
-    while True:
-        #child.prompt (timeout=refresh_timeout)
-        try:
-            #child.read_nonblocking(1,timeout=refresh_timeout)
-            child.read_nonblocking(4000, 0.1)
-        except:
-            pass
+    #child.logfile_read = screen
+    try:
+        s = child.read_nonblocking(4000, 0.1)
+        screen.write(s)
+    except:
+        pass
+    #while True:
+    #    #child.prompt (timeout=refresh_timeout)
+    #    try:
+    #        #child.read_nonblocking(1,timeout=refresh_timeout)
+    #        child.read_nonblocking(4000, 0.1)
+    #    except:
+    #        pass
 
 def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     '''This forks the current process into a daemon.
@@ -118,7 +124,7 @@ def add_cursor_blink (response, row, col):
 
 def main ():
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'h?d', ['help','h','?', 'hostname=', 'username=', 'password=', 'port='])
+        optlist, args = getopt.getopt(sys.argv[1:], 'h?d', ['help','h','?', 'hostname=', 'username=', 'password=', 'port=', 'watch'])
     except Exception, e:
         print str(e)
         exit_with_usage()
@@ -136,6 +142,10 @@ def main ():
     daemon_mode = False
     if '-d' in options:
         daemon_mode = True
+    if '--watch' in options:
+        watch_mode = True
+    else:
+        watch_mode = False
     if '--hostname' in options:
         hostname = options['--hostname']
     if '--port' in options:
@@ -164,12 +174,19 @@ def main ():
     virtual_screen.write (child.before)
     virtual_screen.write (child.after)
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    if os.path.exists("/tmp/mysock"): os.remove("/tmp/mysock")
+    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     localhost = '127.0.0.1'
-    s.bind((localhost, port))
+    s.bind('/tmp/mysock')
+    os.chmod('/tmp/mysock',0777)
     print 'Listen'
     s.listen(1)
     print 'Accept'
+    #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #localhost = '127.0.0.1'
+    #s.bind((localhost, port))
+    #print 'Listen'
+    #s.listen(1)
 
     r = roller (0.01, endless_poll, (child, child.PROMPT, virtual_screen))
     r.start()
@@ -181,10 +198,6 @@ def main ():
             conn, addr = s.accept()
             print 'Connected by', addr
             data = conn.recv(1024)
-            #if len(request) < 2:
-            #    conn.send(error_response('request did not have enough arguments.'))
-            #    conn.close()
-            #    continue   
             if data[0]!=':':
                 cmd = ':sendline'
                 arg = data.strip()
@@ -195,42 +208,38 @@ def main ():
                     arg = request[1].strip()
                 else:
                     cmd = request[0].strip()
-
             if cmd == ':exit':
                 r.cancel()
                 break
             elif cmd == ':sendline':
                 child.sendline (arg)
-                child.prompt(timeout=2)
-                shell_window = str(virtual_screen) #pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))
+                #child.prompt(timeout=2)
+                time.sleep(0.2)
+                shell_window = str(virtual_screen)
             elif cmd == ':send' or cmd==':xsend':
                 if cmd==':xsend':
                     arg = arg.decode("hex")
                 child.send (arg)
                 time.sleep(0.2)
-                shell_window = str(virtual_screen) #pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))
+                shell_window = str(virtual_screen)
             elif cmd == ':cursor':
                 shell_window = '%x%x' % (virtual_screen.cur_r, virtual_screen.cur_c)
             elif cmd == ':refresh':
-                shell_window = str(virtual_screen) #pretty_box(virtual_screen.rows,virtual_screen.cols,str(virtual_screen))
+                shell_window = str(virtual_screen)
 
-            #elif cmd == ':skip':
-            #    # Wait until the TIMEOUT then throw away all data from the child.
-            #    # Use to catch up the screen with the shell if state gets out of sync.
-            #    child.expect (pexpect.TIMEOUT)
-            #    sh_response = child.before.replace ('\r', '')
-            #    virtual_screen.write (sh_response)
             response = []
             response.append (shell_window)
             #response = add_cursor_blink (response, row, col)
             sent = conn.send('\n'.join(response))
-            print '\n'.join(response)
+            if watch_mode: print '\n'.join(response)
             if sent < len (response):
                 print "Sent is too short. Some data was cut off."
             conn.close()
     finally:
+        r.cancel()
         print "cleaning up socket"
         s.close()
+        if os.path.exists("/tmp/mysock"): os.remove("/tmp/mysock")
         print "done!"
 
 def pretty_box (rows, cols, s):
@@ -259,10 +268,11 @@ is equivalent to:
     return '\n'.join(response)
 
 def parse_host_connect_string (hcs):
-    """This parses a host connection string in the form username:password@hostname:port.
-    All fields are options expcet hostname. A dictionary is returned with all four keys.
-    Keys that were not included are set to empty strings ''. Note that if your password has
-    the '@' character then you must backslash escape it.
+    """This parses a host connection string in the form
+    username:password@hostname:port. All fields are options expcet hostname. A
+    dictionary is returned with all four keys. Keys that were not included are
+    set to empty strings ''. Note that if your password has the '@' character
+    then you must backslash escape it.
     """
     if '@' in hcs:
         p = re.compile (r'(?P<username>[^@:]*)(:?)(?P<password>.*)(?!\\)@(?P<hostname>[^:]*):?(?P<port>[0-9]*)')

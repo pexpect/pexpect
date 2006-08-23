@@ -1,61 +1,40 @@
 #!/usr/bin/env python
 # #sys.path.insert (0,"/var/www/cgi-bin")
+#sys.path.insert (0,"/usr/local/apache/cgi-bin")
 
-import sys
-import os
-import commands
-import cgi
-import traceback
-import string
-import re
-import socket
+import sys, os, socket, random, string, traceback, cgi
 
-ROOTPATH="/tmp"
 CGISH_HTML="""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title>Untitled Document</title>
+<title>%(TITLE)s</title>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <style type=text/css>
-body 
+a {color: #9f9; text-decoration: none}
+a:hover {color: #0f0}
+hr {color: #0f0}
+html,body,textarea,input,form
 {
-    font-family: "Courier New", Courier, mono; 
-    font-size: 8pt; 
-    color: #00cc00;
-    background-color: #002000; 
+font-family: "Courier New", Courier, mono; 
+font-size: 8pt; 
+color: #0c0;
+background-color: #030;
+margin:0;
+padding:0;
+border:0;
 }
-.headline {font-size: 18pt}
-a {color: #99ff99; text-decoration: none}
-a:hover {color: #00FF00}
-hr {color: #00ff00}
-.cursor {color:#002000;background-color:#00cc00}
-form {
-    font-family: "Courier New", Courier, mono;
-    font-size: 8pt; 
-    color: #00CC00;
-    background-color: #002000;
-}
-input {
-    font-family: "Courier New", Courier, mono;
-    font-size: 8pt; 
-    color: #00CC00;
-    background-color: #003300;
-    padding: 0px;
-    border: 0;
-}
+input { background-color: #020; }
 textarea {
-    font-family: "Courier New", Courier, mono;
-    font-size: 8pt; 
-    color: #00CC00;
-    background-color: #003300;
-    border-width: 1;
-    border-color: #00cc00;
-    border-style: solid;
+border-width:1;
+border-style:solid;
+border-color:#0c0;
+padding:3;
+margin:3;
 }
 </style>
 
 <script language="JavaScript">
-function firstFocus()
+function focus_first()
 {if (document.forms.length > 0)
 {var TForm = document.forms[0];
 for (i=0;i<TForm.length;i++){
@@ -63,24 +42,21 @@ if ((TForm.elements[i].type=="text")||
 (TForm.elements[i].type=="textarea")||
 (TForm.elements[i].type.toString().charAt(0)=="s"))
 {document.forms[0].elements[i].focus();break;}}}}
-</script>
 
-<script language="JavaScript">
 // JavaScript Virtual Keyboard
-// Noah Spurrier <noah@noah.org>
 // If you like this code then buy me a sandwich.
+// Noah Spurrier <noah@noah.org>
 var flag_shift=0;
 var flag_shiftlock=0;
 var flag_ctrl=0;
-var ButtonOnColor = "#eeee00";
-var TextDestination = "";
+var ButtonOnColor = "#ee0";
 
 function init ()
 {
-    TextDestination = "typed_text";
-    // Hack to set quote key to show both single and double quote.
+    // hack to set quote key to show both single quote and double quote
     document.form['quote'].value = "'" + '  "';
-    //focus_typed_text();
+    refresh_screen();
+    document.form["command"].focus();
 }
 
 function loadurl(dest)
@@ -96,7 +72,7 @@ function update_virtual_screen()
     if ((xmlhttp.readyState == 4) && (xmlhttp.status == 200))
     {
         var screen_text = xmlhttp.responseText;
-        document.form[TextDestination].value = screen_text;
+        document.form["screen_text"].value = screen_text;
         //var json_data = json_parse(xmlhttp.responseText);
     }
 }
@@ -124,20 +100,13 @@ function type_key (chars)
     {
         ch = chars.substr(0,1);
     }
-
     loadurl('bd_client.cgi?ajax=send&arg=' + escape(ch));
-    //insert_at_cursor (document.form[TextDestination], ch);
     if (flag_shift || flag_ctrl)
     {
         flag_shift = 0;
         flag_ctrl = 0;
     }
     update_button_colors();
-    //focus_typed_text();
-}
-function focus_typed_text()
-{
-    document.form[TextDestination].focus();
 }
 
 function key_shiftlock()
@@ -153,7 +122,6 @@ function key_shiftlock()
         flag_shiftlock = 1;
     }
     update_button_colors();
-    focus_typed_text();
 }
 
 function key_shift()
@@ -169,7 +137,6 @@ function key_shift()
         flag_shift = 1;
     }
     update_button_colors(); 
-    focus_typed_text();
 }
 function key_ctrl ()
 {
@@ -185,7 +152,6 @@ function key_ctrl ()
     }
     
     update_button_colors();
-    focus_typed_text();
 }
 function update_button_colors ()
 {
@@ -219,78 +185,6 @@ function update_button_colors ()
     }
     
 }
-function key_backspace()
-{
-    //document.form[TextDestination].value = document.form[TextDestination].value.slice(0,-1);
-    backspace_at_cursor (document.form[TextDestination]);
-    update_button_colors();
-    focus_typed_text();
-}
-
-function backspace_at_cursor (field) 
-// This works for IE/Mozilla/Nutscrape. 
-{
-    // IE
-   if (document.selection)
-     {
-        field.focus();
-        var r=document.selection.createRange();
-        // If nothing selected then select one character to the left of caret.
-        if (r.text.length == 0)
-        {
-            r.move('character', -1);
-            r.moveEnd ('character', 1);
-            // If still no text selected then this means field is empty.
-            // Don't want to still try to delete otherwise it actually removes
-            // the field from the form!
-            if (r.text.length == 0) {
-                return;
-            }
-        }
-        r.execCommand ('Delete');
-        r.execCommand ('Unselect');
-    }
-    // Mozilla/Nutscrape
-    else if (field.selectionStart || field.selectionStart == '0') {
-        // If nothing selected then select one character to the left of caret.
-        if (field.selectionStart == field.selectionEnd){
-            field.selectionStart -= 1;
-        }
-        var final_position = field.selectionStart;
-        field.value = field.value.substring(0, field.selectionStart)
-                    + field.value.substring(field.selectionEnd, field.value.length);
-        field.setSelectionRange(final_position,final_position); // leave the cursor at delete point.
-    } 
-    // Default is just to delete from end :-(
-   else {
-       field.value = field.value.substring(0,field.value.length-1);
-   }
-}
-
-function insert_at_cursor (field, str) 
-// This works for IE/Mozilla/Nutscrape. 
-// If none of those work then it just appends.
-{
-    // IE
-    if (document.selection) {
-        field.focus();
-        sel = document.selection.createRange();
-        sel.text = str;
-    }
-    // Mozilla/Nutscrape
-    else if (field.selectionStart || field.selectionStart == '0') {
-        var final_position = field.value.substring(0, field.selectionStart).length + str.length;
-        field.value = field.value.substring(0, field.selectionStart)
-                    + str
-                    + field.value.substring(field.selectionEnd, field.value.length);
-        field.setSelectionRange(final_position, final_position); // leave the cursor at end of insert.
-    } 
-    // Default is just to append :-(
-    else {
-        field.value += str;
-    }
-}
-
 </script>
 
 </head>
@@ -298,9 +192,10 @@ function insert_at_cursor (field, str)
 <!-- <body onLoad="firstFocus()"> -->
 <body onload="init()">
 <form id="form" name="form" action="/cgi-bin/bd_client.cgi" method="POST">
-<textarea name="typed_text" cols="80" rows="24">%(SHELL_OUTPUT)s</textarea>
+<input name="sid" value="%(SID)s" type="hidden">
+<textarea name="screen_text" cols="80" rows="24">%(SHELL_OUTPUT)s</textarea>
 <hr noshade="1">
-<input name="command" type="text" size="80"><br>
+&nbsp;<input name="command" id="command" type="text" size="80"><br>
 <p align="left"> 
 <table border="0" align="left">
 <tr>
@@ -380,84 +275,67 @@ function insert_at_cursor (field, str)
 </body>
 </html>
 """
-def page (result = ''):
-    """Return the main form"""
-    return CGISH_HTML % {'SHELL_OUTPUT':result}
 
-def bd_client (command, host='localhost', port = 1664):
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((host, port))
+def random_sid ():
+    a=random.randint(0,65535)
+    b=random.randint(0,65535)
+    return 'pxssh%04x%04x' % (a,b)
+
+def bd_client (command, host='localhost', port=-1):
+    """This sends a request to the server and returns the response.
+    If port is less than 0 then host is assumed
+    to be the filename of a Unix domain socket.
+    """
+    if port < 0:
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.connect(host)
+    else:
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((host, port))
     s.send(command)
     data = s.recv (2500)
     s.close()
     return data
 
-    #fout = file ('/tmp/log2','w')
-    #fout.write (command)
-    #fout.write ('\n')
-#    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#    s.connect((host, port))
-#    s.send(command)
-#    data = s.recv(1024)
-    #fout.write (data)
-    #fout.write ('\n')
-#    s.close()
-    #fout.close()
-#    return data
-
-#def link (matchobject):
-#    """Used in re.sub calls to replace a matched object with an HTML link."""
-#    path = matchobject.group(0)
-#    l = "<a href=\"http://63.199.26.227/cgi-bin/ls.py?root=%s&path=%s\">%s</a>" % \
-#        (ROOTPATH+"/"+path, ROOTPATH+"/"+path, path)
-#    return l
-
-def escape_shell_meta_chars(s):
-     """Escape shell meta characters.
-     """
-     s = string.replace(s, "\\", "\\\\")
-     s = string.replace(s, "`", "\\`")
-     s = string.replace(s, " ", "\\ ",)
-     s = string.replace(s, "&", "\\&",)
-     s = string.replace(s, ";", "\\;",)
-     s = string.replace(s, "\"", "\\\"",)
-     s = string.replace(s, "\'", "\\'",)
-     s = string.replace(s, "|", "\\|",)
-     s = string.replace(s, "*", "\\*",)
-     s = string.replace(s, "<", "\\<",)
-     s = string.replace(s, ">", "\\>",)
-     return s
-
-#sys.path.insert (0,"/usr/local/apache/cgi-bin")
-sys.stderr = sys.stdout
 print "Content-type: text/html;charset=utf-8\r\n"
+sys.stderr = sys.stdout
+ajax_mode = False
+TITLE="Shell"
+SHELL_OUTPUT=""
+SID="NOT"
 try:
     form = cgi.FieldStorage()
+    if not form.has_key('sid'):
+        SID=random_sid()
+    else:
+        SID=form['sid'].value
     if form.has_key('ajax'):
+        ajax_mode = True
         ajax_cmd = form['ajax'].value
         if ajax_cmd == 'send':
             command = ':xsend'
             arg = form['arg'].value.encode('hex')
-            result = bd_client (command + ' ' + arg)
+            result = bd_client (command + ' ' + arg, "/tmp/mysock")
             print result
         elif ajax_cmd == 'refresh':
             command = ':refresh'
-            result = bd_client (command)
+            result = bd_client (command, "/tmp/mysock")
             print result
         elif ajax_cmd == 'cursor':
             command = ':cursor'
-            result = bd_client (command)
+            result = bd_client (command, "/tmp/mysock")
             print result
-
     elif form.has_key('command'):
         command = form["command"].value
-        result = bd_client (command)
-        print page(result)
+        SHELL_OUTPUT = bd_client (command, "/tmp/mysock")
+        print CGISH_HTML % locals()
     else:
-        print page()
+        print CGISH_HTML % locals()
 except:
     tb_dump = traceback.format_exc()
-    print "Content-type: text/html"
-    print
-    print page(str(tb_dump))
+    if ajax_mode:
+        print str(tb_dump)
+    else:
+        SHELL_OUTPUT=str(tb_dump)
+        print CGISH_HTML % locals()
 

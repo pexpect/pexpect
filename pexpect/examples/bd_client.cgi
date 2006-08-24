@@ -58,10 +58,38 @@ function init ()
     refresh_screen();
     document.form["command"].focus();
 }
+function multibrowser_ajax ()
+{
+    var xmlHttp = false;
+/*@cc_on @*/
+/*@if (@_jscript_version >= 5)
+    try
+    {
+        xmlHttp = new ActiveXObject("Msxml2.XMLHTTP");
+    }
+    catch (e)
+    {
+        try
+        {
+            xmlHttp = new ActiveXObject("Microsoft.XMLHTTP");
+        }
+        catch (e2)
+        {
+              xmlHttp = false;
+        }
+    }
+@end @*/
 
+    if (!xmlHttp && typeof XMLHttpRequest != 'undefined')
+    {
+        xmlHttp = new XMLHttpRequest();
+    }
+    return xmlHttp;
+}
 function loadurl(dest)
 { 
-    xmlhttp = window.XMLHttpRequest?new XMLHttpRequest(): new ActiveXObject("Microsoft.XMLHTTP");
+    xmlhttp = multibrowser_ajax();
+    //window.XMLHttpRequest?new XMLHttpRequest(): new ActiveXObject("Microsoft.XMLHTTP");
     xmlhttp.onreadystatechange = update_virtual_screen;
     xmlhttp.open("GET", dest);
     xmlhttp.setRequestHeader("If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT");

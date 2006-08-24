@@ -185,11 +185,33 @@ function update_button_colors ()
     }
     
 }
+function keyHandler(e)
+{
+    var pressedKey;
+    if (document.all)    { e = window.event; }
+    if (document.layers) { pressedKey = e.which; }
+    if (document.all)    { pressedKey = e.keyCode; }
+    pressedCharacter = String.fromCharCode(pressedKey);
+    type_key(pressedCharacter+pressedCharacter+pressedCharacter);
+    alert(pressedCharacter);
+//    alert(' Character = ' + pressedCharacter + ' [Decimal value = ' + pressedKey + ']');
+}
+//document.onkeypress = keyHandler;
+//if (document.layers)
+//    document.captureEvents(Event.KEYPRESS);
+//http://sniptools.com/jskeys
+document.onkeyup = KeyCheck;       
+function KeyCheck(e)
+{
+    var KeyID = (window.event) ? event.keyCode : e.keyCode;
+    type_key(String.fromCharCode(KeyID));
+    e.cancelBubble = true;
+    window.event.cancelBubble = true;
+}
 </script>
 
 </head>
 
-<!-- <body onLoad="firstFocus()"> -->
 <body onload="init()">
 <form id="form" name="form" action="/cgi-bin/bd_client.cgi" method="POST">
 <input name="sid" value="%(SID)s" type="hidden">

@@ -13,14 +13,14 @@ def recv_wrapper(s):
     packet_size = cols * rows * 2 # double it for good measure
     return s.recv(packet_size)
 
-HOST = '' #'localhost'    # The remote host
-PORT = 1664 # The same port as used by the server
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.connect((HOST, PORT))
+#HOST = '' #'localhost'    # The remote host
+#PORT = 1664 # The same port as used by the server
+s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+s.connect(sys.argv[1])#(HOST, PORT))
 time.sleep(1)
 #s.setblocking(0)
 #s.send('COMMAND' + '\x01' + sys.argv[1])
-s.send(':command ' + sys.argv[1])
+s.send(':sendline ' + sys.argv[2])
 print recv_wrapper(s)
 s.close()
 sys.exit()

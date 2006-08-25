@@ -14,8 +14,7 @@ This should be considered an experimental tool -- at best.
 """
 import sys,os
 sys.path.insert (0,os.getcwd())
-import socket, random, string, traceback, cgi, time, getopt, getpass, threading
-import pxssh, pexpect, ANSI
+import socket, random, string, traceback, cgi, time, getopt, getpass, threading,resource,signal
 import pxssh, pexpect, ANSI
 
 def exit_with_usage(exit_code=1):
@@ -38,9 +37,14 @@ def client (command, host='localhost', port=-1):
     s.close()
     return data
 
-def server (hostname, username, password, socket_filename='/tmp/mysock', verbose=False):
+def server (hostname, username, password, socket_filename='/tmp/mysock', daemon_mode = True, verbose=False):
     """This starts and services requests from the client.
     """
+    if daemon_mode:
+        d = daemonize()
+        if d != 0:
+            return d
+
     if verbose: sys.stdout.write ('server started with pid %d\n' % os.getpid() )
 
     virtual_screen = ANSI.ANSI (24,80) 
@@ -52,7 +56,6 @@ def server (hostname, username, password, socket_filename='/tmp/mysock', verbose
 
     if os.path.exists(socket_filename): os.remove(socket_filename)
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    localhost = '127.0.0.1'
     s.bind(socket_filename)
     os.chmod(socket_filename,0777)
     if verbose: print 'Listen'
@@ -72,6 +75,7 @@ def server (hostname, username, password, socket_filename='/tmp/mysock', verbose
             conn, addr = s.accept()
             if verbose: print 'Connected by', addr
             data = conn.recv(1024)
+            file('/tmp/PXLOG','a').write('data='+str(data)+'\n')
             if data[0]!=':':
                 cmd = ':sendline'
                 arg = data.strip()
@@ -86,10 +90,12 @@ def server (hostname, username, password, socket_filename='/tmp/mysock', verbose
                 r.cancel()
                 break
             elif cmd == ':sendline':
+                file('/tmp/PXLOG','a').write("sendline arg: " + str(arg)+'\n')
                 child.sendline (arg)
                 #child.prompt(timeout=2)
                 time.sleep(0.2)
                 shell_window = str(virtual_screen)
+                file('/tmp/PXLOG','a').write("virtual_screen : " + str(virtual_screen)+'\n')
             elif cmd == ':send' or cmd==':xsend':
                 if cmd==':xsend':
                     arg = arg.decode("hex")
@@ -101,15 +107,18 @@ def server (hostname, username, password, socket_filename='/tmp/mysock', verbose
             elif cmd == ':refresh':
                 shell_window = str(virtual_screen)
 
+            file('/tmp/PXLOG','a').write("sending response " + '\n')
             response = []
             response.append (shell_window)
             #response = add_cursor_blink (response, row, col)
             if verbose: print '\n'.join(response)
             sent = conn.send('\n'.join(response))
+            file('/tmp/PXLOG','a').write("sent response " + '\n')
             if sent < len (response):
                 if verbose: print "Sent is too short. Some data was cut off."
             conn.close()
-    finally:
+    except e:
+        file('/tmp/PXLOG','a').write(str(e)+'\n')
         r.cancel()
         if verbose: print "cleaning up socket"
         s.close()
@@ -177,10 +186,11 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     try: 
         pid = os.fork() 
         if pid > 0:
-            sys.exit(0)   # Exit first parent.
+            return -1
+            #os._exit(0)   # Exit first parent.
     except OSError, e: 
         sys.stderr.write ("fork #1 failed: (%d) %s\n" % (e.errno, e.strerror) )
-        sys.exit(1)
+        os._exit(1)
 
     # Decouple from parent environment.
     os.chdir("/") 
@@ -191,10 +201,15 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     try: 
         pid = os.fork() 
         if pid > 0:
-            sys.exit(0)   # Exit second parent.
+            time.sleep(4)
+            #sys.stderr.close()
+            #sys.stdout.close()
+      #      os._exit(0)   # Exit second parent.
+      #      sys.exit(0)
+            return -2
     except OSError, e: 
         sys.stderr.write ("fork #2 failed: (%d) %s\n" % (e.errno, e.strerror) )
-        sys.exit(1)
+        os._exit(1)
 
     # Now I am a daemon!
     
@@ -206,7 +221,7 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     os.dup2(so.fileno(), sys.stdout.fileno())
     os.dup2(se.fileno(), sys.stderr.fileno())
 
-    # I now return as the daemon
+    # return as the daemon
     return 0
 
 def random_sid ():
@@ -239,7 +254,6 @@ def pretty_box (s, rows=24, cols=80):
 def client_cgi ():
     """This handles the request if this script was called as a cgi.
     """
-    print "Content-type: text/html;charset=utf-8\r\n"
     sys.stderr = sys.stdout
     ajax_mode = False
     TITLE="Shell"
@@ -247,31 +261,47 @@ def client_cgi ():
     SID="NOT"
     try:
         form = cgi.FieldStorage()
-        if not form.has_key('sid'):
-            SID=random_sid()
-        else:
-            SID=form['sid'].value
         if form.has_key('ajax'):
             ajax_mode = True
             ajax_cmd = form['ajax'].value
+            SID=form['sid'].value
             if ajax_cmd == 'send':
                 command = ':xsend'
                 arg = form['arg'].value.encode('hex')
-                result = client (command + ' ' + arg, '/tmp/mysock')
+                result = client (command + ' ' + arg, '/tmp/'+SID)
+                print "Content-type: text/html;charset=utf-8\r\n"
                 print result
             elif ajax_cmd == 'refresh':
                 command = ':refresh'
-                result = client (command, '/tmp/mysock')
+                result = client (command, '/tmp/'+SID)
+                print "Content-type: text/html;charset=utf-8\r\n"
                 print result
             elif ajax_cmd == 'cursor':
                 command = ':cursor'
-                result = client (command, '/tmp/mysock')
+                result = client (command, '/tmp/'+SID)
+                print "Content-type: text/html;charset=utf-8\r\n"
                 print result
-        elif form.has_key('command'):
-            command = form["command"].value
-            SHELL_OUTPUT = client (command, '/tmp/mysock')
-            print CGISH_HTML % locals()
+        elif not form.has_key('sid'):
+            SID=random_sid()
+            print "Content-type: text/html;charset=utf-8\r\n"
+            print LOGIN_HTML % locals();
         else:
+            SID=form['sid'].value
+            if form.has_key('start_server'):
+                USERNAME = form['username'].value
+                PASSWORD = form['password'].value
+                d = server ('127.0.0.1', USERNAME, PASSWORD, '/tmp/'+SID)
+                if d==-2:
+                    return -2
+                if d==-1:
+                    SHELL_OUTPUT='hit refresh'
+            else:
+                if form.has_key('command'):
+                    command = form['command'].value
+                else:
+                    command = ''
+                SHELL_OUTPUT = client (command, '/tmp/'+SID)
+            print "Content-type: text/html;charset=utf-8\r\n"
             print CGISH_HTML % locals()
     except:
         tb_dump = traceback.format_exc()
@@ -320,12 +350,7 @@ def server_cli():
     else:
         password = getpass.getpass('password: ')
    
-    if daemon_mode: 
-        print "daemonizing server"
-        daemonize()
-        #daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')
-
-    server (hostname, username, password)
+    server (hostname, username, password, '/tmp/mysock', daemon_mode)
 
 def main ():
     if os.getenv('REQUEST_METHOD') is None:
@@ -337,7 +362,7 @@ def main ():
 CGISH_HTML="""<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title>%(TITLE)s</title>
+<title>%(TITLE)s %(SID)s</title>
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <style type=text/css>
 a {color: #9f9; text-decoration: none}
@@ -385,8 +410,14 @@ function init ()
 {
     // hack to set quote key to show both single quote and double quote
     document.form['quote'].value = "'" + '  "';
-    refresh_screen();
+    //refresh_screen();
     document.form["command"].focus();
+}
+function get_password ()
+{
+    var username = prompt("username?","");
+    var password = prompt("password?","");
+    start_server (username, password);
 }
 function multibrowser_ajax ()
 {
@@ -434,13 +465,17 @@ function update_virtual_screen()
         //var json_data = json_parse(xmlhttp.responseText);
     }
 }
+//function start_server (username, password)
+//{
+//    loadurl('bd_client.cgi?ajax=serverstart&username=' + escape(username) + '&password=' + escape(password);
+//}
 function refresh_screen()
 {
-    loadurl('bd_client.cgi?ajax=refresh');
+    loadurl('bd_client.cgi?ajax=refresh&sid=%(SID)s');
 }
 function query_cursor()
 {
-    loadurl('bd_client.cgi?ajax=cursor');
+    loadurl('bd_client.cgi?ajax=cursor&sid=%(SID)s');
 }
 function type_key (chars)
 {
@@ -457,7 +492,7 @@ function type_key (chars)
     {
         ch = chars.substr(0,1);
     }
-    loadurl('bd_client.cgi?ajax=send&arg=' + escape(ch));
+    loadurl('bd_client.cgi?ajax=send&sid=%(SID)s&arg=' + escape(ch));
     if (flag_shift || flag_ctrl)
     {
         flag_shift = 0;
@@ -557,7 +592,7 @@ function keyHandler(e)
 //if (document.layers)
 //    document.captureEvents(Event.KEYPRESS);
 //http://sniptools.com/jskeys
-document.onkeyup = KeyCheck;       
+//document.onkeyup = KeyCheck;       
 function KeyCheck(e)
 {
     var KeyID = (window.event) ? event.keyCode : e.keyCode;
@@ -575,7 +610,6 @@ function KeyCheck(e)
 <textarea name="screen_text" cols="81" rows="25">%(SHELL_OUTPUT)s</textarea>
 <hr noshade="1">
 &nbsp;<input name="command" id="command" type="text" size="80"><br>
-<p align="left"> 
 <table border="0" align="left">
 <tr>
 <td width="86%%" align="center">    
@@ -647,9 +681,56 @@ function KeyCheck(e)
 </td>
 </tr>
 </table>  
-</p>
-
 </form>
+<hr>
+</body>
+</html>
+"""
+
+LOGIN_HTML="""<html>
+<head>
+<title>Shell Login</title>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<style type=text/css>
+a {color: #9f9; text-decoration: none}
+a:hover {color: #0f0}
+hr {color: #0f0}
+html,body,textarea,input,form
+{
+font-family: "Courier New", Courier, mono;
+font-size: 8pt;
+color: #0c0;
+background-color: #030;
+margin:0;
+padding:0;
+border:0;
+}
+input { background-color: #020; }
+textarea {
+border-width:1;
+border-style:solid;
+border-color:#0c0;
+padding:3;
+margin:3;
+}
+</style>
+<script language="JavaScript">
+function init ()
+{
+    document.login_form["username"].focus();
+}
+</script>
+</head>
+<body onload="init()">
+<form name="login_form" method="POST">
+<input name="start_server" value="1" type="hidden">
+<input name="sid" value="%(SID)s" type="hidden">
+username: <input name="username" type="text" size="20"><br>
+password: <input name="password" type="text" size="20"><br>
+<input name="submit" type="submit" value="enter">
+</form>
+<br>
+/tmp/%(SID)s
 </body>
 </html>
 """

@@ -13,8 +13,8 @@ This project is probably not the most security concious thing I've ever built.
 This should be considered an experimental tool -- at best.
 """
 import sys,os
-sys.path.insert (0,os.getcwd())
-import socket, random, string, traceback, cgi, time, getopt, getpass, threading,resource,signal
+sys.path.insert (0,os.getcwd()) # let local modules precede any installed modules
+import socket, random, string, traceback, cgi, time, getopt, getpass, threading, resource, signal
 import pxssh, pexpect, ANSI
 
 def exit_with_usage(exit_code=1):
@@ -23,8 +23,8 @@ def exit_with_usage(exit_code=1):
 
 def client (command, host='localhost', port=-1):
     """This sends a request to the server and returns the response.
-    If port is <= 0 then host is assumed to be the filename of a Unix domain socket.
-    If port is greater 0 then host is an inet hostname.
+    If port <= 0 then host is assumed to be the filename of a Unix domain socket.
+    If port > 0 then host is an inet hostname.
     """
     if port <= 0:
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -37,36 +37,33 @@ def client (command, host='localhost', port=-1):
     s.close()
     return data
 
-def server (hostname, username, password, socket_filename='/tmp/mysock', daemon_mode = True, verbose=False):
-    """This starts and services requests from the client.
+def server (hostname, username, password, socket_filename='/tmp/server_sock', daemon_mode = True, verbose=False):
+    """This starts and services requests from a client.
+        If daemon_mode is True then this forks off a separate daemon process and returns the daemon's pid.
+        If daemon_mode is False then this does not return until the server is done.
     """
     if daemon_mode:
-        d = daemonize()
-        if d != 0:
-            return d
-
-    if verbose: sys.stdout.write ('server started with pid %d\n' % os.getpid() )
+        mypid_name = '/tmp/%d.pid' % os.getpid()
+        daemon_pid = daemonize(daemon_pid_filename=mypid_name)
+        if daemon_pid != 0:
+            os.unlink(mypid_name)
+            return daemon_pid
 
     virtual_screen = ANSI.ANSI (24,80) 
     child = pxssh.pxssh()
     child.login (hostname, username, password)
-    if verbose: print 'created shell. command line prompt is', child.PROMPT
+    if verbose: print 'login OK'
     virtual_screen.write (child.before)
     virtual_screen.write (child.after)
 
     if os.path.exists(socket_filename): os.remove(socket_filename)
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     s.bind(socket_filename)
-    os.chmod(socket_filename,0777)
+    os.chmod(socket_filename, 0777)
     if verbose: print 'Listen'
     s.listen(1)
-    #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #localhost = '127.0.0.1'
-    #s.bind((localhost, port))
-    #print 'Listen'
-    #s.listen(1)
 
-    r = roller (0.01, endless_poll, (child, child.PROMPT, virtual_screen))
+    r = roller (endless_poll, (child, child.PROMPT, virtual_screen))
     r.start()
     if verbose: print "screen poll updater started in background thread"
     sys.stdout.flush()
@@ -75,7 +72,6 @@ def server (hostname, username, password, socket_filename='/tmp/mysock', daemon_
             conn, addr = s.accept()
             if verbose: print 'Connected by', addr
             data = conn.recv(1024)
-            file('/tmp/PXLOG','a').write('data='+str(data)+'\n')
             if data[0]!=':':
                 cmd = ':sendline'
                 arg = data.strip()
@@ -90,12 +86,9 @@ def server (hostname, username, password, socket_filename='/tmp/mysock', daemon_
                 r.cancel()
                 break
             elif cmd == ':sendline':
-                file('/tmp/PXLOG','a').write("sendline arg: " + str(arg)+'\n')
                 child.sendline (arg)
-                #child.prompt(timeout=2)
                 time.sleep(0.2)
                 shell_window = str(virtual_screen)
-                file('/tmp/PXLOG','a').write("virtual_screen : " + str(virtual_screen)+'\n')
             elif cmd == ':send' or cmd==':xsend':
                 if cmd==':xsend':
                     arg = arg.decode("hex")
@@ -107,18 +100,14 @@ def server (hostname, username, password, socket_filename='/tmp/mysock', daemon_
             elif cmd == ':refresh':
                 shell_window = str(virtual_screen)
 
-            file('/tmp/PXLOG','a').write("sending response " + '\n')
             response = []
             response.append (shell_window)
-            #response = add_cursor_blink (response, row, col)
             if verbose: print '\n'.join(response)
             sent = conn.send('\n'.join(response))
-            file('/tmp/PXLOG','a').write("sent response " + '\n')
             if sent < len (response):
                 if verbose: print "Sent is too short. Some data was cut off."
             conn.close()
     except e:
-        file('/tmp/PXLOG','a').write(str(e)+'\n')
         r.cancel()
         if verbose: print "cleaning up socket"
         s.close()
@@ -127,12 +116,11 @@ def server (hostname, username, password, socket_filename='/tmp/mysock', daemon_
 
 class roller (threading.Thread):
     """This class continuously loops a function in a thread.
+        This is basically a thin layer around Thread with a
+        while loop and a cancel.
     """
-    def __init__(self, interval, function, args=[], kwargs={}):
-        """The interval parameter defines time between each call to the function.
-        """
+    def __init__(self, function, args=[], kwargs={}):
         threading.Thread.__init__(self)
-        self.interval = interval
         self.function = function
         self.args = args
         self.kwargs = kwargs
@@ -142,13 +130,11 @@ class roller (threading.Thread):
         self.finished.set()
     def run(self):
         while not self.finished.isSet():
-            # self.finished.wait(self.interval)
             self.function(*self.args, **self.kwargs)
 
 def endless_poll (child, prompt, screen, refresh_timeout=0.1):
     """This keeps the screen updated with the output of the child.
-        This runs in a separate thread.
-        See roller class.
+        This will be run in a separate thread. See roller class.
     """
     #child.logfile_read = screen
     try:
@@ -157,7 +143,7 @@ def endless_poll (child, prompt, screen, refresh_timeout=0.1):
     except:
         pass
 
-def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
+def daemonize_old (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     '''This forks the current process into a daemon.
     Almost none of this is necessary (or advisable) if your daemon 
     is being started by inetd. In that case, stdin, stdout and stderr are 
@@ -182,38 +168,38 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     may not appear in the order that you expect.
     '''
 
-    # Do first fork.
+    # do first fork
     try: 
         pid = os.fork() 
         if pid > 0:
-            return -1
-            #os._exit(0)   # Exit first parent.
+            return os.wait()[0] # return from parent
     except OSError, e: 
         sys.stderr.write ("fork #1 failed: (%d) %s\n" % (e.errno, e.strerror) )
         os._exit(1)
 
-    # Decouple from parent environment.
+    # decouple from parent environment
     os.chdir("/") 
     os.umask(0) 
     os.setsid() 
 
-    # Do second fork.
+    # do second fork
     try: 
         pid = os.fork() 
         if pid > 0:
-            time.sleep(4)
-            #sys.stderr.close()
-            #sys.stdout.close()
-      #      os._exit(0)   # Exit second parent.
-      #      sys.exit(0)
-            return -2
+            time.sleep(3) # make sure child 2 is up before we close and exit. do I need this for sure?
+            sys.stderr.close()
+            sys.stdout.close()
+            sys.stdin.close()
+            sys.exit(0)   # exit second parent
+            # Needs to be Python's exit, not os._exit() to make sure
+            # second python instance is cleanly closed. Something about resources holding up os.wait.
     except OSError, e: 
         sys.stderr.write ("fork #2 failed: (%d) %s\n" % (e.errno, e.strerror) )
         os._exit(1)
 
     # Now I am a daemon!
     
-    # Redirect standard file descriptors.
+    # redirect standard file descriptors
     si = open(stdin, 'r')
     so = open(stdout, 'a+')
     se = open(stderr, 'a+', 0)
@@ -224,33 +210,80 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     # return as the daemon
     return 0
 
-def random_sid ():
-    a=random.randint(0,65535)
-    b=random.randint(0,65535)
-    return '%04x%04x.sid' % (a,b)
+def daemonize (stdin=None, stdout=None, stderr=None, daemon_pid_filename=None):
+    """This runs the current process in the background as a daemon.
+    The arguments stdin, stdout, stderr allow you to set the filename that the daemon reads and writes to.
+    If they are set to None then all stdio for the daemon will be directed to /dev/null.
+    If daemon_pid_filename is set then the pid of the daemon will be written to it as plain text
+    and the pid will be returned. If daemon_pid_filename is None then this will return None.
+    """
+    UMASK = 0
+    WORKINGDIR = "/"
+    MAXFD = 1024
 
-def parse_host_connect_string (hcs):
-    """This parses a host connection string in the form
-    username:password@hostname:port. All fields are options expcet hostname. A
-    dictionary is returned with all four keys. Keys that were not included are
-    set to empty strings ''. Note that if your password has the '@' character
-    then you must backslash escape it.
-    """
-    if '@' in hcs:
-        p = re.compile (r'(?P<username>[^@:]*)(:?)(?P<password>.*)(?!\\)@(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
+    # The stdio file descriptors are redirected to /dev/null by default.
+    if hasattr(os, "devnull"):
+        DEVNULL = os.devnull
     else:
-        p = re.compile (r'(?P<username>)(?P<password>)(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
-    m = p.search (hcs)
-    d = m.groupdict()
-    d['password'] = d['password'].replace('\\@','@')
-    return d
-     
-def pretty_box (s, rows=24, cols=80):
-    """This puts an ASCII text box around the given string.
-    """
-    top_bot = '+' + '-'*cols + '+\n'
-    return top_bot + '\n'.join(['|'+line+'|' for line in s.split('\n')]) + '\n' + top_bot
-    
+        DEVNULL = "/dev/null"
+    if stdin is None: stdin = DEVNULL
+    if stdout is None: stdout = DEVNULL
+    if stderr is None: stderr = DEVNULL
+
+    try:
+        pid = os.fork()
+    except OSError, e:
+        raise Exception, "%s [%d]" % (e.strerror, e.errno)
+
+    if pid != 0:   # The first child.
+        os.waitpid(pid,0)
+        if daemon_pid_filename is not None:
+            daemon_pid = int(file(daemon_pid_filename,'r').read())
+            return daemon_pid
+        else:
+            return None
+
+    # first child
+    os.setsid()
+    signal.signal(signal.SIGHUP, signal.SIG_IGN)
+
+    try:
+        pid = os.fork() # fork second child
+    except OSError, e:
+        raise Exception, "%s [%d]" % (e.strerror, e.errno)
+
+    if pid != 0:
+        if daemon_pid_filename is not None:
+            file(daemon_pid_filename,'w').write(str(pid))
+        os._exit(0) # exit parent (the first child) of the second child.
+
+    # second child
+    os.chdir(WORKINGDIR)
+    os.umask(UMASK)
+
+    maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
+    if maxfd == resource.RLIM_INFINITY:
+        maxfd = MAXFD
+  
+    # close all file descriptors
+    for fd in xrange(0, maxfd):
+        try:
+            os.close(fd)
+        except OSError:   # fd wasn't open to begin with (ignored)
+            pass
+
+    os.open (DEVNULL, os.O_RDWR)  # standard input
+
+    # redirect standard file descriptors
+    si = open(stdin, 'r')
+    so = open(stdout, 'a+')
+    se = open(stderr, 'a+', 0)
+    os.dup2(si.fileno(), sys.stdin.fileno())
+    os.dup2(so.fileno(), sys.stdout.fileno())
+    os.dup2(se.fileno(), sys.stderr.fileno())
+
+    return 0
+
 def client_cgi ():
     """This handles the request if this script was called as a cgi.
     """
@@ -290,11 +323,8 @@ def client_cgi ():
             if form.has_key('start_server'):
                 USERNAME = form['username'].value
                 PASSWORD = form['password'].value
-                d = server ('127.0.0.1', USERNAME, PASSWORD, '/tmp/'+SID)
-                if d==-2:
-                    return -2
-                if d==-1:
-                    SHELL_OUTPUT='hit refresh'
+                dpid = server ('127.0.0.1', USERNAME, PASSWORD, '/tmp/'+SID)
+                SHELL_OUTPUT="daemon pid: " + str(dpid)
             else:
                 if form.has_key('command'):
                     command = form['command'].value
@@ -303,12 +333,19 @@ def client_cgi ():
                 SHELL_OUTPUT = client (command, '/tmp/'+SID)
             print "Content-type: text/html;charset=utf-8\r\n"
             print CGISH_HTML % locals()
+            #sys.stderr.close()
+            #sys.stdout.close()
+            #sys.stdin.close()
+            #os._exit(0)
+            #sys.exit(0)   # exit second parent
     except:
         tb_dump = traceback.format_exc()
         if ajax_mode:
+            print "Content-type: text/html;charset=utf-8\r\n"
             print str(tb_dump)
         else:
             SHELL_OUTPUT=str(tb_dump)
+            print "Content-type: text/html;charset=utf-8\r\n"
             print CGISH_HTML % locals()
 
 def server_cli():
@@ -351,6 +388,33 @@ def server_cli():
         password = getpass.getpass('password: ')
    
     server (hostname, username, password, '/tmp/mysock', daemon_mode)
+
+def random_sid ():
+    a=random.randint(0,65535)
+    b=random.randint(0,65535)
+    return '%04x%04x.sid' % (a,b)
+
+def parse_host_connect_string (hcs):
+    """This parses a host connection string in the form
+    username:password@hostname:port. All fields are options expcet hostname. A
+    dictionary is returned with all four keys. Keys that were not included are
+    set to empty strings ''. Note that if your password has the '@' character
+    then you must backslash escape it.
+    """
+    if '@' in hcs:
+        p = re.compile (r'(?P<username>[^@:]*)(:?)(?P<password>.*)(?!\\)@(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
+    else:
+        p = re.compile (r'(?P<username>)(?P<password>)(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
+    m = p.search (hcs)
+    d = m.groupdict()
+    d['password'] = d['password'].replace('\\@','@')
+    return d
+     
+def pretty_box (s, rows=24, cols=80):
+    """This puts an ASCII text box around the given string.
+    """
+    top_bot = '+' + '-'*cols + '+\n'
+    return top_bot + '\n'.join(['|'+line+'|' for line in s.split('\n')]) + '\n' + top_bot
 
 def main ():
     if os.getenv('REQUEST_METHOD') is None:
@@ -682,7 +746,6 @@ function KeyCheck(e)
 </tr>
 </table>  
 </form>
-<hr>
 </body>
 </html>
 """
@@ -706,7 +769,7 @@ padding:0;
 border:0;
 }
 input { background-color: #020; }
-textarea {
+input,textarea {
 border-width:1;
 border-style:solid;
 border-color:#0c0;

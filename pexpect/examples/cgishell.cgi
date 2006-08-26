@@ -1,7 +1,9 @@
 #!/usr/bin/env python
-"""Back door shell server
+"""CGI shell server
 
-This exposes a shell terminal on a socket.
+This exposes a shell terminal on a web page.
+It uses AJAX to send keys and receive screen updates.
+The client web browser needs nothing but CSS and Javascript.
 
     --hostname : sets the remote host name to open an ssh connection to.
     --username : sets the user name to login with
@@ -45,13 +47,16 @@ def server (hostname, username, password, socket_filename='/tmp/server_sock', da
     if daemon_mode:
         mypid_name = '/tmp/%d.pid' % os.getpid()
         daemon_pid = daemonize(daemon_pid_filename=mypid_name)
+        time.sleep(1)
         if daemon_pid != 0:
             os.unlink(mypid_name)
             return daemon_pid
 
     virtual_screen = ANSI.ANSI (24,80) 
     child = pxssh.pxssh()
+    file('/tmp/ZLOG','a').write('here cgi 1\n')
     child.login (hostname, username, password)
+    file('/tmp/ZLOG','a').write('here cgi 2\n')
     if verbose: print 'login OK'
     virtual_screen.write (child.before)
     virtual_screen.write (child.after)
@@ -62,6 +67,7 @@ def server (hostname, username, password, socket_filename='/tmp/server_sock', da
     os.chmod(socket_filename, 0777)
     if verbose: print 'Listen'
     s.listen(1)
+
 
     r = roller (endless_poll, (child, child.PROMPT, virtual_screen))
     r.start()
@@ -142,73 +148,6 @@ def endless_poll (child, prompt, screen, refresh_timeout=0.1):
         screen.write(s)
     except:
         pass
-
-def daemonize_old (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
-    '''This forks the current process into a daemon.
-    Almost none of this is necessary (or advisable) if your daemon 
-    is being started by inetd. In that case, stdin, stdout and stderr are 
-    all set up for you to refer to the network connection, and the fork()s 
-    and session manipulation should not be done (to avoid confusing inetd). 
-    Only the chdir() and umask() steps remain as useful. 
-
-    References:
-        UNIX Programming FAQ
-        1.7 How do I get my program to act like a daemon?
-        http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16
-
-        Advanced Programming in the Unix Environment
-        W. Richard Stevens, 1992, Addison-Wesley, ISBN 0-201-56317-7.
-
-    The stdin, stdout, and stderr arguments are file names that
-    will be opened and be used to replace the standard file descriptors
-    in sys.stdin, sys.stdout, and sys.stderr.
-    These arguments are optional and default to /dev/null.
-    Note that stderr is opened unbuffered, so
-    if it shares a file with stdout then interleaved output
-    may not appear in the order that you expect.
-    '''
-
-    # do first fork
-    try: 
-        pid = os.fork() 
-        if pid > 0:
-            return os.wait()[0] # return from parent
-    except OSError, e: 
-        sys.stderr.write ("fork #1 failed: (%d) %s\n" % (e.errno, e.strerror) )
-        os._exit(1)
-
-    # decouple from parent environment
-    os.chdir("/") 
-    os.umask(0) 
-    os.setsid() 
-
-    # do second fork
-    try: 
-        pid = os.fork() 
-        if pid > 0:
-            time.sleep(3) # make sure child 2 is up before we close and exit. do I need this for sure?
-            sys.stderr.close()
-            sys.stdout.close()
-            sys.stdin.close()
-            sys.exit(0)   # exit second parent
-            # Needs to be Python's exit, not os._exit() to make sure
-            # second python instance is cleanly closed. Something about resources holding up os.wait.
-    except OSError, e: 
-        sys.stderr.write ("fork #2 failed: (%d) %s\n" % (e.errno, e.strerror) )
-        os._exit(1)
-
-    # Now I am a daemon!
-    
-    # redirect standard file descriptors
-    si = open(stdin, 'r')
-    so = open(stdout, 'a+')
-    se = open(stderr, 'a+', 0)
-    os.dup2(si.fileno(), sys.stdin.fileno())
-    os.dup2(so.fileno(), sys.stdout.fileno())
-    os.dup2(se.fileno(), sys.stderr.fileno())
-
-    # return as the daemon
-    return 0
 
 def daemonize (stdin=None, stdout=None, stderr=None, daemon_pid_filename=None):
     """This runs the current process in the background as a daemon.
@@ -292,6 +231,7 @@ def client_cgi ():
     TITLE="Shell"
     SHELL_OUTPUT=""
     SID="NOT"
+    print "Content-type: text/html;charset=utf-8\r\n"
     try:
         form = cgi.FieldStorage()
         if form.has_key('ajax'):
@@ -302,21 +242,17 @@ def client_cgi ():
                 command = ':xsend'
                 arg = form['arg'].value.encode('hex')
                 result = client (command + ' ' + arg, '/tmp/'+SID)
-                print "Content-type: text/html;charset=utf-8\r\n"
                 print result
             elif ajax_cmd == 'refresh':
                 command = ':refresh'
                 result = client (command, '/tmp/'+SID)
-                print "Content-type: text/html;charset=utf-8\r\n"
                 print result
             elif ajax_cmd == 'cursor':
                 command = ':cursor'
                 result = client (command, '/tmp/'+SID)
-                print "Content-type: text/html;charset=utf-8\r\n"
                 print result
         elif not form.has_key('sid'):
             SID=random_sid()
-            print "Content-type: text/html;charset=utf-8\r\n"
             print LOGIN_HTML % locals();
         else:
             SID=form['sid'].value
@@ -331,21 +267,13 @@ def client_cgi ():
                 else:
                     command = ''
                 SHELL_OUTPUT = client (command, '/tmp/'+SID)
-            print "Content-type: text/html;charset=utf-8\r\n"
             print CGISH_HTML % locals()
-            #sys.stderr.close()
-            #sys.stdout.close()
-            #sys.stdin.close()
-            #os._exit(0)
-            #sys.exit(0)   # exit second parent
     except:
         tb_dump = traceback.format_exc()
         if ajax_mode:
-            print "Content-type: text/html;charset=utf-8\r\n"
             print str(tb_dump)
         else:
             SHELL_OUTPUT=str(tb_dump)
-            print "Content-type: text/html;charset=utf-8\r\n"
             print CGISH_HTML % locals()
 
 def server_cli():
@@ -531,15 +459,15 @@ function update_virtual_screen()
 }
 //function start_server (username, password)
 //{
-//    loadurl('bd_client.cgi?ajax=serverstart&username=' + escape(username) + '&password=' + escape(password);
+//    loadurl('cgishell.cgi?ajax=serverstart&username=' + escape(username) + '&password=' + escape(password);
 //}
 function refresh_screen()
 {
-    loadurl('bd_client.cgi?ajax=refresh&sid=%(SID)s');
+    loadurl('cgishell.cgi?ajax=refresh&sid=%(SID)s');
 }
 function query_cursor()
 {
-    loadurl('bd_client.cgi?ajax=cursor&sid=%(SID)s');
+    loadurl('cgishell.cgi?ajax=cursor&sid=%(SID)s');
 }
 function type_key (chars)
 {
@@ -556,7 +484,7 @@ function type_key (chars)
     {
         ch = chars.substr(0,1);
     }
-    loadurl('bd_client.cgi?ajax=send&sid=%(SID)s&arg=' + escape(ch));
+    loadurl('cgishell.cgi?ajax=send&sid=%(SID)s&arg=' + escape(ch));
     if (flag_shift || flag_ctrl)
     {
         flag_shift = 0;
@@ -669,7 +597,7 @@ function KeyCheck(e)
 </head>
 
 <body onload="init()">
-<form id="form" name="form" action="/cgi-bin/bd_client.cgi" method="POST">
+<form id="form" name="form" action="/cgi-bin/cgishell.cgi" method="POST">
 <input name="sid" value="%(SID)s" type="hidden">
 <textarea name="screen_text" cols="81" rows="25">%(SHELL_OUTPUT)s</textarea>
 <hr noshade="1">
@@ -677,7 +605,7 @@ function KeyCheck(e)
 <table border="0" align="left">
 <tr>
 <td width="86%%" align="center">    
-    <input name="submit" type="submit" value="Enter">
+    <input name="submit" type="submit" value="Submit">
     <input name="refresh" type="button" value="REFRESH" onclick="refresh_screen()">
     <input name="refresh" type="button" value="CURSOR" onclick="query_cursor()">
     <br>

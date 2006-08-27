@@ -20,7 +20,7 @@ p.sendline (X)
 p.expect (pexpect.EOF)
 print p.before
 
-p = pexpect.spawn ('scp doc/clean.css noah@shell.sourceforge.net:htdocs/clean.css')
+p = pexpect.spawn ('scp doc/clean.css doc/email.png noah@shell.sourceforge.net:htdocs/clean.css')
 p.logfile = sys.stdout
 p.expect (pp_pattern)
 p.sendline (X)

@@ -55,9 +55,10 @@ def server (hostname, username, password, socket_filename='/tmp/server_sock', da
 
     virtual_screen = ANSI.ANSI (24,80) 
     child = pxssh.pxssh()
-    file('/tmp/ZLOG','a').write('here cgi 1\n')
-    child.login (hostname, username, password)
-    file('/tmp/ZLOG','a').write('here cgi 2\n')
+    try:
+        child.login (hostname, username, password, login_naked=True)
+    except:
+        return   
     if verbose: print 'login OK'
     virtual_screen.write (child.before)
     virtual_screen.write (child.after)
@@ -114,11 +115,12 @@ def server (hostname, username, password, socket_filename='/tmp/server_sock', da
                 if verbose: print "Sent is too short. Some data was cut off."
             conn.close()
     except e:
-        r.cancel()
-        if verbose: print "cleaning up socket"
-        s.close()
-        if os.path.exists(socket_filename): os.remove(socket_filename)
-        if verbose: print "server done!"
+        pass
+    r.cancel()
+    if verbose: print "cleaning up socket"
+    s.close()
+    if os.path.exists(socket_filename): os.remove(socket_filename)
+    if verbose: print "server done!"
 
 class roller (threading.Thread):
     """This class continuously loops a function in a thread.
@@ -373,12 +375,12 @@ html,body,textarea,input,form
 font-family: "Courier New", Courier, mono; 
 font-size: 8pt; 
 color: #0c0;
-background-color: #030;
+background-color: #020;
 margin:0;
 padding:0;
 border:0;
 }
-input { background-color: #020; }
+input { background-color: #010; }
 textarea {
 border-width:1;
 border-style:solid;
@@ -404,7 +406,7 @@ if ((TForm.elements[i].type=="text")||
 var flag_shift=0;
 var flag_shiftlock=0;
 var flag_ctrl=0;
-var ButtonOnColor = "#ee0";
+var ButtonOnColor="#ee0";
 
 function init ()
 {
@@ -448,12 +450,12 @@ function multibrowser_ajax ()
     }
     return xmlHttp;
 }
-function loadurl(dest)
+function load_url_to_screen(url)
 { 
     xmlhttp = multibrowser_ajax();
     //window.XMLHttpRequest?new XMLHttpRequest(): new ActiveXObject("Microsoft.XMLHTTP");
     xmlhttp.onreadystatechange = update_virtual_screen;
-    xmlhttp.open("GET", dest);
+    xmlhttp.open("GET", url);
     xmlhttp.setRequestHeader("If-Modified-Since", "Sat, 1 Jan 2000 00:00:00 GMT");
     xmlhttp.send(null);
 }
@@ -474,23 +476,23 @@ function poll()
 }
 //function start_server (username, password)
 //{
-//    loadurl('cgishell.cgi?ajax=serverstart&username=' + escape(username) + '&password=' + escape(password);
+//    load_url_to_screen('cgishell.cgi?ajax=serverstart&username=' + escape(username) + '&password=' + escape(password);
 //}
 function refresh_screen()
 {
-    loadurl('cgishell.cgi?ajax=refresh&sid=%(SID)s');
+    load_url_to_screen('cgishell.cgi?ajax=refresh&sid=%(SID)s');
 }
 function query_hash()
 {
-    loadurl('cgishell.cgi?ajax=hash&sid=%(SID)s');
+    load_url_to_screen('cgishell.cgi?ajax=hash&sid=%(SID)s');
 }
 function query_cursor()
 {
-    loadurl('cgishell.cgi?ajax=cursor&sid=%(SID)s');
+    load_url_to_screen('cgishell.cgi?ajax=cursor&sid=%(SID)s');
 }
 function exit_server()
 {
-    loadurl('cgishell.cgi?ajax=exit&sid=%(SID)s');
+    load_url_to_screen('cgishell.cgi?ajax=exit&sid=%(SID)s');
 }
 function type_key (chars)
 {
@@ -507,7 +509,7 @@ function type_key (chars)
     {
         ch = chars.substr(0,1);
     }
-    loadurl('cgishell.cgi?ajax=send&sid=%(SID)s&arg=' + escape(ch));
+    load_url_to_screen('cgishell.cgi?ajax=send&sid=%(SID)s&arg=' + escape(ch));
     if (flag_shift || flag_ctrl)
     {
         flag_shift = 0;
@@ -716,12 +718,12 @@ html,body,textarea,input,form
 font-family: "Courier New", Courier, mono;
 font-size: 8pt;
 color: #0c0;
-background-color: #030;
-margin:0;
+background-color: #020;
+margin:3;
 padding:0;
 border:0;
 }
-input { background-color: #020; }
+input { background-color: #010; }
 input,textarea {
 border-width:1;
 border-style:solid;
@@ -746,7 +748,6 @@ password: <input name="password" type="password" size="30"><br>
 <input name="submit" type="submit" value="enter">
 </form>
 <br>
-/tmp/%(SID)s
 </body>
 </html>
 """

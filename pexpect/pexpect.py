@@ -334,7 +334,6 @@ class spawn (object):
         self.logfile = logfile    
         self.logfile_read = None # input from child (read_nonblocking)
         self.logfile_send = None # output to send (send, sendline)
-        sys.stdout.flush()
         self.maxread = maxread # Max bytes to read at one time into buffer.
         self.buffer = '' # This is the read buffer. See maxread.
         self.searchwindowsize = searchwindowsize # Anything before searchwindowsize point is preserved, but not searched.

@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/python
+##!/usr/bin/env python
 """CGI shell server
 
 This exposes a shell terminal on a web page.
@@ -68,43 +69,42 @@ def server (hostname, username, password, socket_filename='/tmp/server_sock', da
     if verbose: print 'Listen'
     s.listen(1)
 
-
     r = roller (endless_poll, (child, child.PROMPT, virtual_screen))
     r.start()
-    if verbose: print "screen poll updater started in background thread"
+    if verbose: print "started screen-poll-updater in background thread"
     sys.stdout.flush()
     try:
         while True:
             conn, addr = s.accept()
             if verbose: print 'Connected by', addr
             data = conn.recv(1024)
-            if data[0]!=':':
-                cmd = ':sendline'
-                arg = data.strip()
+            request = data.split(' ', 1)
+            if len(request)>1:
+                cmd = request[0].strip()
+                arg = request[1].strip()
             else:
-                request = data.split(' ', 1)
-                if len(request)>1:
-                    cmd = request[0].strip()
-                    arg = request[1].strip()
-                else:
-                    cmd = request[0].strip()
-            if cmd == ':exit':
+                cmd = request[0].strip()
+                arg = ''
+
+            if cmd == 'exit':
                 r.cancel()
                 break
-            elif cmd == ':sendline':
+            elif cmd == 'sendline':
                 child.sendline (arg)
-                time.sleep(0.2)
+                time.sleep(0.1)
                 shell_window = str(virtual_screen)
-            elif cmd == ':send' or cmd==':xsend':
-                if cmd==':xsend':
+            elif cmd == 'send' or cmd=='xsend':
+                if cmd=='xsend':
                     arg = arg.decode("hex")
                 child.send (arg)
-                time.sleep(0.2)
+                time.sleep(0.1)
                 shell_window = str(virtual_screen)
-            elif cmd == ':cursor':
-                shell_window = '%x%x' % (virtual_screen.cur_r, virtual_screen.cur_c)
-            elif cmd == ':refresh':
+            elif cmd == 'cursor':
+                shell_window = '%x,%x' % (virtual_screen.cur_r, virtual_screen.cur_c)
+            elif cmd == 'refresh':
                 shell_window = str(virtual_screen)
+            elif cmd == 'hash':
+                shell_window = str(hash(str(virtual_screen)))
 
             response = []
             response.append (shell_window)
@@ -239,16 +239,24 @@ def client_cgi ():
             ajax_cmd = form['ajax'].value
             SID=form['sid'].value
             if ajax_cmd == 'send':
-                command = ':xsend'
+                command = 'xsend'
                 arg = form['arg'].value.encode('hex')
                 result = client (command + ' ' + arg, '/tmp/'+SID)
                 print result
             elif ajax_cmd == 'refresh':
-                command = ':refresh'
+                command = 'refresh'
                 result = client (command, '/tmp/'+SID)
                 print result
             elif ajax_cmd == 'cursor':
-                command = ':cursor'
+                command = 'cursor'
+                result = client (command, '/tmp/'+SID)
+                print result
+            elif ajax_cmd == 'exit':
+                command = 'exit'
+                result = client (command, '/tmp/'+SID)
+                print result
+            elif ajax_cmd == 'hash':
+                command = 'hash'
                 result = client (command, '/tmp/'+SID)
                 print result
         elif not form.has_key('sid'):
@@ -262,10 +270,10 @@ def client_cgi ():
                 dpid = server ('127.0.0.1', USERNAME, PASSWORD, '/tmp/'+SID)
                 SHELL_OUTPUT="daemon pid: " + str(dpid)
             else:
-                if form.has_key('command'):
-                    command = form['command'].value
+                if form.has_key('cli'):
+                    command = 'sendline ' + form['cli'].value
                 else:
-                    command = ''
+                    command = 'sendline'
                 SHELL_OUTPUT = client (command, '/tmp/'+SID)
             print CGISH_HTML % locals()
     except:
@@ -403,7 +411,8 @@ function init ()
     // hack to set quote key to show both single quote and double quote
     document.form['quote'].value = "'" + '  "';
     //refresh_screen();
-    document.form["command"].focus();
+    poll();
+    document.form["cli"].focus();
 }
 function get_password ()
 {
@@ -457,6 +466,12 @@ function update_virtual_screen()
         //var json_data = json_parse(xmlhttp.responseText);
     }
 }
+function poll()
+{
+    refresh_screen();
+    timerID  = setTimeout("poll()", 2000);
+    // clearTimeout(timerID);
+}
 //function start_server (username, password)
 //{
 //    loadurl('cgishell.cgi?ajax=serverstart&username=' + escape(username) + '&password=' + escape(password);
@@ -465,9 +480,17 @@ function refresh_screen()
 {
     loadurl('cgishell.cgi?ajax=refresh&sid=%(SID)s');
 }
+function query_hash()
+{
+    loadurl('cgishell.cgi?ajax=hash&sid=%(SID)s');
+}
 function query_cursor()
 {
     loadurl('cgishell.cgi?ajax=cursor&sid=%(SID)s');
+}
+function exit_server()
+{
+    loadurl('cgishell.cgi?ajax=exit&sid=%(SID)s');
 }
 function type_key (chars)
 {
@@ -601,13 +624,15 @@ function KeyCheck(e)
 <input name="sid" value="%(SID)s" type="hidden">
 <textarea name="screen_text" cols="81" rows="25">%(SHELL_OUTPUT)s</textarea>
 <hr noshade="1">
-&nbsp;<input name="command" id="command" type="text" size="80"><br>
+&nbsp;<input name="cli" id="cli" type="text" size="80"><br>
 <table border="0" align="left">
 <tr>
 <td width="86%%" align="center">    
     <input name="submit" type="submit" value="Submit">
     <input name="refresh" type="button" value="REFRESH" onclick="refresh_screen()">
     <input name="refresh" type="button" value="CURSOR" onclick="query_cursor()">
+    <input name="hash" type="button" value="HASH" onclick="query_hash()">
+    <input name="exit" type="button" value="EXIT" onclick="exit_server()">
     <br>
     <input type="button" value="Esc" onclick="type_key('\\x1b\\x1b')" />
     <input type="button" value="` ~" onclick="type_key('`~')" />
@@ -716,8 +741,8 @@ function init ()
 <form name="login_form" method="POST">
 <input name="start_server" value="1" type="hidden">
 <input name="sid" value="%(SID)s" type="hidden">
-username: <input name="username" type="text" size="20"><br>
-password: <input name="password" type="text" size="20"><br>
+username: <input name="username" type="text" size="30"><br>
+password: <input name="password" type="password" size="30"><br>
 <input name="submit" type="submit" value="enter">
 </form>
 <br>

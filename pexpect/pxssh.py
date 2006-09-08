@@ -49,6 +49,8 @@ class pxssh (spawn):
 
     """
 
+# Python's super is annoying.
+# http://mail.python.org/pipermail/python-list/2006-February/325485.html
     def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None, logfile=None, env=None):
         super(pxssh, self).__init__(None,[],timeout,maxread,searchwindowsize,logfile,env)
         self.name = '<pxssh>'
@@ -71,13 +73,14 @@ class pxssh (spawn):
     def login (self,server,username,password='',terminal_type='ansi',original_prompts=r"][#$]|~[#$]|bash.*?[#$]|[#$] ",login_timeout=10,port=None):
         """This logs the user into the given server. By default the prompt is
         rather optimistic and should be considered more of an example. It's
-        better to try to match the prompt as exactly as possible to prevent
-        any false matches by server strings such as a "Message Of The Day" or
-        something. The closer you can make the original_prompt match your real prompt
-        then the better. A timeout will not necessarily cause the login to fail.
-        In the case of a timeout we assume that the prompt was so weird that
-        we could not match it. We still try to reset the prompt to something
-        more unique. If that still fails then we return False.
+        better to try to match the prompt as exactly as possible to prevent any
+        false matches by server strings such as a "Message Of The Day" or
+        something. The closer you can make the original_prompt match your real
+        prompt then the better. A timeout will not necessarily cause the login
+        to fail. In the case of a timeout we assume that the prompt was so
+        weird that we could not match it. We still try to reset the prompt to
+        something more unique. If that still fails then this raises an
+        ExceptionPxssh exception.
         """
         if port is None:
             cmd = "ssh -l %s %s" % (username, server)

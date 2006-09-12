@@ -346,7 +346,7 @@ class spawn (object):
         self.closed = True # File-like object.
         self.env = env
         self.__irix_hack = sys.platform.lower().find('irix') >= 0 # This flags if we are running on irix
-        self.use_native_pty_fork = not (sys.platform.lower().find('solaris') >= 0) # Solaris uses internal __fork_pty(). All other use pty.fork().
+        self.use_native_pty_fork = not (sys.platform.lower().find('solaris') >= 0) # Solaris uses internal __fork_pty(). All others use pty.fork().
 
         # allow dummy instances for subclasses that may not use command or args.
         if command is None:

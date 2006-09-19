@@ -8,8 +8,8 @@ each host to return the shell command line prompt. The shell prompt is used
 to synch output.
 
 Example:
-    $ ./hivesh.py host1.example.com host2.example.net
-    username: noah
+    $ ./hivesh.py --samepw host1.example.com host2.example.net
+    username: myusername
     password: 
     connecting to host1.example.com - OK
     connecting to host2.example.net- OK
@@ -33,12 +33,9 @@ You will be asked for your username and password.
 It is assumed that these will be the same for all hosts
 or that you have key pairs registered for each host.
 
-    --askall : This tells Hive that you want to be prompted for your
-                username and password separately for all machines.
-                This is useful if you have differnet usernames and
-                passwords on each host. This can even be used to connect
-                to different user accounts on a single host. For example:
-                    hive.py --askall host1 host1 host1
+    --samepw : This flag tells Hive that you want to be prompted just once
+                for your username and password and to use these credentials
+                for each host.
 
 $Id $
 Noah Spurrier
@@ -79,6 +76,11 @@ CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
     until :sync is run. This is useful to run before commands that will not
     return with the special shell prompt pattern that Hive uses to synchronize.
 
+:resync
+    This is similar to :sync, but it does not change the mode.
+    It looks for the prompt and thus consumes all input from all targetted
+    hosts.
+
 :prompt
     force each host to reset command line prompt to the special pattern
     used to synchronize all the hosts. This is useful if you 'su' to
@@ -87,13 +89,16 @@ CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
 :send my text
     This will send the 'my text' wihtout a line feed to the targetted hosts.
     This output of the hosts is not automatically synchronized.
+
+:exit
+    This will exit the hive shell.
 """
 
 def main ():
     global CMD_HELP
 
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'h?', ['help','h','?','askall','username','password'])
+        optlist, args = getopt.getopt(sys.argv[1:], 'h?', ['help','h','?','samepw','username=','password='])
     except Exception, e:
         print str(e)
         exit_with_usage()
@@ -102,11 +107,11 @@ def main ():
     if [elem for elem in options if elem in ['-h','--h','-?','--?','--help']]:
         exit_with_usage(0)
 
-    if '--askall' in options:
-        ask_all_mode = True
+    if '--samepw' in options:
+        samepw = True
     else:
-        ask_all_mode = False
-    if not ask_all_mode:
+        samepw = False
+    if samepw:
         if '--username' in options:
             username = options['--username']
         else:
@@ -125,7 +130,7 @@ def main ():
         password = hcd['password']
         port     = hcd['port']
         print 'connecting to', hostname
-        if ask_all_mode:
+        if not samepw:
             if username == '':
                 username = raw_input('username: ')
             if password == '':
@@ -153,9 +158,18 @@ def main ():
         if cmd=='?':
             print CMD_HELP
             continue
+        elif cmd==':resync':
+            resync (hive, target_hostnames, timeout=0.5)
+            for hostname in target_hostnames:
+                print '/============================================================================='
+                print '| ' + hostname
+                print '\\-----------------------------------------------------------------------------'
+                print hive[hostname].before
+            print '=============================================================================='
+            continue
         elif cmd==':sync':
             synchronous_mode = True
-            resync (hive, target_hostnames)
+            resync (hive, target_hostnames, timeout=0.5)
             continue
         elif cmd==':async':
             synchronous_mode = False
@@ -183,24 +197,20 @@ def main ():
                 target_hostnames = hive_names[:]
             print 'targetting hosts:', ' '.join(target_hostnames)
             continue
-
+        elif cmd == ':exit':
+            break
+        #
         # Run the command on all targets in parallel
+        #
         for hostname in target_hostnames:
             hive[hostname].sendline (cmd)
-            # This is a simple hack to detect if switching users, so we can set the prompt.
-            #if cmd[:3] == 'su ' or ' su ' in cmd:
-            #    print "hacking prompt"
-            #    time.sleep(0.5)
-            #    hive[name].set_unique_prompt()
 
-        if cmd == 'exit':
-            break
-
-        # if in synchronous mode then wait for the shell prompt
-        # for each host and print its response.
+        #
+        # print the response for each targeted host.
+        #
         if synchronous_mode:
             for hostname in target_hostnames:
-                hive[hostname].prompt()
+                hive[hostname].prompt(timeout=2)
                 print '/============================================================================='
                 print '| ' + hostname
                 print '\\-----------------------------------------------------------------------------'
@@ -215,7 +225,7 @@ def resync (hive, hive_names, timeout=2, max_attempts=5):
     best effort to consume all input if it printed more than one prompt. It's
     kind of kludgy. Note that this will always introduce a delay equal to the
     timeout for each machine. So for 10 machines with a 2 second delay you will
-    get AT LEAST a 20 second delay.
+    get AT LEAST a 20 second delay if not more.
     """
     # TODO This is ideal for threading.
     for hostname in hive_names:

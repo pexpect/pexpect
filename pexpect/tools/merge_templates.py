@@ -5,9 +5,14 @@
 # on the web site so that it will be compatible with
 # The Vaults of Parnasus which requires a direct URL link to a
 # tar ball distribution. I don't advertise the package this way.
-
-import pexpect, pyed
 import sys, os, re
+import pyed
+try:
+    import pexpect
+except:
+    # this happens if Pexpect was never installed to begin with.
+    sys.path.insert(0, '.')
+    import pexpect
 
 # extract the version number from the pexpect.py source.
 d = pyed.pyed()

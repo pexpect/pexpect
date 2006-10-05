@@ -74,7 +74,7 @@ class pyed (object):
     def first (self, pattern=None):
         if pattern is not None:
             try:
-                return self.match_lines_rev(pattern).next()
+                return self.match_lines(pattern).next()
             except StopIteration, e:
                 # force invalid line number
                 self.cur_line_num = None

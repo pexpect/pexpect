@@ -361,7 +361,12 @@ class spawn (object):
         self.closed = True # File-like object.
         self.env = env
         self.__irix_hack = sys.platform.lower().find('irix') >= 0 # This flags if we are running on irix
-        self.use_native_pty_fork = not (sys.platform.lower().find('solaris') >= 0) # Solaris uses internal __fork_pty(). All others use pty.fork().
+        # Solaris uses internal __fork_pty(). All others use pty.fork().
+        if sys.platform.lower().find('solaris') or sys.platform.lower().find('sunos5'):
+            self.use_native_pty_fork = False
+        else:
+            self.use_native_pty_fork = True
+
 
         # allow dummy instances for subclasses that may not use command or args.
         if command is None:
@@ -369,7 +374,7 @@ class spawn (object):
             self.args = None
             self.name = '<pexpect factory incomplete>'
         else:
-            self.__spawn (command, args)
+            self._spawn (command, args)
 
     def __del__(self):
         """This makes sure that no system resources are left open.
@@ -421,10 +426,11 @@ class spawn (object):
         s.append('delayafterterminate: ' + str(self.delayafterterminate))
         return '\n'.join(s)
 
-    def __spawn(self,command,args=[]):
+    def _spawn(self,command,args=[]):
         """This starts the given command in a child process.
         This does all the fork/exec type of stuff for a pty.
         This is called by __init__. 
+        If args is empty then command will be parsed (split on spaces) and args will be set to parsed arguments.
         """
         # The pid and child_fd of this object get set by this method.
         # Note that it is difficult for this method to fail.

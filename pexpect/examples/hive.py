@@ -137,10 +137,12 @@ def main ():
                 password = getpass.getpass('password: ')
         if port == '':
             port = None
+        fout = file ("mylog.txt","w")
         try:
-            hive[hostname] = pxssh.pxssh()
+            hive[hostname] = pxssh.pxssh(logfile=fout)
             hive[hostname].login(hostname, username, password, port)
             hive_names.append(hostname)
+            print hive[hostname].before
             print '- OK'
         except Exception, e:
             print '- ERROR',
@@ -148,6 +150,7 @@ def main ():
             print 'Skipping', hostname
             if hostname in hive:
                 del hive[hostname]
+        fout.close()
 
     synchronous_mode = True
     target_hostnames = hive_names[:]
@@ -202,8 +205,14 @@ def main ():
         #
         # Run the command on all targets in parallel
         #
-        for hostname in target_hostnames:
-            hive[hostname].sendline (cmd)
+        try:
+            for hostname in target_hostnames:
+                hive[hostname].sendline (cmd)
+        except Exception, e:
+            print "Had trouble communicating with %s, so removing it from the target list." % hostname
+            print str(e)
+            del hive[hostname]
+            #del target_hostnames[hostname]
 
         #
         # print the response for each targeted host.

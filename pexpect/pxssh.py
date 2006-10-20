@@ -3,6 +3,7 @@ This adds methods for login, logout, and expecting the shell prompt.
 $Id$
 """
 from pexpect import *
+import pexpect
 
 __all__ = ['ExceptionPxssh', 'pxssh']
 
@@ -52,9 +53,11 @@ class pxssh (spawn):
 # Python's super is annoying.
 # http://mail.python.org/pipermail/python-list/2006-February/325485.html
     def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None, logfile=None, env=None):
-        super(pxssh, self).__init__(None,[],timeout,maxread,searchwindowsize,logfile,env)
+        #super(pxssh, self).__init__(None,[],timeout,maxread,searchwindowsize,logfile,env)
+        spawn.__init__(self, None, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, env=env)
+
         self.name = '<pxssh>'
-        super(spawn, self).__init__()
+        #super(spawn, self).__init__()
         # SUBTLE HACK ALERT!
         # Note that the command to set the prompt uses a slightly different string
         # than the regular expression to match it. This is because when you set the
@@ -86,9 +89,8 @@ class pxssh (spawn):
             cmd = "ssh -l %s %s" % (username, server)
         else:
             cmd = "ssh -p %s -l %s %s" % (str(port),username,server)
-        spawn.__init__(self, cmd, timeout=login_timeout)
-        #, "(?i)no route to host"])
-        i = self.expect(["(?i)are you sure you want to continue connecting", original_prompts, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT, "(?i)connection closed by remote host"])
+        spawn._spawn(self, cmd)
+        i = self.expect(["(?i)are you sure you want to continue connecting", original_prompts, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT, "(?i)connection closed by remote host"], timeout=login_timeout)
         if i==0: # New certificate -- always accept it. This is what you if SSH does not have the remote host's public key stored in the cache.
             self.sendline("yes")
             i = self.expect(["(?i)are you sure you want to continue connecting", original_prompts, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT])

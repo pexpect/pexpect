@@ -594,12 +594,13 @@ class spawn (object):
         if not self.closed:
             self.flush()
             os.close (self.child_fd)
-            self.child_fd = -1
-            self.closed = True
             time.sleep(self.delayafterclose) # Give kernel time to update process status.
             if self.isalive():
                 if not self.terminate(force):
                     raise ExceptionPexpect ('close() could not terminate the child using terminate()')
+            self.child_fd = -1
+            self.closed = True
+            #self.pid = None
 
     def flush (self):   # File-like object.
         """This does nothing. It is here to support the interface for a File-like object.

@@ -70,10 +70,11 @@ class pxssh (spawn):
         # used to set shell command-line prompt to something more unique.
         self.PROMPT_SET_SH = "PS1='[PEXPECT]\$ '"
         self.PROMPT_SET_CSH = "set prompt='[PEXPECT]\$ '"
+        self.auto_prompt_reset = True 
 
     ### TODO: This is getting messy and I'm pretty sure this isn't perfect.
     ### TODO: I need to draw a flow chart for this.
-    def login (self,server,username,password='',terminal_type='ansi',original_prompts=r"][#$]|~[#$]|bash.*?[#$]|[#$] ",login_timeout=10,port=None):
+    def login (self,server,username,password='',terminal_type='ansi',original_prompt=r"][#$]|~[#$]|bash.*?[#$]|[#$] ",login_timeout=10,port=None,auto_prompt_reset=True):
         """This logs the user into the given server. By default the prompt is
         rather optimistic and should be considered more of an example. It's
         better to try to match the prompt as exactly as possible to prevent any
@@ -84,22 +85,27 @@ class pxssh (spawn):
         weird that we could not match it. We still try to reset the prompt to
         something more unique. If that still fails then this raises an
         ExceptionPxssh exception.
+        Set auto_prompt_reset to False to inhibit setting the prompt to
+        something new. By default pxssh will reset the command-line prompt
+        which the prompt() method uses to match. You can turn this off, but
+        this will break the prompt() method unless you also set the
+        PROMPT attribute to the prompt you want to match.
         """
         if port is None:
             cmd = "ssh -l %s %s" % (username, server)
         else:
             cmd = "ssh -p %s -l %s %s" % (str(port),username,server)
         spawn._spawn(self, cmd)
-        i = self.expect(["(?i)are you sure you want to continue connecting", original_prompts, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT, "(?i)connection closed by remote host"], timeout=login_timeout)
+        i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT, "(?i)connection closed by remote host"], timeout=login_timeout)
         if i==0: # New certificate -- always accept it. This is what you if SSH does not have the remote host's public key stored in the cache.
             self.sendline("yes")
-            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompts, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
+            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
         if i==2: # password
             self.sendline(password)
-            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompts, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
+            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
         if i==4:
             self.sendline(terminal_type)
-            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompts, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
+            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)password", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
 
         if i==0:
             # This is weird. This should not happen twice in a row.
@@ -141,11 +147,12 @@ class pxssh (spawn):
             self.close()
             #return False
             raise ExceptionPxssh ('unexpected login response')
-        # We appear to be in -- set shell prompt to something more unique.
-        if not self.set_unique_prompt():
-            self.close()
-            #return False
-            raise ExceptionPxssh ('could not set shell prompt\n'+self.before)
+        # We appear to be in.
+        # set shell prompt to something unique.
+        if auto_prompt_reset:
+            if not self.set_unique_prompt():
+                self.close()
+                raise ExceptionPxssh ('could not set shell prompt\n'+self.before)
         return True
 
     def logout (self):
@@ -157,12 +164,16 @@ class pxssh (spawn):
         if index==1:
             self.sendline("exit")
             self.expect(EOF)
+        self.close()
 
     def prompt (self, timeout=20):
         """This matches the shell prompt.
         This is little more than a short-cut to the expect() method.
         This returns True if the shell prompt was matched.
         This returns False if there was a timeout.
+        Note that if you called login() with auto_prompt_reset
+        set to False then you should have manually set the PROMPT
+        attribute to a regex pattern for matching the prompt.
         """
         i = self.expect([self.PROMPT, TIMEOUT], timeout=timeout)
         if i==1:
@@ -181,13 +192,18 @@ class pxssh (spawn):
 
         You can also set your own prompt and set the PROMPT attribute
         to a regular expression that matches it.
+
+        The auto_prompt_reset attribute must be True for this method to work;
+        otherwise, it just returns False.
         """
+        if not self.auto_prompt_reset:
+            return False
         self.sendline (self.PROMPT_SET_SH) # sh-style
         i = self.expect ([TIMEOUT, self.PROMPT], timeout=10)
         if i == 0: # csh-style
             self.sendline (self.PROMPT_SET_CSH)
             i = self.expect ([TIMEOUT, self.PROMPT], timeout=10)
             if i == 0:
-                return 0
-        return 1
+                return False
+        return True
 

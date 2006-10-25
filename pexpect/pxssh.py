@@ -50,10 +50,9 @@ class pxssh (spawn):
 
     """
 
-# Python's super is annoying.
+# Python's super is super annoying.
 # http://mail.python.org/pipermail/python-list/2006-February/325485.html
     def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None, logfile=None, env=None):
-        #super(pxssh, self).__init__(None,[],timeout,maxread,searchwindowsize,logfile,env)
         spawn.__init__(self, None, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, env=env)
 
         self.name = '<pxssh>'
@@ -66,17 +65,19 @@ class pxssh (spawn):
         # we eliminate the problem. To make the set command different we add a
         # backslash in front of $. The $ doesn't need to be escaped, but it doesn't
         # hurt and serves to make the set prompt command different than the regex.
-        self.PROMPT = "\[PEXPECT\][\$\#] " # used to match the command-line prompt.
-        # used to set shell command-line prompt to something more unique.
+        self.UNIQUE_PROMPT = "\[PEXPECT\][\$\#] " # used to match the command-line prompt.
+        self.GENERIC_PROMPT = r"][#$]|~[#$]|bash.*?[#$]|[#$] " # used to match the command-line prompt.
+        self.PROMPT = self.UNIQUE_PROMPT # used to match the command-line prompt.
+        # used to set shell command-line prompt to UNIQUE_PROMPT.
         self.PROMPT_SET_SH = "PS1='[PEXPECT]\$ '"
         self.PROMPT_SET_CSH = "set prompt='[PEXPECT]\$ '"
         self.auto_prompt_reset = True 
 
     ### TODO: This is getting messy and I'm pretty sure this isn't perfect.
     ### TODO: I need to draw a flow chart for this.
-    def login (self,server,username,password='',terminal_type='ansi',original_prompt=r"][#$]|~[#$]|bash.*?[#$]|[#$] ",login_timeout=10,port=None,auto_prompt_reset=True):
-        """This logs the user into the given server. By default the prompt is
-        rather optimistic and should be considered more of an example. It's
+    def login (self,server,username,password='',terminal_type='ansi',original_prompt=None,login_timeout=10,port=None,auto_prompt_reset=True):
+        """This logs the user into the given server. By default the original prompt
+        is rather optimistic and should be considered more of an example. It's
         better to try to match the prompt as exactly as possible to prevent any
         false matches by server strings such as a "Message Of The Day" or
         something. The closer you can make the original_prompt match your real
@@ -86,11 +87,13 @@ class pxssh (spawn):
         something more unique. If that still fails then this raises an
         ExceptionPxssh exception.
         Set auto_prompt_reset to False to inhibit setting the prompt to
-        something new. By default pxssh will reset the command-line prompt
+        the UNIQUE_PROMPT. By default pxssh will reset the command-line prompt
         which the prompt() method uses to match. You can turn this off, but
         this will break the prompt() method unless you also set the
         PROMPT attribute to the prompt you want to match.
         """
+        if original_prompt is None:
+            original_prompt = self.GENERIC_PROMPT
         if port is None:
             cmd = "ssh -l %s %s" % (username, server)
         else:
@@ -192,12 +195,7 @@ class pxssh (spawn):
 
         You can also set your own prompt and set the PROMPT attribute
         to a regular expression that matches it.
-
-        The auto_prompt_reset attribute must be True for this method to work;
-        otherwise, it just returns False.
         """
-        if not self.auto_prompt_reset:
-            return False
         self.sendline (self.PROMPT_SET_SH) # sh-style
         i = self.expect ([TIMEOUT, self.PROMPT], timeout=10)
         if i == 0: # csh-style

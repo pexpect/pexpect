@@ -13,7 +13,7 @@ Example:
     password: 
     connecting to host1.example.com - OK
     connecting to host2.example.net- OK
-    targetting hosts: 63.199.26.226 63.199.26.229
+    targetting hosts: 192.168.1.104 192.168.1.107
     CMD (? for help) > uptime
     =======================================================================
     host1.example.com
@@ -137,9 +137,8 @@ def main ():
                 password = getpass.getpass('password: ')
         if port == '':
             port = None
-        fout = file ("mylog.txt","w")
         try:
-            hive[hostname] = pxssh.pxssh(logfile=fout)
+            hive[hostname] = pxssh.pxssh()
             hive[hostname].login(hostname, username, password, port)
             hive_names.append(hostname)
             print hive[hostname].before
@@ -150,7 +149,6 @@ def main ():
             print 'Skipping', hostname
             if hostname in hive:
                 del hive[hostname]
-        fout.close()
 
     synchronous_mode = True
     target_hostnames = hive_names[:]
@@ -200,7 +198,7 @@ def main ():
                 target_hostnames = hive_names[:]
             print 'targetting hosts:', ' '.join(target_hostnames)
             continue
-        elif cmd == ':exit':
+        elif cmd == ':exit' or cmd == ':q' or cmd == ':quit':
             break
         #
         # Run the command on all targets in parallel

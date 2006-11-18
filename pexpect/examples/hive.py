@@ -98,7 +98,7 @@ def main ():
     global CMD_HELP
 
     try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'h?', ['help','h','?','samepw','username=','password='])
+        optlist, args = getopt.getopt(sys.argv[1:], 'h?', ['help','h','?','sameuser','samepw', 'username=','password='])
     except Exception, e:
         print str(e)
         exit_with_usage()
@@ -107,36 +107,46 @@ def main ():
     if [elem for elem in options if elem in ['-h','--h','-?','--?','--help']]:
         exit_with_usage(0)
 
+    if '--sameuser' in options:
+        sameuser = True
+    else:
+        sameuser = False
     if '--samepw' in options:
         samepw = True
     else:
         samepw = False
-    if samepw:
-        if '--username' in options:
-            username = options['--username']
-        else:
-            username = raw_input('username: ')
-        if '--password' in options:
-            password = options['--password']
-        else:
-            password = getpass.getpass('password: ')
+    cli_username = ''
+    if '--username' in options:
+        cli_username = options['--username']
+    else:
+        cli_username = raw_input('username: ')
+    cli_password = ''
+    if '--password' in options:
+        cli_password = options['--password']
+    else:
+        cli_password = getpass.getpass('password: ')
 
     hive = {}
     hive_names = []
     for host_connect_string in args:
         hcd = parse_host_connect_string (host_connect_string)
         hostname = hcd['hostname']
-        username = hcd['username']
-        password = hcd['password']
         port     = hcd['port']
-        print 'connecting to', hostname
-        if not samepw:
-            if username == '':
-                username = raw_input('username: ')
-            if password == '':
-                password = getpass.getpass('password: ')
         if port == '':
             port = None
+        if len(hcd['username']) > 0 and not sameuser:
+            username = hcd['username']
+        elif cli_username == '': 
+            username = raw_input('username: ')
+        else:
+            username = cli_username
+        if len(hcd['password']) > 0 and not samepw:
+            password = hcd['password']
+        elif cli_password == '': 
+            password = raw_input('password: ')
+        else:
+            password = cli_password
+        print 'connecting to', hostname
         try:
             hive[hostname] = pxssh.pxssh()
             hive[hostname].login(hostname, username, password, port)

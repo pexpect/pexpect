@@ -118,13 +118,9 @@ def main ():
     cli_username = ''
     if '--username' in options:
         cli_username = options['--username']
-    else:
-        cli_username = raw_input('username: ')
     cli_password = ''
     if '--password' in options:
         cli_password = options['--password']
-    else:
-        cli_password = getpass.getpass('password: ')
 
     hive = {}
     hive_names = []

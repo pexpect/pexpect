@@ -58,6 +58,11 @@ CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
 :target all
     reset list of hosts to target all hosts in the hive. 
 
+:to name command
+    send a command line to the named host. This is similar to :target, but
+    sends only one command and does not change the list of targets for
+    future commands.
+
 :sync
     set mode to wait for shell prompts after commands are run. This is the
     default. When Hive first logs into a host it sets a special shell prompt
@@ -162,7 +167,7 @@ def main ():
     while True:
         cmd = raw_input('CMD (? for help) > ')
         cmd = cmd.strip()
-        if cmd=='?':
+        if cmd=='?' or cmd==':help' or cmd==':h':
             print CMD_HELP
             continue
         elif cmd==':resync':
@@ -189,6 +194,15 @@ def main ():
             cmd, txt = cmd.split(None,1)
             for hostname in target_hostnames:
                 hive[hostname].send(txt)
+            continue
+        elif cmd[:3] == ':to':
+            cmd, hostname, txt = cmd.split(None,2)
+            hive[hostname].sendline (txt)
+            hive[hostname].prompt(timeout=2)
+            print '/============================================================================='
+            print '| ' + hostname
+            print '\\-----------------------------------------------------------------------------'
+            print hive[hostname].before
             continue
         elif cmd[:7] == ':expect':
             cmd, pattern = cmd.split(None,1)

@@ -113,7 +113,6 @@ class pxssh (spawn):
         if i==0:
             # This is weird. This should not happen twice in a row.
             self.close()
-            #return False
             raise ExceptionPxssh ('Weird error. Got "are you sure" prompt twice.')
         elif i==1: # can occur if you have a public key pair set to authenticate. 
             ### TODO: May NOT be OK if expect() got tricked and matched a false prompt.
@@ -124,15 +123,12 @@ class pxssh (spawn):
             # If we get the password prompt again then this means
             # we didn't get the password right the first time. 
             self.close()
-            #return False
             raise ExceptionPxssh ('password refused')
         elif i==3: # permission denied -- password was bad.
             self.close()
-            #return False
             raise ExceptionPxssh ('permission denied')
         elif i==4: # terminal type again? WTF?
             self.close()
-            #return False
             raise ExceptionPxssh ('Weird error. Got "terminal type" prompt twice.')
         elif i==5: # Timeout
             # This is tricky... I presume that we are at the command-line prompt.
@@ -144,11 +140,9 @@ class pxssh (spawn):
             pass
         elif i==6: # Connection closed by remote host
             self.close()
-            #return False
             raise ExceptionPxssh ('connection closed')
         else: # Unexpected 
             self.close()
-            #return False
             raise ExceptionPxssh ('unexpected login response')
         # We appear to be in.
         # set shell prompt to something unique.

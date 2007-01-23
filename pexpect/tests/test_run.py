@@ -5,13 +5,13 @@ import commands
 import sys
 import PexpectTestCase
 
-# Many of these test cases blindly assume that sequential
-# listing of the /bin directory will yield the same results.
-# This may not always be true, but seems adequate for testing now.
-# I should fix this at some point.
+# TODO Many of these test cases blindly assume that sequential
+# TODO listing of the /bin directory will yield the same results.
+# TODO This may not always be true, but seems adequate for testing for now.
+# TODO I should fix this at some point.
 
 def timeout_callback (d):
-    print d["event_count"],
+#    print d["event_count"],
     if d["event_count"]>5:
         return 1
     return 0
@@ -28,7 +28,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         assert the_old_way == the_new_way
         assert exitstatus == 0
 
-    def test_run_callback (self):
+    def test_run_callback (self): # TODO it seems like this test could block forever if run fails...
         pexpect.run("cat", timeout=1, events={pexpect.TIMEOUT:timeout_callback})
 
     def test_run_bad_exitstatus (self):

@@ -33,7 +33,7 @@ Noah Spurrier, Richard Holden, Marco Molteni, Kimberley Burchett, Robert Stone,
 Hartmut Goebel, Chad Schroeder, Erick Tryzelaar, Dave Kirby, Ids vander Molen,
 George Todd, Noel Taylor, Nicolas D. Cesar, Alexander Gattin,
 Geoffrey Marshall, Francisco Lourenco, Glen Mabey, Karthik Gurusamy,
-Fernando Perez 
+Fernando Perez, Corey Minyard
 (Let me know if I forgot anyone.)
 
 Free, open source, and all that good stuff.
@@ -56,7 +56,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-Pexpect Copyright (c) 2006 Noah Spurrier
+Pexpect Copyright (c) 2007 Noah Spurrier
 http://pexpect.sourceforge.net/
 
 $Id$
@@ -125,7 +125,7 @@ class TIMEOUT(ExceptionPexpect):
 ##class MAXBUFFER(ExceptionPexpect):
 ##    """Raised when a scan buffer fills before matching an expected pattern."""
 
-def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None, logfile=None):
+def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None, logfile=None, cwd=None, env=None):
     """This function runs the given command; waits for it to finish;
     then returns all output as a string. STDERR is included in output.
     If the full path to the command is not given then the path is searched.
@@ -186,9 +186,9 @@ def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None
     a callback function through run() through the locals dictionary passed to a callback.
     """
     if timeout == -1:
-        child = spawn(command, maxread=2000, logfile=logfile)
+        child = spawn(command, maxread=2000, logfile=logfile, cwd=cwd, env=env)
     else:
-        child = spawn(command, timeout=timeout, maxread=2000, logfile=logfile)
+        child = spawn(command, timeout=timeout, maxread=2000, logfile=logfile, cwd=cwd, env=env)
     if events is not None:
         patterns = events.keys()
         responses = events.values()
@@ -234,7 +234,7 @@ class spawn (object):
     Use this class to start and control child applications.
     """
 
-    def __init__(self, command, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None, env=None):
+    def __init__(self, command, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None, cwd=None, env=None):
         """This is the constructor. The command parameter may be a string
         that includes a command and any arguments to the command. For example:
             child = pexpect.spawn ('/usr/bin/ftp')
@@ -358,10 +358,11 @@ class spawn (object):
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.
         self.closed = True # File-like object.
+        self.cwd = cwd
         self.env = env
-        self.__irix_hack = sys.platform.lower().find('irix') >= 0 # This flags if we are running on irix
+        self.__irix_hack = (sys.platform.lower().find('irix')>=0) # This flags if we are running on irix
         # Solaris uses internal __fork_pty(). All others use pty.fork().
-        if sys.platform.lower().find('solaris') or sys.platform.lower().find('sunos5'):
+        if (sys.platform.lower().find('solaris')>=0) or (sys.platform.lower().find('sunos5')>=0):
             self.use_native_pty_fork = False
         else:
             self.use_native_pty_fork = True
@@ -497,6 +498,8 @@ class spawn (object):
             # (specifically, Tomcat).
             signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
+            if self.cwd is not None:
+                os.chdir(self.cwd)
             if self.env is None:
                 os.execv(self.command, self.args)
             else:

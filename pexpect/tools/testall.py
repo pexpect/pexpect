@@ -15,8 +15,8 @@ import os, os.path
 import sys
 
 import pexpect
-print pexpect.__version__,
-print pexpect.__revision__
+print "Testing pexpect version:", pexpect.__version__
+print "Testing pexpect revision:", pexpect.__revision__
 
 def add_tests_to_list (import_list, dirname, names):
     # Only check directories named 'tests'.

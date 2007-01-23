@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""hivesh -- Hive Shell
+"""hive -- Hive Shell
 
 This lets you ssh to a group of servers and control them as if they were one.
 Each command you enter is sent to each host in parallel. The response of each
@@ -8,11 +8,11 @@ each host to return the shell command line prompt. The shell prompt is used
 to synch output.
 
 Example:
-    $ ./hivesh.py --samepw host1.example.com host2.example.net
+    $ hive.py --sameauth host1.example.com host2.example.net
     username: myusername
     password: 
     connecting to host1.example.com - OK
-    connecting to host2.example.net- OK
+    connecting to host2.example.net - OK
     targetting hosts: 192.168.1.104 192.168.1.107
     CMD (? for help) > uptime
     =======================================================================
@@ -27,15 +27,30 @@ Example:
     23:53:02 up 1 day, 13:36,  2 users,  load average: 0.50, 0.40, 0.46
     =======================================================================
 
-Usage:
-    hivesh.py host1 host2 host3 ... hostN
-You will be asked for your username and password.
-It is assumed that these will be the same for all hosts
-or that you have key pairs registered for each host.
+Other Usage Examples:
+1. You will be asked for your username and password for each host.
+    hive.py host1 host2 host3 ... hostN
+2. You will be asked once for your username and password.
+   This will be used for each host.
+    hive.py --sameauth host1 host2 host3 ... hostN
+3. Give a username and password on the command-line:
+    hive.py user1:pass2@host1 user2:pass2@host2 ... userN:passN@hostN
 
-    --samepw : This flag tells Hive that you want to be prompted just once
-                for your username and password and to use these credentials
-                for each host.
+You can use an extended host notation to specify username, password, and host
+instead of entering auth information interactively. Where you would enter
+a host name use this format:
+    username:password@host
+This assumes that ':' is not part of the password.
+You can use '\\:' to indicate a ':' and '\\\\' to indicate a single '\\'.
+Remember that this information will appear in the process listing.
+Anyone on your machine can see this auth information. This is not secure.
+
+    --sameauth : This flag tells Hive that you want to be prompted just once
+                for a username and password and to use this authentication
+                information for each host.
+    --sameuser : This flag tell Hive that you want to use the same username
+                 for each host, but you will still be prompted for a
+                 different password for each host.
 
 $Id $
 Noah Spurrier
@@ -99,36 +114,9 @@ CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
     This will exit the hive shell.
 """
 
-def main ():
-    global CMD_HELP
-
-    try:
-        optlist, args = getopt.getopt(sys.argv[1:], 'h?', ['help','h','?','sameuser','samepw', 'username=','password='])
-    except Exception, e:
-        print str(e)
-        exit_with_usage()
-    options = dict(optlist)
-    # There are a million ways to cry for help. These are but a few of them.
-    if [elem for elem in options if elem in ['-h','--h','-?','--?','--help']]:
-        exit_with_usage(0)
-
-    if '--sameuser' in options:
-        sameuser = True
-    else:
-        sameuser = False
-    if '--samepw' in options:
-        samepw = True
-    else:
-        samepw = False
-    cli_username = ''
-    if '--username' in options:
-        cli_username = options['--username']
-    cli_password = ''
-    if '--password' in options:
-        cli_password = options['--password']
-
-    hive = {}
+def login (args):
     hive_names = []
+    hive = {}
     for host_connect_string in args:
         hcd = parse_host_connect_string (host_connect_string)
         hostname = hcd['hostname']
@@ -141,10 +129,10 @@ def main ():
             username = raw_input('username: ')
         else:
             username = cli_username
-        if len(hcd['password']) > 0 and not samepw:
+        if len(hcd['password']) > 0 and not sameauth:
             password = hcd['password']
         elif cli_password == '': 
-            password = raw_input('password: ')
+            password = getpass.getpass('password: ')
         else:
             password = cli_password
         print 'connecting to', hostname
@@ -160,6 +148,39 @@ def main ():
             print 'Skipping', hostname
             if hostname in hive:
                 del hive[hostname]
+    return (hive_names, hive)
+
+def main ():
+    global CMD_HELP
+
+    try:
+        optlist, args = getopt.getopt(sys.argv[1:], 'h?', ['help','h','?','sameuser','sameauth', 'username=','password='])
+    except Exception, e:
+        print str(e)
+        exit_with_usage()
+    options = dict(optlist)
+    # There are a million ways to cry for help. These are but a few of them.
+    if [elem for elem in options if elem in ['-h','--h','-?','--?','--help']]:
+        exit_with_usage(0)
+    if len(options)==0 and len(args)==0:
+        exit_with_usage(0)
+
+    if '--sameuser' in options:
+        sameuser = True
+    else:
+        sameuser = False
+    if '--sameauth' in options:
+        sameauth = True
+    else:
+        sameauth = False
+    cli_username = ''
+    if '--username' in options:
+        cli_username = options['--username']
+    cli_password = ''
+    if '--password' in options:
+        cli_password = options['--password']
+
+    (hive_names, hive) = login(args)
 
     synchronous_mode = True
     target_hostnames = hive_names[:]

@@ -100,6 +100,16 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat')
         child.setwinsize(10,13)
         assert child.getwinsize()==(10,13), "getwinsize() did not return (10,13)"
+    def test_env(self):
+        default = pexpect.run('env')
+        userenv = pexpect.run('env', env={'foo':'pexpect'})
+        assert default!=userenv, "'default' and 'userenv' should be different"
+        assert 'foo' in userenv and 'pexpect' in userenv, "'foo' and 'pexpect' should be in 'userenv'"
+    def test_cwd (self): # This assumes 'pwd' and '/tmp' exist on this platform.
+        default = pexpect.run('pwd')
+        tmpdir =  pexpect.run('pwd', cwd='/tmp')
+        assert default!=tmpdir, "'default' and 'tmpdir' should be different"
+        assert ('tmp' in tmpdir), "'tmp' should be returned by 'pwd' command"
     def test_which (self):
         p = os.defpath
         ep = os.environ['PATH']

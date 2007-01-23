@@ -52,7 +52,7 @@ import sys, os, re, math, stat, getopt, traceback, types, time
 import pexpect
 
 __version__ = '1.2'
-__revision__ = '$Revision$'
+__revision__ = '$Revision: 402 $'
 __all__ = ['main', __version__, __revision__]
 
 GLOBAL_LOGFILE_NAME = "rippy_%d.log" % os.getpid()

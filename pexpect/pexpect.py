@@ -33,7 +33,7 @@ Noah Spurrier, Richard Holden, Marco Molteni, Kimberley Burchett, Robert Stone,
 Hartmut Goebel, Chad Schroeder, Erick Tryzelaar, Dave Kirby, Ids vander Molen,
 George Todd, Noel Taylor, Nicolas D. Cesar, Alexander Gattin,
 Geoffrey Marshall, Francisco Lourenco, Glen Mabey, Karthik Gurusamy,
-Fernando Perez, Corey Minyard
+Fernando Perez, Corey Minyard, Jon Cohen
 (Let me know if I forgot anyone.)
 
 Free, open source, and all that good stuff.

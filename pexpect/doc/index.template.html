@@ -351,19 +351,19 @@ parameter.</p>
 </blockquote>
 <hr noshade="noshade" size="1">
 <h1><a name="faq"></a>FAQ</h1>
-<p><b>Q: Why doesn't shell pipe and redirect (| and >) work when I
+<p><b>Q: Why don't shell pipe and redirect (| and >) work when I
 spawn a command?</b></p>
 <p>
 
 A: Remember that Pexpect does NOT interpret shell meta characters such as
-redirect, pipe, or wild cards (>, |, or *). That's done by a shell not the
+redirect, pipe, or wild cards (&gt;, |, or *). That's done by a shell not the
 command you are spawning. This is a common mistake. If you want to run a
 command and pipe it through another command then you must also start a shell.
 For example:
 
 <pre>
-            child = pexpect.spawn('/bin/bash -c "ls -l | grep LOG > log_list.txt"')
-            child.expect(pexpect.EOF)
+    child = pexpect.spawn('/bin/bash -c "ls -l | grep LOG &gt; log_list.txt"')
+    child.expect(pexpect.EOF)
 </pre>
 
 The second form of spawn (where you pass a list of arguments) is useful in
@@ -372,9 +372,9 @@ This can make syntax more clear. For example, the following is equivalent to
 the previous example:
 
 <pre>
-            shell_cmd = 'ls -l | grep LOG > log_list.txt'
-            child = pexpect.spawn('/bin/bash', ['-c', shell_cmd])
-            child.expect(pexpect.EOF)
+    shell_cmd = 'ls -l | grep LOG &gt; log_list.txt'
+    child = pexpect.spawn ('/bin/bash', ['-c', shell_cmd])
+    child.expect (pexpect.EOF)
 </pre>
 </p>
 <p><b>Q: Isn't there already a Python Expect?</b></p>
@@ -751,6 +751,7 @@ look for EOF.</p>
 <hr noshade="noshade" size="1">
 <h1><a name="testing"></a>TESTING</h1>
 <p>The following platforms have been tested:</p>
+<!--
 <table class="pymenu" border="0" cellpadding="5">
   <tbody>
     <tr>
@@ -817,6 +818,7 @@ works at all is amazing to me. Cygwin rules!</td>
     </tr>
   </tbody>
 </table>
+-->
 <h1>&nbsp;</h1>
 <h1><a name="todo">TO DO</a></h1>
 <p>Add an option to add a delay after each expect() or before each

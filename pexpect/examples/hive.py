@@ -51,7 +51,9 @@ Anyone on your machine can see this auth information. This is not secure.
     --sameuser : This flag tell Hive that you want to use the same username
                  for each host, but you will still be prompted for a
                  different password for each host.
-
+    --username=: This sets the username for all hosts. This implies --sameuser.
+    --password=: This sets the password for all hosts. This implies --password.
+                
 $Id$
 Noah Spurrier
 """
@@ -114,7 +116,7 @@ CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
     This will exit the hive shell.
 """
 
-def login (args):
+def login (args, cli_username=None, cli_password=None):
     hive_names = []
     hive = {}
     for host_connect_string in args:
@@ -123,18 +125,18 @@ def login (args):
         port     = hcd['port']
         if port == '':
             port = None
-        if len(hcd['username']) > 0 and not sameuser:
+        if len(hcd['username']) > 0: 
             username = hcd['username']
-        elif cli_username == '': 
-            username = raw_input('username: ')
-        else:
+        elif cli_username is not None:
             username = cli_username
-        if len(hcd['password']) > 0 and not sameauth:
-            password = hcd['password']
-        elif cli_password == '': 
-            password = getpass.getpass('password: ')
         else:
+            username = raw_input('username: ')
+        if len(hcd['password']) > 0:
+            password = hcd['password']
+        elif cli_password is not None:
             password = cli_password
+        else:
+            password = getpass.getpass('password: ')
         print 'connecting to', hostname
         try:
             hive[hostname] = pxssh.pxssh()
@@ -166,21 +168,19 @@ def main ():
         exit_with_usage(0)
 
     if '--sameuser' in options:
-        sameuser = True
-    else:
-        sameuser = False
-    if '--sameauth' in options:
-        sameauth = True
-    else:
-        sameauth = False
-    cli_username = ''
-    if '--username' in options:
+        cli_username = raw_input('username: ')
+    elif '--username' in options:
         cli_username = options['--username']
-    cli_password = ''
-    if '--password' in options:
+    else:
+        cli_username = None
+    if '--sameauth' in options:
+        cli_password = getpass.getpass('password: ')
+    elif '--password' in options:
         cli_password = options['--password']
-
-    (hive_names, hive) = login(args)
+    else:
+        cli_password = None
+    
+    (hive_names, hive) = login(args, cli_username, cli_password)
 
     synchronous_mode = True
     target_hostnames = hive_names[:]

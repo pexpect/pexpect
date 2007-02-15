@@ -52,7 +52,7 @@ Anyone on your machine can see this auth information. This is not secure.
                  for each host, but you will still be prompted for a
                  different password for each host.
 
-$Id $
+$Id$
 Noah Spurrier
 """
 # TODO add feature to support username:password@host combination

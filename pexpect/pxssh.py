@@ -84,9 +84,10 @@ class pxssh (spawn):
         #need to be escaped, but it doesn't hurt and serves to make the set
         #prompt command different than the regex.
 
-        self.UNIQUE_PROMPT = "\[PEXPECT\][\$\#] " # used to match the command-line prompt.
-        self.GENERIC_PROMPT = r"][#$]|~[#$]|bash.*?[#$]|[#$] " # used to match the command-line prompt.
-        self.PROMPT = self.UNIQUE_PROMPT # used to match the command-line prompt.
+        # used to match the command-line prompt
+        self.UNIQUE_PROMPT = "\[PEXPECT\][\$\#] "
+        self.PROMPT = self.UNIQUE_PROMPT
+
         # used to set shell command-line prompt to UNIQUE_PROMPT.
         self.PROMPT_SET_SH = "PS1='[PEXPECT]\$ '"
         self.PROMPT_SET_CSH = "set prompt='[PEXPECT]\$ '"
@@ -95,8 +96,10 @@ class pxssh (spawn):
         self.auto_prompt_reset = True 
 
     def levenshtein_distance(self, a,b):
+
         """This calculates the Levenshtein distance between a and b.
         """
+
         n, m = len(a), len(b)
         if n > m:
             a,b = b,a
@@ -113,12 +116,11 @@ class pxssh (spawn):
         return current[n]
 
     def synch_original_prompt (self):
-        """This attempts to find the prompt.
-        Basically, press enter and record the response;
-        press enter again and record the response;
-        if the two responses are similar then
-        assume we are at the original prompt.
-        """
+
+        """This attempts to find the prompt. Basically, press enter and record
+        the response; press enter again and record the response; if the two
+        responses are similar then assume we are at the original prompt. """
+
         # All of these timing pace values are magic.
         # I came up with these based on what seemed reliable for
         # connecting to a heavily loaded machine I have.
@@ -145,27 +147,31 @@ class pxssh (spawn):
 
     ### TODO: This is getting messy and I'm pretty sure this isn't perfect.
     ### TODO: I need to draw a flow chart for this.
-    def login (self,server,username,password='',terminal_type='ansi',original_prompt=None,login_timeout=10,port=None,auto_prompt_reset=True):
-        """This logs the user into the given server. By default the original
-        prompt is optimistic and is easily fooled. It's more reliable to try to
-        match the original prompt as exactly as possible to prevent false
-        matches by server strings such as the "Message Of The Day". On some
-        systems you can disable the MOTD on the remote server by creating a
-        zero-length file in the home directory of the remote server called
-        ".hushlogin". A timeout will not necessarily cause the login to fail.
-        In the case of a timeout we assume that the original prompt was so
-        weird that we could not match it, so we still try to reset the prompt
-        to something more unique. If that fails then login() raises an
-        ExceptionPxssh exception. Set auto_prompt_reset to False to inhibit
-        setting the prompt to the UNIQUE_PROMPT. By default pxssh will reset
-        the command-line prompt which the prompt() method uses to match. You
-        can turn this off, but this will break the prompt() method unless you
-        also set the PROMPT attribute to the prompt you want to match.
-        This does not distinguish between a remote server 'password'
-        prompt and a local ssh 'passphrase' prompt.
-        """
-        if original_prompt is None:
-            original_prompt = self.GENERIC_PROMPT
+    def login (self,server,username,password='',terminal_type='ansi',original_prompt=r"[#$] ",login_timeout=10,port=None,auto_prompt_reset=True):
+
+        """This logs the user into the given server. It uses the
+        'original_prompt' to try to find the promp right after login. When it
+        finds the prompt it immediately tries to reset the prompt to something
+        more easily matched. The default 'original_prompt' is very optimistic
+        and is easily fooled. It's more reliable to try to match the original
+        prompt as exactly as possible to prevent false matches by server
+        strings such as the "Message Of The Day". On some systems you can
+        disable the MOTD on the remote server by creating a zero-length file in
+        the home directory of the remote server called ".hushlogin". If a
+        prompt cannot be found then this will not necessarily cause the login
+        to fail. In the case of a timeout when looking for the prompt we assume
+        that the original prompt was so weird that we could not match it, so we
+        use a few tricks to guess when we have reached the prompt. Then we hope
+        for the best and blindly try to reset the prompt to something more
+        unique. If that fails then login() raises an ExceptionPxssh exception.
+        
+        In some situations it is not possible or desirable to reset the
+        original prompt. In this case, set 'auto_prompt_reset' to False to
+        inhibit setting the prompt to the UNIQUE_PROMPT. Remember that pxssh
+        uses a unique prompt in the prompt() method. If the original prompt is
+        not reset then this will disable the prompt() method unless you
+        manually set the PROMPT attribute. """
+
         ssh_options = '-q'
         if self.force_password:
             ssh_options = ssh_options + ' ' + self.SSH_OPTS
@@ -173,6 +179,8 @@ class pxssh (spawn):
             ssh_options = ssh_options + ' -p %s'%(str(port))
         cmd = "ssh %s -l %s %s" % (ssh_options, username, server)
 
+        # This does not distinguish between a remote server 'password' prompt
+        # and a local ssh 'passphrase' prompt (for unlocking a private key).
         spawn._spawn(self, cmd)
         i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT, "(?i)connection closed by remote host"], timeout=login_timeout)
 
@@ -237,9 +245,10 @@ class pxssh (spawn):
         return True
 
     def logout (self):
-        """This sends exit to the remote shell.
-        If there are stopped jobs then this sends exit twice.
-        """
+
+        """This sends exit to the remote shell. If there are stopped jobs then
+        this automatically sends exit twice. """
+
         self.sendline("exit")
         index = self.expect([EOF, "(?i)there are stopped jobs"])
         if index==1:
@@ -248,32 +257,36 @@ class pxssh (spawn):
         self.close()
 
     def prompt (self, timeout=20):
-        """This matches the shell prompt.
-        This is little more than a short-cut to the expect() method.
-        This returns True if the shell prompt was matched.
-        This returns False if there was a timeout.
-        Note that if you called login() with auto_prompt_reset
-        set to False then you should have manually set the PROMPT
-        attribute to a regex pattern for matching the prompt.
-        """
+
+        """This matches the shell prompt. This is little more than a short-cut
+        to the expect() method. This returns True if the shell prompt was
+        matched. This returns False if there was a timeout. Note that if you
+        called login() with auto_prompt_reset set to False then you should have
+        manually set the PROMPT attribute to a regex pattern for matching the
+        prompt. """
+
         i = self.expect([self.PROMPT, TIMEOUT], timeout=timeout)
         if i==1:
             return False
         return True
         
     def set_unique_prompt (self):
-        """This sets the remote shell prompt to something more unique than
-        # or $. This makes it easier for the prompt() method to match the shell
-        prompt unambiguously. This method is called automatically by the
-        login() method, but you may want to call it manually if you somehow
-        reset the shell prompt. For example, if you 'su' to a different user
-        then you will need to manually reset the prompt. This sends shell
-        commands to the remote host to set the prompt, so this assumes the
-        remote host is ready to receive commands.
 
-        You can also set your own prompt and set the PROMPT attribute
-        to a regular expression that matches it.
-        """
+        """This sets the remote prompt to something more unique than # or $.
+        This makes it easier for the prompt() method to match the shell prompt
+        unambiguously. This method is called automatically by the login()
+        method, but you may want to call it manually if you somehow reset the
+        shell prompt. For example, if you 'su' to a different user then you
+        will need to manually reset the prompt. This sends shell commands to
+        the remote host to set the prompt, so this assumes the remote host is
+        ready to receive commands.
+
+        Alternatively, you may use your own prompt pattern. Just set the PROMPT
+        attribute to a regular expression that matches it. In this case you
+        should call login() with auto_prompt_reset=False; then set the PROMPT
+        attribute. After that the prompt() method will try to match your prompt
+        pattern."""
+
         self.sendline (self.PROMPT_SET_SH) # sh-style
         i = self.expect ([TIMEOUT, self.PROMPT], timeout=10)
         if i == 0: # csh-style

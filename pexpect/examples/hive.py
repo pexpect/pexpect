@@ -112,6 +112,9 @@ CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
     This will send the 'my text' wihtout a line feed to the targetted hosts.
     This output of the hosts is not automatically synchronized.
 
+:control X
+    This will send the given control character to the targetted hosts.
+    For example, ":control c" will send ASCII 3.
 :exit
     This will exit the hive shell.
 """
@@ -241,6 +244,16 @@ def main ():
             continue
         elif cmd == ':exit' or cmd == ':q' or cmd == ':quit':
             break
+        elif cmd[:8] == ':control':
+            cmd, c = cmd.split(None,1)
+            c = ord(c)-96
+            for hostname in target_hostnames:
+                hive[hostname].send(chr(c))
+            continue
+        elif cmd == ':esc':
+            for hostname in target_hostnames:
+                hive[hostname].send(chr(27))
+            continue
         #
         # Run the command on all targets in parallel
         #

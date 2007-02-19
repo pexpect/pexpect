@@ -408,7 +408,14 @@ class spawn (object):
         then this does not close it. """
 
         if not self.closed:
-            self.close()
+            # It is possible for __del__ methods to execute during the
+            # teardown of the Python VM itself. Thus self.close() may
+            # trigger an exception because os.close may be None.
+            # -- Fernando Perez
+            try:
+                self.close()
+            except AttributeError:
+                pass
 
     def __str__(self):
 

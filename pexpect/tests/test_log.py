@@ -32,7 +32,8 @@ class TestCaseLog(PexpectTestCase.PexpectTestCase):
         mylog.close()
         lf = open(filename).read()
         os.unlink (filename)
-        assert lf == 'This is a test.\nThis is a test.\r\nThis is a test.\r\n'
+        lf = lf.replace(chr(4),'')
+        assert lf == 'This is a test.\nThis is a test.\r\nThis is a test.\r\n', repr(lf)
 
 if __name__ == '__main__':
     unittest.main()

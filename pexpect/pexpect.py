@@ -34,7 +34,8 @@ Credits: Noah Spurrier, Richard Holden, Marco Molteni, Kimberley Burchett,
 Robert Stone, Hartmut Goebel, Chad Schroeder, Erick Tryzelaar, Dave Kirby, Ids
 vander Molen, George Todd, Noel Taylor, Nicolas D. Cesar, Alexander Gattin,
 Geoffrey Marshall, Francisco Lourenco, Glen Mabey, Karthik Gurusamy, Fernando
-Perez, Corey Minyard, Jon Cohen (Let me know if I forgot anyone.)
+Perez, Corey Minyard, Jon Cohen, Guillaume Chazarain (Let me know if I forgot
+anyone.)
 
 Free, open source, and all that good stuff.
 
@@ -895,6 +896,30 @@ class spawn (object):
         n = n + self.send (os.linesep)
         return n
 
+    def sendcontrol(self, char):
+
+        """This sends a control character to the child such as Ctrl-C or
+        Ctrl-D. For example, to send a Ctrl-G (ASCII 7):
+
+            child.sendcontrol('g')
+
+        See also, sendintr() and sendeof().
+        """
+
+        c = c.tolower()
+        a = ord(char)
+        if a>=97 and a<=122:
+            a = a - ord('a') + 1
+            self.send (chr(a))
+        d = {'@':0, '`':0, 
+            '[':27, '{':27,
+            '\\':28, '|':28,
+            ']':29, '}': 29,
+            '^':30, '~':30,
+            '_':31,
+            '?':127}
+        self.send (chr(d[char]))
+
     def sendeof(self):
 
         """This sends an EOF to the child. This sends a character which causes
@@ -909,18 +934,37 @@ class spawn (object):
         ### Hmmm... how do I send an EOF?
         ###C  if ((m = write(pty, *buf, p - *buf)) < 0)
         ###C      return (errno == EWOULDBLOCK) ? n : -1;
-        fd = sys.stdin.fileno()
-        old = termios.tcgetattr(fd) # remember current state
-        new = termios.tcgetattr(fd)
-        new[3] = new[3] | termios.ICANON # ICANON must be set to recognize EOF
-        try: # use try/finally to ensure state gets restored
-            termios.tcsetattr(fd, termios.TCSADRAIN, new)
-            if 'CEOF' in dir(termios):
-                os.write (self.child_fd, '%c' % termios.CEOF)
-            else:
-                os.write (self.child_fd, '%c' % 4) # Silly platform does not define CEOF so assume CTRL-D
-        finally: # restore state
-            termios.tcsetattr(fd, termios.TCSADRAIN, old)
+        #fd = sys.stdin.fileno()
+        #old = termios.tcgetattr(fd) # remember current state
+        #new = termios.tcgetattr(fd)
+        #new[3] = new[3] | termios.ICANON # ICANON must be set to recognize EOF
+        #try: # use try/finally to ensure state gets restored
+        #    termios.tcsetattr(fd, termios.TCSADRAIN, new)
+        #    if 'CEOF' in dir(termios):
+        #        os.write (self.child_fd, '%c' % termios.CEOF)
+        #    else:
+        #        # Silly platform does not define CEOF so assume CTRL-D
+        #        os.write (self.child_fd, '%c' % 4)
+        #finally: # restore state
+        #    termios.tcsetattr(fd, termios.TCSADRAIN, old)
+        if 'VEOF' in dir(termios):
+            char = termios.tcgetattr(self.child_fd)[6][termios.VEOF]
+        else:
+            # platform does not define VEOF so assume CTRL-D
+            char = chr(4)
+        self.send(char)
+
+    def sendintr(self):
+
+        """This sends a SIGINT to the child. It does not require
+        the SIGINT to be the first character on a line. """
+
+        if 'VINTR' in dir(termios):
+            char = termios.tcgetattr(self.child_fd)[6][termios.VINTR]
+        else:
+            # platform does not define VINTR so assume CTRL-C
+            char = chr(3) 
+        self.send (char)
 
     def eof (self):
 

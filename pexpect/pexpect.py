@@ -330,9 +330,10 @@ class spawn (object):
         real heyboard. If you introduce a slight delay just before writing then
         this seems to clear up the problem. This was such a common problem for
         many users that I decided that the default pexpect behavior should be
-        to sleep just before writing to the child application. 1/10th of a
-        second (100 ms) seems to be enough to clear up the problem. You can set
-        delaybeforesend to 0 to return to the old behavior.
+        to sleep just before writing to the child application. 1/20th of a
+        second (50 ms) seems to be enough to clear up the problem. You can set
+        delaybeforesend to 0 to return to the old behavior. Most Linux machines
+        don't like this to be below 0.03. I don't know why.
         
         Note that spawn is clever about finding commands on your path.
         It uses the same logic that "which" uses to find executables.
@@ -372,12 +373,13 @@ class spawn (object):
         self.logfile = logfile    
         self.logfile_read = None # input from child (read_nonblocking)
         self.logfile_send = None # output to send (send, sendline)
-        self.maxread = maxread # Max bytes to read at one time into buffer.
+        self.maxread = maxread # max bytes to read at one time into buffer
         self.buffer = '' # This is the read buffer. See maxread.
         self.searchwindowsize = searchwindowsize # Anything before searchwindowsize point is preserved, but not searched.
-        self.delaybeforesend = 0.1 # Sets sleep time used just before sending data to child.
-        self.delayafterclose = 0.1 # Sets delay in close() method to allow kernel time to update process status.
-        self.delayafterterminate = 0.1 # Sets delay in terminate() method to allow kernel time to update process status.
+        # Most Linux machines don't like delaybeforesend to be below 0.03 (30 ms).
+        self.delaybeforesend = 0.05 # Sets sleep time used just before sending data to child. Time in seconds.
+        self.delayafterclose = 0.1 # Sets delay in close() method to allow kernel time to update process status. Time in seconds.
+        self.delayafterterminate = 0.1 # Sets delay in terminate() method to allow kernel time to update process status. Time in seconds.
         self.softspace = False # File-like object.
         self.name = '<' + repr(self) + '>' # File-like object.
         self.encoding = None # File-like object.

@@ -906,11 +906,11 @@ class spawn (object):
         See also, sendintr() and sendeof().
         """
 
-        c = c.tolower()
+        char = char.lower()
         a = ord(char)
         if a>=97 and a<=122:
             a = a - ord('a') + 1
-            self.send (chr(a))
+            return self.send (chr(a))
         d = {'@':0, '`':0, 
             '[':27, '{':27,
             '\\':28, '|':28,
@@ -918,7 +918,9 @@ class spawn (object):
             '^':30, '~':30,
             '_':31,
             '?':127}
-        self.send (chr(d[char]))
+        if char not in d:
+            return 0
+        return self.send (chr(d[char]))
 
     def sendeof(self):
 

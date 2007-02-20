@@ -4,10 +4,11 @@
 This lets you ssh to a group of servers and control them as if they were one.
 Each command you enter is sent to each host in parallel. The response of each
 host is collected and printed. In normal synchronous mode Hive will wait for
-each host to return the shell command line prompt. The shell prompt is used
-to synch output.
+each host to return the shell command line prompt. The shell prompt is used to
+synch output.
 
 Example:
+
     $ hive.py --sameauth host1.example.com host2.example.net
     username: myusername
     password: 
@@ -28,6 +29,7 @@ Example:
     =======================================================================
 
 Other Usage Examples:
+
 1. You will be asked for your username and password for each host.
     hive.py host1 host2 host3 ... hostN
 2. You will be asked once for your username and password.
@@ -37,13 +39,15 @@ Other Usage Examples:
     hive.py user1:pass2@host1 user2:pass2@host2 ... userN:passN@hostN
 
 You can use an extended host notation to specify username, password, and host
-instead of entering auth information interactively. Where you would enter
-a host name use this format:
+instead of entering auth information interactively. Where you would enter a
+host name use this format:
+
     username:password@host
-This assumes that ':' is not part of the password.
-You can use '\\:' to indicate a ':' and '\\\\' to indicate a single '\\'.
-Remember that this information will appear in the process listing.
-Anyone on your machine can see this auth information. This is not secure.
+
+This assumes that ':' is not part of the password. You can use '\\:' to
+indicate a ':' and '\\\\' to indicate a single '\\'. Remember that this
+information will appear in the process listing. Anyone on your machine can see
+this auth information. This is not secure.
 
     --sameauth : This flag tells Hive that you want to be prompted just once
                 for a username and password and to use this authentication
@@ -57,11 +61,20 @@ Anyone on your machine can see this auth information. This is not secure.
 $Id$
 Noah Spurrier
 """
+
 # TODO add feature to support username:password@host combination
 # TODO add feature to log each host output in separate file
 
 import sys, os, re, getopt, traceback, types, time, getpass
 import pexpect, pxssh
+import readline, atexit
+
+#histfile = os.path.join(os.environ["HOME"], ".hive_history")
+#try:
+#    readline.read_history_file(histfile)
+#except IOError:
+#    pass
+#atexit.register(readline.write_history_file, histfile)
 
 def exit_with_usage(exit_code=1):
     print globals()['__doc__']
@@ -70,17 +83,21 @@ def exit_with_usage(exit_code=1):
 CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
 
 :target name1 name2 name3 ...
+
     set list of hosts to target commands
 
 :target all
+
     reset list of hosts to target all hosts in the hive. 
 
 :to name command
+
     send a command line to the named host. This is similar to :target, but
-    sends only one command and does not change the list of targets for
-    future commands.
+    sends only one command and does not change the list of targets for future
+    commands.
 
 :sync
+
     set mode to wait for shell prompts after commands are run. This is the
     default. When Hive first logs into a host it sets a special shell prompt
     pattern that it can later look for to synchronize output of the hosts. If
@@ -93,33 +110,41 @@ CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
     CMD (? for help) > :sync
 
 :async
+
     set mode to not expect command line prompts (see :sync). Afterwards
     commands are send to target hosts, but their responses are not read back
     until :sync is run. This is useful to run before commands that will not
     return with the special shell prompt pattern that Hive uses to synchronize.
 
 :resync
-    This is similar to :sync, but it does not change the mode.
-    It looks for the prompt and thus consumes all input from all targetted
-    hosts.
+
+    This is similar to :sync, but it does not change the mode. It looks for the
+    prompt and thus consumes all input from all targetted hosts.
 
 :prompt
-    force each host to reset command line prompt to the special pattern
-    used to synchronize all the hosts. This is useful if you 'su' to
-    a different user where Hive would not know the prompt to match.
+
+    force each host to reset command line prompt to the special pattern used to
+    synchronize all the hosts. This is useful if you 'su' to a different user
+    where Hive would not know the prompt to match.
 
 :send my text
+
     This will send the 'my text' wihtout a line feed to the targetted hosts.
     This output of the hosts is not automatically synchronized.
 
 :control X
+
     This will send the given control character to the targetted hosts.
     For example, ":control c" will send ASCII 3.
+
 :exit
+
     This will exit the hive shell.
+
 """
 
 def login (args, cli_username=None, cli_password=None):
+
     hive_names = []
     hive = {}
     for host_connect_string in args:
@@ -156,6 +181,7 @@ def login (args, cli_username=None, cli_password=None):
     return (hive_names, hive)
 
 def main ():
+
     global CMD_HELP
 
     try:
@@ -246,9 +272,13 @@ def main ():
             break
         elif cmd[:8] == ':control':
             cmd, c = cmd.split(None,1)
-            c = ord(c)-96
+            if ord(c)-96 < 0 or ord(c)-96 > 255:
+                print '/============================================================================='
+                print '| Invalid character. Must be [a-zA-Z], @, [, ], \\, ^, _, or ?'
+                print '\\-----------------------------------------------------------------------------'
+                continue
             for hostname in target_hostnames:
-                hive[hostname].send(chr(c))
+                hive[hostname].sendcontrol(c)
             continue
         elif cmd == ':esc':
             for hostname in target_hostnames:
@@ -279,6 +309,7 @@ def main ():
             print '=============================================================================='
     
 def resync (hive, hive_names, timeout=2, max_attempts=5):
+
     """This waits for the shell prompt for each host in an effort to try to get
     them all to the same state. The timeout is set low so that hosts that are
     already at the prompt will not slow things down too much. If a prompt match
@@ -286,8 +317,8 @@ def resync (hive, hive_names, timeout=2, max_attempts=5):
     best effort to consume all input if it printed more than one prompt. It's
     kind of kludgy. Note that this will always introduce a delay equal to the
     timeout for each machine. So for 10 machines with a 2 second delay you will
-    get AT LEAST a 20 second delay if not more.
-    """
+    get AT LEAST a 20 second delay if not more. """
+
     # TODO This is ideal for threading.
     for hostname in hive_names:
         for attempts in xrange(0, max_attempts):
@@ -295,11 +326,13 @@ def resync (hive, hive_names, timeout=2, max_attempts=5):
                 break
 
 def parse_host_connect_string (hcs):
-    """This parses a host connection string in the form username:password@hostname:port.
-    All fields are options expcet hostname. A dictionary is returned with all four keys.
-    Keys that were not included are set to empty strings ''. Note that if your password has
-    the '@' character then you must backslash escape it.
-    """
+
+    """This parses a host connection string in the form
+    username:password@hostname:port. All fields are options expcet hostname. A
+    dictionary is returned with all four keys. Keys that were not included are
+    set to empty strings ''. Note that if your password has the '@' character
+    then you must backslash escape it. """
+
     if '@' in hcs:
         p = re.compile (r'(?P<username>[^@:]*)(:?)(?P<password>.*)(?!\\)@(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
     else:

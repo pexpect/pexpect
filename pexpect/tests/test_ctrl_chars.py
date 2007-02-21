@@ -13,8 +13,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         to a child process."""
 
         child = pexpect.spawn('python getch.py')
-        # Most Linux machines don't like this to be below 0.03.
-        child.delaybeforesend = 0.03
+        #child.delaybeforesend = 0.1
         for i in range(256):
             child.send(chr(i))
             child.expect ('%d\r\n' % i)
@@ -26,8 +25,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         """
 
         child = pexpect.spawn('python getch.py')
-        # Most Linux machines don't like this to be below 0.03.
-        child.delaybeforesend = 0.03
+        #child.delaybeforesend = 0.1
         for i in 'abcdefghijklmnopqrstuvwxyz':
             child.sendcontrol(i)
             child.expect ('[0-9]+\r\n')

@@ -143,47 +143,56 @@ class TIMEOUT(ExceptionPexpect):
 
 def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None, logfile=None, cwd=None, env=None):
 
-    """This function runs the given command; waits for it to finish; then
+    """
+    This function runs the given command; waits for it to finish; then
     returns all output as a string. STDERR is included in output. If the full
     path to the command is not given then the path is searched.
 
     Note that lines are terminated by CR/LF (\\r\\n) combination even on
     UNIX-like systems because this is the standard for pseudo ttys. If you set
-    withexitstatus to true, then run will return a tuple of (command_output,
-    exitstatus). If withexitstatus is false then this returns just
+    'withexitstatus' to true, then run will return a tuple of (command_output,
+    exitstatus). If 'withexitstatus' is false then this returns just
     command_output.
 
     The run() function can often be used instead of creating a spawn instance.
     For example, the following code uses spawn:
+
         from pexpect import *
         child = spawn('scp foo myname@host.example.com:.')
         child.expect ('(?i)password')
         child.sendline (mypassword)
-    The previous code can be replace with the following, which you may
-    or may not find simpler:
+
+    The previous code can be replace with the following:
+
         from pexpect import *
         run ('scp foo myname@host.example.com:.', events={'(?i)password': mypassword})
 
-    Examples:
+    == Examples ==
+
     Start the apache daemon on the local machine:
+
         from pexpect import *
         run ("/usr/local/apache/bin/apachectl start")
+
     Check in a file using SVN:
+
         from pexpect import *
         run ("svn ci -m 'automatic commit' my_file.py")
+
     Run a command and capture exit status:
+
         from pexpect import *
         (command_output, exitstatus) = run ('ls -l /bin', withexitstatus=1)
 
     === Tricky Examples ===
 
     The following will run SSH and execute 'ls -l' on the remote machine. The
-    password 'secret' will be sent if the '(?i)password' pattern is ever seen.
+    password 'secret' will be sent if the '(?i)password' pattern is ever seen:
 
         run ("ssh username@machine.example.com 'ls -l'", events={'(?i)password':'secret\n'})
 
     This will start mencoder to rip a video from DVD. This will also display
-    progress ticks every 5 seconds as it runs. Example:
+    progress ticks every 5 seconds as it runs. For example:
 
         from pexpect import *
         def print_ticks(d):
@@ -289,7 +298,7 @@ class spawn (object):
             child.expect(pexpect.EOF)
 
         The maxread attribute sets the read buffer size. This is maximum number
-        of bytes that Pexpect will try to read from a TTY at one time. Seeting
+        of bytes that Pexpect will try to read from a TTY at one time. Setting
         the maxread size to 1 will turn off buffering. Setting the maxread
         value higher may help performance in cases where large amounts of
         output are read back from the child. This feature is useful in
@@ -311,10 +320,13 @@ class spawn (object):
         everything to standard output. The logfile is flushed after each write.
 
         Example 1:
+
             child = pexpect.spawn('some_command')
             fout = file('mylog.txt','w')
             child.logfile = fout
+
         Example 2:
+
             child = pexpect.spawn('some_command')
             child.logfile = sys.stdout
             
@@ -556,7 +568,10 @@ class spawn (object):
         resolve the issue with Python's pty.fork() not supporting Solaris,
         particularly ssh. Based on patch to posixmodule.c authored by Noah
         Spurrier:
-        http://mail.python.org/pipermail/python-dev/2003-May/035281.html """
+
+            http://mail.python.org/pipermail/python-dev/2003-May/035281.html
+
+        """
 
         parent_fd, child_fd = os.openpty()
         if parent_fd < 0 or child_fd < 0:
@@ -666,7 +681,7 @@ class spawn (object):
         """This sets the terminal echo mode on or off. Note that anything the
         child sent before the echo will be lost, so you should be sure that
         your input buffer is empty before you setecho. For example, the
-        following will work as expected.
+        following will work as expected:
 
             p = pexpect.spawn('cat')
             p.sendline ('1234') # We will see this twice (once from tty echo and again from cat).
@@ -710,19 +725,19 @@ class spawn (object):
         then an EOF exception will be raised. If a log file was set using
         setlog() then all data will also be written to the log file.
 
-        If timeout==None then the read may block indefinitely. If timeout==-1
-        then the self.timeout value is used. If timeout==0 then the child is
+        If timeout is None then the read may block indefinitely. If timeout is -1
+        then the self.timeout value is used. If timeout is 0 then the child is
         polled and if there was no data immediately ready then this will raise
         a TIMEOUT exception.
         
-        The "timeout" refers only to the amount of time to read at least one
+        The timeout refers only to the amount of time to read at least one
         character. This is not effected by the 'size' parameter, so if you call
         read_nonblocking(size=100, timeout=30) and only one character is
         available right away then one character will be returned immediately.
         It will not wait for 30 seconds for another 99 characters to come in.
         
         This is a wrapper around os.read(). It uses select.select() to
-        implement a timeout. """
+        implement the timeout. """
 
         if self.closed:
             raise ValueError ('I/O operation on closed file in read_nonblocking().')
@@ -1125,7 +1140,7 @@ class spawn (object):
         those. Patterns may also be None which results in an empty list.
 
         This is used by expect() when calling expect_list(). Thus expect() is
-        nothing more than::
+        nothing more than:
 
              cpl = self.compile_pattern_list(pl)
              return self.expect_list(clp, timeout)

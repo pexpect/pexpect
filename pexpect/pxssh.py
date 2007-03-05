@@ -68,8 +68,6 @@ class pxssh (spawn):
             s.login (hostname, username, password)
     """
 
-# Python's super is super annoying.
-# http://mail.python.org/pipermail/python-list/2006-February/325485.html
     def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None, logfile=None, cwd=None, env=None):
         spawn.__init__(self, None, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env)
 

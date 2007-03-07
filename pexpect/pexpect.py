@@ -13,7 +13,7 @@ There are two main interfaces to Pexpect -- the function, run() and the class,
 spawn. You can call the run() function to execute a command and return the
 output. This is a handy replacement for os.system().
 
-For example:
+For example::
 
     pexpect.run('ls -la')
 
@@ -21,7 +21,7 @@ The more powerful interface is the spawn class. You can use this to spawn an
 external child command and then interact with the child by sending lines and
 expecting responses.
 
-For example:
+For example::
 
     child = pexpect.spawn('scp foo myname@host.example.com:.')
     child.expect ('Password:')
@@ -34,8 +34,8 @@ Credits: Noah Spurrier, Richard Holden, Marco Molteni, Kimberley Burchett,
 Robert Stone, Hartmut Goebel, Chad Schroeder, Erick Tryzelaar, Dave Kirby, Ids
 vander Molen, George Todd, Noel Taylor, Nicolas D. Cesar, Alexander Gattin,
 Geoffrey Marshall, Francisco Lourenco, Glen Mabey, Karthik Gurusamy, Fernando
-Perez, Corey Minyard, Jon Cohen, Guillaume Chazarain, Andrew Ryan (Let me know if I forgot
-anyone.)
+Perez, Corey Minyard, Jon Cohen, Guillaume Chazarain, Andrew Ryan (Let me know
+if I forgot anyone.)
 
 Free, open source, and all that good stuff.
 
@@ -126,7 +126,7 @@ class ExceptionPexpect(Exception):
 
 class EOF(ExceptionPexpect):
 
-    """Raised when EOF is read from a child. """
+    """Raised when EOF is read from a child. This usually means the child has exited."""
 
 class TIMEOUT(ExceptionPexpect):
 
@@ -155,31 +155,31 @@ def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None
     command_output.
 
     The run() function can often be used instead of creating a spawn instance.
-    For example, the following code uses spawn:
+    For example, the following code uses spawn::
 
         from pexpect import *
         child = spawn('scp foo myname@host.example.com:.')
         child.expect ('(?i)password')
         child.sendline (mypassword)
 
-    The previous code can be replace with the following:
+    The previous code can be replace with the following::
 
         from pexpect import *
         run ('scp foo myname@host.example.com:.', events={'(?i)password': mypassword})
 
     == Examples ==
 
-    Start the apache daemon on the local machine:
+    Start the apache daemon on the local machine::
 
         from pexpect import *
         run ("/usr/local/apache/bin/apachectl start")
 
-    Check in a file using SVN:
+    Check in a file using SVN::
 
         from pexpect import *
         run ("svn ci -m 'automatic commit' my_file.py")
 
-    Run a command and capture exit status:
+    Run a command and capture exit status::
 
         from pexpect import *
         (command_output, exitstatus) = run ('ls -l /bin', withexitstatus=1)
@@ -187,12 +187,12 @@ def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None
     === Tricky Examples ===
 
     The following will run SSH and execute 'ls -l' on the remote machine. The
-    password 'secret' will be sent if the '(?i)password' pattern is ever seen:
+    password 'secret' will be sent if the '(?i)password' pattern is ever seen::
 
-        run ("ssh username@machine.example.com 'ls -l'", events={'(?i)password':'secret\n'})
+        run ("ssh username@machine.example.com 'ls -l'", events={'(?i)password':'secret\\n'})
 
     This will start mencoder to rip a video from DVD. This will also display
-    progress ticks every 5 seconds as it runs. For example:
+    progress ticks every 5 seconds as it runs. For example::
 
         from pexpect import *
         def print_ticks(d):
@@ -265,13 +265,13 @@ class spawn (object):
     def __init__(self, command, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None, cwd=None, env=None):
 
         """This is the constructor. The command parameter may be a string that
-        includes a command and any arguments to the command. For example:
+        includes a command and any arguments to the command. For example::
 
             child = pexpect.spawn ('/usr/bin/ftp')
             child = pexpect.spawn ('/usr/bin/ssh user@example.com')
             child = pexpect.spawn ('ls -latr /tmp')
 
-        You may also construct it with a list of arguments like so:
+        You may also construct it with a list of arguments like so::
 
             child = pexpect.spawn ('/usr/bin/ftp', [])
             child = pexpect.spawn ('/usr/bin/ssh', ['user@example.com'])
@@ -283,7 +283,7 @@ class spawn (object):
         Remember that Pexpect does NOT interpret shell meta characters such as
         redirect, pipe, or wild cards (>, |, or *). This is a common mistake.
         If you want to run a command and pipe it through another command then
-        you must also start a shell. For example:
+        you must also start a shell. For example::
 
             child = pexpect.spawn('/bin/bash -c "ls -l | grep LOG > log_list.txt"')
             child.expect(pexpect.EOF)
@@ -291,7 +291,7 @@ class spawn (object):
         The second form of spawn (where you pass a list of arguments) is useful
         in situations where you wish to spawn a command and pass it its own
         argument list. This can make syntax more clear. For example, the
-        following is equivalent to the previous example:
+        following is equivalent to the previous example::
 
             shell_cmd = 'ls -l | grep LOG > log_list.txt'
             child = pexpect.spawn('/bin/bash', ['-c', shell_cmd])
@@ -303,7 +303,7 @@ class spawn (object):
         value higher may help performance in cases where large amounts of
         output are read back from the child. This feature is useful in
         conjunction with searchwindowsize.
-        
+
         The searchwindowsize attribute sets the how far back in the incomming
         seach buffer Pexpect will search for pattern matches. Every time
         Pexpect reads some data from the child it will append the data to the
@@ -313,23 +313,23 @@ class spawn (object):
         amount of data where you want to match The searchwindowsize does not
         effect the size of the incomming data buffer. You will still have
         access to the full buffer after expect() returns.
-        
+
         The logfile member turns on or off logging. All input and output will
         be copied to the given file object. Set logfile to None to stop
         logging. This is the default. Set logfile to sys.stdout to echo
         everything to standard output. The logfile is flushed after each write.
 
-        Example 1:
+        Example log input and output to a file::
 
             child = pexpect.spawn('some_command')
             fout = file('mylog.txt','w')
             child.logfile = fout
 
-        Example 2:
+        Example log to stdout::
 
             child = pexpect.spawn('some_command')
             child.logfile = sys.stdout
-            
+
         The delaybeforesend helps overcome a weird behavior that many users
         were experiencing. The typical problem was that a user would expect() a
         "Password:" prompt and then immediately call sendline() to send the
@@ -346,7 +346,7 @@ class spawn (object):
         second (50 ms) seems to be enough to clear up the problem. You can set
         delaybeforesend to 0 to return to the old behavior. Most Linux machines
         don't like this to be below 0.03. I don't know why.
-        
+
         Note that spawn is clever about finding commands on your path.
         It uses the same logic that "which" uses to find executables.
 
@@ -376,13 +376,13 @@ class spawn (object):
         self.terminated = True
         self.exitstatus = None
         self.signalstatus = None
-        self.status = None # status returned by os.waitpid 
+        self.status = None # status returned by os.waitpid
         self.flag_eof = False
         self.pid = None
         self.child_fd = -1 # initially closed
         self.timeout = timeout
         self.delimiter = EOF
-        self.logfile = logfile    
+        self.logfile = logfile
         self.logfile_read = None # input from child (read_nonblocking)
         self.logfile_send = None # output to send (send, sendline)
         self.maxread = maxread # max bytes to read at one time into buffer
@@ -522,13 +522,13 @@ class spawn (object):
             except OSError, e:
                 raise ExceptionPexpect('Error! pty.fork() failed: ' + str(e))
         else: # Use internal __fork_pty
-            self.pid, self.child_fd = self.__fork_pty() 
+            self.pid, self.child_fd = self.__fork_pty()
 
         if self.pid == 0: # Child
-            try: 
+            try:
                 self.child_fd = sys.stdout.fileno() # used by setwinsize()
                 self.setwinsize(24, 80)
-            except: 
+            except:
                 # Some platforms do not like setwinsize (Cygwin).
                 # This will cause problem when running applications that
                 # are very picky about window size.
@@ -563,11 +563,11 @@ class spawn (object):
         """This implements a substitute for the forkpty system call. This
         should be more portable than the pty.fork() function. Specifically,
         this should work on Solaris.
-        
+
         Modified 10.06.05 by Geoff Marshall: Implemented __fork_pty() method to
         resolve the issue with Python's pty.fork() not supporting Solaris,
         particularly ssh. Based on patch to posixmodule.c authored by Noah
-        Spurrier:
+        Spurrier::
 
             http://mail.python.org/pipermail/python-dev/2003-May/035281.html
 
@@ -576,7 +576,7 @@ class spawn (object):
         parent_fd, child_fd = os.openpty()
         if parent_fd < 0 or child_fd < 0:
             raise ExceptionPexpect, "Error! Could not open pty with os.openpty()."
-        
+
         pid = os.fork()
         if pid < 0:
             raise ExceptionPexpect, "Error! Failed os.fork()."
@@ -584,19 +584,19 @@ class spawn (object):
             # Child.
             os.close(parent_fd)
             self.__pty_make_controlling_tty(child_fd)
-            
+
             os.dup2(child_fd, 0)
             os.dup2(child_fd, 1)
             os.dup2(child_fd, 2)
-            
+
             if child_fd > 2:
                 os.close(child_fd)
         else:
             # Parent.
             os.close(child_fd)
-        
+
         return pid, parent_fd
-                
+
     def __pty_make_controlling_tty(self, tty_fd):
 
         """This makes the pseudo-terminal the controlling tty. This should be
@@ -604,14 +604,14 @@ class spawn (object):
         work on Solaris. """
 
         child_name = os.ttyname(tty_fd)
-        
+
         # Disconnect from controlling tty if still connected.
         fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY);
         if fd >= 0:
             os.close(fd)
-            
+
         os.setsid()
-        
+
         # Verify we are disconnected from controlling tty
         try:
             fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY);
@@ -621,7 +621,7 @@ class spawn (object):
         except:
             # Good! We are disconnected from a controlling tty.
             pass
-        
+
         # Verify we can open child pty.
         fd = os.open(child_name, os.O_RDWR);
         if fd < 0:
@@ -635,7 +635,7 @@ class spawn (object):
             raise ExceptionPexpect, "Error! Could not open controlling tty, /dev/tty"
         else:
             os.close(fd)
-         
+
     def fileno (self):   # File-like object.
 
         """This returns the file descriptor of the pty for the child.
@@ -681,7 +681,7 @@ class spawn (object):
         """This sets the terminal echo mode on or off. Note that anything the
         child sent before the echo will be lost, so you should be sure that
         your input buffer is empty before you setecho. For example, the
-        following will work as expected:
+        following will work as expected::
 
             p = pexpect.spawn('cat')
             p.sendline ('1234') # We will see this twice (once from tty echo and again from cat).
@@ -694,7 +694,7 @@ class spawn (object):
             p.expect (['wxyz'])
 
         The following WILL NOT WORK because the lines sent before the setecho
-        will be lost:
+        will be lost::
 
             p = pexpect.spawn('cat')
             p.sendline ('1234') # We will see this twice (once from tty echo and again from cat).
@@ -716,7 +716,7 @@ class spawn (object):
         # I tried TCSADRAIN and TCSAFLUSH, but these were inconsistent
         # and blocked on some platforms. TCSADRAIN is probably ideal if it worked.
         termios.tcsetattr(self.child_fd, termios.TCSANOW, new)
-    
+
     def read_nonblocking (self, size = 1, timeout = -1):
 
         """This reads at most size characters from the child application. It
@@ -729,13 +729,13 @@ class spawn (object):
         then the self.timeout value is used. If timeout is 0 then the child is
         polled and if there was no data immediately ready then this will raise
         a TIMEOUT exception.
-        
+
         The timeout refers only to the amount of time to read at least one
         character. This is not effected by the 'size' parameter, so if you call
         read_nonblocking(size=100, timeout=30) and only one character is
         available right away then one character will be returned immediately.
         It will not wait for 30 seconds for another 99 characters to come in.
-        
+
         This is a wrapper around os.read(). It uses select.select() to
         implement the timeout. """
 
@@ -762,9 +762,9 @@ class spawn (object):
             if not r and not self.isalive():
                 self.flag_eof = True
                 raise EOF ('End Of File (EOF) in read_nonblocking(). Pokey platform.')
-            
+
         r,w,e = self.__select([self.child_fd], [], [], timeout)
-        
+
         if not r:
             if not self.isalive():
                 # Some platforms, such as Irix, will claim that their processes are alive;
@@ -816,12 +816,12 @@ class spawn (object):
         # worry about if I have to later modify read() or expect().
         # Note, it's OK if size==-1 in the regex. That just means it
         # will never match anything in which case we stop only on EOF.
-        cre = re.compile('.{%d}' % size, re.DOTALL) 
+        cre = re.compile('.{%d}' % size, re.DOTALL)
         index = self.expect ([cre, self.delimiter]) # delimiter default is EOF
         if index == 0:
             return self.after ### self.before should be ''. Should I assert this?
         return self.before
-        
+
     def readline (self, size = -1):    # File-like object.
 
         """This reads and returns one entire line. A trailing newline is kept
@@ -916,7 +916,7 @@ class spawn (object):
     def sendcontrol(self, char):
 
         """This sends a control character to the child such as Ctrl-C or
-        Ctrl-D. For example, to send a Ctrl-G (ASCII 7):
+        Ctrl-D. For example, to send a Ctrl-G (ASCII 7)::
 
             child.sendcontrol('g')
 
@@ -928,7 +928,7 @@ class spawn (object):
         if a>=97 and a<=122:
             a = a - ord('a') + 1
             return self.send (chr(a))
-        d = {'@':0, '`':0, 
+        d = {'@':0, '`':0,
             '[':27, '{':27,
             '\\':28, '|':28,
             ']':29, '}': 29,
@@ -982,7 +982,7 @@ class spawn (object):
             char = termios.tcgetattr(self.child_fd)[6][termios.VINTR]
         else:
             # platform does not define VINTR so assume CTRL-C
-            char = chr(3) 
+            char = chr(3)
         self.send (char)
 
     def eof (self):
@@ -1032,7 +1032,7 @@ class spawn (object):
                 return True
             else:
                 return False
-     
+
     def wait(self):
 
         """This waits until the child exits. This is a blocking call. This will
@@ -1059,7 +1059,7 @@ class spawn (object):
         elif os.WIFSTOPPED (status):
             raise ExceptionPexpect ('Wait was called for a child process that is stopped. This is not supported. Is some other process attempting job control with our child pid?')
         return self.exitstatus
-   
+
     def isalive(self):
 
         """This tests if the child process is running or not. This is
@@ -1078,7 +1078,7 @@ class spawn (object):
             waitpid_options = 0
         else:
             waitpid_options = os.WNOHANG
-            
+
         try:
             pid, status = os.waitpid(self.pid, waitpid_options)
         except OSError, e: # No child processes
@@ -1140,14 +1140,14 @@ class spawn (object):
         those. Patterns may also be None which results in an empty list.
 
         This is used by expect() when calling expect_list(). Thus expect() is
-        nothing more than:
+        nothing more than::
 
              cpl = self.compile_pattern_list(pl)
              return self.expect_list(clp, timeout)
 
         If you are using expect() within a loop it may be more
         efficient to compile the patterns first and then call expect_list().
-        This avoid calls in a loop to compile_pattern_list():
+        This avoid calls in a loop to compile_pattern_list()::
 
              cpl = self.compile_pattern_list(my_pattern)
              while some_condition:
@@ -1178,7 +1178,7 @@ class spawn (object):
                 raise TypeError ('Argument must be one of StringType, EOF, TIMEOUT, SRE_Pattern, or a list of those type. %s' % str(type(p)))
 
         return compiled_pattern_list
- 
+
     def expect(self, pattern, timeout = -1, searchwindowsize=None):
 
         """This seeks through the stream until a pattern is matched. The
@@ -1203,7 +1203,7 @@ class spawn (object):
         catch these exceptions and return the index of the list entry instead
         of raising the exception. The attribute 'after' will be set to the
         exception type. The attribute 'match' will be None. This allows you to
-        write code like this:
+        write code like this::
 
                 index = p.expect (['good', 'bad', pexpect.EOF, pexpect.TIMEOUT])
                 if index == 0:
@@ -1214,8 +1214,8 @@ class spawn (object):
                     do_some_other_thing()
                 elif index == 3:
                     do_something_completely_different()
-                    
-        instead of code like this:
+
+        instead of code like this::
 
                 try:
                     index = p.expect (['good', 'bad'])
@@ -1230,7 +1230,7 @@ class spawn (object):
 
         These two forms are equivalent. It all depends on what you want. You
         can also just expect the EOF if you are waiting for all output of a
-        child to finish. For example:
+        child to finish. For example::
 
                 p = pexpect.spawn('/bin/ls')
                 p.expect (pexpect.EOF)
@@ -1259,7 +1259,7 @@ class spawn (object):
         if timeout == -1:
             timeout = self.timeout
         if timeout is not None:
-            end_time = time.time() + timeout 
+            end_time = time.time() + timeout
         if searchwindowsize == -1:
             searchwindowsize = self.searchwindowsize
 
@@ -1269,7 +1269,7 @@ class spawn (object):
                 # Sequence through the list of patterns looking for a match.
                 first_match = -1
                 for cre in pattern_list:
-                    if cre is EOF or cre is TIMEOUT: 
+                    if cre is EOF or cre is TIMEOUT:
                         continue # The patterns for PexpectExceptions are handled differently.
                     if searchwindowsize is None: # search everything
                         match = cre.search(incoming)
@@ -1387,7 +1387,7 @@ class spawn (object):
         Note that if you change the window size of the parent the SIGWINCH
         signal will not be passed through to the child. If you want the child
         window size to change when the parent's window size changes then do
-        something like the following example:
+        something like the following example::
 
             import pexpect, struct, fcntl, termios, signal, sys
             def sigwinch_passthrough (sig, data):
@@ -1461,7 +1461,7 @@ class spawn (object):
         # if select() is interrupted by a signal (errno==EINTR) then
         # we loop back and enter the select() again.
         if timeout is not None:
-            end_time = time.time() + timeout 
+            end_time = time.time() + timeout
         while True:
             try:
                 return select.select (iwtd, owtd, ewtd, timeout)
@@ -1476,7 +1476,7 @@ class spawn (object):
                     raise
 
 ##############################################################################
-# The following methods are no longer supported or allowed..                
+# The following methods are no longer supported or allowed..
     def setmaxread (self, maxread):
 
         """This method is no longer supported or allowed. I don't like getters
@@ -1523,7 +1523,7 @@ def which (filename):
 
     # Oddly enough this was the one line that made Pexpect
     # incompatible with Python 1.5.2.
-    #pathlist = p.split (os.pathsep) 
+    #pathlist = p.split (os.pathsep)
     pathlist = string.split (p, os.pathsep)
 
     for path in pathlist:

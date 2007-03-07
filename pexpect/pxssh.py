@@ -27,7 +27,7 @@ class pxssh (spawn):
     unique than just $ or #. This should work on most Borne/Bash or Csh style
     shells.
 
-    Example that runs a few commands on a remote server and prints the result:
+    Example that runs a few commands on a remote server and prints the result::
         
         import pxssh
         import getpass
@@ -58,7 +58,7 @@ class pxssh (spawn):
     off any key agents during testing. The 'force_password' attribute will turn
     off public key authentication. This will only work if the remote SSH server
     is configured to allow password logins. Example of using 'force_password'
-    attirbute:
+    attribute::
 
             s = pxssh.pxssh()
             s.force_password = True

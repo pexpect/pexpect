@@ -167,7 +167,8 @@ def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None
         from pexpect import *
         run ('scp foo myname@host.example.com:.', events={'(?i)password': mypassword})
 
-    == Examples ==
+    Examples
+    ========
 
     Start the apache daemon on the local machine::
 
@@ -184,7 +185,8 @@ def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None
         from pexpect import *
         (command_output, exitstatus) = run ('ls -l /bin', withexitstatus=1)
 
-    === Tricky Examples ===
+    Tricky Examples
+    ===============
 
     The following will run SSH and execute 'ls -l' on the remote machine. The
     password 'secret' will be sent if the '(?i)password' pattern is ever seen::

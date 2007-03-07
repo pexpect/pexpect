@@ -1,134 +1,177 @@
-'''
-$Revision: 374 $
-$Date: 2006-03-06 18:47:28 -0800 (Mon, 06 Mar 2006) $
+"""This implements an ANSI terminal emulator as a subclass of screen.
 
-'''
+$Id$
+"""
 # references:
-# http://www.retards.org/terminals/vt102.html
-# http://vt100.net/docs/vt102-ug/contents.html
-# http://vt100.net/docs/vt220-rm/
-# http://www.termsys.demon.co.uk/vtansi.htm
-# 
+#     http://www.retards.org/terminals/vt102.html
+#     http://vt100.net/docs/vt102-ug/contents.html
+#     http://vt100.net/docs/vt220-rm/
+#     http://www.termsys.demon.co.uk/vtansi.htm
 
 import screen
 import FSM
 import copy
 import string
 
-
-
 def Emit (fsm):
-        screen = fsm.something[0]
-        screen.write_ch(fsm.input_symbol)
+
+    screen = fsm.something[0]
+    screen.write_ch(fsm.input_symbol)
+
 def StartNumber (fsm):
-        fsm.something.append (fsm.input_symbol)
+
+    fsm.something.append (fsm.input_symbol)
+
 def BuildNumber (fsm):
-        ns = fsm.something.pop()
-        ns = ns + fsm.input_symbol
-        fsm.something.append (ns)
+
+    ns = fsm.something.pop()
+    ns = ns + fsm.input_symbol
+    fsm.something.append (ns)
+
 def DoBackOne (fsm):
-        screen = fsm.something[0]
-        screen.cursor_back ()
+
+    screen = fsm.something[0]
+    screen.cursor_back ()
+
 def DoBack (fsm):
-        count = int(fsm.something.pop())
-        screen = fsm.something[0]
-        screen.cursor_back (count)
+
+    count = int(fsm.something.pop())
+    screen = fsm.something[0]
+    screen.cursor_back (count)
+
 def DoDownOne (fsm):
-        screen = fsm.something[0]
-        screen.cursor_down ()
+
+    screen = fsm.something[0]
+    screen.cursor_down ()
+
 def DoDown (fsm):
-        count = int(fsm.something.pop())
-        screen = fsm.something[0]
-        screen.cursor_down (count)
+
+    count = int(fsm.something.pop())
+    screen = fsm.something[0]
+    screen.cursor_down (count)
+
 def DoForwardOne (fsm):
-        screen = fsm.something[0]
-        screen.cursor_forward ()
+
+    screen = fsm.something[0]
+    screen.cursor_forward ()
+
 def DoForward (fsm):
-        count = int(fsm.something.pop())
-        screen = fsm.something[0]
-        screen.cursor_forward (count)
+
+    count = int(fsm.something.pop())
+    screen = fsm.something[0]
+    screen.cursor_forward (count)
+
 def DoUpReverse (fsm):
-        screen = fsm.something[0]
-        screen.cursor_up_reverse()
+
+    screen = fsm.something[0]
+    screen.cursor_up_reverse()
+
 def DoUpOne (fsm):
-        screen = fsm.something[0]
-        screen.cursor_up ()
+
+    screen = fsm.something[0]
+    screen.cursor_up ()
+
 def DoUp (fsm):
-        count = int(fsm.something.pop())
-        screen = fsm.something[0]
-        screen.cursor_up (count)
+
+    count = int(fsm.something.pop())
+    screen = fsm.something[0]
+    screen.cursor_up (count)
+
 def DoHome (fsm):
-        c = int(fsm.something.pop())
-        r = int(fsm.something.pop())
-        screen = fsm.something[0]
-        screen.cursor_home (r,c)
+
+    c = int(fsm.something.pop())
+    r = int(fsm.something.pop())
+    screen = fsm.something[0]
+    screen.cursor_home (r,c)
+
 def DoHomeOrigin (fsm):
-        c = 1
-        r = 1
-        screen = fsm.something[0]
-        screen.cursor_home (r,c)
+
+    c = 1
+    r = 1
+    screen = fsm.something[0]
+    screen.cursor_home (r,c)
+
 def DoEraseDown (fsm):
-        screen = fsm.something[0]
-        screen.erase_down()
+
+    screen = fsm.something[0]
+    screen.erase_down()
+
 def DoErase (fsm):
-        arg = int(fsm.something.pop())
-        screen = fsm.something[0]
-        if arg == 0:
-                screen.erase_down()
-        elif arg == 1:
-                screen.erase_up()
-        elif arg == 2:
-                screen.erase_screen()
+
+    arg = int(fsm.something.pop())
+    screen = fsm.something[0]
+    if arg == 0:
+        screen.erase_down()
+    elif arg == 1:
+        screen.erase_up()
+    elif arg == 2:
+        screen.erase_screen()
+
 def DoEraseEndOfLine (fsm):
-        screen = fsm.something[0]
-        screen.erase_end_of_line()
+
+    screen = fsm.something[0]
+    screen.erase_end_of_line()
+
 def DoEraseLine (fsm):
-        screen = fsm.something[0]
-        if arg == 0:
-                screen.end_of_line()
-        elif arg == 1:
-                screen.start_of_line()
-        elif arg == 2:
-                screen.erase_line()
+
+    screen = fsm.something[0]
+    if arg == 0:
+        screen.end_of_line()
+    elif arg == 1:
+        screen.start_of_line()
+    elif arg == 2:
+        screen.erase_line()
+
 def DoEnableScroll (fsm):
-        screen = fsm.something[0]
-        screen.scroll_screen()
+
+    screen = fsm.something[0]
+    screen.scroll_screen()
+
 def DoCursorSave (fsm):
-        screen = fsm.something[0]
-        screen.cursor_save_attrs()
+
+    screen = fsm.something[0]
+    screen.cursor_save_attrs()
+
 def DoCursorRestore (fsm):
-        screen = fsm.something[0]
-        screen.cursor_restore_attrs()
+
+    screen = fsm.something[0]
+    screen.cursor_restore_attrs()
+
 def DoScrollRegion (fsm):
-        screen = fsm.something[0]
-        r2 = int(fsm.something.pop())
-        r1 = int(fsm.something.pop())
-        screen.scroll_screen_rows (r1,r2)
+
+    screen = fsm.something[0]
+    r2 = int(fsm.something.pop())
+    r1 = int(fsm.something.pop())
+    screen.scroll_screen_rows (r1,r2)
 
 def DoMode (fsm):
-        screen = fsm.something[0]
-        mode = fsm.something.pop() # Should be 4
-        # screen.setReplaceMode ()
+
+    screen = fsm.something[0]
+    mode = fsm.something.pop() # Should be 4
+    # screen.setReplaceMode ()
+
 def Log (fsm):
-        screen = fsm.something[0]
-        fsm.something = [screen]
-        fout = open ('log', 'a')
-        fout.write (fsm.input_symbol + ',' + fsm.current_state + '\n')
-        fout.close()
+
+    screen = fsm.something[0]
+    fsm.something = [screen]
+    fout = open ('log', 'a')
+    fout.write (fsm.input_symbol + ',' + fsm.current_state + '\n')
+    fout.close()
 
 class term (screen.screen):
-    '''This is a placeholder. 
+    """This is a placeholder. 
     In theory I might want to add other terminal types.
-    '''
+    """
     def __init__ (self, r=24, c=80):
         screen.screen.__init__(self, r,c)
 
 class ANSI (term):
-    '''This class encapsulates a generic terminal.
-        It filters a stream and maintains the state of
-        a screen object.
-    '''
+
+    """This class encapsulates a generic terminal. It filters a stream and
+    maintains the state of a screen object. """
+
     def __init__ (self, r=24,c=80):
+
         term.__init__(self,r,c)
 
         #self.screen = screen (24,80)
@@ -199,21 +242,30 @@ class ANSI (term):
         self.state.add_transition ('m', 'NUMBER_2', None, 'INIT')
         ### LED control. Same problem as 'm' code.
         self.state.add_transition ('q', 'NUMBER_2', None, 'INIT') 
+
     def process (self, c):
+
         self.state.process(c)
+
     def process_list (self, l):
+
         self.write(l)
+
     def write (self, s):
+
         for c in s:
             self.process(c)
+
     def flush (self):
+
         pass
+
     def write_ch (self, ch):
-        '''Puts a character at the current cursor position.
-        cursor position if moved forward with wrap-around, but
-        no scrolling is done if the cursor hits the lower-right corner
-        of the screen.
-        '''
+
+        """This puts a character at the current cursor position. cursor
+        position if moved forward with wrap-around, but no scrolling is done if
+        the cursor hits the lower-right corner of the screen. """
+
         #\r and \n both produce a call to crlf().
         ch = ch[0]
 
@@ -246,36 +298,37 @@ class ANSI (term):
                 self.cursor_home (self.cur_r, 1)
                 self.erase_line()
 
-    def test (self):
-        import sys
-        write_text = 'I\'ve got a ferret sticking up my nose.\n' + \
-        '(He\'s got a ferret sticking up his nose.)\n' + \
-        'How it got there I can\'t tell\n' + \
-        'But now it\'s there it hurts like hell\n' + \
-        'And what is more it radically affects my sense of smell.\n' + \
-        '(His sense of smell.)\n' + \
-        'I can see a bare-bottomed mandril.\n' + \
-        '(Slyly eyeing his other nostril.)\n' + \
-        'If it jumps inside there too I really don\'t know what to do\n' + \
-        'I\'ll be the proud posessor of a kind of nasal zoo.\n' + \
-        '(A nasal zoo.)\n' + \
-        'I\'ve got a ferret sticking up my nose.\n' + \
-        '(And what is worst of all it constantly explodes.)\n' + \
-        '"Ferrets don\'t explode," you say\n' + \
-        'But it happened nine times yesterday\n' + \
-        'And I should know for each time I was standing in the way.\n' + \
-        'I\'ve got a ferret sticking up my nose.\n' + \
-        '(He\'s got a ferret sticking up his nose.)\n' + \
-        'How it got there I can\'t tell\n' + \
-        'But now it\'s there it hurts like hell\n' + \
-        'And what is more it radically affects my sense of smell.\n' + \
-        '(His sense of smell.)'
-        self.fill('.')
-        self.cursor_home()
-        for c in write_text:
-            self.write_ch (c)
-        print str(self)
-
-if __name__ == '__main__':
-    t = ANSI(6,65)
-    t.test()
+#    def test (self):
+#
+#        import sys
+#        write_text = 'I\'ve got a ferret sticking up my nose.\n' + \
+#        '(He\'s got a ferret sticking up his nose.)\n' + \
+#        'How it got there I can\'t tell\n' + \
+#        'But now it\'s there it hurts like hell\n' + \
+#        'And what is more it radically affects my sense of smell.\n' + \
+#        '(His sense of smell.)\n' + \
+#        'I can see a bare-bottomed mandril.\n' + \
+#        '(Slyly eyeing his other nostril.)\n' + \
+#        'If it jumps inside there too I really don\'t know what to do\n' + \
+#        'I\'ll be the proud posessor of a kind of nasal zoo.\n' + \
+#        '(A nasal zoo.)\n' + \
+#        'I\'ve got a ferret sticking up my nose.\n' + \
+#        '(And what is worst of all it constantly explodes.)\n' + \
+#        '"Ferrets don\'t explode," you say\n' + \
+#        'But it happened nine times yesterday\n' + \
+#        'And I should know for each time I was standing in the way.\n' + \
+#        'I\'ve got a ferret sticking up my nose.\n' + \
+#        '(He\'s got a ferret sticking up his nose.)\n' + \
+#        'How it got there I can\'t tell\n' + \
+#        'But now it\'s there it hurts like hell\n' + \
+#        'And what is more it radically affects my sense of smell.\n' + \
+#        '(His sense of smell.)'
+#        self.fill('.')
+#        self.cursor_home()
+#        for c in write_text:
+#            self.write_ch (c)
+#        print str(self)
+#
+#if __name__ == '__main__':
+#    t = ANSI(6,65)
+#    t.test()

@@ -1589,3 +1589,5 @@ def split_command_line(command_line):
         arg_list.append(arg)
     return arg_list
 
+# vi:ts=4:sw=4:expandtab:ft=python:
+

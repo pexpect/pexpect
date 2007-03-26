@@ -341,7 +341,7 @@ class spawn (object):
         turn off stdin echo, but if you send your password before the
         application turned off echo, then you get your password echoed.
         Normally this wouldn't be a problem when interacting with a human at a
-        real heyboard. If you introduce a slight delay just before writing then
+        real keyboard. If you introduce a slight delay just before writing then
         this seems to clear up the problem. This was such a common problem for
         many users that I decided that the default pexpect behavior should be
         to sleep just before writing to the child application. 1/20th of a
@@ -831,7 +831,7 @@ class spawn (object):
         line. Note: This readline() looks for a \\r\\n pair even on UNIX
         because this is what the pseudo tty device returns. So contrary to what
         you may expect you will receive the newline as \\r\\n. An empty string
-        is returned when EOF is hit immediately. Currently, the size agument is
+        is returned when EOF is hit immediately. Currently, the size argument is
         mostly ignored, so this behavior is not standard for a file-like
         object. If size is 0 then an empty string is returned. """
 
@@ -948,7 +948,7 @@ class spawn (object):
         program without waiting for end-of-line. If it is the first character
         of the line, the read() in the user program returns 0, which signifies
         end-of-file. This means to work as expected a sendeof() has to be
-        called at the begining of a line. This method does not send a newline.
+        called at the beginning of a line. This method does not send a newline.
         It is the responsibility of the caller to ensure the eof is sent at the
         beginning of a line. """
 
@@ -1196,7 +1196,7 @@ class spawn (object):
         'match' will be set. You can see all the data read before the match in
         'before'. You can see the data that was matched in 'after'. The
         re.MatchObject used in the re match will be in 'match'. If an error
-        occured then 'before' will be set to all the data read so far and
+        occurred then 'before' will be set to all the data read so far and
         'after' and 'match' will be None.
 
         If timeout is -1 then timeout will be set to the self.timeout value.

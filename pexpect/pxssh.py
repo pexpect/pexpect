@@ -148,7 +148,7 @@ class pxssh (spawn):
     def login (self,server,username,password='',terminal_type='ansi',original_prompt=r"[#$] ",login_timeout=10,port=None,auto_prompt_reset=True):
 
         """This logs the user into the given server. It uses the
-        'original_prompt' to try to find the promp right after login. When it
+        'original_prompt' to try to find the prompt right after login. When it
         finds the prompt it immediately tries to reset the prompt to something
         more easily matched. The default 'original_prompt' is very optimistic
         and is easily fooled. It's more reliable to try to match the original
@@ -294,3 +294,4 @@ class pxssh (spawn):
                 return False
         return True
 
+# vi:ts=4:sw=4:expandtab:ft=python:

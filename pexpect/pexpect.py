@@ -1145,7 +1145,7 @@ class spawn (object):
         nothing more than::
 
              cpl = self.compile_pattern_list(pl)
-             return self.expect_list(clp, timeout)
+             return self.expect_list(cpl, timeout)
 
         If you are using expect() within a loop it may be more
         efficient to compile the patterns first and then call expect_list().

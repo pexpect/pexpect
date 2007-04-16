@@ -286,7 +286,7 @@ characters:</p>
 <p>Generally any star * expression will match as little as possible</p>
 <p>One thing you can do is to try to force a non-ambiguous character at
 the end of your <span class="code">\d+</span> pattern. Expect that
-character to delimit the string. For example, you might try making thr
+character to delimit the string. For example, you might try making the
 end of your pattrn be <span class="code">\D+</span> instead of <span
  class="code">\D*</span>. That means number digits alone would not
 satisfy the (<span class="code">\d+</span>) pattern. You would need
@@ -376,6 +376,7 @@ the previous example:
     child = pexpect.spawn ('/bin/bash', ['-c', shell_cmd])
     child.expect (pexpect.EOF)
 </pre>
+
 </p>
 <p><b>Q: Isn't there already a Python Expect?</b></p>
 <p>A: Yes, there are several of them. They usually require you to
@@ -384,6 +385,7 @@ single module that was simple to install. I also wanted something that
 was easy to use. This pure Python expect only recently became possible
 with the introduction of the pty module in the standard Python library.
 Previously C extensions were required.</p>
+
 <p><strong>Q: The before and after properties sound weird.</strong></p>
 <p>Originally I was going to model Pexpect more after Expect, but then
 I found that I could never remember how to get the context of the stuff
@@ -392,6 +394,7 @@ decided that it was easier for me to remember what before and after
 was. It just so happens that this is how the -B and -A options in grep
 works, so that made it even easier for me to remember. Whatever makes
 my life easier is what's best.</p>
+
 <p><b>Q: Why not just use Expect?</b></p>
 <p>A: I love it. It's great. I has bailed me out of some real jams, but
 I wanted something that would do 90% of what I need from Expect; be 10%
@@ -399,6 +402,7 @@ of the size; and allow me to write my code in Python instead of TCL.
 Pexpect is not nearly as big as Expect, but Pexpect does everything I
 have ever used Expect for.
 <!-- :-P If I liked TCL then you wouldn't be reading this. My appologies to Don Libes -- Expect is cool, TK is cool, but TCL is only slightly better than Perl in my book. Hopefully after Expyct is done I will not need to use Expect anymore -- except for that lovely autoexpect tool. Damn, I wish I had that! --> </p>
+
 <p><b>Q: Why not just use a pipe (popen())?</b></p>
 <p>A: A pipe works fine for getting the output to non-interactive
 programs. If you just want to get the output from <span class="code">ls</span>,
@@ -416,7 +420,7 @@ Standard IO Library (anything that uses <span class="code">#include
 &lt;stdio.h&gt;</span>). One of the features of the stdio library is
 that it buffers all input and output. Normally output is <b><i>line
 buffered</i></b> when a program is printing to a TTY (your terminal
-screen). Everytime the program prints a line-feed the currently
+screen). Every time the program prints a line-feed the currently
 buffered data will get printed to your screen. The problem comes when
 you connect a pipe. The stdio library is smart and can tell that it is
 printing to a pipe instead of a TTY. In that case it switches from line
@@ -463,6 +467,7 @@ internally in the STDIO library. I think the STDIO lib looks at the
 file descriptor and decides to change behavior based on whether it's a
 TTY or a block file (see isatty()).</p>
 <p>I hope that this qualifies as helpful.</p>
+
 <h1>Don't use a pipe to control another application...</h1>
 <p>Pexpect may seem similar to <span class="code">os.popen()</span> or
 <span class="code">commands</span> module. The main difference is that
@@ -478,6 +483,7 @@ output. The stdio library behaves differently depending on where the
 output is going. There is no way to control this behavior from the
 client end.<br>
 </p>
+
 <p><b>Q: Can I do screen scraping with this thing?</b></p>
 <p>A: That depends. If your application just does line-oriented output
 then this is easy. If it does screen-oriented output then it may work,
@@ -551,6 +557,7 @@ then it will always return 0 as expected.</p>
 <blockquote>
   <pre class="code">child = pexpect.spawn('ls')<br>child.expect(pexpect.EOF)<br>time.sleep(0.1)<br>print child.isalive()</pre>
 </blockquote>
+
 <h2>Truncated output just before child exits</h2>
 <p><i>So far I have seen this only on older versions of <b>Apple's MacOS X</b>.</i>
 If the child application quits it may not flush its output buffer. This
@@ -569,6 +576,7 @@ demonstrates the problem:</p>
   <pre class="code">child = pexpect.spawn ('ls -l')<br>child.expect (pexpect.EOF)<br>print child.before <br>  </pre>
 </blockquote>
 <p></p>
+
 <h2>Controlling SSH on Solaris</h2>
 <p>Pexpect does not yet work perfectly on Solaris.
 One common problem is that SSH sometimes will not allow TTY password

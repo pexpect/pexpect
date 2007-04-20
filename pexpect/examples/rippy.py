@@ -120,13 +120,13 @@ prompts = {
 It can be any file that mencoder supports.
 You can also choose a DVD device using the dvd://1 syntax.
 Title 1 is usually the main title on a DVD.""",0),
-'video_chapter':("1",'video chapter?',"""This is the chapter number. Usually disks such as TV series seasons will be divided into chapters. Maybe be ALL.""",0),
+'video_chapter':("none",'video chapter?',"""This is the chapter number. Usually disks such as TV series seasons will be divided into chapters. Maybe be set to none.""",0),
 'video_final_filename':("video_final.avi", "video final filename?", """This is the name of the final video.""",0),
 'audio_raw_filename':("audiodump.wav", "audio raw filename?", """This is the audio raw PCM filename. This is prior to compression.
 Note that mplayer automatically names this audiodump.wav, so don't change this.""",1000),
 #'audio_compressed_filename':("audiodump.mp3","Audio compressed filename?", """This is the name of the compressed audio that will be mixed
 #into the final video. Normally you don't need to change this.""",2),
-'video_length':("None","video length in seconds?","""This sets the length of the video in seconds. This is used to estimate the
+'video_length':("none","video length in seconds?","""This sets the length of the video in seconds. This is used to estimate the
 bitrate for a target video file size. Set to 'calc' to have Rippy calculate
 the length. Set to 'none' if you don't want rippy to estimate the bitrate --
 you will have to manually specify bitrate.""",1),
@@ -584,7 +584,7 @@ def build_compression_command (video_source_filename, video_final_filename, vide
         chapter = '-chapter %d-%d' %(video_chapter,video_chapter)
     else:
         chapter = ''
-    chapter = '-chapter 1-1'
+#    chapter = '-chapter 2-2'
 
     #
     # build audio_filter argument
@@ -640,7 +640,7 @@ def compression_estimate (video_length, video_source_filename, video_final_filen
     size = get_filesize ("compression_test_1.avi")+get_filesize ("compression_test_2.avi")+get_filesize ("compression_test_3.avi")+get_filesize ("compression_test_4.avi")+get_filesize ("compression_test_5.avi")
     return (size / 5.0)
 
-def compress_video (video_source_filename, video_final_filename, video_target_size, audio_id=128, video_bitrate=1000, video_codec='mpeg4', audio_codec='mp3', video_fourcc_override='FMP4', video_gray_flag=0, video_crop_area=None, video_aspect_ratio='16/9', video_scale=None, video_encode_passes=2, video_deinterlace_flag=0, audio_volume_boost=None, audio_sample_rate=None, audio_bitrate=None, seek_skip=None, seek_length=None, verbose_flag=0, dry_run_flag=0):
+def compress_video (video_source_filename, video_final_filename, video_target_size, audio_id=128, video_bitrate=1000, video_codec='mpeg4', audio_codec='mp3', video_fourcc_override='FMP4', video_gray_flag=0, video_crop_area=None, video_aspect_ratio='16/9', video_scale=None, video_encode_passes=2, video_deinterlace_flag=0, audio_volume_boost=None, audio_sample_rate=None, audio_bitrate=None, seek_skip=None, seek_length=None, video_chapter=None, verbose_flag=0, dry_run_flag=0):
     """This compresses the video and audio of the given source video filename to the transcoded filename.
         This does a two-pass compression (I'm assuming mpeg4, I should probably make this smarter for other formats).
     """
@@ -649,7 +649,7 @@ def compress_video (video_source_filename, video_final_filename, video_target_si
     #
     #cmd = "mencoder -quiet '%(video_source_filename)s' -ss 65 -endpos 20 -aid %(audio_id)s -o '%(video_final_filename)s' -ffourcc %(video_fourcc_override)s -ovc lavc -oac lavc %(lavcopts)s %(video_filter)s %(audio_filter)s" % locals()
 
-    cmd = build_compression_command (video_source_filename, video_final_filename, video_target_size, audio_id, video_bitrate, video_codec, audio_codec, video_fourcc_override, video_gray_flag, video_crop_area, video_aspect_ratio, video_scale, video_encode_passes, video_deinterlace_flag, audio_volume_boost, audio_sample_rate, audio_bitrate, seek_skip, seek_length)
+    cmd = build_compression_command (video_source_filename, video_final_filename, video_target_size, audio_id, video_bitrate, video_codec, audio_codec, video_fourcc_override, video_gray_flag, video_crop_area, video_aspect_ratio, video_scale, video_encode_passes, video_deinterlace_flag, audio_volume_boost, audio_sample_rate, audio_bitrate, seek_skip, seek_length, video_chapter)
     if verbose_flag: print cmd
     if not dry_run_flag:
         run(cmd)

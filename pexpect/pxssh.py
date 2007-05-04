@@ -1,5 +1,6 @@
 """This class extends pexpect.spawn to specialize setting up SSH connections.
 This adds methods for login, logout, and expecting the shell prompt.
+
 $Id$
 """
 from pexpect import *
@@ -90,6 +91,11 @@ class pxssh (spawn):
         self.PROMPT_SET_SH = "PS1='[PEXPECT]\$ '"
         self.PROMPT_SET_CSH = "set prompt='[PEXPECT]\$ '"
         self.SSH_OPTS = "-o'RSAAuthentication=no' -o 'PubkeyAuthentication=no'"
+        # Disabling X11 forwarding gets rid of the annoying SSH_ASKPASS from
+        # displaying a GUI password dialog. I have not figured out how to
+        # disable only SSH_ASKPASS without also disabling X11 forwarding.
+        # Unsetting SSH_ASKPASS on the remote side doesn't disable it! Annoying!
+        #self.SSH_OPTS = "-x -o'RSAAuthentication=no' -o 'PubkeyAuthentication=no'"
         self.force_password = False
         self.auto_prompt_reset = True 
 

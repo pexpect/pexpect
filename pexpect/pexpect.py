@@ -1311,6 +1311,7 @@ class spawn (object):
                 self.match_index = None
                 raise EOF (str(e) + '\n' + str(self))
         except TIMEOUT, e:
+            self.buffer = incoming
             self.before = incoming
             self.after = TIMEOUT
             if TIMEOUT in pattern_list:

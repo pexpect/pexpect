@@ -14,10 +14,15 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
 
         child = pexpect.spawn('python getch.py')
         #child.delaybeforesend = 0.1
-        for i in range(256):
-            child.send(chr(i))
-            child.expect ('%d\r\n' % i)
-            #print child.after
+        try:
+            for i in range(256):
+                child.send(chr(i))
+                child.expect ('%d\r\n' % i)
+                #print child.after
+        except Exception, e:
+            msg = "Did not echo character value: " + str(i) + "\n" 
+            msg = msg + str(e)
+            self.fail(msg)
 
     def test_sendcontrol(self):
 

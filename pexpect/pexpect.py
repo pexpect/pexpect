@@ -1139,7 +1139,9 @@ class spawn (object):
 
         """This compiles a pattern-string or a list of pattern-strings.
         Patterns must be a StringType, EOF, TIMEOUT, SRE_Pattern, or a list of
-        those. Patterns may also be None which results in an empty list.
+        those. Patterns may also be None which results in an empty list (you
+        might do this if waiting for an EOF or TIMEOUT condition without
+        expecting any pattern).
 
         This is used by expect() when calling expect_list(). Thus expect() is
         nothing more than::
@@ -1184,13 +1186,14 @@ class spawn (object):
     def expect(self, pattern, timeout = -1, searchwindowsize=None):
 
         """This seeks through the stream until a pattern is matched. The
-        pattern is overloaded and may take several types including a list. The
-        pattern can be a StringType, EOF, a compiled re, or a list of those
-        types. Strings will be compiled to re types. This returns the index
-        into the pattern list. If the pattern was not a list this returns index
-        0 on a successful match. This may raise exceptions for EOF or TIMEOUT.
-        To avoid the EOF or TIMEOUT exceptions add EOF or TIMEOUT to the
-        pattern list.
+        pattern is overloaded and may take several types. The pattern can be a
+        StringType, EOF, a compiled re, or a list of any of those types.
+        Strings will be compiled to re types. This returns the index into the
+        pattern list. If the pattern was not a list this returns index 0 on a
+        successful match. This may raise exceptions for EOF or TIMEOUT. To
+        avoid the EOF or TIMEOUT exceptions add EOF or TIMEOUT to the pattern
+        list. That will cause expect to match an EOF or TIMEOUT condition
+        instead of raising an exception.
 
         After a match is found the instance attributes 'before', 'after' and
         'match' will be set. You can see all the data read before the match in
@@ -1201,7 +1204,7 @@ class spawn (object):
 
         If timeout is -1 then timeout will be set to the self.timeout value.
 
-        Note: A list entry may be EOF or TIMEOUT instead of a string. This will
+        A list entry may be EOF or TIMEOUT instead of a string. This will
         catch these exceptions and return the index of the list entry instead
         of raising the exception. The attribute 'after' will be set to the
         exception type. The attribute 'match' will be None. This allows you to
@@ -1487,16 +1490,27 @@ class spawn (object):
 
         raise ExceptionPexpect ('This method is no longer supported or allowed. Just assign a value to the maxread member variable.')
 
-    def expect_exact (self, pattern_list, timeout = -1):
+    def expect_exact (self, pattern_list, timeout = -1, searchwindowsize=None):
 
-        """This method is no longer supported or allowed. It was too hard to
-        maintain and keep it up to date with expect_list. Few people used this
-        method. Most people favored reliability over speed. The implementation
-        is left in comments in case anyone needs to hack this feature back into
-        their copy. If someone wants to diff this with expect_list and make
-        them work nearly the same then I will consider adding this make in. """
+        """This will escape all the regular expression meta chars for each
+        string in the pattern_list. This will only escape the strings, so you
+        can still pass in compiled regexes, EOF, or TIMEOUT. This function
+        otherwise behaves exactly like expect().
 
-        raise ExceptionPexpect ('This method is no longer supported or allowed.')
+        This is useful if you want to match an exact pattern string without
+        having regex meta characters interpreted. This simply calls re.escape()
+        on each string in the list. """
+
+        if pattern_list is None:
+            return []
+        if type(pattern_list) is not types.ListType:
+            pattern_list = [pattern_list]
+        for i in range(0,len(pattern_list)):
+            if type(pattern_list[i]) is types.StringType:
+                pattern_list[i] = re.escape(pattern_list[i])
+        return self.expect(pattern_list, timeout, searchwindowsize)
+#        raise ExceptionPexpect ('This method is no longer supported or allowed.')
+
     def setlog (self, fileobject):
 
         """This method is no longer supported or allowed.

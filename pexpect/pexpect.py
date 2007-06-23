@@ -1662,6 +1662,7 @@ class ReSearch (object):
         If there is a match, returns the index of that string, and
         sets 'start', 'end' and 'match'. Otherwise, returns -1.
         """
+        # TODO, I should double-check that this logic follows the old re.search logic.
         absurd_match = len(buffer)
         first_match = absurd_match
         # 'freshlen' doesn't help here -- we cannot predict the

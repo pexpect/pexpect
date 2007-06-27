@@ -151,7 +151,7 @@ class pxssh (spawn):
 
     ### TODO: This is getting messy and I'm pretty sure this isn't perfect.
     ### TODO: I need to draw a flow chart for this.
-    def login (self,server,username,password='',terminal_type='ansi',original_prompt=r"[#$] ",login_timeout=10,port=None,auto_prompt_reset=True):
+    def login (self,server,username,password='',terminal_type='ansi',original_prompt=r"[#$]",login_timeout=10,port=None,auto_prompt_reset=True):
 
         """This logs the user into the given server. It uses the
         'original_prompt' to try to find the prompt right after login. When it
@@ -291,6 +291,7 @@ class pxssh (spawn):
         attribute. After that the prompt() method will try to match your prompt
         pattern."""
 
+        self.sendline ("unset PROMPT_COMMAND")
         self.sendline (self.PROMPT_SET_SH) # sh-style
         i = self.expect ([TIMEOUT, self.PROMPT], timeout=10)
         if i == 0: # csh-style

@@ -1566,6 +1566,7 @@ class searcher_string (object):
 
         absurd_match = len(buffer)
         first_match = absurd_match
+
         # 'freshlen' helps a lot here. Further optimizations could
         # possibly include:
         #
@@ -1577,6 +1578,7 @@ class searcher_string (object):
         # rescanning until we've read three more bytes.
         #
         # Sadly, I don't know enough about this interesting topic. /grahn
+        
         for index, s in self._strings:
             if searchwindowsize is None:
                 # the match, if any, can only be in the fresh data,
@@ -1592,9 +1594,9 @@ class searcher_string (object):
                 best_index = index
         if first_match == absurd_match:
             return -1
+        self.match = self._strings[best_index][1]
         self.start = first_match
-        self.match = self._strings[best_index]
-        self.end = self.start + len(self.match) - 1
+        self.end = self.start + len(self.match)
         return best_index
 
 class searcher_re (object):

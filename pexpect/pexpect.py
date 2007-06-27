@@ -34,8 +34,8 @@ Credits: Noah Spurrier, Richard Holden, Marco Molteni, Kimberley Burchett,
 Robert Stone, Hartmut Goebel, Chad Schroeder, Erick Tryzelaar, Dave Kirby, Ids
 vander Molen, George Todd, Noel Taylor, Nicolas D. Cesar, Alexander Gattin,
 Geoffrey Marshall, Francisco Lourenco, Glen Mabey, Karthik Gurusamy, Fernando
-Perez, Corey Minyard, Jon Cohen, Guillaume Chazarain, Andrew Ryan (Let me know
-if I forgot anyone.)
+Perez, Corey Minyard, Jon Cohen, Guillaume Chazarain, Andrew Ryan, Nick Craig-Wood
+(Let me know if I forgot anyone.)
 
 Free, open source, and all that good stuff.
 
@@ -953,14 +953,14 @@ class spawn (object):
         #new[3] = new[3] | termios.ICANON # ICANON must be set to recognize EOF
         #try: # use try/finally to ensure state gets restored
         #    termios.tcsetattr(fd, termios.TCSADRAIN, new)
-        #    if 'CEOF' in dir(termios):
+        #    if hasattr(termios, 'CEOF'):
         #        os.write (self.child_fd, '%c' % termios.CEOF)
         #    else:
         #        # Silly platform does not define CEOF so assume CTRL-D
         #        os.write (self.child_fd, '%c' % 4)
         #finally: # restore state
         #    termios.tcsetattr(fd, termios.TCSADRAIN, old)
-        if 'VEOF' in dir(termios):
+        if hasattr(termios, 'VEOF'):
             char = termios.tcgetattr(self.child_fd)[6][termios.VEOF]
         else:
             # platform does not define VEOF so assume CTRL-D
@@ -972,7 +972,7 @@ class spawn (object):
         """This sends a SIGINT to the child. It does not require
         the SIGINT to be the first character on a line. """
 
-        if 'VINTR' in dir(termios):
+        if hasattr(termios, 'VINTR'):
             char = termios.tcgetattr(self.child_fd)[6][termios.VINTR]
         else:
             # platform does not define VINTR so assume CTRL-C
@@ -1352,10 +1352,7 @@ class spawn (object):
         """This returns the terminal window size of the child tty. The return
         value is a tuple of (rows, cols). """
 
-        if 'TIOCGWINSZ' in dir(termios):
-            TIOCGWINSZ = termios.TIOCGWINSZ
-        else:
-            TIOCGWINSZ = 1074295912L # assume if not defined
+        TIOCGWINSZ = getattr(termios, 'TIOCGWINSZ', 1074295912L)
         s = struct.pack('HHHH', 0, 0, 0, 0)
         x = fcntl.ioctl(self.fileno(), TIOCGWINSZ, s)
         return struct.unpack('HHHH', x)[0:2]
@@ -1376,10 +1373,7 @@ class spawn (object):
         # TIOCSWINSZ and they don't have a truncate problem.
         # Newer versions of Linux have totally different values for TIOCSWINSZ.
         # Note that this fix is a hack.
-        if 'TIOCSWINSZ' in dir(termios):
-            TIOCSWINSZ = termios.TIOCSWINSZ
-        else:
-            TIOCSWINSZ = -2146929561
+        TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
         if TIOCSWINSZ == 2148037735L: # L is not required in Python >= 2.2.
             TIOCSWINSZ = -2146929561 # Same bits, but with sign.
         # Note, assume ws_xpixel and ws_ypixel are zero.

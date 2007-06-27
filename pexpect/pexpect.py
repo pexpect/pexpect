@@ -230,16 +230,16 @@ def run (command, timeout=-1, withexitstatus=False, events=None, extra_args=None
     while 1:
         try:
             index = child.expect (patterns)
-            if type(child.after) is types.StringType:
+            if type(child.after) in types.StringTypes:
                 child_result_list.append(child.before + child.after)
             else: # child.after may have been a TIMEOUT or EOF, so don't cat those.
                 child_result_list.append(child.before)
-            if type(responses[index]) is types.StringType:
+            if type(responses[index]) in types.StringTypes:
                 child.send(responses[index])
             elif type(responses[index]) is types.FunctionType:
                 callback_result = responses[index](locals())
                 sys.stdout.flush()
-                if type(callback_result) is types.StringType:
+                if type(callback_result) in types.StringTypes:
                     child.send(callback_result)
                 elif callback_result:
                     break
@@ -436,8 +436,8 @@ class spawn (object):
 
     def __str__(self):
 
-        """This returns the current state of the pexpect object as a string.
-        """
+        """This returns a human-readable string that represents the state of
+        the object. """
 
         s = []
         s.append(repr(self))
@@ -1162,7 +1162,7 @@ class spawn (object):
             compile_flags = compile_flags | re.IGNORECASE
         compiled_pattern_list = []
         for p in patterns:
-            if type(p) is types.StringType:
+            if type(p) in types.StringTypes:
                 compiled_pattern_list.append(re.compile(p, compile_flags))
             elif p is EOF:
                 compiled_pattern_list.append(EOF)
@@ -1171,7 +1171,7 @@ class spawn (object):
             elif type(p) is type(re.compile('')):
                 compiled_pattern_list.append(p)
             else:
-                raise TypeError ('Argument must be one of StringType, EOF, TIMEOUT, SRE_Pattern, or a list of those type. %s' % str(type(p)))
+                raise TypeError ('Argument must be one of StringTypes, EOF, TIMEOUT, SRE_Pattern, or a list of those type. %s' % str(type(p)))
 
         return compiled_pattern_list
 
@@ -1251,34 +1251,30 @@ class spawn (object):
         the self.timeout value is used. If searchwindowsize==-1 then the
         self.searchwindowsize value is used. """
 
-        return self.expect_loop(ReSearch(pattern_list), timeout, searchwindowsize)
+        return self.expect_loop(searcher_re(pattern_list), timeout, searchwindowsize)
 
     def expect_exact(self, pattern_list, timeout = -1, searchwindowsize = -1):
 
-        """Like expect(), but with non-RE strings replacing compiled regular
-        expressions in 'pattern_list', which may be string string; a list or
-        other sequence of strings; or TIMEOUT and EOF.
+        """This is similar to expect(), but uses plain string matching instead
+        of compiled regular expressions in 'pattern_list'. The 'pattern_list'
+        may be a string; a list or other sequence of strings; or TIMEOUT and
+        EOF.
 
-        Assuming you can in fact expect exact strings rather than REs, this
-        call might be faster for two reasons: string searching is faster than
-        RE matching and more importantly it is feasible to limit the search to
-        just the end of the input; pexpect doesn't need to rescan the whole
-        input each time it reads more data
+        This call might be faster than expect() for two reasons: string
+        searching is faster than RE matching and it is possible to limit the
+        search to just the end of the input buffer.
 
-        It is also useful when you don't want to have to worry about escaping
-        regular expression characters that you want to match.
+        This method is also useful when you don't want to have to worry about
+        escaping regular expression characters that you want to match."""
 
-        expect_exact() was available in early public pexpect releases, then
-        removed in pexpect 2.1. Now it's back. """
-
-        if type(pattern_list) in (types.StringType, TIMEOUT, EOF):
+        if type(pattern_list) in types.StringTypes + (TIMEOUT, EOF):
             pattern_list = [pattern_list]
-        return self.expect_loop(StringSearch(pattern_list), timeout, searchwindowsize)
+        return self.expect_loop(searcher_string(pattern_list), timeout, searchwindowsize)
 
     def expect_loop(self, searcher, timeout = -1, searchwindowsize = -1):
 
         """This is the common loop used inside expect. The 'searcher' should be
-        an instance of ReSearch or StringSearch, which describes how and what
+        an instance of searcher_re or searcher_string, which describes how and what
         to search for in the input.
 
         See expect() for other arguments, return value and exceptions. """
@@ -1491,34 +1487,14 @@ class spawn (object):
                     raise
 
 ##############################################################################
-# The following methods are no longer supported or allowed..
+# The following methods are no longer supported or allowed.
+
     def setmaxread (self, maxread):
 
         """This method is no longer supported or allowed. I don't like getters
         and setters without a good reason. """
 
         raise ExceptionPexpect ('This method is no longer supported or allowed. Just assign a value to the maxread member variable.')
-
-    def expect_exact (self, pattern_list, timeout = -1, searchwindowsize=None):
-
-        """This will escape all the regular expression meta chars for each
-        string in the pattern_list. This will only escape the strings, so you
-        can still pass in compiled regexes, EOF, or TIMEOUT. This function
-        otherwise behaves exactly like expect().
-
-        This is useful if you want to match an exact pattern string without
-        having regex meta characters interpreted. This simply calls re.escape()
-        on each string in the list. """
-
-        if pattern_list is None:
-            return []
-        if type(pattern_list) is not types.ListType:
-            pattern_list = [pattern_list]
-        for i in range(0,len(pattern_list)):
-            if type(pattern_list[i]) is types.StringType:
-                pattern_list[i] = re.escape(pattern_list[i])
-        return self.expect(pattern_list, timeout, searchwindowsize)
-#        raise ExceptionPexpect ('This method is no longer supported or allowed.')
 
     def setlog (self, fileobject):
 
@@ -1531,23 +1507,28 @@ class spawn (object):
 # End of spawn class
 ##############################################################################
 
-class StringSearch (object):
-    """Plain string search helper for the spawn.expect_any() call.
+class searcher_string (object):
+
+    """This is a plain string search helper for the spawn.expect_any() method.
 
     Attributes:
+
     eof_index - index of EOF, or -1
     timeout_index - index of TIMEOUT, or -1
 
-    After a successful match, the following attributes are also
-    available:
+    After a successful match by the search() method the following attributes
+    are available:
+
     start - index into the buffer, first byte of match
     end   - index into the buffer, first byte after match
     match - the matching string itself
     """
+
     def __init__(self, strings):
-        """This creates an instance of StringSearch. This argument 'strings'
-        may be a list; a sequence of strings; or the EOF or TIMEOUT types.
-        """
+
+        """This creates an instance of searcher_string. This argument 'strings'
+        may be a list; a sequence of strings; or the EOF or TIMEOUT types. """
+
         self.eof_index = -1
         self.timeout_index = -1
         self._strings = []
@@ -1559,24 +1540,30 @@ class StringSearch (object):
                 self.timeout_index = n
                 continue
             self._strings.append((n, s))
+
     def __str__(self):
+
+        """This returns a human-readable string that represents the state of
+        the object."""
+
         # TODO This should really build the string in list order including EOF and TIMEOUT.
-        ss = ['StringSearcher'] + [ '    %d: "%s"' % ns for ns in self._strings ]
+        ss = ['searcher_string'] + [ '    %d: "%s"' % ns for ns in self._strings ]
         if self.eof_index >= 0: ss.append('    %d: EOF' % self.eof_index)
         if self.timeout_index >= 0: ss.append('    %d: TIMEOUT' % self.timeout_index)
         return '\n'.join(ss)
+
     def search(self, buffer, freshlen, searchwindowsize=None):
-        """Search 'buffer' for the first occurence of one of the
-        search strings.  'freshlen' must indicate the number of bytes
-        at the end of 'buffer' which haven't been searched before.
-        It helps to avoid searching the same, possibly big, buffer
-        over and over again.
+
+        """This searches 'buffer' for the first occurence of one of the search
+        strings.  'freshlen' must indicate the number of bytes at the end of
+        'buffer' which have not been searched before. It helps to avoid
+        searching the same, possibly big, buffer over and over again.
 
         See class spawn for the 'searchwindowsize' argument.
 
-        If there is a match, returns the index of that string, and
-        sets 'start', 'end' and 'match'. Otherwise, returns -1.
-        """
+        If there is a match this returns the index of that string, and sets
+        'start', 'end' and 'match'. Otherwise, this returns -1. """
+
         absurd_match = len(buffer)
         first_match = absurd_match
         # 'freshlen' helps a lot here. Further optimizations could
@@ -1607,27 +1594,31 @@ class StringSearch (object):
             return -1
         self.start = first_match
         self.match = self._strings[best_index]
-        self.end = self.start + len(self.match)
+        self.end = self.start + len(self.match) - 1
         return best_index
 
-class ReSearch (object):
-    """Regular expression search helper for the spawn.expect_any() call.
+class searcher_re (object):
+
+    """This is regular expression string search helper for the spawn.expect_any() method.
 
     Attributes:
+
     eof_index - index of EOF, or -1
     timeout_index - index of TIMEOUT, or -1
 
-    After a successful match, the following attributes are also
-    available:
+    After a successful match by the search() method the following attributes
+
     start - index into the buffer, first byte of match
     end   - index into the buffer, first byte after match
-    match - the re match object returned by a succesful re.search
+    match - the re.match object returned by a succesful re.search
     """
+
     def __init__(self, patterns):
-        """Create an instance searching for 'patterns', a list or
-        other sequence of compiled regular expressions, or the EOF or
-        TIMEOUT types.
-        """
+
+        """This creates an instance that searches for 'patterns' Where
+        'patterns' may be a list or other sequence of compiled regular
+        expressions, or the EOF or TIMEOUT types."""
+
         self.eof_index = -1
         self.timeout_index = -1
         self._searches = []
@@ -1639,23 +1630,29 @@ class ReSearch (object):
                 self.timeout_index = n
                 continue
             self._searches.append((n, s))
+
     def __str__(self):
+
+        """This returns a human-readable string that represents the state of
+        the object."""
+
         # TODO This should really build the string in list order including EOF and TIMEOUT.
-        ss = ['ReSearcher'] + [ '    %d: "%s"' % (n, str(s.pattern)) for n, s in self._searches ]
+        ss = ['searcher_re'] + [ '    %d: "%s"' % (n, str(s.pattern)) for n, s in self._searches ]
         if self.eof_index >= 0: ss.append('    %d: EOF' % self.eof_index)
         if self.timeout_index >= 0: ss.append('    %d: TIMEOUT' % self.timeout_index)
         return '\n'.join(ss)
+
     def search(self, buffer, freshlen, searchwindowsize=None):
-        """Search 'buffer' for the first occurence of one of the
-        regular expressions.  'freshlen' must indicate the number of
-        bytes at the end of 'buffer' which haven't been searched
-        before.
+
+        """This searches 'buffer' for the first occurence of one of the regular
+        expressions. 'freshlen' must indicate the number of bytes at the end of
+        'buffer' which have not been searched before.
 
         See class spawn for the 'searchwindowsize' argument.
         
-        If there is a match, returns the index of that string, and
-        sets 'start', 'end' and 'match'. Otherwise, returns -1.
-        """
+        If there is a match this returns the index of that string, and sets
+        'start', 'end' and 'match'. Otherwise, returns -1."""
+
         # TODO, I should double-check that this logic follows the old re.search logic.
         absurd_match = len(buffer)
         first_match = absurd_match
@@ -1686,7 +1683,7 @@ def which (filename):
 
     """This takes a given filename; tries to find it in the environment path;
     then checks if it is executable. This returns the full path to the filename
-    if found and executable. Otherwise this returns None. """
+    if found and executable. Otherwise this returns None."""
 
     # Special case where filename already contains a path.
     if os.path.dirname(filename) != '':

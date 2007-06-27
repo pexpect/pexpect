@@ -158,7 +158,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
                 break
         the_new_way = the_new_way[:-1]
         the_new_way = the_new_way.replace('\r','\n')
-        assert the_old_way == the_new_way
+        assert the_old_way == the_new_way, repr(the_old_way) + '\n' + repr(the_new_way)
         p = pexpect.spawn('echo hello.?world')
         i = p.expect_exact('.?')
         assert p.before == 'hello' and p.after == '.?'

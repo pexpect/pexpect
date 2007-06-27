@@ -3,6 +3,7 @@ This adds methods for login, logout, and expecting the shell prompt.
 
 $Id$
 """
+
 from pexpect import *
 import pexpect
 import time
@@ -129,6 +130,8 @@ class pxssh (spawn):
         # I came up with these based on what seemed reliable for
         # connecting to a heavily loaded machine I have.
         # If latency is worse than these values then this will fail.
+
+        self.read_nonblocking(size=10000,timeout=1) # GAS: Clear out the cache before getting the prompt
         time.sleep(0.1)
         self.sendline()
         time.sleep(0.5)

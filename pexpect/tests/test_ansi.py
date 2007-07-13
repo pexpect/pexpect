@@ -59,6 +59,33 @@ tetris_target='                           XX            XXXX    XX              
 '  J->LEFT  K->ROTATE  L->RIGHT  SPACE->DROP  P->PAUSE  Q->QUIT                  \n' +\
 '                                                                                '
 
+torture_target='+--------------------------------------------------------------------------------+\n' +\
+'|a`opqrs`      This is the       `srqpo`a                                        |\n' +\
+'|VT100 series Torture Test Demonstration.                                        |\n' +\
+'|VT100 series Torture Test Demonstration.                                        |\n' +\
+'|This is a normal line __________________________________________________y_      |\n' +\
+'|This is a bold line (normal unless the Advanced Video Option is installed)      |\n' +\
+'|This line is underlined _ "       "       "       "       "       "    _y_      |\n' +\
+'|This is a blinking line _ "       "       "       "       "       "    _y_      |\n' +\
+'|This is inverse video _ (underlined if no AVO and cursor is underline) _y_      |\n' +\
+'|Normal gjpqy Underline   Blink   Underline+Blink gjpqy                          |\n' +\
+'|Bold   gjpqy Underline   Blink   Underline+Blink gjpqy                          |\n' +\
+'|Inverse      Underline   Blink   Underline+Blink                                |\n' +\
+'|Bold+Inverse Underline7m   Blink   Underline+Blink                              |\n' +\
+'|This is double width                                                            |\n' +\
+'|This is double height                                                           |\n' +\
+'|This is double height                                                           |\n' +\
+'|_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ioy                                        |\n' +\
+'|_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ioy                                        |\n' +\
+'|_ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789ioy                                        |\n' +\
+'|`abcdefghijklmnopqrstuvwxyz{|}~ lqwqk                                           |\n' +\
+'|`abcdefghijklmnopqrstuvwxyz{|}~ tqnqu                                           |\n' +\
+'|`abcdefghijklmnopqrstuvwxyz{|}~ tqnqu                                           |\n' +\
+'|`abcdefghijklmnopqrstuvwxyz{|}~ mqvqj                                           |\n' +\
+'|   This test created by Joe Smith, 8-May-85                                     |\n' +\
+'|                                                                                |\n' +\
+'+--------------------------------------------------------------------------------+\n'
+
 class ansiTestCase (PexpectTestCase.PexpectTestCase):
     def test_write (self):
         s = ANSI.ANSI (6,65)
@@ -67,6 +94,12 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
         for c in write_text:
             s.write (c)
         assert str(s) == write_target
+    def test_torturet (self):
+        s = ANSI.ANSI (24,80)
+        sample_text = open ('torturet.vt').read()
+        for c in sample_text:
+            s.process (c)
+        assert s.pretty() == torture_target, 'processed: \n' + s.pretty() + '\nexpected:\n' + torture_target
     def test_tetris (self):
         s = ANSI.ANSI (24,80)
         tetris_text = open ('tetris.data').read()

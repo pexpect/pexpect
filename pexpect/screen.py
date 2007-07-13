@@ -1,10 +1,12 @@
-"""This implements a virtual screen.
+"""This implements a virtual screen. This is used to support ANSI terminal
+emulation. The screen representation and state is implemented in this class.
+Most of the methods are inspired by ANSI screen control codes. The ANSI class
+extends this class to add parsing of ANSI escape codes.
 
 $Id$
 """
 
 import copy
-#import string
 
 NUL = 0    # Fill character; ignored on input.
 ENQ = 5    # Transmit answerback message.
@@ -27,7 +29,7 @@ SPACE = chr(32) # Space or blank character.
 
 def constrain (n, min, max):
 
-    """This returns n constrained to the min and max bounds. """
+    """This returns a number, n constrained to the min and max bounds. """
 
     if n < min:
         return min
@@ -44,6 +46,9 @@ class screen:
     like arrays). """
 
     def __init__ (self, r=24,c=80):
+
+        """This initializes a blank scree of the given dimentions."""
+
         self.rows = r
         self.cols = c
         self.cur_r = 1
@@ -55,6 +60,10 @@ class screen:
         self.w = [ [SPACE] * self.cols for c in range(self.rows)]
 
     def __str__ (self):
+
+        """This returns a printable representation of the screen. The end of
+        each screen line is terminated by a newline. """
+
         return '\n'.join ([ ''.join(c) for c in self.w ])
 
     def dump (self):
@@ -63,6 +72,15 @@ class screen:
         __str__ except that lines are not terminated with line feeds. """
 
         return ''.join ([ ''.join(c) for c in self.w ])
+
+    def pretty (self):
+
+        """This returns a copy of the screen as a string with an ASCII text box
+        around the screen border. This is similar to __str__ except that it
+        adds a box. """
+
+        top_bot = '+' + '-'*self.cols + '+\n'
+        return top_bot + '\n'.join(['|'+line+'|' for line in str(self).split('\n')]) + '\n' + top_bot
 
     def fill (self, ch=SPACE):
 

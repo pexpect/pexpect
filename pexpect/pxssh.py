@@ -162,15 +162,15 @@ class pxssh (spawn):
         more easily matched. The default 'original_prompt' is very optimistic
         and is easily fooled. It's more reliable to try to match the original
         prompt as exactly as possible to prevent false matches by server
-        strings such as the "Message Of The Day". On some systems you can
-        disable the MOTD on the remote server by creating a zero-length file in
-        the home directory of the remote server called ".hushlogin". If a
-        prompt cannot be found then this will not necessarily cause the login
-        to fail. In the case of a timeout when looking for the prompt we assume
-        that the original prompt was so weird that we could not match it, so we
-        use a few tricks to guess when we have reached the prompt. Then we hope
-        for the best and blindly try to reset the prompt to something more
-        unique. If that fails then login() raises an ExceptionPxssh exception.
+        strings such as the "Message Of The Day". On many systems you can
+        disable the MOTD on the remote server by creating a zero-length file
+        called "~/.hushlogin" on the remote server. If a prompt cannot be found
+        then this will not necessarily cause the login to fail. In the case of
+        a timeout when looking for the prompt we assume that the original
+        prompt was so weird that we could not match it, so we use a few tricks
+        to guess when we have reached the prompt. Then we hope for the best and
+        blindly try to reset the prompt to something more unique. If that fails
+        then login() raises an ExceptionPxssh exception.
         
         In some situations it is not possible or desirable to reset the
         original prompt. In this case, set 'auto_prompt_reset' to False to

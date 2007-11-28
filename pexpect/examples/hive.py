@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 """hive -- Hive Shell
 
 This lets you ssh to a group of servers and control them as if they were one.
@@ -58,8 +59,9 @@ this auth information. This is not secure.
     --username=: This sets the username for all hosts. This implies --sameuser.
     --password=: This sets the password for all hosts. This implies --password.
                 
-$Id$
 Noah Spurrier
+
+$Id$
 """
 
 # TODO add feature to support username:password@host combination
@@ -350,6 +352,8 @@ if __name__ == "__main__":
         print time.asctime()
         print "TOTAL TIME IN MINUTES:",
         print (time.time() - start_time) / 60.0
+    except SystemExit, e:
+        raise e
     except Exception, e:
         tb_dump = traceback.format_exc()
         print "=========================================================================="

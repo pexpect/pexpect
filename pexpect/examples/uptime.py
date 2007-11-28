@@ -1,7 +1,9 @@
 #!/usr/bin/env python
-"""This displays uptime information using uptime.
-This is redundant perhaps, but it demonstrates expecting for a
-regular expression that uses subgroups.
+
+"""This displays uptime information using uptime. This is redundant,
+but it demonstrates expecting for a regular expression that uses subgroups.
+
+$Id$
 """
 
 import pexpect

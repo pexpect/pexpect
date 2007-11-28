@@ -1,18 +1,23 @@
 #!/usr/bin/env python
-"""script.py
-This spawns a sub-shell (bash) and gives the user interactive control.
-The entire shell session is logged to a file called script.log.
-This behaves much like the classic BSD command "script".
+
+"""This spawns a sub-shell (bash) and gives the user interactive control. The
+entire shell session is logged to a file called script.log. This behaves much
+like the classic BSD command 'script'.
 
 ./script.py [-a] [-c command] {logfilename}
+
     logfilename : This is the name of the log file. Default is script.log.
     -a : Append to log file. Default is to overwrite log file.
     -c : spawn command. Default is to spawn the sh shell.
 
 Example:
-    This will start a bash shell and append to the log named my_session.log
+
+    This will start a bash shell and append to the log named my_session.log:
+
         ./script.py -a -c bash my_session.log
+
 """
+
 import os, sys, time, getopt
 import signal, fcntl, termios, struct
 import traceback
@@ -21,10 +26,12 @@ import pexpect
 global_pexpect_instance = None # Used by signal handler
 
 def exit_with_usage():
+
     print globals()['__doc__']
     os._exit(1)
 
 def main():
+
     ######################################################################
     # Parse the options, arguments, get ready, etc.
     ######################################################################
@@ -72,6 +79,7 @@ def main():
     return 0
 
 def sigwinch_passthrough (sig, data):
+
     # Check for buggy platforms (see pexpect.setwinsize()).
     if 'TIOCGWINSZ' in dir(termios):
         TIOCGWINSZ = termios.TIOCGWINSZ
@@ -85,6 +93,8 @@ def sigwinch_passthrough (sig, data):
 if __name__ == "__main__":
     try:
         main()
+    except SystemExit, e:
+        raise e
     except Exception, e:
         print "ERROR"
         print str(e)

@@ -55,6 +55,7 @@ TOPIP_LOG_FILE = '/var/log/topip.log'
 TOPIP_LAST_RUN_STATS = '/var/run/topip.last'
 
 def exit_with_usage():
+
     print globals()['__doc__']
     os._exit(1)
 
@@ -256,6 +257,9 @@ def main():
 if __name__ == '__main__':
     try:
         main()
+        sys.exit(0)
+    except SystemExit, e:
+        raise e
     except Exception, e:
         print str(e)
         traceback.print_exc()

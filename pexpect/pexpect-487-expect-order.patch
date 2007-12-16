@@ -1,0 +1,138 @@
+This patch restores restores the order in which patterns match
+so that it works as pexpect 2.1 did.  It was my expect_exact()
+patch which broke this back in June 2007.
+
+It also tries to document the behavior, and adds unit tests on
+it.  All tests should pass. test_expect.py passes when applied
+to pexpect 2.1.
+
+It's a patch against pexpect SVN 487, but requires
+pexpect-487-expect_exact-bugs.patch to have been applied first.
+
+/Jörgen
+
+
+diff -aur p/pexpect/pexpect.py pexpect/pexpect/pexpect.py
+--- p/pexpect/pexpect.py	2007-11-18 16:31:57.000000000 +0100
++++ pexpect/pexpect/pexpect.py	2007-11-18 15:30:31.000000000 +0100
+@@ -1187,6 +1187,22 @@
+         list. That will cause expect to match an EOF or TIMEOUT condition
+         instead of raising an exception.
+ 
++        If you pass a list of patterns and more than one matches, the first match
++        in the stream is chosen. If more than one pattern matches at that point,
++        the leftmost in the pattern list is chosen. For example::
++
++            # the input is 'foobar'
++            index = p.expect (['bar', 'foo', 'foobar'])
++            # returns 1 ('foo') even though 'foobar' is a "better" match
++
++        Please note, however, that buffering can affect this behavior, since
++        input arrives in unpredictable chunks. For example::
++
++            # the input is 'foobar'
++            index = p.expect (['foobar', 'foo'])
++            # returns 0 ('foobar') if all input is available at once,
++            # but returs 1 ('foo') if parts of the final 'bar' arrive late
++
+         After a match is found the instance attributes 'before', 'after' and
+         'match' will be set. You can see all the data read before the match in
+         'before'. You can see the data that was matched in 'after'. The
+@@ -1588,8 +1604,7 @@
+                 # better obey searchwindowsize
+                 offset = -searchwindowsize
+             n = buffer.find(s, offset)
+-            if n >= 0 and n <= first_match:
+-                # note that the last, not the longest, match rules
++            if n >= 0 and n < first_match:
+                 first_match = n
+                 best_index, best_match = index, s
+         if first_match == absurd_match:
+@@ -1669,8 +1684,7 @@
+             if match is None:
+                 continue
+             n = match.start()
+-            if n <= first_match:
+-                # note that the last, not the longest, match rules
++            if n < first_match:
+                 first_match = n
+                 the_match = match
+                 best_index = index
+Only in p/pexpect: pexpect.py.rej
+diff -aur p/pexpect/tests/test_expect.py pexpect/pexpect/tests/test_expect.py
+--- p/pexpect/tests/test_expect.py	2007-11-18 16:31:57.000000000 +0100
++++ pexpect/pexpect/tests/test_expect.py	2007-11-18 16:06:39.000000000 +0100
+@@ -230,8 +230,6 @@
+         else:
+             self.fail ('Expected an EOF exception.')
+ 
+-class AdditionalExpectTestCase (PexpectTestCase.PexpectTestCase):
+-
+     def _before_after(self, p):
+         p.timeout = 5
+ 
+@@ -307,6 +305,64 @@
+         p.expect = p.expect_exact
+         self._ordering(p)
+ 
++    def _greed(self, p):
++        p.timeout = 5
++        p.expect('>>> ')
++        p.sendline('import time')
++        p.expect('>>> ')
++        # the newline and sleep will (I hope) guarantee that
++        # pexpect is fed two distinct batches of data,
++        # "foo\r\n" + "bar\r\n".
++        foo_then_bar = 'print "f"+"o"+"o" ; time.sleep(3); print "b"+"a"+"r"'
++
++        p.sendline(foo_then_bar)
++        self.assertEqual(p.expect(['foo\r\nbar']), 0)
++        p.expect('>>> ')
++
++        p.sendline(foo_then_bar)
++        self.assertEqual(p.expect(['\r\nbar']), 0)
++        p.expect('>>> ')
++
++        p.sendline(foo_then_bar)
++        self.assertEqual(p.expect(['foo\r\nbar', 'foo', 'bar']), 1)
++        p.expect('>>> ')
++
++        p.sendline(foo_then_bar)
++        self.assertEqual(p.expect(['foo', 'foo\r\nbar', 'foo', 'bar']), 0)
++        p.expect('>>> ')
++
++        p.sendline(foo_then_bar)
++        self.assertEqual(p.expect(['bar', 'foo\r\nbar']), 1)
++        p.expect('>>> ')
++
++        # If the expect works as if we rematch for every new character,
++        # 'o\r\nb' should win over 'oo\r\nba'. The latter is longer and
++        # matches earlier in the input, but isn't satisfied until the 'a'
++        # arrives.
++        # However, pexpect doesn't do that (version 2.1 didn't).
++        p.sendline(foo_then_bar)
++        self.assertEqual(p.expect(['oo\r\nba', 'o\r\nb']), 0)
++        p.expect('>>> ')
++
++        # distinct patterns, but both suddenly match when the 'r' arrives.
++        p.sendline(foo_then_bar)
++        self.assertEqual(p.expect(['foo\r\nbar', 'ar']), 0)
++        p.expect('>>> ')
++
++        p.sendline(foo_then_bar)
++        self.assertEqual(p.expect(['ar', 'foo\r\nbar']), 1)
++        p.expect('>>> ')
++
++    def test_greed(self):
++        p = pexpect.spawn(self.PYTHONBIN)
++        self._greed(p)
++
++    def test_greed_exact(self):
++        p = pexpect.spawn(self.PYTHONBIN)
++        # mangle the spawn so we test expect_exact() instead
++        p.expect = p.expect_exact
++        self._greed(p)
++
+ if __name__ == '__main__':
+     unittest.main()
+ 

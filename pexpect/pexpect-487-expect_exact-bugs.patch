@@ -1,0 +1,221 @@
+Some fixes related to the expect_exact() patches I sent back in June.
+As you see, they are against pexpect, SVN 487.
+
+- Bug fix: expect_exact() was broken for a single TIMEOUT or EOF pattern,
+  and for lists of patterns, where TIMEOUT or EOF were in the list,
+  before a normal string pattern.
+
+- Added tests to expose these bugs (by splicing into those tests
+  which excercised expect() and didn't use REs).
+
+- Added some more tests for regressions since 2.1, in which pattern
+  is chosen as the match when many match -- something Noah brought up
+  earlier this year.  I plan to send another patch to "fix" this later
+  today.
+
+/Jörgen
+
+Index: pexpect.py
+===================================================================
+--- pexpect.py	(revision 487)
++++ pexpect.py	(working copy)
+@@ -35,7 +35,7 @@
+ vander Molen, George Todd, Noel Taylor, Nicolas D. Cesar, Alexander Gattin,
+ Geoffrey Marshall, Francisco Lourenco, Glen Mabey, Karthik Gurusamy, Fernando
+ Perez, Corey Minyard, Jon Cohen, Guillaume Chazarain, Andrew Ryan, Nick
+-Craig-Wood, Andrew Stone (Let me know if I forgot anyone.)
++Craig-Wood, Andrew Stone, Jorgen Grahn (Let me know if I forgot anyone.)
+ 
+ Free, open source, and all that good stuff.
+ 
+@@ -1267,7 +1267,7 @@
+         This method is also useful when you don't want to have to worry about
+         escaping regular expression characters that you want to match."""
+ 
+-        if type(pattern_list) in types.StringTypes + (TIMEOUT, EOF):
++        if type(pattern_list) in types.StringTypes or pattern_list in (TIMEOUT, EOF):
+             pattern_list = [pattern_list]
+         return self.expect_loop(searcher_string(pattern_list), timeout, searchwindowsize)
+ 
+@@ -1585,16 +1585,16 @@
+                 # or at the very end of the old data
+                 offset = -(freshlen+len(s))
+             else:
+-                # better obey_searchwindowsize
++                # better obey searchwindowsize
+                 offset = -searchwindowsize
+             n = buffer.find(s, offset)
+             if n >= 0 and n <= first_match:
+                 # note that the last, not the longest, match rules
+                 first_match = n
+-                best_index = index
++                best_index, best_match = index, s
+         if first_match == absurd_match:
+             return -1
+-        self.match = self._strings[best_index][1]
++        self.match = best_match
+         self.start = first_match
+         self.end = self.start + len(self.match)
+         return best_index
+Index: tests/test_expect.py
+===================================================================
+--- tests/test_expect.py	(revision 487)
++++ tests/test_expect.py	(working copy)
+@@ -34,6 +34,17 @@
+         p.sendeof () 
+         p.expect (pexpect.EOF)
+ 
++    def test_expect_exact_basic (self):
++        p = pexpect.spawn('cat')
++        p.sendline ('Hello')
++        p.sendline ('there')
++        p.sendline ('Mr. Python')
++        p.expect_exact ('Hello')
++        p.expect_exact ('there')
++        p.expect_exact ('Mr. Python')
++        p.sendeof () 
++        p.expect_exact (pexpect.EOF)
++
+     def test_expect_ignore_case(self):
+         """This test that the ignorecase flag will match patterns
+         even if case is different using the regex (?i) directive.
+@@ -61,8 +72,21 @@
+ 
+     def test_expect_order (self):
+         """This tests that patterns are matched in the same order as given in the pattern_list.
++
++        (Or does it?  Doesn't it also pass if expect() always chooses
++        (one of the) the leftmost matches in the input? -- grahn)
+         """
+         p = pexpect.spawn('cat')
++        self._expect_order(p)
++
++    def test_expect_order_exact (self):
++        """Like test_expect_order(), but using expect_exact().
++        """
++        p = pexpect.spawn('cat')
++        p.expect = p.expect_exact
++        self._expect_order(p)
++
++    def _expect_order (self, p):
+         p.sendline ('1234') 
+         p.sendline ('abcd') 
+         p.sendline ('wxyz') 
+@@ -89,6 +113,16 @@
+         """This tests that echo can be turned on and off.
+         """
+         p = pexpect.spawn('cat', timeout=10)
++        self._expect_echo(p)
++
++    def test_expect_echo_exact (self):
++        """Like test_expect_echo(), but using expect_exact().
++        """
++        p = pexpect.spawn('cat', timeout=10)
++        p.expect = p.expect_exact
++        self._expect_echo(p)
++
++    def _expect_echo (self, p):
+         p.sendline ('1234') # Should see this twice (once from tty echo and again from cat).
+         index = p.expect (['1234','abcd','wxyz',pexpect.EOF,pexpect.TIMEOUT])
+         assert index == 0, "index="+str(index)+"\n"+p.before
+@@ -115,6 +149,16 @@
+         """
+         #pdb.set_trace()
+         p = pexpect.spawn('cat')
++        self._expect_index(p)
++
++    def test_expect_index_exact (self):
++        """Like test_expect_index(), but using expect_exact().
++        """
++        p = pexpect.spawn('cat')
++        p.expect = p.expect_exact
++        self._expect_index(p)
++
++    def _expect_index (self, p):
+         p.setecho(0)
+         p.sendline ('1234')
+         index = p.expect (['abcd','wxyz','1234',pexpect.EOF])
+@@ -186,6 +230,83 @@
+         else:
+             self.fail ('Expected an EOF exception.')
+ 
++class AdditionalExpectTestCase (PexpectTestCase.PexpectTestCase):
++
++    def _before_after(self, p):
++        p.timeout = 5
++
++        p.expect('>>> ')
++        self.assertEqual(p.after, '>>> ')
++        self.assert_(p.before.startswith('Python '))
++
++        p.sendline('range(4*3)')
++
++        p.expect('5')
++        self.assertEqual(p.after, '5')
++        self.assert_(p.before.startswith('range(4*3)'))
++
++        p.expect('>>> ')
++        self.assertEqual(p.after, '>>> ')
++        self.assert_(p.before.startswith(', 6, 7, 8'))
++
++    def test_before_after(self):
++        """This tests expect() for some simple before/after things.
++        """
++        p = pexpect.spawn(self.PYTHONBIN)
++        self._before_after(p)
++
++    def test_before_after_exact(self):
++        """This tests some simple before/after things, for
++        expect_exact(). (Grahn broke it at one point.)
++        """
++        p = pexpect.spawn(self.PYTHONBIN)
++        # mangle the spawn so we test expect_exact() instead
++        p.expect = p.expect_exact
++        self._before_after(p)
++
++    def _ordering(self, p):
++        p.timeout = 5
++        p.expect('>>> ')
++
++        p.sendline('range(4*3)')
++        self.assertEqual(p.expect(['5,', '5,']), 0)
++        p.expect('>>> ')
++
++        p.sendline('range(4*3)')
++        self.assertEqual(p.expect(['7,', '5,']), 1)
++        p.expect('>>> ')
++
++        p.sendline('range(4*3)')
++        self.assertEqual(p.expect(['5,', '7,']), 0)
++        p.expect('>>> ')
++
++        p.sendline('range(4*5)')
++        self.assertEqual(p.expect(['2,', '12,']), 0)
++        p.expect('>>> ')
++
++        p.sendline('range(4*5)')
++        self.assertEqual(p.expect(['12,', '2,']), 1)
++
++    def test_ordering(self):
++        """This tests expect() for which pattern is returned
++        when many may eventually match. I (Grahn) am a bit
++        confused about what should happen, but this test passes
++        with pexpect 2.1.
++        """
++        p = pexpect.spawn(self.PYTHONBIN)
++        self._ordering(p)
++
++    def test_ordering_exact(self):
++        """This tests expect_exact() for which pattern is returned
++        when many may eventually match. I (Grahn) am a bit
++        confused about what should happen, but this test passes
++        for the expect() method with pexpect 2.1.
++        """
++        p = pexpect.spawn(self.PYTHONBIN)
++        # mangle the spawn so we test expect_exact() instead
++        p.expect = p.expect_exact
++        self._ordering(p)
++
+ if __name__ == '__main__':
+     unittest.main()
+ 

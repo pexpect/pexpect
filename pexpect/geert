@@ -1,0 +1,29 @@
+Hello Noah,
+
+first of all I would like to thank you for pexpect -- it is great and I
+use it all the time.
+
+A while back I also wrote something in the same functional space: kdesu.
+This also contained a small helper in C++ for interfacing with a
+command-line program through a PTY.
+
+When I read the description of the "echo bug" on your page, and saw how
+you wanted to solve this (by issueing a delay), I remembered that there
+is another way to solve this and this is how I implemented it in kdesu.
+You could add a method to pexpect to i) report on the echo status of the
+PTY, and 2) wait for echo to become off. The latter may require a
+polling loop as I think there is no wait to wait for it (but I am not sure).
+
+The SSH problem you describe could then be solved like this:
+
+    child.expect ('[pP]assword:')
+    child.wait_echo_off()
+    child.sendline (my_password)
+
+I think this is guaranteed to be race-free and in general feels a bit
+cleaner that issueing a delay.
+
+Hope this was useful. In any case keep up the great work with pexpect!
+
+Regards,
+Geert Jansen

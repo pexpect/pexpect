@@ -15,91 +15,91 @@ import string
 
 def Emit (fsm):
 
-    screen = fsm.something[0]
+    screen = fsm.memory[0]
     screen.write_ch(fsm.input_symbol)
 
 def StartNumber (fsm):
 
-    fsm.something.append (fsm.input_symbol)
+    fsm.memory.append (fsm.input_symbol)
 
 def BuildNumber (fsm):
 
-    ns = fsm.something.pop()
+    ns = fsm.memory.pop()
     ns = ns + fsm.input_symbol
-    fsm.something.append (ns)
+    fsm.memory.append (ns)
 
 def DoBackOne (fsm):
 
-    screen = fsm.something[0]
+    screen = fsm.memory[0]
     screen.cursor_back ()
 
 def DoBack (fsm):
 
-    count = int(fsm.something.pop())
-    screen = fsm.something[0]
+    count = int(fsm.memory.pop())
+    screen = fsm.memory[0]
     screen.cursor_back (count)
 
 def DoDownOne (fsm):
 
-    screen = fsm.something[0]
+    screen = fsm.memory[0]
     screen.cursor_down ()
 
 def DoDown (fsm):
 
-    count = int(fsm.something.pop())
-    screen = fsm.something[0]
+    count = int(fsm.memory.pop())
+    screen = fsm.memory[0]
     screen.cursor_down (count)
 
 def DoForwardOne (fsm):
 
-    screen = fsm.something[0]
+    screen = fsm.memory[0]
     screen.cursor_forward ()
 
 def DoForward (fsm):
 
-    count = int(fsm.something.pop())
-    screen = fsm.something[0]
+    count = int(fsm.memory.pop())
+    screen = fsm.memory[0]
     screen.cursor_forward (count)
 
 def DoUpReverse (fsm):
 
-    screen = fsm.something[0]
+    screen = fsm.memory[0]
     screen.cursor_up_reverse()
 
 def DoUpOne (fsm):
 
-    screen = fsm.something[0]
+    screen = fsm.memory[0]
     screen.cursor_up ()
 
 def DoUp (fsm):
 
-    count = int(fsm.something.pop())
-    screen = fsm.something[0]
+    count = int(fsm.memory.pop())
+    screen = fsm.memory[0]
     screen.cursor_up (count)
 
 def DoHome (fsm):
 
-    c = int(fsm.something.pop())
-    r = int(fsm.something.pop())
-    screen = fsm.something[0]
+    c = int(fsm.memory.pop())
+    r = int(fsm.memory.pop())
+    screen = fsm.memory[0]
     screen.cursor_home (r,c)
 
 def DoHomeOrigin (fsm):
 
     c = 1
     r = 1
-    screen = fsm.something[0]
+    screen = fsm.memory[0]
     screen.cursor_home (r,c)
 
 def DoEraseDown (fsm):
 
-    screen = fsm.something[0]
+    screen = fsm.memory[0]
     screen.erase_down()
 
 def DoErase (fsm):
 
-    arg = int(fsm.something.pop())
-    screen = fsm.something[0]
+    arg = int(fsm.memory.pop())
+    screen = fsm.memory[0]
     if arg == 0:
         screen.erase_down()
     elif arg == 1:
@@ -109,12 +109,12 @@ def DoErase (fsm):
 
 def DoEraseEndOfLine (fsm):
 
-    screen = fsm.something[0]
+    screen = fsm.memory[0]
     screen.erase_end_of_line()
 
 def DoEraseLine (fsm):
 
-    screen = fsm.something[0]
+    screen = fsm.memory[0]
     if arg == 0:
         screen.end_of_line()
     elif arg == 1:
@@ -124,36 +124,36 @@ def DoEraseLine (fsm):
 
 def DoEnableScroll (fsm):
 
-    screen = fsm.something[0]
+    screen = fsm.memory[0]
     screen.scroll_screen()
 
 def DoCursorSave (fsm):
 
-    screen = fsm.something[0]
+    screen = fsm.memory[0]
     screen.cursor_save_attrs()
 
 def DoCursorRestore (fsm):
 
-    screen = fsm.something[0]
+    screen = fsm.memory[0]
     screen.cursor_restore_attrs()
 
 def DoScrollRegion (fsm):
 
-    screen = fsm.something[0]
-    r2 = int(fsm.something.pop())
-    r1 = int(fsm.something.pop())
+    screen = fsm.memory[0]
+    r2 = int(fsm.memory.pop())
+    r1 = int(fsm.memory.pop())
     screen.scroll_screen_rows (r1,r2)
 
 def DoMode (fsm):
 
-    screen = fsm.something[0]
-    mode = fsm.something.pop() # Should be 4
+    screen = fsm.memory[0]
+    mode = fsm.memory.pop() # Should be 4
     # screen.setReplaceMode ()
 
 def Log (fsm):
 
-    screen = fsm.something[0]
-    fsm.something = [screen]
+    screen = fsm.memory[0]
+    fsm.memory = [screen]
     fout = open ('log', 'a')
     fout.write (fsm.input_symbol + ',' + fsm.current_state + '\n')
     fout.close()

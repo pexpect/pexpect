@@ -230,8 +230,6 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         else:
             self.fail ('Expected an EOF exception.')
 
-class AdditionalExpectTestCase (PexpectTestCase.PexpectTestCase):
-
     def _before_after(self, p):
         p.timeout = 5
 
@@ -306,6 +304,64 @@ class AdditionalExpectTestCase (PexpectTestCase.PexpectTestCase):
         # mangle the spawn so we test expect_exact() instead
         p.expect = p.expect_exact
         self._ordering(p)
+
+    def _greed(self, p):
+        p.timeout = 5
+        p.expect('>>> ')
+        p.sendline('import time')
+        p.expect('>>> ')
+        # the newline and sleep will (I hope) guarantee that
+        # pexpect is fed two distinct batches of data,
+        # "foo\r\n" + "bar\r\n".
+        foo_then_bar = 'print "f"+"o"+"o" ; time.sleep(3); print "b"+"a"+"r"'
+
+        p.sendline(foo_then_bar)
+        self.assertEqual(p.expect(['foo\r\nbar']), 0)
+        p.expect('>>> ')
+
+        p.sendline(foo_then_bar)
+        self.assertEqual(p.expect(['\r\nbar']), 0)
+        p.expect('>>> ')
+
+        p.sendline(foo_then_bar)
+        self.assertEqual(p.expect(['foo\r\nbar', 'foo', 'bar']), 1)
+        p.expect('>>> ')
+
+        p.sendline(foo_then_bar)
+        self.assertEqual(p.expect(['foo', 'foo\r\nbar', 'foo', 'bar']), 0)
+        p.expect('>>> ')
+
+        p.sendline(foo_then_bar)
+        self.assertEqual(p.expect(['bar', 'foo\r\nbar']), 1)
+        p.expect('>>> ')
+
+        # If the expect works as if we rematch for every new character,
+        # 'o\r\nb' should win over 'oo\r\nba'. The latter is longer and
+        # matches earlier in the input, but isn't satisfied until the 'a'
+        # arrives.
+        # However, pexpect doesn't do that (version 2.1 didn't).
+        p.sendline(foo_then_bar)
+        self.assertEqual(p.expect(['oo\r\nba', 'o\r\nb']), 0)
+        p.expect('>>> ')
+
+        # distinct patterns, but both suddenly match when the 'r' arrives.
+        p.sendline(foo_then_bar)
+        self.assertEqual(p.expect(['foo\r\nbar', 'ar']), 0)
+        p.expect('>>> ')
+
+        p.sendline(foo_then_bar)
+        self.assertEqual(p.expect(['ar', 'foo\r\nbar']), 1)
+        p.expect('>>> ')
+
+    def test_greed(self):
+        p = pexpect.spawn(self.PYTHONBIN)
+        self._greed(p)
+
+    def test_greed_exact(self):
+        p = pexpect.spawn(self.PYTHONBIN)
+        # mangle the spawn so we test expect_exact() instead
+        p.expect = p.expect_exact
+        self._greed(p)
 
 if __name__ == '__main__':
     unittest.main()

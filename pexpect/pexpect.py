@@ -1187,6 +1187,22 @@ class spawn (object):
         list. That will cause expect to match an EOF or TIMEOUT condition
         instead of raising an exception.
 
+        If you pass a list of patterns and more than one matches, the first match
+        in the stream is chosen. If more than one pattern matches at that point,
+        the leftmost in the pattern list is chosen. For example::
+
+            # the input is 'foobar'
+            index = p.expect (['bar', 'foo', 'foobar'])
+            # returns 1 ('foo') even though 'foobar' is a "better" match
+
+        Please note, however, that buffering can affect this behavior, since
+        input arrives in unpredictable chunks. For example::
+
+            # the input is 'foobar'
+            index = p.expect (['foobar', 'foo'])
+            # returns 0 ('foobar') if all input is available at once,
+            # but returs 1 ('foo') if parts of the final 'bar' arrive late
+
         After a match is found the instance attributes 'before', 'after' and
         'match' will be set. You can see all the data read before the match in
         'before'. You can see the data that was matched in 'after'. The
@@ -1588,8 +1604,7 @@ class searcher_string (object):
                 # better obey searchwindowsize
                 offset = -searchwindowsize
             n = buffer.find(s, offset)
-            if n >= 0 and n <= first_match:
-                # note that the last, not the longest, match rules
+            if n >= 0 and n < first_match:
                 first_match = n
                 best_index, best_match = index, s
         if first_match == absurd_match:
@@ -1669,8 +1684,7 @@ class searcher_re (object):
             if match is None:
                 continue
             n = match.start()
-            if n <= first_match:
-                # note that the last, not the longest, match rules
+            if n < first_match:
                 first_match = n
                 the_match = match
                 best_index = index

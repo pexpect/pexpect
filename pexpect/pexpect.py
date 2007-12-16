@@ -35,7 +35,7 @@ Robert Stone, Hartmut Goebel, Chad Schroeder, Erick Tryzelaar, Dave Kirby, Ids
 vander Molen, George Todd, Noel Taylor, Nicolas D. Cesar, Alexander Gattin,
 Geoffrey Marshall, Francisco Lourenco, Glen Mabey, Karthik Gurusamy, Fernando
 Perez, Corey Minyard, Jon Cohen, Guillaume Chazarain, Andrew Ryan, Nick
-Craig-Wood, Andrew Stone (Let me know if I forgot anyone.)
+Craig-Wood, Andrew Stone, Jorgen Grahn (Let me know if I forgot anyone.)
 
 Free, open source, and all that good stuff.
 
@@ -1267,7 +1267,7 @@ class spawn (object):
         This method is also useful when you don't want to have to worry about
         escaping regular expression characters that you want to match."""
 
-        if type(pattern_list) in types.StringTypes + (TIMEOUT, EOF):
+        if type(pattern_list) in types.StringTypes or pattern_list in (TIMEOUT, EOF):
             pattern_list = [pattern_list]
         return self.expect_loop(searcher_string(pattern_list), timeout, searchwindowsize)
 
@@ -1585,16 +1585,16 @@ class searcher_string (object):
                 # or at the very end of the old data
                 offset = -(freshlen+len(s))
             else:
-                # better obey_searchwindowsize
+                # better obey searchwindowsize
                 offset = -searchwindowsize
             n = buffer.find(s, offset)
             if n >= 0 and n <= first_match:
                 # note that the last, not the longest, match rules
                 first_match = n
-                best_index = index
+                best_index, best_match = index, s
         if first_match == absurd_match:
             return -1
-        self.match = self._strings[best_index][1]
+        self.match = best_match
         self.start = first_match
         self.end = self.start + len(self.match)
         return best_index

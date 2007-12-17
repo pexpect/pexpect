@@ -1,4 +1,8 @@
 #!/usr/bin/env python
+
+"""This is a very simple client for the backdoor daemon. This is intended more
+for testing rather than normal use. See bd_serv.py """
+
 import socket
 import sys, time, select
 

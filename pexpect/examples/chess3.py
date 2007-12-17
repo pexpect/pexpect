@@ -1,7 +1,9 @@
 #!/usr/bin/env python
+
 '''This demonstrates controlling a screen oriented application (curses).
 It starts two instances of gnuchess and then pits them against each other.
 '''
+
 import pexpect
 import string
 import ANSI

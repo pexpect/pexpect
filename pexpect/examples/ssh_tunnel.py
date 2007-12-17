@@ -1,17 +1,18 @@
 #!/usr/bin/env python
-"""This starts an SSH tunnel to a given host.
-If the SSH process ever dies then this script will detect that and restart it.
-I use this under Cygwin to keep open encrypted tunnels to
-port 25 (SMTP), port 143 (IMAP4), and port 110 (POP3). I set my mail client to talk to
-localhost and I keep this script running in the background.
 
-Note that this is a rather stupid script at the moment because it
-just looks to see if any ssh process is running. It should really
-make sure that our specific ssh process is running.
-ssh is missing a very useful feature. It has no way to report the
-process id of the background daemon that it creates with the -f command.
-This would be a really useful script if I could figure a way around this problem.
-"""
+"""This starts an SSH tunnel to a given host. If the SSH process ever dies then
+this script will detect that and restart it. I use this under Cygwin to keep
+open encrypted tunnels to port 25 (SMTP), port 143 (IMAP4), and port 110
+(POP3). I set my mail client to talk to localhost and I keep this script
+running in the background.
+
+Note that this is a rather stupid script at the moment because it just looks to
+see if any ssh process is running. It should really make sure that our specific
+ssh process is running. The problem is that ssh is missing a very useful
+feature. It has no way to report the process id of the background daemon that
+it creates with the -f command. This would be a really useful script if I could
+figure a way around this problem. """
+
 import pexpect
 import getpass
 import time
@@ -23,7 +24,9 @@ user = raw_input('Username: ')
 X = getpass.getpass('Password: ')
 
 def get_process_info ():
+
     # This seems to work on both Linux and BSD, but should otherwise be considered highly UNportable.
+
     ps = pexpect.run ('ps ax -O ppid')
     pass
 def start_tunnel ():
@@ -39,7 +42,8 @@ def start_tunnel ():
         print str(e)
 
 def main ():
-    while 1:
+
+    while True:
         ps = pexpect.spawn ('ps')
         time.sleep (1)
         index = ps.expect (['/usr/bin/ssh', pexpect.EOF, pexpect.TIMEOUT])

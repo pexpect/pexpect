@@ -13,14 +13,14 @@ import sys, os
 X = getpass.getpass('Password: ')
 pp_pattern=["(?i)password:", "(?i)enter passphrase for key '.*?':"]
 
-p = pexpect.spawn ('scp -r doc/. noah@shell.sourceforge.net:htdocs/.')
+p = pexpect.spawn ('scp -r doc/. noah@shell.sourceforge.net:/home/groups/p/pe/pexpect/htdocs/.')
 p.logfile = sys.stdout
 p.expect (pp_pattern)
 p.sendline (X)
 p.expect (pexpect.EOF)
 print p.before
 
-p = pexpect.spawn ('scp doc/clean.css doc/email.png noah@shell.sourceforge.net:htdocs/clean.css')
+p = pexpect.spawn ('scp doc/clean.css doc/email.png noah@shell.sourceforge.net:/home/groups/p/pe/pexpect/htdocs/clean.css')
 p.logfile = sys.stdout
 p.expect (pp_pattern)
 p.sendline (X)
@@ -34,7 +34,7 @@ print p.before
 #p.expect (pexpect.EOF)
 #print p.before
 
-p = pexpect.spawn ('scp dist/pexpect-*.tar.gz noah@shell.sourceforge.net:htdocs/.')
+p = pexpect.spawn ('scp dist/pexpect-*.tar.gz noah@shell.sourceforge.net:/home/groups/p/pe/pexpect/htdocs/.')
 p.logfile = sys.stdout
 p.expect (pp_pattern)
 p.sendline (X)

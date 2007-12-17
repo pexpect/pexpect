@@ -1,8 +1,7 @@
 #!/usr/bin/env python
-'''Change passwords on the named machines.
-    passmass host1 host2 host3 . . .
-Note that login shell prompt on remote machine must end in # or $.
-'''
+
+"""Change passwords on the named machines. passmass host1 host2 host3 . . .
+Note that login shell prompt on remote machine must end in # or $. """
 
 import pexpect
 import sys, getpass
@@ -12,7 +11,9 @@ COMMAND_PROMPT = '[$#] '
 TERMINAL_PROMPT = r'Terminal type\?'
 TERMINAL_TYPE = 'vt100'
 SSH_NEWKEY = r'Are you sure you want to continue connecting \(yes/no\)\?'
+
 def login(host, user, password):
+
     child = pexpect.spawn('ssh -l %s %s'%(user, host))
     fout = file ("LOG.TXT","wb")
     child.setlog (fout)
@@ -40,6 +41,7 @@ def login(host, user, password):
 
 # (current) UNIX password:
 def change_password(child, user, oldpassword, newpassword):
+
     child.sendline('passwd') 
     i = child.expect(['[Oo]ld [Pp]assword', '.current.*password', '[Nn]ew [Pp]assword'])
     # Root does not require old password, so it gets to bypass the next step.
@@ -57,6 +59,7 @@ def change_password(child, user, oldpassword, newpassword):
     child.sendline(newpassword)
 
 def main():
+
     if len(sys.argv) <= 1:
         print USAGE
         return 1

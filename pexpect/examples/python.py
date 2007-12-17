@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-'''This starts the python interpreter; captures the startup message; then gives the user interactive control over the session.
-Why?
-'''
+
+"""This starts the python interpreter; captures the startup message; then gives
+the user interactive control over the session. Why? For fun... """
 
 # Don't do this unless you like being John Malkovich
 # c = pexpect.spawn ('/usr/bin/env python ./python.py')

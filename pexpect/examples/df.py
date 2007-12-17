@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-"""This collects filesystem capacity info using the 'df' command.
-Tuples of filesystem name and percentage are stored in a list.
-A simple report is printed. Filesystems over 95% capacity are highlighted.
-Note that this does not parse filesystem names after the first space, so
-names with spaces in them will be truncated. This will produce ambiguous
-results for automount filesystems on Apple OSX.
-"""
+
+"""This collects filesystem capacity info using the 'df' command. Tuples of
+filesystem name and percentage are stored in a list. A simple report is
+printed. Filesystems over 95% capacity are highlighted. Note that this does not
+parse filesystem names after the first space, so names with spaces in them will
+be truncated. This will produce ambiguous results for automount filesystems on
+Apple OSX. """
+
 import pexpect
 
 child = pexpect.spawn ('df')

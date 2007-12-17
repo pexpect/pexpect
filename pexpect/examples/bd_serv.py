@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 """Back door shell server
 
 This exposes an shell terminal on a socket.
@@ -9,6 +10,7 @@ This exposes an shell terminal on a socket.
     --port     : set the local port for the server to listen on
     --watch    : show the virtual screen after each client request
 """
+
 # Having the password on the command line is not a good idea, but
 # then this entire project is probably not the most security concious thing
 # I've ever built. This should be considered an experimental tool -- at best.
@@ -16,33 +18,43 @@ import pxssh, pexpect, ANSI
 import time, sys, os, getopt, getpass, traceback, threading, socket
 
 def exit_with_usage(exit_code=1):
+
     print globals()['__doc__']
     os._exit(exit_code)
 
 class roller (threading.Thread):
+
     """This runs a function in a loop in a thread."""
+
     def __init__(self, interval, function, args=[], kwargs={}):
+
         """The interval parameter defines time between each call to the function.
         """
+
         threading.Thread.__init__(self)
         self.interval = interval
         self.function = function
         self.args = args
         self.kwargs = kwargs
         self.finished = threading.Event()
+
     def cancel(self):
+
         """Stop the roller."""
+
         self.finished.set()
+
     def run(self):
+
         while not self.finished.isSet():
             # self.finished.wait(self.interval)
             self.function(*self.args, **self.kwargs)
 
 def endless_poll (child, prompt, screen, refresh_timeout=0.1):
-    """This keeps the screen updated with the output of the child.
-        This runs in a separate thread.
-        See roller().
-    """
+
+    """This keeps the screen updated with the output of the child. This runs in
+    a separate thread. See roller(). """
+
     #child.logfile_read = screen
     try:
         s = child.read_nonblocking(4000, 0.1)
@@ -58,12 +70,13 @@ def endless_poll (child, prompt, screen, refresh_timeout=0.1):
     #        pass
 
 def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
-    '''This forks the current process into a daemon.
-    Almost none of this is necessary (or advisable) if your daemon 
-    is being started by inetd. In that case, stdin, stdout and stderr are 
-    all set up for you to refer to the network connection, and the fork()s 
-    and session manipulation should not be done (to avoid confusing inetd). 
-    Only the chdir() and umask() steps remain as useful. 
+
+    '''This forks the current process into a daemon. Almost none of this is
+    necessary (or advisable) if your daemon is being started by inetd. In that
+    case, stdin, stdout and stderr are all set up for you to refer to the
+    network connection, and the fork()s and session manipulation should not be
+    done (to avoid confusing inetd). Only the chdir() and umask() steps remain
+    as useful. 
 
     References:
         UNIX Programming FAQ
@@ -73,14 +86,12 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
         Advanced Programming in the Unix Environment
         W. Richard Stevens, 1992, Addison-Wesley, ISBN 0-201-56317-7.
 
-    The stdin, stdout, and stderr arguments are file names that
-    will be opened and be used to replace the standard file descriptors
-    in sys.stdin, sys.stdout, and sys.stderr.
-    These arguments are optional and default to /dev/null.
-    Note that stderr is opened unbuffered, so
-    if it shares a file with stdout then interleaved output
-    may not appear in the order that you expect.
-    '''
+    The stdin, stdout, and stderr arguments are file names that will be opened
+    and be used to replace the standard file descriptors in sys.stdin,
+    sys.stdout, and sys.stderr. These arguments are optional and default to
+    /dev/null. Note that stderr is opened unbuffered, so if it shares a file
+    with stdout then interleaved output may not appear in the order that you
+    expect. '''
 
     # Do first fork.
     try: 
@@ -119,10 +130,12 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     return 0
 
 def add_cursor_blink (response, row, col):
+
     i = (row-1) * 80 + col
     return response[:i]+'<img src="http://www.noah.org/cursor.gif">'+response[i:]
 
 def main ():
+
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'h?d', ['help','h','?', 'hostname=', 'username=', 'password=', 'port=', 'watch'])
     except Exception, e:
@@ -243,12 +256,15 @@ def main ():
         print "done!"
 
 def pretty_box (rows, cols, s):
+
     """This puts an ASCII text box around the given string, s.
     """
+
     top_bot = '+' + '-'*cols + '+\n'
     return top_bot + '\n'.join(['|'+line+'|' for line in s.split('\n')]) + '\n' + top_bot
     
 def error_response (msg):
+
     response = []
     response.append ("""All commands start with :
 :{REQUEST} {ARGUMENT}
@@ -268,12 +284,13 @@ is equivalent to:
     return '\n'.join(response)
 
 def parse_host_connect_string (hcs):
+
     """This parses a host connection string in the form
     username:password@hostname:port. All fields are options expcet hostname. A
     dictionary is returned with all four keys. Keys that were not included are
     set to empty strings ''. Note that if your password has the '@' character
-    then you must backslash escape it.
-    """
+    then you must backslash escape it. """
+
     if '@' in hcs:
         p = re.compile (r'(?P<username>[^@:]*)(:?)(?P<password>.*)(?!\\)@(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
     else:
@@ -284,6 +301,7 @@ def parse_host_connect_string (hcs):
     return d
      
 if __name__ == "__main__":
+
     try:
         start_time = time.time()
         print time.asctime()

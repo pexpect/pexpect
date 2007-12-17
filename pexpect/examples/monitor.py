@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-""" monitor.py
-    This runs a sequence of commands on a remote host using SSH.
-    It runs a simple system checks such as uptime and free to monitor
-    the state of the remote host.
+
+""" This runs a sequence of commands on a remote host using SSH. It runs a
+simple system checks such as uptime and free to monitor the state of the remote
+host.
 
 ./monitor.py [-s server_hostname] [-u username] [-p password]
     -s : hostname of the remote server to login to.
@@ -22,6 +22,7 @@ It works like this:
     Run 'free'.
     Exit the remote host.
 """
+
 import os, sys, time, re, getopt, getpass
 import traceback
 import pexpect
@@ -36,10 +37,12 @@ TERMINAL_TYPE = 'vt100'
 SSH_NEWKEY = '(?i)are you sure you want to continue connecting'
 
 def exit_with_usage():
+
     print globals()['__doc__']
     os._exit(1)
 
 def main():
+
     global COMMAND_PROMPT, TERMINAL_PROMPT, TERMINAL_TYPE, SSH_NEWKEY
     ######################################################################
     ## Parse the options, arguments, get ready, etc.
@@ -195,6 +198,7 @@ def main():
         child.expect(EOF)
 
 if __name__ == "__main__":
+
     try:
         main()
     except Exception, e:

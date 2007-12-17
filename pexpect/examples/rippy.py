@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 """Rippy!
 
 This script helps to convert video from one format to another.
@@ -67,6 +68,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 Noah Spurrier
 $Id$
 """
+
 import sys, os, re, math, stat, getopt, traceback, types, time
 import pexpect
 

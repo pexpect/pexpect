@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 """This runs Apache Status on the remote host and returns the number of requests per second.
 
 ./astat.py [-s server_hostname] [-u username] [-p password]
@@ -11,15 +12,18 @@ Example:
         ./astat.py -s www.example.com -u mylogin -p mypassword
 
 """
+
 import os, sys, time, re, getopt, getpass
 import traceback
 import pexpect, pxssh
 
 def exit_with_usage():
+
     print globals()['__doc__']
     os._exit(1)
 
 def main():
+
     ######################################################################
     ## Parse the options, arguments, get ready, etc.
     ######################################################################

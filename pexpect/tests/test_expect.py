@@ -109,6 +109,19 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
         assert index == 3, "index="+str(index)
         
+    def test_waitnoecho (self):
+        
+        """ This tests that we can wait on a child process to set echo mode.
+        For example, this tests that we could wait for SSH to set ECHO False
+        when asking of a password. This makes use of an external script
+        echo_wait.py. """
+
+        p1 = pexpect.spawn('%s echo_wait.py' % self.PYTHONBIN)
+        start = time.time()
+        p1.waitnoecho(timeout=10)
+        end_time = time.time() - start
+        assert end_time < 10 and end_time > 2, "waitnoecho did not set ECHO off in the expected time window" 
+
     def test_expect_echo (self):
         """This tests that echo can be turned on and off.
         """

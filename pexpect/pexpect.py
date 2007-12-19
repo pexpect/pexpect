@@ -670,6 +670,40 @@ class spawn (object):
 
         return os.isatty(self.child_fd)
 
+    def waitnoecho (self, timeout=-1):
+
+        """This waits until the terminal ECHO flag is set False. This returns
+        True if the echo mode is off. This returns False if the ECHO flag was
+        not set False before the timeout. This can be used to detect when the
+        child is waiting for a password. Usually a child application will turn
+        off echo mode when it is waiting for the user to enter a password. It
+        timeout is None then this method to block forever until ECHO flag is
+        False."""
+
+        if timeout == -1:
+            timeout = self.timeout
+        if timeout is not None:
+            end_time = time.time() + timeout 
+        while True:
+            if not self.getecho():
+                return True
+            if timeout < 0 and timeout is not None:
+                return False
+            if timeout is not None:
+                timeout = end_time - time.time()
+            time.sleep(0.1)
+
+    def getecho (self):
+
+        """This returns the terminal echo mode. This returns True if echo is
+        on or False if echo is off. Child applications that are expecting you
+        to enter a password often set ECHO False. See waitnoecho(). """
+
+        attr = termios.tcgetattr(self.child_fd)
+        if attr[3] & termios.ECHO:
+            return True
+        return False
+
     def setecho (self, state):
 
         """This sets the terminal echo mode on or off. Note that anything the
@@ -702,11 +736,11 @@ class spawn (object):
         """
 
         self.child_fd
-        new = termios.tcgetattr(self.child_fd)
+        attr = termios.tcgetattr(self.child_fd)
         if state:
-            new[3] = new[3] | termios.ECHO
+            attr[3] = attr[3] | termios.ECHO
         else:
-            new[3] = new[3] & ~termios.ECHO
+            attr[3] = attr[3] & ~termios.ECHO
         # I tried TCSADRAIN and TCSAFLUSH, but these were inconsistent
         # and blocked on some platforms. TCSADRAIN is probably ideal if it worked.
         termios.tcsetattr(self.child_fd, termios.TCSANOW, new)
@@ -1778,4 +1812,3 @@ def split_command_line(command_line):
     return arg_list
 
 # vi:ts=4:sw=4:expandtab:ft=python:
-

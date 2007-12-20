@@ -2,7 +2,7 @@
 import pexpect
 import unittest
 import commands
-import sys
+import sys, time
 import PexpectTestCase
 #import pdb
 
@@ -120,7 +120,22 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         start = time.time()
         p1.waitnoecho(timeout=10)
         end_time = time.time() - start
-        assert end_time < 10 and end_time > 2, "waitnoecho did not set ECHO off in the expected time window" 
+        assert end_time < 10 and end_time > 2, "waitnoecho did not set ECHO off in the expected window of time." 
+
+        # test that we actually timeout and return False if ECHO is never set off.
+        p1 = pexpect.spawn('cat')
+        start = time.time()
+        retval = p1.waitnoecho(timeout=4)
+        end_time = time.time() - start
+        assert end_time > 3, "waitnoecho should have waited longer than 2 seconds. retval should be False, retval=%d"%retval
+        assert retval==False, "retval should be False, retval=%d"%retval
+
+        # This one is mainly here to test default timeout for code coverage.
+        p1 = pexpect.spawn('%s echo_wait.py' % self.PYTHONBIN)
+        start = time.time()
+        p1.waitnoecho()
+        end_time = time.time() - start
+        assert end_time < 10, "waitnoecho did not set ECHO off in the expected window of time." 
 
     def test_expect_echo (self):
         """This tests that echo can be turned on and off.

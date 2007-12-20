@@ -13,16 +13,32 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         to a child process."""
 
         child = pexpect.spawn('python getch.py')
-        #child.delaybeforesend = 0.1
         try:
             for i in range(256):
                 child.send(chr(i))
                 child.expect ('%d\r\n' % i)
-                #print child.after
         except Exception, e:
             msg = "Did not echo character value: " + str(i) + "\n" 
             msg = msg + str(e)
             self.fail(msg)
+
+    def test_sendintr (self):
+        try:
+            child = pexpect.spawn('python getch.py')
+            child.sendintr()
+            child.expect ('3\r\n')
+        except Exception, e:
+            msg = "Did not echo character value: 3\n" 
+            msg = msg + str(e)
+            self.fail(msg)
+
+    def test_bad_sendcontrol_chars (self):
+
+        """This tests that sendcontrol will return 0 for an unknown char. """
+
+        child = pexpect.spawn('python getch.py')
+        retval = child.sendcontrol('1') 
+        assert retval == 0, "sendcontrol() should have returned 0 because there is no such thing as ctrl-1."
 
     def test_sendcontrol(self):
 

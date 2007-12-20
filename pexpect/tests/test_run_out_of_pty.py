@@ -6,7 +6,8 @@ import sys
 import PexpectTestCase
 
 class ExpectTestCase(PexpectTestCase.PexpectTestCase):
-    def off_test_run_out (self):
+    # This takes too long to run and isn't all that interesting of a test.
+    def OFF_test_run_out_of_pty (self):
         """This assumes that the tested platform has < 10000 pty devices.
         This test currently does not work under Solaris.
         Under Solaris it runs out of file descriptors first and

@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import signal, time, struct, fcntl, termios, os, sys
 
 # a dumb PAM will print the password prompt first then set ECHO
@@ -9,11 +10,11 @@ import signal, time, struct, fcntl, termios, os, sys
 
 print "fake password:"
 sys.stdout.flush()
+time.sleep(3)
 attr = termios.tcgetattr(sys.stdout)
 attr[3] = attr[3] & ~termios.ECHO
-termios.tcsetattr(sys.stdout, termios.TCSANOW, new)
-time.sleep(3)
+termios.tcsetattr(sys.stdout, termios.TCSANOW, attr)
+time.sleep(12)
 attr[3] = attr[3] | termios.ECHO
-termios.tcsetattr(sys.stdout, termios.TCSANOW, new)
-
-time.sleep(20)
+termios.tcsetattr(sys.stdout, termios.TCSANOW, attr)
+time.sleep(2)

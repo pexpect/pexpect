@@ -84,7 +84,7 @@ except ImportError, e:
 A critical module was not found. Probably this operating system does not
 support it. Pexpect is intended for UNIX-like operating systems.""")
 
-__version__ = '2.2'
+__version__ = '2.3'
 __revision__ = '$Revision: 399 $'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which',
     'split_command_line', '__version__', '__revision__']
@@ -676,9 +676,18 @@ class spawn (object):
         True if the echo mode is off. This returns False if the ECHO flag was
         not set False before the timeout. This can be used to detect when the
         child is waiting for a password. Usually a child application will turn
-        off echo mode when it is waiting for the user to enter a password. It
-        timeout is None then this method to block forever until ECHO flag is
-        False."""
+        off echo mode when it is waiting for the user to enter a password. For
+        example, instead of expecting the "password:" prompt you can wait for
+        the child to set ECHO off::
+
+            p = pexpect.spawn ('ssh user@example.com')
+            p.waitnoecho()
+            p.sendline(mypassword)
+
+        If timeout is None then this method to block forever until ECHO flag is
+        False.
+
+        """
 
         if timeout == -1:
             timeout = self.timeout
@@ -708,7 +717,7 @@ class spawn (object):
 
         """This sets the terminal echo mode on or off. Note that anything the
         child sent before the echo will be lost, so you should be sure that
-        your input buffer is empty before you setecho. For example, the
+        your input buffer is empty before you call setecho(). For example, the
         following will work as expected::
 
             p = pexpect.spawn('cat')
@@ -743,7 +752,7 @@ class spawn (object):
             attr[3] = attr[3] & ~termios.ECHO
         # I tried TCSADRAIN and TCSAFLUSH, but these were inconsistent
         # and blocked on some platforms. TCSADRAIN is probably ideal if it worked.
-        termios.tcsetattr(self.child_fd, termios.TCSANOW, new)
+        termios.tcsetattr(self.child_fd, termios.TCSANOW, attr)
 
     def read_nonblocking (self, size = 1, timeout = -1):
 
@@ -983,10 +992,10 @@ class spawn (object):
         ###C      return (errno == EWOULDBLOCK) ? n : -1;
         #fd = sys.stdin.fileno()
         #old = termios.tcgetattr(fd) # remember current state
-        #new = termios.tcgetattr(fd)
-        #new[3] = new[3] | termios.ICANON # ICANON must be set to recognize EOF
+        #attr = termios.tcgetattr(fd)
+        #attr[3] = attr[3] | termios.ICANON # ICANON must be set to recognize EOF
         #try: # use try/finally to ensure state gets restored
-        #    termios.tcsetattr(fd, termios.TCSADRAIN, new)
+        #    termios.tcsetattr(fd, termios.TCSADRAIN, attr)
         #    if hasattr(termios, 'CEOF'):
         #        os.write (self.child_fd, '%c' % termios.CEOF)
         #    else:
@@ -1563,15 +1572,15 @@ class searcher_string (object):
 
     Attributes:
 
-    eof_index - index of EOF, or -1
-    timeout_index - index of TIMEOUT, or -1
+        eof_index     - index of EOF, or -1
+        timeout_index - index of TIMEOUT, or -1
 
     After a successful match by the search() method the following attributes
     are available:
 
-    start - index into the buffer, first byte of match
-    end   - index into the buffer, first byte after match
-    match - the matching string itself
+        start - index into the buffer, first byte of match
+        end   - index into the buffer, first byte after match
+        match - the matching string itself
     """
 
     def __init__(self, strings):
@@ -1596,10 +1605,14 @@ class searcher_string (object):
         """This returns a human-readable string that represents the state of
         the object."""
 
-        # TODO This should really build the string in list order including EOF and TIMEOUT.
-        ss = ['searcher_string'] + [ '    %d: "%s"' % ns for ns in self._strings ]
-        if self.eof_index >= 0: ss.append('    %d: EOF' % self.eof_index)
-        if self.timeout_index >= 0: ss.append('    %d: TIMEOUT' % self.timeout_index)
+        ss =  [ (ns[0],'    %d: "%s"' % ns) for ns in self._strings ]
+        ss.append((-1,'searcher_string:'))
+        if self.eof_index >= 0:
+            ss.append ((self.eof_index,'    %d: EOF' % self.eof_index))
+        if self.timeout_index >= 0:
+            ss.append ((self.timeout_index,'    %d: TIMEOUT' % self.timeout_index))
+        ss.sort()
+        ss = zip(*ss)[1]
         return '\n'.join(ss)
 
     def search(self, buffer, freshlen, searchwindowsize=None):
@@ -1650,18 +1663,21 @@ class searcher_string (object):
 
 class searcher_re (object):
 
-    """This is regular expression string search helper for the spawn.expect_any() method.
+    """This is regular expression string search helper for the
+    spawn.expect_any() method.
 
     Attributes:
 
-    eof_index - index of EOF, or -1
-    timeout_index - index of TIMEOUT, or -1
+        eof_index     - index of EOF, or -1
+        timeout_index - index of TIMEOUT, or -1
 
     After a successful match by the search() method the following attributes
+    are available:
 
-    start - index into the buffer, first byte of match
-    end   - index into the buffer, first byte after match
-    match - the re.match object returned by a succesful re.search
+        start - index into the buffer, first byte of match
+        end   - index into the buffer, first byte after match
+        match - the re.match object returned by a succesful re.search
+
     """
 
     def __init__(self, patterns):
@@ -1687,10 +1703,14 @@ class searcher_re (object):
         """This returns a human-readable string that represents the state of
         the object."""
 
-        # TODO This should really build the string in list order including EOF and TIMEOUT.
-        ss = ['searcher_re'] + [ '    %d: "%s"' % (n, str(s.pattern)) for n, s in self._searches ]
-        if self.eof_index >= 0: ss.append('    %d: EOF' % self.eof_index)
-        if self.timeout_index >= 0: ss.append('    %d: TIMEOUT' % self.timeout_index)
+        ss =  [ (n,'    %d: re.compile("%s")' % (n,str(s.pattern))) for n,s in self._searches]
+        ss.append((-1,'searcher_re:'))
+        if self.eof_index >= 0:
+            ss.append ((self.eof_index,'    %d: EOF' % self.eof_index))
+        if self.timeout_index >= 0:
+            ss.append ((self.timeout_index,'    %d: TIMEOUT' % self.timeout_index))
+        ss.sort()
+        ss = zip(*ss)[1]
         return '\n'.join(ss)
 
     def search(self, buffer, freshlen, searchwindowsize=None):
@@ -1704,7 +1724,6 @@ class searcher_re (object):
         If there is a match this returns the index of that string, and sets
         'start', 'end' and 'match'. Otherwise, returns -1."""
 
-        # TODO, I should double-check that this logic follows the old re.search logic.
         absurd_match = len(buffer)
         first_match = absurd_match
         # 'freshlen' doesn't help here -- we cannot predict the

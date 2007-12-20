@@ -4,6 +4,7 @@ import unittest
 import PexpectTestCase
 import time
 import os
+import re
 
 class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         
@@ -82,6 +83,28 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         except:
             self.fail ("child.isalive() should have raised a pexpect.ExceptionPexpect")
         child.terminated = 1 # Force back to valid state so __del__ won't complain
+    def test_bad_arguments (self):
+        """This tests that we get a graceful error when passing bad arguments."""
+        try:
+            p = pexpect.spawn(1)
+        except pexpect.ExceptionPexpect, e:
+            pass
+        except:
+            self.fail ("pexpect.spawn(1) should have raised a pexpect.ExceptionPexpect.")
+        try:
+            p = pexpect.spawn('ls', '-la') # should really use pexpect.spawn('ls', ['-ls'])
+        except TypeError, e:
+            pass
+        except:
+            self.fail ("pexpect.spawn('ls', '-la') should have raised a TypeError.")
+        try:
+            p = pexpect.spawn('cat')
+            p.close()
+            p.read_nonblocking(size=1, timeout=3)
+        except ValueError, e:
+            pass
+        except:
+            self.fail ("read_nonblocking on closed spawn object should have raised a ValueError.")
     def test_isalive(self):
         child = pexpect.spawn('cat')
         assert child.isalive(), "child.isalive() did not return True"
@@ -123,7 +146,17 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         assert wp == None, "Executable should not be found. Returned %s" % wp
         os.defpath = p
         os.environ['PATH'] = ep
-        
+    def test_searcher_re (self):
+        ss = pexpect.searcher_re ([re.compile('this'),re.compile('that'),re.compile('and'),re.compile('the'),re.compile('other')])
+        assert ss.__str__() == 'searcher_re:\n    0: re.compile("this")\n    1: re.compile("that")\n    2: re.compile("and")\n    3: re.compile("the")\n    4: re.compile("other")'
+        ss = pexpect.searcher_re ([pexpect.TIMEOUT,re.compile('this'),re.compile('that'),re.compile('and'),pexpect.EOF,re.compile('other')])
+        assert ss.__str__() == 'searcher_re:\n    0: TIMEOUT\n    1: re.compile("this")\n    2: re.compile("that")\n    3: re.compile("and")\n    4: EOF\n    5: re.compile("other")'
+    def test_searcher_string (self):
+        ss = pexpect.searcher_string (['this','that','and','the','other'])
+        assert ss.__str__() == 'searcher_string:\n    0: "this"\n    1: "that"\n    2: "and"\n    3: "the"\n    4: "other"', repr(ss.__str__())
+        ss = pexpect.searcher_string (['this',pexpect.EOF,'that','and','the','other',pexpect.TIMEOUT])
+        assert ss.__str__() == 'searcher_string:\n    0: "this"\n    1: EOF\n    2: "that"\n    3: "and"\n    4: "the"\n    5: "other"\n    6: TIMEOUT'
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -1,7 +1,7 @@
 # TODO This stupid Makefile is getty crappier and crappier. Is 'crappier' a word?
 SHELL = /bin/sh
 
-VERSION=2.2beta
+VERSION=2.3
 #DOCGENERATOR= happydoc
 DOCGENERATOR=pydoc -w
 # This is for GNU Make. This does not work on BSD Make.

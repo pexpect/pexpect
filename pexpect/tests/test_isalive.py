@@ -5,6 +5,29 @@ import sys, os, time
 import PexpectTestCase
 
 class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
+
+    def test_expect_wait (self):
+        """This tests that calling wait on a finished process works as expected.
+        """
+        p = pexpect.spawn('sleep 3')
+        if not p.isalive():
+            self.fail ('Child process is not alive. It should be.')
+        time.sleep(1)
+        p.wait()
+        if p.isalive():
+            self.fail ('Child process is not dead. It should be.')
+        p = pexpect.spawn('sleep 3')
+        if not p.isalive():
+            self.fail ('Child process is not alive. It should be.')
+        p.kill(9)
+        time.sleep(1)
+        try:
+            p.wait()
+        except pexpect.ExceptionPexpect, e:
+            pass
+        else:
+            self.fail ('Should have raised ExceptionPython because you can\'t call wait on a dead process.')
+
     def test_expect_isalive_dead_after_normal_termination (self):
         p = pexpect.spawn('ls')
         p.expect(pexpect.EOF)
@@ -40,8 +63,10 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
 
 ### Some platforms allow this. Some reset status after call to waitpid.
     def test_expect_isalive_consistent_multiple_calls (self):
+
         """This tests that multiple calls to isalive() return same value.
         """
+
         p = pexpect.spawn('cat')
         if not p.isalive():
             self.fail ('Child process is not alive. It should be.')
@@ -53,7 +78,7 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
             self.fail ('Child process is not dead. It should be.')
         if p.isalive():
             self.fail ('Second call. Child process is not dead. It should be.')
-
+        
 if __name__ == '__main__':
     unittest.main()
 

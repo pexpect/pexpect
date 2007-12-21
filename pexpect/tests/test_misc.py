@@ -80,7 +80,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
             child.isalive()
         except pexpect.ExceptionPexpect, e:
             pass
-        except:
+        else:
             self.fail ("child.isalive() should have raised a pexpect.ExceptionPexpect")
         child.terminated = 1 # Force back to valid state so __del__ won't complain
     def test_bad_arguments (self):
@@ -89,13 +89,13 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
             p = pexpect.spawn(1)
         except pexpect.ExceptionPexpect, e:
             pass
-        except:
+        else:
             self.fail ("pexpect.spawn(1) should have raised a pexpect.ExceptionPexpect.")
         try:
             p = pexpect.spawn('ls', '-la') # should really use pexpect.spawn('ls', ['-ls'])
         except TypeError, e:
             pass
-        except:
+        else:
             self.fail ("pexpect.spawn('ls', '-la') should have raised a TypeError.")
         try:
             p = pexpect.spawn('cat')
@@ -103,7 +103,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
             p.read_nonblocking(size=1, timeout=3)
         except ValueError, e:
             pass
-        except:
+        else:
             self.fail ("read_nonblocking on closed spawn object should have raised a ValueError.")
     def test_isalive(self):
         child = pexpect.spawn('cat')
@@ -117,7 +117,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
             child.expect({}) # We don't support dicts yet. Should give TypeError
         except TypeError, e:
             pass
-        except:
+        else:
             self.fail ("child.expect({}) should have raised a TypeError")
     def test_winsize(self):
         child = pexpect.spawn('cat')

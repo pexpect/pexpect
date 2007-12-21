@@ -5,6 +5,7 @@ import commands
 import sys, os, time, tty
 import PexpectTestCase
 import thread
+import threading
 
 def start_interact (p):
     p.interact()
@@ -15,12 +16,30 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         # I can't believe this actually works...
         p = pexpect.spawn('%s swapcase_echo.py' % self.PYTHONBIN)
         mode = tty.tcgetattr(p.STDIN_FILENO)
-        thread.start_new_thread (start_interact, (p,))
+        t = threading.Thread (target=start_interact, args=(p,))
+        t.start()
+        #thread.start_new_thread (start_interact, (p,))
         time.sleep(1)
         p.sendline ('Hello')
-        time.sleep(2)
-        p.close(force = False)
+        time.sleep(1)
+        try:
+            p.expect ('olleH', timeout=5)
+        except Exception, e:
+            p.close(force = False)
+            tty.tcsetattr(p.STDIN_FILENO, tty.TCSAFLUSH, mode)
+            raise e
+        p.close(force = True)
         tty.tcsetattr(p.STDIN_FILENO, tty.TCSAFLUSH, mode)
+#    def test_interact_thread (self):
+#        # I can't believe this actually works...
+#        p = pexpect.spawn('%s swapcase_echo.py' % self.PYTHONBIN)
+#        mode = tty.tcgetattr(p.STDIN_FILENO)
+#        thread.start_new_thread (start_interact, (p,))
+#        time.sleep(1)
+#        p.sendline ('Hello')
+#        time.sleep(2)
+#        p.close(force = False)
+#        tty.tcsetattr(p.STDIN_FILENO, tty.TCSAFLUSH, mode)
         
     def test_interact (self):
         p = pexpect.spawn('%s interact.py' % self.PYTHONBIN)

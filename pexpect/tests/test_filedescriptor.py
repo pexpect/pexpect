@@ -37,7 +37,8 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         fd = os.open ('TESTDATA.txt', os.O_RDONLY)
         s = fdpexpect.fdspawn (fd)
         assert not s.isatty()
-        os.close(fd)
+        #os.close(fd)
+        fd.close(fd)
 
 ###    def test_close_does_not_close_fd (self):
 ###        """Calling close() on a fdpexpect.fdspawn object should not

@@ -49,13 +49,13 @@ class fdspawn (spawn):
 
     def close (self):
 
-        if super(fdspawn, self).child_fd == -1:
+        if self.child_fd == -1:
             return
         if self.own_fd:
-            super(fdspawn, self).close (self)
+            self.close (self)
         else:
             self.flush()
-            os.close(super(fdspawn, self).child_fd)
+            os.close(self.child_fd)
             self.child_fd = -1
             self.closed = True
 

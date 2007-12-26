@@ -38,7 +38,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         s = fdpexpect.fdspawn (fd)
         assert not s.isatty()
         #os.close(fd)
-        fd.close(fd)
+        s.close()
 
 ###    def test_close_does_not_close_fd (self):
 ###        """Calling close() on a fdpexpect.fdspawn object should not

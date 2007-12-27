@@ -332,6 +332,18 @@ class spawn (object):
             child = pexpect.spawn('some_command')
             child.logfile = sys.stdout
 
+        The logfile_read and logfile_send members can be used to separately log
+        the input from the child and output sent to the child. Sometimes you
+        don't want to see everything you write to the child. You only want to
+        log what the child sends back. For example::
+        
+            child = pexpect.spawn('some_command')
+            child.logfile_read = sys.stdout
+
+        To separately log output sent to the child use logfile_send::
+        
+            self.logfile_send = fout
+
         The delaybeforesend helps overcome a weird behavior that many users
         were experiencing. The typical problem was that a user would expect() a
         "Password:" prompt and then immediately call sendline() to send the

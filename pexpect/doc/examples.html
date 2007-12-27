@@ -6,15 +6,25 @@
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <meta name="Author" content="Noah Spurrier">
 <meta name="Keywords"
- content="pexpect, Noah Spurrier, pypect, Python, Libes, TCL, Expect, pipe, popen, pyExpect, expectpy, expect-like, expect-alike, expect like">
-<meta name="Description"
- content="Examples for using Pexpect.">
+ content="pexpect, Noah Spurrier, Python, Libes, TCL, Expect, pipe, popen, pyExpect, expectpy, expect-like, expect-alike, expect like">
+<meta name="Description" content="Examples for using Pexpect.">
 </head>
 <body bgcolor="#ffffff" text="#000000">
 <div id="Header">
 <h1>Pexpect Examples</h1>
 </div>
 <div id="Content">
+
+<p><span class="code">hive.py</span></p>
+<p><blockquote>
+This script creates SSH connections to a list of hosts that
+you provide. Then you are given a command line prompt. Each
+shell command that you enter is sent to all the hosts. The
+response from each host is collected and printed. For example,
+you could connect to a dozen different machines and reboot
+them all at once.
+</p></blockquote>
+
 <p><span class="code">script.py</span></p>
 <p><blockquote>
  This implements a command similar to the classic BSD
@@ -111,11 +121,15 @@ match groups.
  The grouping regular expression handles a wide variety of different
 uptime formats.
   </blockquote>
+
 <p>
 <a href="http://sourceforge.net/projects/pexpect/"
  title="The Pexpect project page on SourceForge.net"> <img
  src="http://sourceforge.net/sflogo.php?group_id=59762&amp;type=5"
  alt="The Pexpect project page on SourceForge.net" border="0"
- height="31" width="105"> </a> </div>
+ height="31" width="105"> </a>
+</p>
+</div>
+
 </body>
 </html>

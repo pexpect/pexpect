@@ -26,11 +26,16 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.sendline ("abc")
         child.sendline ("123")
         child.sendeof()
-        assert child.readline(0) == '', "readline(0) did not return ''"
-        assert child.readline() == 'abc\r\n', "readline() did not return 'abc\\r\\n'"
-        assert child.readline(2) == 'abc\r\n', "readline(2) did not return 'abc\\r\\n'"
-        assert child.readline(1) == '123\r\n', "readline(1) did not return '123\\r\\n'"
-        assert child.readline() == '123\r\n', "readline() did not return '123\\r\\n'"
+        line1 = child.readline(0)
+        line2 = child.readline() 
+        line3 = child.readline(2)
+        line4 = child.readline(1)
+        line5 = child.readline() 
+        assert line1  == '', "readline(0) did not return ''. Returned: " + repr(line1)
+        assert line2 == 'abc\r\n', "readline() did not return 'abc\\r\\n'. Returned: " + repr(line2)
+        assert line3  == 'abc\r\n', "readline(2) did not return 'abc\\r\\n'. Returned: " + repr(line3)
+        assert line4  == '123\r\n', "readline(1) did not return '123\\r\\n'. Returned: " + repr(line4)
+        assert line5 == '123\r\n', "readline() did not return '123\\r\\n'. Returned: " + repr(line5)
     def test_iter (self):
         child = pexpect.spawn('cat')
         child.sendline ("abc")

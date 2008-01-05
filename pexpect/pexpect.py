@@ -84,8 +84,8 @@ except ImportError, e:
 A critical module was not found. Probably this operating system does not
 support it. Pexpect is intended for UNIX-like operating systems.""")
 
-__version__ = '2.3'
-__revision__ = '$Revision: 399 $'
+__version__ = '2.4'
+__revision__ = '$Revision$'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which',
     'split_command_line', '__version__', '__revision__']
 

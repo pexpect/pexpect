@@ -32,11 +32,16 @@ Example:
 Other Usage Examples:
 
 1. You will be asked for your username and password for each host.
+
     hive.py host1 host2 host3 ... hostN
+
 2. You will be asked once for your username and password.
    This will be used for each host.
+
     hive.py --sameuser --samepass host1 host2 host3 ... hostN
+
 3. Give a username and password on the command-line:
+
     hive.py user1:pass2@host1 user2:pass2@host2 ... userN:passN@hostN
 
 You can use an extended host notation to specify username, password, and host
@@ -49,6 +54,9 @@ This assumes that ':' is not part of the password. If your password contains a
 ':' then you can use '\\:' to indicate a ':' and '\\\\' to indicate a single
 '\\'. Remember that this information will appear in the process listing. Anyone
 on your machine can see this auth information. This is not secure.
+
+This is a crude script that begs to be multithreaded. But it serves its
+purpose.
 
 Noah Spurrier
 
@@ -104,6 +112,12 @@ CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
     commands are send to target hosts, but their responses are not read back
     until :sync is run. This is useful to run before commands that will not
     return with the special shell prompt pattern that Hive uses to synchronize.
+
+:refresh
+
+    refresh the display. This shows the last few lines of output from all hosts.
+    This is similar to resync, but does not expect the promt. This is useful
+    for seeing what hosts are doing during long running commands.
 
 :resync
 
@@ -202,6 +216,20 @@ def main ():
         if cmd=='?' or cmd==':help' or cmd==':h':
             print CMD_HELP
             continue
+        elif cmd==':refresh':
+            refresh (hive, target_hostnames, timeout=0.5)
+            for hostname in target_hostnames:
+                if hive[hostname] is None:
+                    print '/============================================================================='
+                    print '| ' + hostname + ' is DEAD'
+                    print '\\-----------------------------------------------------------------------------'
+                else:
+                    print '/============================================================================='
+                    print '| ' + hostname
+                    print '\\-----------------------------------------------------------------------------'
+                    print hive[hostname].before
+            print '=============================================================================='
+            continue
         elif cmd==':resync':
             resync (hive, target_hostnames, timeout=0.5)
             for hostname in target_hostnames:
@@ -284,7 +312,7 @@ def main ():
             continue
         elif cmd == ':exit' or cmd == ':q' or cmd == ':quit':
             break
-        elif cmd[:8] == ':control':
+        elif cmd[:8] == ':control' or cmd[:5] == ':ctrl' :
             cmd, c = cmd.split(None,1)
             if ord(c)-96 < 0 or ord(c)-96 > 255:
                 print '/============================================================================='
@@ -339,6 +367,15 @@ def main ():
                     hive[hostname] = None
             print '=============================================================================='
     
+def refresh (hive, hive_names, timeout=0.5):
+
+    """This waits for the TIMEOUT on each host.
+    """
+
+    # TODO This is ideal for threading.
+    for hostname in hive_names:
+        hive[hostname].expect([pexpect.TIMEOUT,pexpect.EOF],timeout=timeout)
+
 def resync (hive, hive_names, timeout=2, max_attempts=5):
 
     """This waits for the shell prompt for each host in an effort to try to get

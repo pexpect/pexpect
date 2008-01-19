@@ -304,6 +304,12 @@ def check_missing_requirements ():
         missing.append("mencoder")
     if pexpect.which("mplayer") is None:
         missing.append("mplayer")
+    cmd = "mencoder -oac help"
+    (command_output, exitstatus) = run(cmd)
+    ar = re.findall("(mp3lame)", command_output)
+    if len(ar)==0:
+        missing.append("Mencoder was not compiled with mp3lame support.")
+    
     #if pexpect.which("lame") is None:
     #    missing.append("lame")
     #if pexpect.which("mkvmerge") is None:
@@ -620,7 +626,8 @@ def build_compression_command (video_source_filename, video_final_filename, vide
     if seek_length is not None:
         seek_filter = seek_filter + ' -endpos %s' % (str(seek_length))
 
-    cmd = "mencoder -quiet -info comment='Arkivist' '%(video_source_filename)s' %(seek_filter)s %(chapter)s -aid %(audio_id)s -o '%(video_final_filename)s' -ffourcc %(video_fourcc_override)s -ovc lavc -oac lavc %(lavcopts)s %(video_filter)s %(audio_filter)s" % locals()
+#    cmd = "mencoder -quiet -info comment='Arkivist' '%(video_source_filename)s' %(seek_filter)s %(chapter)s -aid %(audio_id)s -o '%(video_final_filename)s' -ffourcc %(video_fourcc_override)s -ovc lavc -oac lavc %(lavcopts)s %(video_filter)s %(audio_filter)s" % locals()
+    cmd = "mencoder -quiet -info comment='Arkivist' '%(video_source_filename)s' %(seek_filter)s %(chapter)s -aid %(audio_id)s -o '%(video_final_filename)s' -ffourcc %(video_fourcc_override)s -ovc lavc -oac mp3lame %(lavcopts)s %(video_filter)s %(audio_filter)s" % locals()
     return cmd
 
 def compression_estimate (video_length, video_source_filename, video_final_filename, video_target_size, audio_id=128, video_bitrate=1000, video_codec='mpeg4', audio_codec='mp3', video_fourcc_override='FMP4', video_gray_flag=0, video_crop_area=None, video_aspect_ratio='16/9', video_scale=None, video_encode_passes=2, video_deinterlace_flag=0, audio_volume_boost=None, audio_sample_rate=None, audio_bitrate=None):
@@ -719,11 +726,12 @@ def mux_mkv (video_final_filename, video_transcoded_filename, audio_compressed_f
 
 def mux_avi (video_final_filename, video_transcoded_filename, audio_compressed_filename, verbose_flag=0, dry_run_flag=0):
     """This is depricated."""
-    cmd = "mencoder -quiet -oac copy -ovc copy -o '%s' -audiofile %s '%s'" % (video_final_filename, audio_compressed_filename, video_transcoded_filename)
-    if verbose_flag: print cmd
-    if not dry_run_flag:
-        run(cmd)
-        print
+    pass
+#    cmd = "mencoder -quiet -oac copy -ovc copy -o '%s' -audiofile %s '%s'" % (video_final_filename, audio_compressed_filename, video_transcoded_filename)
+#    if verbose_flag: print cmd
+#    if not dry_run_flag:
+#        run(cmd)
+#        print
 
 def delete_tmp_files (audio_raw_filename, verbose_flag=0, dry_run_flag=0):
     global GLOBAL_LOGFILE_NAME

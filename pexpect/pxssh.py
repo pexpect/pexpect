@@ -124,14 +124,18 @@ class pxssh (spawn):
 
         """This attempts to find the prompt. Basically, press enter and record
         the response; press enter again and record the response; if the two
-        responses are similar then assume we are at the original prompt. """
+        responses are similar then assume we are at the original prompt. This
+        is a slow function. It can take over 10 seconds. """
 
         # All of these timing pace values are magic.
         # I came up with these based on what seemed reliable for
         # connecting to a heavily loaded machine I have.
         # If latency is worse than these values then this will fail.
 
-        self.read_nonblocking(size=10000,timeout=1) # GAS: Clear out the cache before getting the prompt
+        try:
+            self.read_nonblocking(size=10000,timeout=1) # GAS: Clear out the cache before getting the prompt
+        except TIMEOUT:
+            pass
         time.sleep(0.1)
         self.sendline()
         time.sleep(0.5)

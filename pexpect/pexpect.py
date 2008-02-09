@@ -35,7 +35,8 @@ Robert Stone, Hartmut Goebel, Chad Schroeder, Erick Tryzelaar, Dave Kirby, Ids
 vander Molen, George Todd, Noel Taylor, Nicolas D. Cesar, Alexander Gattin,
 Geoffrey Marshall, Francisco Lourenco, Glen Mabey, Karthik Gurusamy, Fernando
 Perez, Corey Minyard, Jon Cohen, Guillaume Chazarain, Andrew Ryan, Nick
-Craig-Wood, Andrew Stone, Jorgen Grahn (Let me know if I forgot anyone.)
+Craig-Wood, Andrew Stone, Jorgen Grahn, John Spiegel (Let me know if I forgot
+anyone.)
 
 Free, open source, and all that good stuff.
 

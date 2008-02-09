@@ -120,7 +120,7 @@ class pxssh (spawn):
                 current[j] = min(add, delete, change)
         return current[n]
 
-    def synch_original_prompt (self):
+    def sync_original_prompt (self):
 
         """This attempts to find the prompt. Basically, press enter and record
         the response; press enter again and record the response; if the two
@@ -244,7 +244,7 @@ class pxssh (spawn):
         else: # Unexpected 
             self.close()
             raise ExceptionPxssh ('unexpected login response')
-        if not self.synch_original_prompt():
+        if not self.sync_original_prompt():
             self.close()
             raise ExceptionPxssh ('could not synchronize with original prompt')
         # We appear to be in.

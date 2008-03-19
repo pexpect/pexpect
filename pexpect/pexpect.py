@@ -35,8 +35,8 @@ Robert Stone, Hartmut Goebel, Chad Schroeder, Erick Tryzelaar, Dave Kirby, Ids
 vander Molen, George Todd, Noel Taylor, Nicolas D. Cesar, Alexander Gattin,
 Geoffrey Marshall, Francisco Lourenco, Glen Mabey, Karthik Gurusamy, Fernando
 Perez, Corey Minyard, Jon Cohen, Guillaume Chazarain, Andrew Ryan, Nick
-Craig-Wood, Andrew Stone, Jorgen Grahn, John Spiegel (Let me know if I forgot
-anyone.)
+Craig-Wood, Andrew Stone, Jorgen Grahn, John Spiegel, Jan Grant (Let me know if
+I forgot anyone.)
 
 Free, open source, and all that good stuff.
 
@@ -613,9 +613,13 @@ class spawn (object):
         child_name = os.ttyname(tty_fd)
 
         # Disconnect from controlling tty if still connected.
-        fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY);
-        if fd >= 0:
-            os.close(fd)
+        try:
+            fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY);
+            if fd >= 0:
+                os.close(fd)
+        except:
+            # We are already disconnected. Perhaps we are running inside cron.
+            pass
 
         os.setsid()
 

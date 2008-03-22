@@ -1235,7 +1235,7 @@ class spawn (object):
 
         return compiled_pattern_list
 
-    def expect(self, pattern, timeout = -1, searchwindowsize=None):
+    def expect(self, pattern, timeout = -1, searchwindowsize=-1):
 
         """This seeks through the stream until a pattern is matched. The
         pattern is overloaded and may take several types. The pattern can be a

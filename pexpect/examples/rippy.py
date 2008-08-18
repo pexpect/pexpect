@@ -99,8 +99,8 @@ prompts_key_order = (
 'video_bitrate',
 'video_bitrate_overhead',
 'video_target_size',
-'video_crop_area',
 'video_deinterlace_flag',
+'video_crop_area',
 'video_gray_flag',
 'subtitle_id',
 'audio_id',
@@ -746,6 +746,7 @@ def delete_tmp_files (audio_raw_filename, verbose_flag=0, dry_run_flag=0):
 # This is the interactive Q&A that is used if a conf file was not given.
 ##############################################################################
 def interactive_convert ():
+
     global prompts, prompts_key_order
 
     print globals()['__doc__']

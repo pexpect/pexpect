@@ -1,5 +1,6 @@
-"""This is a utility class to make shell scripting easier in Python. It
-combines Pexpect and wraps many Standard Python Library functions.
+"""This is a utility class to make shell scripting easier in Python.
+It combines Pexpect and wraps many Standard Python Library functions
+to make them look more shell-like.
 
 $Id$
 """
@@ -9,12 +10,12 @@ from types import *
 
 class ExceptionPsh(pexpect.ExceptionPexpect):
 
-    """Raised for pxssh exceptions.
+    """Raised for Psh exceptions.
     """
 
 class ExceptionErrorCode(ExceptionPsh):
 
-    """Raised when an program returns an error code
+    """Raised when an program returns an error code.
     """
 
     def __init__(self, string, err_code, cmd_output):
@@ -91,6 +92,11 @@ class psh (object):
        raise ExceptionErrorCode("Running command [%s] returned error [%d]" % (cmd,ret), ret, output)
 
     def run_raw(self, cmd, stim_resp_dict=None, timeout=None):
+
+        """Someone contributed this, but now I've lost touch and I forget the motive of this.
+        It was sort of a sketch at the time which doesn't make this any easier to prioritize, but
+        it seemed important at the time.
+        """
 
         if not timeout: timeout = self.default_timeout
 

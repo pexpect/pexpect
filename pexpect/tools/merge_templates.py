@@ -26,13 +26,13 @@ d = pyed.pyed()
 d.read ("doc/index.template.html")
 for cl in d.match_lines('.*VERSION.*'):
     d.cur_line = d.cur_line.replace('VERSION', version)
-d.write("doc/index.html") 
-    
+d.write("doc/index.html")
+
 # Edit the setup.py to update current VERSION.
 d = pyed.pyed()
 d.read ("setup.py.template")
 for cl in d.match_lines('.*VERSION.*'):
     d.cur_line = d.cur_line.replace('VERSION', version)
-d.write("setup.py") 
+d.write("setup.py")
 os.chmod("setup.py", 0755)
 

@@ -1,13 +1,13 @@
-# TODO This stupid Makefile is getty crappier and crappier. Is 'crappier' a word?
 SHELL = /bin/sh
 
-VERSION=2.4
+VERSION=2.5
 #DOCGENERATOR= happydoc
 DOCGENERATOR=pydoc -w
 # This is for GNU Make. This does not work on BSD Make.
 #MANIFEST_LINES := $(shell cat MANIFEST)
 # This is for BSD Make. This does not work on GNU Make.
 #MANIFEST_LINES != cat MANIFEST
+# I hate Makefiles.
 
 all: merge_templates docs dist
 

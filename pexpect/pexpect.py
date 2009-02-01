@@ -85,7 +85,7 @@ except ImportError, e:
 A critical module was not found. Probably this operating system does not
 support it. Pexpect is intended for UNIX-like operating systems.""")
 
-__version__ = '2.4'
+__version__ = '2.5'
 __revision__ = '$Revision$'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which',
     'split_command_line', '__version__', '__revision__']
@@ -1847,4 +1847,4 @@ def split_command_line(command_line):
         arg_list.append(arg)
     return arg_list
 
-# vi:ts=4:sw=4:expandtab:ft=python:
+# vi:set sr et ts=4 sw=4 ft=python :

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""This runs Apache Status on the remote host and returns the number of requests per second.
+'''This runs Apache Status on the remote host and returns the number of requests per second.
 
 ./astat.py [-s server_hostname] [-u username] [-p password]
     -s : hostname of the remote server to login to.
@@ -11,7 +11,24 @@ Example:
     This will print information about the given host:
         ./astat.py -s www.example.com -u mylogin -p mypassword
 
-"""
+PEXPECT LICENSE
+
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+'''
 
 import os, sys, time, re, getopt, getpass
 import traceback

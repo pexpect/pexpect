@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Back door shell server
+'''Back door shell server
 
 This exposes an shell terminal on a socket.
 
@@ -9,7 +9,25 @@ This exposes an shell terminal on a socket.
     --password : (optional) sets the password to login with
     --port     : set the local port for the server to listen on
     --watch    : show the virtual screen after each client request
-"""
+
+PEXPECT LICENSE
+
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+'''
 
 # Having the password on the command line is not a good idea, but
 # then this entire project is probably not the most security concious thing
@@ -24,12 +42,12 @@ def exit_with_usage(exit_code=1):
 
 class roller (threading.Thread):
 
-    """This runs a function in a loop in a thread."""
+    '''This runs a function in a loop in a thread.'''
 
     def __init__(self, interval, function, args=[], kwargs={}):
 
-        """The interval parameter defines time between each call to the function.
-        """
+        '''The interval parameter defines time between each call to the function.
+        '''
 
         threading.Thread.__init__(self)
         self.interval = interval
@@ -40,7 +58,7 @@ class roller (threading.Thread):
 
     def cancel(self):
 
-        """Stop the roller."""
+        '''Stop the roller.'''
 
         self.finished.set()
 
@@ -52,8 +70,8 @@ class roller (threading.Thread):
 
 def endless_poll (child, prompt, screen, refresh_timeout=0.1):
 
-    """This keeps the screen updated with the output of the child. This runs in
-    a separate thread. See roller(). """
+    '''This keeps the screen updated with the output of the child. This runs in
+    a separate thread. See roller(). '''
 
     #child.logfile_read = screen
     try:
@@ -76,7 +94,7 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     case, stdin, stdout and stderr are all set up for you to refer to the
     network connection, and the fork()s and session manipulation should not be
     done (to avoid confusing inetd). Only the chdir() and umask() steps remain
-    as useful. 
+    as useful.
 
     References:
         UNIX Programming FAQ
@@ -94,30 +112,30 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     expect. '''
 
     # Do first fork.
-    try: 
-        pid = os.fork() 
+    try:
+        pid = os.fork()
         if pid > 0:
             sys.exit(0)   # Exit first parent.
-    except OSError, e: 
+    except OSError, e:
         sys.stderr.write ("fork #1 failed: (%d) %s\n" % (e.errno, e.strerror) )
         sys.exit(1)
 
     # Decouple from parent environment.
-    os.chdir("/") 
-    os.umask(0) 
-    os.setsid() 
+    os.chdir("/")
+    os.umask(0)
+    os.setsid()
 
     # Do second fork.
-    try: 
-        pid = os.fork() 
+    try:
+        pid = os.fork()
         if pid > 0:
             sys.exit(0)   # Exit second parent.
-    except OSError, e: 
+    except OSError, e:
         sys.stderr.write ("fork #2 failed: (%d) %s\n" % (e.errno, e.strerror) )
         sys.exit(1)
 
     # Now I am a daemon!
-    
+
     # Redirect standard file descriptors.
     si = open(stdin, 'r')
     so = open(stdout, 'a+')
@@ -147,7 +165,7 @@ def main ():
     # There are a million ways to cry for help. These are but a few of them.
     if [elem for elem in command_line_options if elem in ['-h','--h','-?','--?','--help']]:
         exit_with_usage(0)
-  
+
     hostname = "127.0.0.1"
     port = 1664
     username = os.getenv('USER')
@@ -170,15 +188,15 @@ def main ():
         password = options['--password']
     else:
         password = getpass.getpass('password: ')
-   
-    if daemon_mode: 
+
+    if daemon_mode:
         print "daemonizing server"
         daemonize()
         #daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')
-    
+
     sys.stdout.write ('server started with pid %d\n' % os.getpid() )
 
-    virtual_screen = ANSI.ANSI (24,80) 
+    virtual_screen = ANSI.ANSI (24,80)
     child = pxssh.pxssh()
     child.login (hostname, username, password)
     print 'created shell. command line prompt is', child.PROMPT
@@ -257,16 +275,16 @@ def main ():
 
 def pretty_box (rows, cols, s):
 
-    """This puts an ASCII text box around the given string, s.
-    """
+    '''This puts an ASCII text box around the given string, s.
+    '''
 
     top_bot = '+' + '-'*cols + '+\n'
     return top_bot + '\n'.join(['|'+line+'|' for line in s.split('\n')]) + '\n' + top_bot
-    
+
 def error_response (msg):
 
     response = []
-    response.append ("""All commands start with :
+    response.append ('''All commands start with :
 :{REQUEST} {ARGUMENT}
 {REQUEST} may be one of the following:
     :sendline: Run the ARGUMENT followed by a line feed.
@@ -279,17 +297,17 @@ Example:
     ls -l
 is equivalent to:
     :sendline ls -l
-""")
+''')
     response.append (msg)
     return '\n'.join(response)
 
 def parse_host_connect_string (hcs):
 
-    """This parses a host connection string in the form
+    '''This parses a host connection string in the form
     username:password@hostname:port. All fields are options expcet hostname. A
     dictionary is returned with all four keys. Keys that were not included are
     set to empty strings ''. Note that if your password has the '@' character
-    then you must backslash escape it. """
+    then you must backslash escape it. '''
 
     if '@' in hcs:
         p = re.compile (r'(?P<username>[^@:]*)(:?)(?P<password>.*)(?!\\)@(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
@@ -299,7 +317,7 @@ def parse_host_connect_string (hcs):
     d = m.groupdict()
     d['password'] = d['password'].replace('\\@','@')
     return d
-     
+
 if __name__ == "__main__":
 
     try:

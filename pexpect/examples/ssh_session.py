@@ -1,17 +1,39 @@
-#
-# Eric S. Raymond
-#
-# Greatly modified by Nigel W. Moriarty
-# April 2003
-#
+#!/usr/bin/env python
+
+'''
+ Eric S. Raymond
+
+ Greatly modified by Nigel W. Moriarty
+ April 2003
+
+PEXPECT LICENSE
+
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+'''
+
 from pexpect import *
 import os, sys
 import getpass
 import time
-    
+
+
 class ssh_session:
 
-    "Session with extra state including the password to be used."
+    '''Session with extra state including the password to be used.'''
 
     def __init__(self, user, host, password=None, verbose=0):
 
@@ -26,9 +48,9 @@ class ssh_session:
             'Command not found.',
             EOF,
             ]
-        
+
         self.f = open('ssh.out','w')
-            
+
     def __repr__(self):
 
         outl = 'class :'+self.__class__.__name__
@@ -41,7 +63,8 @@ class ssh_session:
 
     def __exec(self, command):
 
-        "Execute a command on the remote host.    Return the output."
+        '''Execute a command on the remote host. Return the output.'''
+
         child = spawn(command,
                                     #timeout=10,
                                     )
@@ -61,7 +84,7 @@ class ssh_session:
             # Added to allow the background running of remote process
             if not child.isalive():
                 seen = child.expect(self.keys)
-        if seen == 2: 
+        if seen == 2:
             lines = child.readlines()
             self.f.write(lines)
         if self.verbose:
@@ -85,7 +108,8 @@ class ssh_session:
 
     def exists(self, file):
 
-        "Retrieve file permissions of specified remote file."
+        '''Retrieve file permissions of specified remote file.'''
+
         seen = self.ssh("/bin/ls -ld %s" % file)
         if string.find(seen, "No such file") > -1:
             return None # File doesn't exist

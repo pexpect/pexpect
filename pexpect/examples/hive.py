@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""hive -- Hive Shell
+'''hive -- Hive Shell
 
 This lets you ssh to a group of servers and control them as if they were one.
 Each command you enter is sent to each host in parallel. The response of each
@@ -12,7 +12,7 @@ Example:
 
     $ hive.py --sameuser --samepass host1.example.com host2.example.net
     username: myusername
-    password: 
+    password:
     connecting to host1.example.com - OK
     connecting to host2.example.net - OK
     targetting hosts: 192.168.1.104 192.168.1.107
@@ -58,26 +58,55 @@ on your machine can see this auth information. This is not secure.
 This is a crude script that begs to be multithreaded. But it serves its
 purpose.
 
-Noah Spurrier
+PEXPECT LICENSE
 
-$Id$
-"""
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+'''
 
 # TODO add feature to support username:password@host combination
 # TODO add feature to log each host output in separate file
 
-import sys, os, re, optparse, traceback, types, time, getpass
-import pexpect, pxssh
-import readline, atexit
+import sys
+import os
+import re
+import optparse
+import traceback
+import types
+import time
+import getpass
+import readline
+import atexit
+try:
+    import pexpect
+    import pxssh
+except ImportError:
+    sys.stderr.write("You do not have 'pexpect' installed.\n")
+    sys.stderr.write("On Ubuntu you need the 'python-pexpect' package.\n")
+    sys.stderr.write("    aptitude -y install python-pexpect\n")
+    exit(1)
 
-#histfile = os.path.join(os.environ["HOME"], ".hive_history")
-#try:
-#    readline.read_history_file(histfile)
-#except IOError:
-#    pass
-#atexit.register(readline.write_history_file, histfile)
+histfile = os.path.join(os.environ["HOME"], ".hive_history")
+try:
+    readline.read_history_file(histfile)
+except IOError:
+    pass
+atexit.register(readline.write_history_file, histfile)
 
-CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
+CMD_HELP='''Hive commands are preceded by a colon : (just think of vi).
 
 :target name1 name2 name3 ...
 
@@ -85,7 +114,7 @@ CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
 
 :target all
 
-    reset list of hosts to target all hosts in the hive. 
+    reset list of hosts to target all hosts in the hive.
 
 :to name command
 
@@ -144,7 +173,7 @@ CMD_HELP="""Hive commands are preceded by a colon : (just think of vi).
 
     This will exit the hive shell.
 
-"""
+'''
 
 def login (args, cli_username=None, cli_password=None):
 
@@ -160,7 +189,7 @@ def login (args, cli_username=None, cli_password=None):
         port     = hcd['port']
         if port == '':
             port = None
-        if len(hcd['username']) > 0: 
+        if len(hcd['username']) > 0:
             username = hcd['username']
         elif cli_username is not None:
             username = cli_username
@@ -180,6 +209,11 @@ def login (args, cli_username=None, cli_password=None):
         try:
             fout = file("log_"+hostname, "w")
             hive[hostname] = pxssh.pxssh()
+            # Disable host key checking.
+            hive[hostname].SSH_OPTS = (hive[hostname].SSH_OPTS
+                    + " -o 'StrictHostKeyChecking=no'"
+                    + " -o 'UserKnownHostsFile /dev/null' ")
+            hive[hostname].force_password = True
             hive[hostname].login(*hive_connect_info[hostname])
             print hive[hostname].before
             hive[hostname].logfile = fout
@@ -195,6 +229,9 @@ def main ():
 
     global options, args, CMD_HELP
 
+    rows = 24
+    cols = 80
+
     if options.sameuser:
         cli_username = raw_input('username: ')
     else:
@@ -204,7 +241,7 @@ def main ():
         cli_password = getpass.getpass('password: ')
     else:
         cli_password = None
-   
+
     host_names, hive = login(args, cli_username, cli_password)
 
     synchronous_mode = True
@@ -219,30 +256,26 @@ def main ():
         elif cmd==':refresh':
             refresh (hive, target_hostnames, timeout=0.5)
             for hostname in target_hostnames:
+                print '/' + '=' * (cols - 2)
+                print '| ' + hostname
+                print '\\' + '-' * (cols - 2)
                 if hive[hostname] is None:
-                    print '/============================================================================='
-                    print '| ' + hostname + ' is DEAD'
-                    print '\\-----------------------------------------------------------------------------'
+                    print '# DEAD: %s' % hostname
                 else:
-                    print '/============================================================================='
-                    print '| ' + hostname
-                    print '\\-----------------------------------------------------------------------------'
                     print hive[hostname].before
-            print '=============================================================================='
+            print '#' * 79
             continue
         elif cmd==':resync':
             resync (hive, target_hostnames, timeout=0.5)
             for hostname in target_hostnames:
+                print '/' + '=' * (cols - 2)
+                print '| ' + hostname
+                print '\\' + '-' * (cols - 2)
                 if hive[hostname] is None:
-                    print '/============================================================================='
-                    print '| ' + hostname + ' is DEAD'
-                    print '\\-----------------------------------------------------------------------------'
+                    print '# DEAD: %s' % hostname
                 else:
-                    print '/============================================================================='
-                    print '| ' + hostname
-                    print '\\-----------------------------------------------------------------------------'
                     print hive[hostname].before
-            print '=============================================================================='
+            print '#' * 79
             continue
         elif cmd==':sync':
             synchronous_mode = True
@@ -274,17 +307,15 @@ def main ():
             continue
         elif cmd[:3] == ':to':
             cmd, hostname, txt = cmd.split(None,2)
+            print '/' + '=' * (cols - 2)
+            print '| ' + hostname
+            print '\\' + '-' * (cols - 2)
             if hive[hostname] is None:
-                print '/============================================================================='
-                print '| ' + hostname + ' is DEAD'
-                print '\\-----------------------------------------------------------------------------'
+                print '# DEAD: %s' % hostname
                 continue
             try:
                 hive[hostname].sendline (txt)
                 hive[hostname].prompt(timeout=2)
-                print '/============================================================================='
-                print '| ' + hostname
-                print '\\-----------------------------------------------------------------------------'
                 print hive[hostname].before
             except Exception, e:
                 print "Had trouble communicating with %s, so removing it from the target list." % hostname
@@ -315,9 +346,9 @@ def main ():
         elif cmd[:8] == ':control' or cmd[:5] == ':ctrl' :
             cmd, c = cmd.split(None,1)
             if ord(c)-96 < 0 or ord(c)-96 > 255:
-                print '/============================================================================='
+                print '/' + '=' * (cols - 2)
                 print '| Invalid character. Must be [a-zA-Z], @, [, ], \\, ^, _, or ?'
-                print '\\-----------------------------------------------------------------------------'
+                print '\\' + '-' * (cols - 2)
                 continue
             for hostname in target_hostnames:
                 try:
@@ -351,55 +382,55 @@ def main ():
         if synchronous_mode:
             for hostname in target_hostnames:
                 try:
+                    print '/' + '=' * (cols - 2)
+                    print '| ' + hostname
+                    print '\\' + '-' * (cols - 2)
                     if hive[hostname] is None:
-                        print '/============================================================================='
-                        print '| ' + hostname + ' is DEAD'
-                        print '\\-----------------------------------------------------------------------------'
+                        print '# DEAD: %s' % hostname
                     else:
                         hive[hostname].prompt(timeout=2)
-                        print '/============================================================================='
-                        print '| ' + hostname
-                        print '\\-----------------------------------------------------------------------------'
                         print hive[hostname].before
                 except Exception, e:
                     print "Had trouble communicating with %s, so removing it from the target list." % hostname
                     print str(e)
                     hive[hostname] = None
-            print '=============================================================================='
-    
+            print '#' * 79
+
 def refresh (hive, hive_names, timeout=0.5):
 
-    """This waits for the TIMEOUT on each host.
-    """
+    '''This waits for the TIMEOUT on each host.
+    '''
 
     # TODO This is ideal for threading.
     for hostname in hive_names:
-        hive[hostname].expect([pexpect.TIMEOUT,pexpect.EOF],timeout=timeout)
+        if hive[hostname] is not None:
+            hive[hostname].expect([pexpect.TIMEOUT,pexpect.EOF],timeout=timeout)
 
 def resync (hive, hive_names, timeout=2, max_attempts=5):
 
-    """This waits for the shell prompt for each host in an effort to try to get
+    '''This waits for the shell prompt for each host in an effort to try to get
     them all to the same state. The timeout is set low so that hosts that are
     already at the prompt will not slow things down too much. If a prompt match
     is made for a hosts then keep asking until it stops matching. This is a
     best effort to consume all input if it printed more than one prompt. It's
     kind of kludgy. Note that this will always introduce a delay equal to the
     timeout for each machine. So for 10 machines with a 2 second delay you will
-    get AT LEAST a 20 second delay if not more. """
+    get AT LEAST a 20 second delay if not more. '''
 
     # TODO This is ideal for threading.
     for hostname in hive_names:
-        for attempts in xrange(0, max_attempts):
-            if not hive[hostname].prompt(timeout=timeout):
-                break
+        if hive[hostname] is not None:
+            for attempts in xrange(0, max_attempts):
+                if not hive[hostname].prompt(timeout=timeout):
+                    break
 
 def parse_host_connect_string (hcs):
 
-    """This parses a host connection string in the form
+    '''This parses a host connection string in the form
     username:password@hostname:port. All fields are options expcet hostname. A
     dictionary is returned with all four keys. Keys that were not included are
     set to empty strings ''. Note that if your password has the '@' character
-    then you must backslash escape it. """
+    then you must backslash escape it. '''
 
     if '@' in hcs:
         p = re.compile (r'(?P<username>[^@:]*)(:?)(?P<password>.*)(?!\\)@(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
@@ -413,7 +444,7 @@ def parse_host_connect_string (hcs):
 if __name__ == '__main__':
     try:
         start_time = time.time()
-        parser = optparse.OptionParser(formatter=optparse.TitledHelpFormatter(), usage=globals()['__doc__'], version='$Id$',conflict_handler="resolve")
+        parser = optparse.OptionParser(formatter=optparse.TitledHelpFormatter(), usage=globals()['__doc__'], version='$Id: hive.py 533 2012-10-20 02:19:33Z noah $',conflict_handler="resolve")
         parser.add_option ('-v', '--verbose', action='store_true', default=False, help='verbose output')
         parser.add_option ('--samepass', action='store_true', default=False, help='Use same password for each login.')
         parser.add_option ('--sameuser', action='store_true', default=False, help='Use same username for each login.')

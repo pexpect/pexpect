@@ -2,6 +2,24 @@
 
 '''This demonstrates controlling a screen oriented application (curses).
 It starts two instances of gnuchess and then pits them against each other.
+
+PEXPECT LICENSE
+
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 '''
 
 import pexpect
@@ -16,7 +34,7 @@ class Chess:
 	def __init__(self, engine = "/usr/local/bin/gnuchess -a -h 1"):
 		self.child = pexpect.spawn (engine)
                 self.term = ANSI.ANSI ()
-             
+
 #		self.child.expect ('Chess')
 	#	if self.child.after != 'Chess':
 	#		raise IOError, 'incompatible chess program'
@@ -50,7 +68,7 @@ class Chess:
                 self.read_until_cursor (19,60)
 		self.child.sendline (move)
 		return move
-	
+
 	def get_computer_move (self):
 		print 'Here'
 		i = self.child.expect (['\[17;59H', '\[17;58H'])
@@ -129,7 +147,7 @@ while not done:
     black.do_move (move_white)
     move_black = black.get_computer_move()
     print 'move black:', move_black
-   
+
     white.do_move (move_black)
     print 'tail of loop'
 

@@ -1,6 +1,6 @@
 '''
-$Revision$
-$Date$
+$Revision: 485 $
+$Date: 2007-07-12 15:23:15 -0700 (Thu, 12 Jul 2007) $
 '''
 from distutils.core import setup
 setup (name='pexpect',

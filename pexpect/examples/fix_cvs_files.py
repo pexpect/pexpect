@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""This is for cleaning up binary files improperly added to CVS. This script
+'''This is for cleaning up binary files improperly added to CVS. This script
 scans the given path to find binary files; checks with CVS to see if the sticky
 options are set to -kb; finally if sticky options are not -kb then uses 'cvs
 admin' to set the -kb option.
@@ -15,7 +15,25 @@ update the Sticky Option status.
 
 Noah Spurrier
 20030426
-"""
+
+PEXPECT LICENSE
+
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+'''
 
 import os, sys, time
 import pexpect
@@ -24,8 +42,8 @@ VERBOSE = 1
 
 def is_binary (filename):
 
-    """Assume that any file with a character where the 8th bit is set is
-    binary. """
+    '''Assume that any file with a character where the 8th bit is set is
+    binary. '''
 
 	fin = open(filename, 'rb')
 	wholething = fin.read()
@@ -37,9 +55,9 @@ def is_binary (filename):
 
 def is_kb_sticky (filename):
 
-    """This checks if 'cvs status' reports '-kb' for Sticky options. If the
+    '''This checks if 'cvs status' reports '-kb' for Sticky options. If the
     Sticky Option status is '-ks' then this returns 1. If the status is
-    'Unknown' then it returns 1. Otherwise 0 is returned. """
+    'Unknown' then it returns 1. Otherwise 0 is returned. '''
 
 	try:
 		s = pexpect.spawn ('cvs status %s' % filename)
@@ -59,17 +77,17 @@ def is_kb_sticky (filename):
 
 def cvs_admin_kb (filename):
 
-    """This uses 'cvs admin' to set the '-kb' sticky option. """
+    '''This uses 'cvs admin' to set the '-kb' sticky option. '''
 
 	s = pexpect.run ('cvs admin -kb %s' % filename)
 	# There is a timing issue. If I run 'cvs admin' too quickly
 	# cvs sometimes has trouble obtaining the directory lock.
 	time.sleep(1)
-	
+
 def walk_and_clean_cvs_binaries (arg, dirname, names):
 
-    """This contains the logic for processing files. This is the os.path.walk
-    callback. This skips dirnames that end in CVS. """
+    '''This contains the logic for processing files. This is the os.path.walk
+    callback. This skips dirnames that end in CVS. '''
 
 	if len(dirname)>3 and dirname[-3:]=='CVS':
 		return

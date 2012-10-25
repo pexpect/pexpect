@@ -1,4 +1,23 @@
 #!/usr/bin/env python
+'''
+PEXPECT LICENSE
+
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+'''
 import pexpect
 import unittest
 import sys, os, time
@@ -7,8 +26,8 @@ import PexpectTestCase
 class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
 
     def test_expect_wait (self):
-        """This tests that calling wait on a finished process works as expected.
-        """
+        '''This tests that calling wait on a finished process works as expected.
+        '''
         p = pexpect.spawn('sleep 3')
         if not p.isalive():
             self.fail ('Child process is not alive. It should be.')
@@ -64,8 +83,8 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
 ### Some platforms allow this. Some reset status after call to waitpid.
     def test_expect_isalive_consistent_multiple_calls (self):
 
-        """This tests that multiple calls to isalive() return same value.
-        """
+        '''This tests that multiple calls to isalive() return same value.
+        '''
 
         p = pexpect.spawn('cat')
         if not p.isalive():
@@ -78,7 +97,7 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
             self.fail ('Child process is not dead. It should be.')
         if p.isalive():
             self.fail ('Second call. Child process is not dead. It should be.')
-        
+
 if __name__ == '__main__':
     unittest.main()
 

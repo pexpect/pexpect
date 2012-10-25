@@ -1,4 +1,23 @@
 #!/usr/bin/env python
+'''
+PEXPECT LICENSE
+
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+'''
 import pexpect
 import unittest
 import PexpectTestCase
@@ -7,7 +26,7 @@ import os
 import re
 
 class TestCaseMisc(PexpectTestCase.PexpectTestCase):
-        
+
     def test_isatty (self):
         child = pexpect.spawn('cat')
         assert child.isatty(), "Not returning True. Should always be True."
@@ -27,10 +46,10 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.sendline ("123")
         child.sendeof()
         line1 = child.readline(0)
-        line2 = child.readline() 
+        line2 = child.readline()
         line3 = child.readline(2)
         line4 = child.readline(1)
-        line5 = child.readline() 
+        line5 = child.readline()
         assert line1  == '', "readline(0) did not return ''. Returned: " + repr(line1)
         assert line2 == 'abc\r\n', "readline() did not return 'abc\\r\\n'. Returned: " + repr(line2)
         assert line3  == 'abc\r\n', "readline(2) did not return 'abc\\r\\n'. Returned: " + repr(line3)
@@ -89,7 +108,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
             self.fail ("child.isalive() should have raised a pexpect.ExceptionPexpect")
         child.terminated = 1 # Force back to valid state so __del__ won't complain
     def test_bad_arguments (self):
-        """This tests that we get a graceful error when passing bad arguments."""
+        '''This tests that we get a graceful error when passing bad arguments.'''
         try:
             p = pexpect.spawn(1)
         except pexpect.ExceptionPexpect, e:

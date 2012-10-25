@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""This spawns a sub-shell (bash) and gives the user interactive control. The
+'''This spawns a sub-shell (bash) and gives the user interactive control. The
 entire shell session is logged to a file called script.log. This behaves much
 like the classic BSD command 'script'.
 
@@ -16,7 +16,24 @@ Example:
 
         ./script.py -a -c bash my_session.log
 
-"""
+PEXPECT LICENSE
+
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+'''
 
 import os, sys, time, getopt
 import signal, fcntl, termios, struct
@@ -43,7 +60,7 @@ def main():
     options = dict(optlist)
     if len(args) > 1:
         exit_with_usage()
-        
+
     if [elem for elem in options if elem in ['-h','--h','-?','--?','--help']]:
         print "Help:"
         exit_with_usage()
@@ -63,7 +80,7 @@ def main():
 
     # Begin log with date/time in the form CCCCyymm.hhmmss
     fout.write ('# %4d%02d%02d.%02d%02d%02d \n' % time.localtime()[:-3])
-    
+
     ######################################################################
     # Start the interactive session
     ######################################################################

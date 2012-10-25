@@ -1,4 +1,23 @@
 #!/usr/bin/env python
+'''
+PEXPECT LICENSE
+
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+'''
 import pexpect
 import unittest
 import commands
@@ -31,7 +50,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.expect ('Hello')
         p.expect ('there')
         p.expect ('Mr. Python')
-        p.sendeof () 
+        p.sendeof ()
         p.expect (pexpect.EOF)
 
     def test_expect_exact_basic (self):
@@ -42,56 +61,56 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.expect_exact ('Hello')
         p.expect_exact ('there')
         p.expect_exact ('Mr. Python')
-        p.sendeof () 
+        p.sendeof ()
         p.expect_exact (pexpect.EOF)
 
     def test_expect_ignore_case(self):
-        """This test that the ignorecase flag will match patterns
+        '''This test that the ignorecase flag will match patterns
         even if case is different using the regex (?i) directive.
-        """
+        '''
         p = pexpect.spawn('cat')
         p.sendline ('HELLO')
         p.sendline ('there')
         p.expect ('(?i)hello')
         p.expect ('(?i)THERE')
-        p.sendeof () 
+        p.sendeof ()
         p.expect (pexpect.EOF)
 
     def test_expect_ignore_case_flag(self):
-        """This test that the ignorecase flag will match patterns
+        '''This test that the ignorecase flag will match patterns
         even if case is different using the ignorecase flag.
-        """
+        '''
         p = pexpect.spawn('cat')
         p.ignorecase = True
         p.sendline ('HELLO')
         p.sendline ('there')
         p.expect ('hello')
         p.expect ('THERE')
-        p.sendeof () 
+        p.sendeof ()
         p.expect (pexpect.EOF)
 
     def test_expect_order (self):
-        """This tests that patterns are matched in the same order as given in the pattern_list.
+        '''This tests that patterns are matched in the same order as given in the pattern_list.
 
         (Or does it?  Doesn't it also pass if expect() always chooses
         (one of the) the leftmost matches in the input? -- grahn)
-        """
+        '''
         p = pexpect.spawn('cat')
         self._expect_order(p)
 
     def test_expect_order_exact (self):
-        """Like test_expect_order(), but using expect_exact().
-        """
+        '''Like test_expect_order(), but using expect_exact().
+        '''
         p = pexpect.spawn('cat')
         p.expect = p.expect_exact
         self._expect_order(p)
 
     def _expect_order (self, p):
-        p.sendline ('1234') 
-        p.sendline ('abcd') 
-        p.sendline ('wxyz') 
-        p.sendline ('7890') 
-        p.sendeof () 
+        p.sendline ('1234')
+        p.sendline ('abcd')
+        p.sendline ('wxyz')
+        p.sendline ('7890')
+        p.sendeof ()
         index = p.expect (['1234','abcd','wxyz',pexpect.EOF,'7890'])
         assert index == 0, "index="+str(index)
         index = p.expect (['1234','abcd','wxyz',pexpect.EOF,'7890'])
@@ -108,19 +127,19 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         assert index == 3, "index="+str(index)
         index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
         assert index == 3, "index="+str(index)
-        
+
     def test_waitnoecho (self):
-        
-        """ This tests that we can wait on a child process to set echo mode.
+
+        ''' This tests that we can wait on a child process to set echo mode.
         For example, this tests that we could wait for SSH to set ECHO False
         when asking of a password. This makes use of an external script
-        echo_wait.py. """
+        echo_wait.py. '''
 
         p1 = pexpect.spawn('%s echo_wait.py' % self.PYTHONBIN)
         start = time.time()
         p1.waitnoecho(timeout=10)
         end_time = time.time() - start
-        assert end_time < 10 and end_time > 2, "waitnoecho did not set ECHO off in the expected window of time." 
+        assert end_time < 10 and end_time > 2, "waitnoecho did not set ECHO off in the expected window of time."
 
         # test that we actually timeout and return False if ECHO is never set off.
         p1 = pexpect.spawn('cat')
@@ -135,17 +154,17 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         start = time.time()
         p1.waitnoecho()
         end_time = time.time() - start
-        assert end_time < 10, "waitnoecho did not set ECHO off in the expected window of time." 
+        assert end_time < 10, "waitnoecho did not set ECHO off in the expected window of time."
 
     def test_expect_echo (self):
-        """This tests that echo can be turned on and off.
-        """
+        '''This tests that echo can be turned on and off.
+        '''
         p = pexpect.spawn('cat', timeout=10)
         self._expect_echo(p)
 
     def test_expect_echo_exact (self):
-        """Like test_expect_echo(), but using expect_exact().
-        """
+        '''Like test_expect_echo(), but using expect_exact().
+        '''
         p = pexpect.spawn('cat', timeout=10)
         p.expect = p.expect_exact
         self._expect_echo(p)
@@ -170,18 +189,18 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
         assert index == 3, "index="+str(index)
         p.sendeof()
- 
+
     def test_expect_index (self):
-        """This tests that mixed list of regex strings, TIMEOUT, and EOF all
+        '''This tests that mixed list of regex strings, TIMEOUT, and EOF all
         return the correct index when matched.
-        """
+        '''
         #pdb.set_trace()
         p = pexpect.spawn('cat')
         self._expect_index(p)
 
     def test_expect_index_exact (self):
-        """Like test_expect_index(), but using expect_exact().
-        """
+        '''Like test_expect_index(), but using expect_exact().
+        '''
         p = pexpect.spawn('cat')
         p.expect = p.expect_exact
         self._expect_index(p)
@@ -276,15 +295,15 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self.assert_(p.before.startswith(', 6, 7, 8'))
 
     def test_before_after(self):
-        """This tests expect() for some simple before/after things.
-        """
+        '''This tests expect() for some simple before/after things.
+        '''
         p = pexpect.spawn(self.PYTHONBIN)
         self._before_after(p)
 
     def test_before_after_exact(self):
-        """This tests some simple before/after things, for
+        '''This tests some simple before/after things, for
         expect_exact(). (Grahn broke it at one point.)
-        """
+        '''
         p = pexpect.spawn(self.PYTHONBIN)
         # mangle the spawn so we test expect_exact() instead
         p.expect = p.expect_exact
@@ -314,20 +333,20 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self.assertEqual(p.expect(['12,', '2,']), 1)
 
     def test_ordering(self):
-        """This tests expect() for which pattern is returned
+        '''This tests expect() for which pattern is returned
         when many may eventually match. I (Grahn) am a bit
         confused about what should happen, but this test passes
         with pexpect 2.1.
-        """
+        '''
         p = pexpect.spawn(self.PYTHONBIN)
         self._ordering(p)
 
     def test_ordering_exact(self):
-        """This tests expect_exact() for which pattern is returned
+        '''This tests expect_exact() for which pattern is returned
         when many may eventually match. I (Grahn) am a bit
         confused about what should happen, but this test passes
         for the expect() method with pexpect 2.1.
-        """
+        '''
         p = pexpect.spawn(self.PYTHONBIN)
         # mangle the spawn so we test expect_exact() instead
         p.expect = p.expect_exact

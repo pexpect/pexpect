@@ -1,8 +1,24 @@
-"""This is like pexpect, but will work on any file descriptor that you pass it.
-So you are reponsible for opening and close the file descriptor.
+'''This is like pexpect, but it will work with any file descriptor that you
+pass it. You are reponsible for opening and close the file descriptor.
 
-$Id$
-"""
+PEXPECT LICENSE
+
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+'''
 
 from pexpect import *
 import os
@@ -11,15 +27,15 @@ __all__ = ['fdspawn']
 
 class fdspawn (spawn):
 
-    """This is like pexpect.spawn but allows you to supply your own open file
+    '''This is like pexpect.spawn but allows you to supply your own open file
     descriptor. For example, you could use it to read through a file looking
-    for patterns, or to control a modem or serial device. """
+    for patterns, or to control a modem or serial device. '''
 
     def __init__ (self, fd, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None):
 
-        """This takes a file descriptor (an int) or an object that support the
+        '''This takes a file descriptor (an int) or an object that support the
         fileno() method (returning an int). All Python file-like objects
-        support fileno(). """
+        support fileno(). '''
 
         ### TODO: Add better handling of trying to use fdspawn in place of spawn
         ### TODO: (overload to allow fdspawn to also handle commands as spawn does.
@@ -61,8 +77,8 @@ class fdspawn (spawn):
 
     def isalive (self):
 
-        """This checks if the file descriptor is still valid. If os.fstat()
-        does not raise an exception then we assume it is alive. """
+        '''This checks if the file descriptor is still valid. If os.fstat()
+        does not raise an exception then we assume it is alive. '''
 
         if self.child_fd == -1:
             return False

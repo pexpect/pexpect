@@ -1,10 +1,26 @@
-"""This implements a virtual screen. This is used to support ANSI terminal
+'''This implements a virtual screen. This is used to support ANSI terminal
 emulation. The screen representation and state is implemented in this class.
 Most of the methods are inspired by ANSI screen control codes. The ANSI class
 extends this class to add parsing of ANSI escape codes.
 
-$Id$
-"""
+PEXPECT LICENSE
+
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+'''
 
 import copy
 
@@ -29,7 +45,7 @@ SPACE = chr(32) # Space or blank character.
 
 def constrain (n, min, max):
 
-    """This returns a number, n constrained to the min and max bounds. """
+    '''This returns a number, n constrained to the min and max bounds. '''
 
     if n < min:
         return min
@@ -39,15 +55,15 @@ def constrain (n, min, max):
 
 class screen:
 
-    """This object maintains the state of a virtual text screen as a
+    '''This object maintains the state of a virtual text screen as a
     rectangluar array. This maintains a virtual cursor position and handles
     scrolling as characters are added. This supports most of the methods needed
     by an ANSI text screen. Row and column indexes are 1-based (not zero-based,
-    like arrays). """
+    like arrays). '''
 
     def __init__ (self, r=24,c=80):
 
-        """This initializes a blank scree of the given dimentions."""
+        '''This initializes a blank scree of the given dimentions.'''
 
         self.rows = r
         self.cols = c
@@ -61,23 +77,23 @@ class screen:
 
     def __str__ (self):
 
-        """This returns a printable representation of the screen. The end of
-        each screen line is terminated by a newline. """
+        '''This returns a printable representation of the screen. The end of
+        each screen line is terminated by a newline. '''
 
         return '\n'.join ([ ''.join(c) for c in self.w ])
 
     def dump (self):
 
-        """This returns a copy of the screen as a string. This is similar to
-        __str__ except that lines are not terminated with line feeds. """
+        '''This returns a copy of the screen as a string. This is similar to
+        __str__ except that lines are not terminated with line feeds. '''
 
         return ''.join ([ ''.join(c) for c in self.w ])
 
     def pretty (self):
 
-        """This returns a copy of the screen as a string with an ASCII text box
+        '''This returns a copy of the screen as a string with an ASCII text box
         around the screen border. This is similar to __str__ except that it
-        adds a box. """
+        adds a box. '''
 
         top_bot = '+' + '-'*self.cols + '+\n'
         return top_bot + '\n'.join(['|'+line+'|' for line in str(self).split('\n')]) + '\n' + top_bot
@@ -102,15 +118,15 @@ class screen:
 
     def cr (self):
 
-        """This moves the cursor to the beginning (col 1) of the current row.
-        """
+        '''This moves the cursor to the beginning (col 1) of the current row.
+        '''
 
         self.cursor_home (self.cur_r, 1)
 
     def lf (self):
 
-        """This moves the cursor down with scrolling.
-        """
+        '''This moves the cursor down with scrolling.
+        '''
 
         old_r = self.cur_r
         self.cursor_down()
@@ -120,23 +136,23 @@ class screen:
 
     def crlf (self):
 
-        """This advances the cursor with CRLF properties.
+        '''This advances the cursor with CRLF properties.
         The cursor will line wrap and the screen may scroll.
-        """
+        '''
 
         self.cr ()
         self.lf ()
 
     def newline (self):
 
-        """This is an alias for crlf().
-        """
+        '''This is an alias for crlf().
+        '''
 
         self.crlf()
 
     def put_abs (self, r, c, ch):
 
-        """Screen array starts at 1 index."""
+        '''Screen array starts at 1 index.'''
 
         r = constrain (r, 1, self.rows)
         c = constrain (c, 1, self.cols)
@@ -145,21 +161,21 @@ class screen:
 
     def put (self, ch):
 
-        """This puts a characters at the current cursor position.
-        """
+        '''This puts a characters at the current cursor position.
+        '''
 
         self.put_abs (self.cur_r, self.cur_c, ch)
 
     def insert_abs (self, r, c, ch):
 
-        """This inserts a character at (r,c). Everything under
+        '''This inserts a character at (r,c). Everything under
         and to the right is shifted right one character.
         The last character of the line is lost.
-        """
+        '''
 
         r = constrain (r, 1, self.rows)
         c = constrain (c, 1, self.cols)
-        for ci in range (self.cols, c, -1): 
+        for ci in range (self.cols, c, -1):
             self.put_abs (r,ci, self.get_abs(r,ci-1))
         self.put_abs (r,c,ch)
 
@@ -168,7 +184,7 @@ class screen:
         self.insert_abs (self.cur_r, self.cur_c, ch)
 
     def get_abs (self, r, c):
-    
+
         r = constrain (r, 1, self.rows)
         c = constrain (c, 1, self.cols)
         return self.w[r-1][c-1]
@@ -179,8 +195,8 @@ class screen:
 
     def get_region (self, rs,cs, re,ce):
 
-        """This returns a list of lines representing the region.
-        """
+        '''This returns a list of lines representing the region.
+        '''
 
         rs = constrain (rs, 1, self.rows)
         re = constrain (re, 1, self.rows)
@@ -201,8 +217,8 @@ class screen:
 
     def cursor_constrain (self):
 
-        """This keeps the cursor within the screen area.
-        """
+        '''This keeps the cursor within the screen area.
+        '''
 
         self.cur_r = constrain (self.cur_r, 1, self.rows)
         self.cur_c = constrain (self.cur_c, 1, self.cols)
@@ -242,38 +258,38 @@ class screen:
 
     def cursor_force_position (self, r, c): # <ESC>[{ROW};{COLUMN}f
 
-        """Identical to Cursor Home."""
+        '''Identical to Cursor Home.'''
 
         self.cursor_home (r, c)
 
     def cursor_save (self): # <ESC>[s
 
-        """Save current cursor position."""
+        '''Save current cursor position.'''
 
         self.cursor_save_attrs()
 
     def cursor_unsave (self): # <ESC>[u
 
-        """Restores cursor position after a Save Cursor."""
+        '''Restores cursor position after a Save Cursor.'''
 
         self.cursor_restore_attrs()
 
     def cursor_save_attrs (self): # <ESC>7
 
-        """Save current cursor position."""
+        '''Save current cursor position.'''
 
         self.cur_saved_r = self.cur_r
         self.cur_saved_c = self.cur_c
 
     def cursor_restore_attrs (self): # <ESC>8
 
-        """Restores cursor position after a Save Cursor."""
+        '''Restores cursor position after a Save Cursor.'''
 
         self.cursor_home (self.cur_saved_r, self.cur_saved_c)
 
     def scroll_constrain (self):
 
-        """This keeps the scroll region within the screen region."""
+        '''This keeps the scroll region within the screen region.'''
 
         if self.scroll_row_start <= 0:
             self.scroll_row_start = 1
@@ -282,14 +298,14 @@ class screen:
 
     def scroll_screen (self): # <ESC>[r
 
-        """Enable scrolling for entire display."""
+        '''Enable scrolling for entire display.'''
 
         self.scroll_row_start = 1
         self.scroll_row_end = self.rows
 
     def scroll_screen_rows (self, rs, re): # <ESC>[{start};{end}r
 
-        """Enable scrolling from row {start} to row {end}."""
+        '''Enable scrolling from row {start} to row {end}.'''
 
         self.scroll_row_start = rs
         self.scroll_row_end = re
@@ -297,7 +313,7 @@ class screen:
 
     def scroll_down (self): # <ESC>D
 
-        """Scroll display down one line."""
+        '''Scroll display down one line.'''
 
         # Screen is indexed from 1, but arrays are indexed from 0.
         s = self.scroll_row_start - 1
@@ -306,7 +322,7 @@ class screen:
 
     def scroll_up (self): # <ESC>M
 
-        """Scroll display up one line."""
+        '''Scroll display up one line.'''
 
         # Screen is indexed from 1, but arrays are indexed from 0.
         s = self.scroll_row_start - 1
@@ -315,61 +331,61 @@ class screen:
 
     def erase_end_of_line (self): # <ESC>[0K -or- <ESC>[K
 
-        """Erases from the current cursor position to the end of the current
-        line."""
+        '''Erases from the current cursor position to the end of the current
+        line.'''
 
         self.fill_region (self.cur_r, self.cur_c, self.cur_r, self.cols)
 
     def erase_start_of_line (self): # <ESC>[1K
 
-        """Erases from the current cursor position to the start of the current
-        line."""
+        '''Erases from the current cursor position to the start of the current
+        line.'''
 
         self.fill_region (self.cur_r, 1, self.cur_r, self.cur_c)
 
     def erase_line (self): # <ESC>[2K
 
-        """Erases the entire current line."""
+        '''Erases the entire current line.'''
 
         self.fill_region (self.cur_r, 1, self.cur_r, self.cols)
 
     def erase_down (self): # <ESC>[0J -or- <ESC>[J
 
-        """Erases the screen from the current line down to the bottom of the
-        screen."""
+        '''Erases the screen from the current line down to the bottom of the
+        screen.'''
 
         self.erase_end_of_line ()
         self.fill_region (self.cur_r + 1, 1, self.rows, self.cols)
 
     def erase_up (self): # <ESC>[1J
 
-        """Erases the screen from the current line up to the top of the
-        screen."""
+        '''Erases the screen from the current line up to the top of the
+        screen.'''
 
         self.erase_start_of_line ()
         self.fill_region (self.cur_r-1, 1, 1, self.cols)
 
     def erase_screen (self): # <ESC>[2J
 
-        """Erases the screen with the background color."""
+        '''Erases the screen with the background color.'''
 
         self.fill ()
 
     def set_tab (self): # <ESC>H
 
-        """Sets a tab at the current position."""
+        '''Sets a tab at the current position.'''
 
         pass
 
     def clear_tab (self): # <ESC>[g
 
-        """Clears tab at the current position."""
+        '''Clears tab at the current position.'''
 
         pass
 
     def clear_all_tabs (self): # <ESC>[3g
 
-        """Clears all tabs."""
+        '''Clears all tabs.'''
 
         pass
 

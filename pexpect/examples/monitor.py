@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-""" This runs a sequence of commands on a remote host using SSH. It runs a
+''' This runs a sequence of commands on a remote host using SSH. It runs a
 simple system checks such as uptime and free to monitor the state of the remote
 host.
 
@@ -21,7 +21,25 @@ It works like this:
     Run 'netstat'
     Run 'free'.
     Exit the remote host.
-"""
+
+PEXPECT LICENSE
+
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+'''
 
 import os, sys, time, re, getopt, getpass
 import traceback
@@ -171,7 +189,7 @@ def main():
     child.sendline ('df')
     child.expect (COMMAND_PROMPT)
     print child.before
-    
+
     # Run lsof.
     child.sendline ('lsof')
     child.expect (COMMAND_PROMPT)

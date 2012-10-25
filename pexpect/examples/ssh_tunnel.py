@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""This starts an SSH tunnel to a given host. If the SSH process ever dies then
+'''This starts an SSH tunnel to a given host. If the SSH process ever dies then
 this script will detect that and restart it. I use this under Cygwin to keep
 open encrypted tunnels to port 25 (SMTP), port 143 (IMAP4), and port 110
 (POP3). I set my mail client to talk to localhost and I keep this script
@@ -11,7 +11,26 @@ see if any ssh process is running. It should really make sure that our specific
 ssh process is running. The problem is that ssh is missing a very useful
 feature. It has no way to report the process id of the background daemon that
 it creates with the -f command. This would be a really useful script if I could
-figure a way around this problem. """
+figure a way around this problem.
+
+PEXPECT LICENSE
+
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+'''
 
 import pexpect
 import getpass
@@ -29,7 +48,9 @@ def get_process_info ():
 
     ps = pexpect.run ('ps ax -O ppid')
     pass
+
 def start_tunnel ():
+
     try:
         ssh_tunnel = pexpect.spawn (tunnel_command % globals())
         ssh_tunnel.expect ('password:')
@@ -56,17 +77,18 @@ def main ():
             print 'restarting tunnel'
             start_tunnel ()
             time.sleep (11)
-	        print 'tunnel OK'
+            print 'tunnel OK'
         else:
             # print 'tunnel OK'
             time.sleep (7)
 
 if __name__ == '__main__':
+
     main ()
 
 # This was for older SSH versions that didn't have -f option
 #tunnel_command = 'ssh -C -n -L 25:%(host)s:25 -L 110:%(host)s:110 %(user)s@%(host)s -f nothing.sh'
-#nothing_script = """#!/bin/sh
+#nothing_script = '''#!/bin/sh
 #while true; do sleep 53; done
-#"""
+#'''
 

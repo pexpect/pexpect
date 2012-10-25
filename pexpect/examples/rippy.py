@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
-"""Rippy!
+'''Rippy!
 
+This is old and probably does not work anymore.
 This script helps to convert video from one format to another.
 This is useful for ripping DVD to mpeg4 video (XviD, DivX).
 
@@ -44,30 +45,24 @@ compression before I calculate the revised bitrate. I'm also considering an
 enhancement where Rippy would compress ten spread out chunks, 1-minute in
 length to estimate the bitrate.
 
-Free, open source, and all that good stuff.
-Rippy Copyright (c) 2006 Noah Spurrier
+PEXPECT LICENSE
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-Noah Spurrier
-$Id$
-"""
+'''
 
 import sys, os, re, math, stat, getopt, traceback, types, time
 import pexpect
@@ -118,58 +113,58 @@ prompts_key_order = (
 #    prompt_key : ( default value, prompt string, help string, level of difficulty (0,1,2) )
 #
 prompts = {
-'video_source_filename':("dvd://1", 'video source filename?', """This is the filename of the video that you want to convert from.
+'video_source_filename':("dvd://1", 'video source filename?', '''This is the filename of the video that you want to convert from.
 It can be any file that mencoder supports.
 You can also choose a DVD device using the dvd://1 syntax.
-Title 1 is usually the main title on a DVD.""",0),
-'video_chapter':("none",'video chapter?',"""This is the chapter number. Usually disks such as TV series seasons will be divided into chapters. Maybe be set to none.""",0),
-'video_final_filename':("video_final.avi", "video final filename?", """This is the name of the final video.""",0),
-'audio_raw_filename':("audiodump.wav", "audio raw filename?", """This is the audio raw PCM filename. This is prior to compression.
-Note that mplayer automatically names this audiodump.wav, so don't change this.""",1000),
-#'audio_compressed_filename':("audiodump.mp3","Audio compressed filename?", """This is the name of the compressed audio that will be mixed
-#into the final video. Normally you don't need to change this.""",2),
-'video_length':("none","video length in seconds?","""This sets the length of the video in seconds. This is used to estimate the
+Title 1 is usually the main title on a DVD.''',0),
+'video_chapter':("none",'video chapter?','''This is the chapter number. Usually disks such as TV series seasons will be divided into chapters. Maybe be set to none.''',0),
+'video_final_filename':("video_final.avi", "video final filename?", '''This is the name of the final video.''',0),
+'audio_raw_filename':("audiodump.wav", "audio raw filename?", '''This is the audio raw PCM filename. This is prior to compression.
+Note that mplayer automatically names this audiodump.wav, so don't change this.''',1000),
+#'audio_compressed_filename':("audiodump.mp3","Audio compressed filename?", '''This is the name of the compressed audio that will be mixed
+#into the final video. Normally you don't need to change this.''',2),
+'video_length':("none","video length in seconds?",'''This sets the length of the video in seconds. This is used to estimate the
 bitrate for a target video file size. Set to 'calc' to have Rippy calculate
 the length. Set to 'none' if you don't want rippy to estimate the bitrate --
-you will have to manually specify bitrate.""",1),
-'video_aspect_ratio':("calc","aspect ratio?","""This sets the aspect ratio of the video. Most DVDs are 16/9 or 4/3.""",1),
-'video_scale':("none","video scale?","""This scales the video to the given output size. The default is to do no scaling.
+you will have to manually specify bitrate.''',1),
+'video_aspect_ratio':("calc","aspect ratio?",'''This sets the aspect ratio of the video. Most DVDs are 16/9 or 4/3.''',1),
+'video_scale':("none","video scale?",'''This scales the video to the given output size. The default is to do no scaling.
 You may type in a resolution such as 320x240 or you may use presets.
     qntsc: 352x240 (NTSC quarter screen)
     qpal:  352x288 (PAL quarter screen)
     ntsc:  720x480 (standard NTSC)
     pal:   720x576 (standard PAL)
     sntsc: 640x480 (square pixel NTSC)
-    spal:  768x576 (square pixel PAL)""",1),
-'video_codec':("mpeg4","video codec?","""This is the video compression to use. This is passed directly to mencoder, so
+    spal:  768x576 (square pixel PAL)''',1),
+'video_codec':("mpeg4","video codec?",'''This is the video compression to use. This is passed directly to mencoder, so
 any format that it recognizes should work. For XviD or DivX use mpeg4.
 Almost all MS Windows systems support wmv2 out of the box.
 Some common codecs include:
 mjpeg, h263, h263p, h264, mpeg4, msmpeg4, wmv1, wmv2, mpeg1video, mpeg2video, huffyuv, ffv1.
-""",2),
-'audio_codec':("mp3","audio codec?","""This is the audio compression to use. This is passed directly to mencoder, so
+''',2),
+'audio_codec':("mp3","audio codec?",'''This is the audio compression to use. This is passed directly to mencoder, so
 any format that it recognizes will work.
 Some common codecs include:
 mp3, mp2, aac, pcm
-See mencoder manual for details.""",2),
-'video_fourcc_override':("XVID","force fourcc code?","""This forces the fourcc codec to the given value. XVID is safest for Windows.
+See mencoder manual for details.''',2),
+'video_fourcc_override':("XVID","force fourcc code?",'''This forces the fourcc codec to the given value. XVID is safest for Windows.
 The following are common fourcc values:
     FMP4 - This is the mencoder default. This is the "real" value.
     XVID - used by Xvid (safest)
     DX50 -
-    MP4S - Microsoft""",2),
-'video_encode_passes':("1","number of encode passes?","""This sets how many passes to use to encode the video. You can choose 1 or 2.
+    MP4S - Microsoft''',2),
+'video_encode_passes':("1","number of encode passes?",'''This sets how many passes to use to encode the video. You can choose 1 or 2.
 Using two pases takes twice as long as one pass, but produces a better
-quality video. I found that the improvement is not that impressive.""",1),
-'verbose_flag':("Y","verbose output?","""This sets verbose output. If true then all commands and arguments are printed
-before they are run. This is useful to see exactly how commands are run.""",1),
-'dry_run_flag':("N","dry run?","""This sets 'dry run' mode. If true then commands are not run. This is useful
-if you want to see what would the script would do.""",1),
-'video_bitrate':("calc","video bitrate?","""This sets the video bitrate. This overrides video_target_size.
+quality video. I found that the improvement is not that impressive.''',1),
+'verbose_flag':("Y","verbose output?",'''This sets verbose output. If true then all commands and arguments are printed
+before they are run. This is useful to see exactly how commands are run.''',1),
+'dry_run_flag':("N","dry run?",'''This sets 'dry run' mode. If true then commands are not run. This is useful
+if you want to see what would the script would do.''',1),
+'video_bitrate':("calc","video bitrate?",'''This sets the video bitrate. This overrides video_target_size.
 Set to 'calc' to automatically estimate the bitrate based on the
 video final target size. If you set video_length to 'none' then
-you will have to specify this video_bitrate.""",1),
-'video_target_size':("737280000","video final target size?","""This sets the target video size that you want to end up with.
+you will have to specify this video_bitrate.''',1),
+'video_target_size':("737280000","video final target size?",'''This sets the target video size that you want to end up with.
 This is over-ridden by video_bitrate. In other words, if you specify
 video_bitrate then video_target_size is ignored.
 Due to the unpredictable nature of VBR compression the final video size
@@ -177,51 +172,51 @@ may not exactly match. The following are common CDR sizes:
     180MB CDR (21 minutes) holds 193536000 bytes
     550MB CDR (63 minutes) holds 580608000 bytes
     650MB CDR (74 minutes) holds 681984000 bytes
-    700MB CDR (80 minutes) holds 737280000 bytes""",0),
-'video_bitrate_overhead':("1.0","bitrate overhead factor?","""Adjust this value if you want to leave more room for
+    700MB CDR (80 minutes) holds 737280000 bytes''',0),
+'video_bitrate_overhead':("1.0","bitrate overhead factor?",'''Adjust this value if you want to leave more room for
 other files such as subtitle files.
-If you specify video_bitrate then this value is ignored.""",2),
-'video_crop_area':("detect","crop area?","""This sets the crop area to remove black bars from the top or sides of the video.
+If you specify video_bitrate then this value is ignored.''',2),
+'video_crop_area':("detect","crop area?",'''This sets the crop area to remove black bars from the top or sides of the video.
 This helps save space. Set to 'detect' to automatically detect the crop area.
-Set to 'none' to not crop the video. Normally you don't need to change this.""",1),
-'video_deinterlace_flag':("N","is the video interlaced?","""This sets the deinterlace flag. If set then mencoder will be instructed
-to filter out interlace artifacts (using '-vf pp=md').""",1),
-'video_gray_flag':("N","is the video black and white (gray)?","""This improves output for black and white video.""",1),
-'subtitle_id':("None","Subtitle ID stream?","""This selects the subtitle stream to extract from the source video.
+Set to 'none' to not crop the video. Normally you don't need to change this.''',1),
+'video_deinterlace_flag':("N","is the video interlaced?",'''This sets the deinterlace flag. If set then mencoder will be instructed
+to filter out interlace artifacts (using '-vf pp=md').''',1),
+'video_gray_flag':("N","is the video black and white (gray)?",'''This improves output for black and white video.''',1),
+'subtitle_id':("None","Subtitle ID stream?",'''This selects the subtitle stream to extract from the source video.
 Normally, 0 is the English subtitle stream for a DVD.
-Subtitles IDs with higher numbers may be other languages.""",1),
-'audio_id':("128","audio ID stream?","""This selects the audio stream to extract from the source video.
+Subtitles IDs with higher numbers may be other languages.''',1),
+'audio_id':("128","audio ID stream?",'''This selects the audio stream to extract from the source video.
 If your source is a VOB file (DVD) then stream IDs start at 128.
 Normally, 128 is the main audio track for a DVD.
-Tracks with higher numbers may be other language dubs or audio commentary.""",1),
-'audio_sample_rate':("32000","audio sample rate (Hz) 48000, 44100, 32000, 24000, 12000","""This sets the rate at which the compressed audio will be resampled.
+Tracks with higher numbers may be other language dubs or audio commentary.''',1),
+'audio_sample_rate':("32000","audio sample rate (Hz) 48000, 44100, 32000, 24000, 12000",'''This sets the rate at which the compressed audio will be resampled.
 DVD audio is 48 kHz whereas music CDs use 44.1 kHz. The higher the sample rate
 the more space the audio track will take. That will leave less space for video.
-32 kHz is a good trade-off if you are trying to fit a video onto a CD.""",1),
-'audio_bitrate':("96","audio bitrate (kbit/s) 192, 128, 96, 64?","""This sets the bitrate for MP3 audio compression.
+32 kHz is a good trade-off if you are trying to fit a video onto a CD.''',1),
+'audio_bitrate':("96","audio bitrate (kbit/s) 192, 128, 96, 64?",'''This sets the bitrate for MP3 audio compression.
 The higher the bitrate the more space the audio track will take.
 That will leave less space for video. Most people find music to be acceptable
-at 128 kBitS. 96 kBitS is a good trade-off if you are trying to fit a video onto a CD.""",1),
-'audio_volume_boost':("none","volume dB boost?","""Many DVDs have very low audio volume. This sets an audio volume boost in Decibels.
-Values of 6 to 10 usually adjust quiet DVDs to a comfortable level.""",1),
-#'audio_lowpass_filter':("16","audio lowpass filter (kHz)?","""This sets the low-pass filter for the audio.
+at 128 kBitS. 96 kBitS is a good trade-off if you are trying to fit a video onto a CD.''',1),
+'audio_volume_boost':("none","volume dB boost?",'''Many DVDs have very low audio volume. This sets an audio volume boost in Decibels.
+Values of 6 to 10 usually adjust quiet DVDs to a comfortable level.''',1),
+#'audio_lowpass_filter':("16","audio lowpass filter (kHz)?",'''This sets the low-pass filter for the audio.
 #Normally this should be half of the audio sample rate.
 #This improves audio compression and quality.
-#Normally you don't need to change this.""",1),
-'delete_tmp_files_flag':("N","delete temporary files when finished?","""If Y then %s, audio_raw_filename, and 'divx2pass.log' will be deleted at the end."""%GLOBAL_LOGFILE_NAME,1)
+#Normally you don't need to change this.''',1),
+'delete_tmp_files_flag':("N","delete temporary files when finished?",'''If Y then %s, audio_raw_filename, and 'divx2pass.log' will be deleted at the end.'''%GLOBAL_LOGFILE_NAME,1)
 }
 
 ##############################################################################
 # This is the important convert control function
 ##############################################################################
 def convert (options):
-    """This is the heart of it all -- this performs an end-to-end conversion of
+    '''This is the heart of it all -- this performs an end-to-end conversion of
     a video from one format to another. It requires a dictionary of options.
     The conversion process will also add some keys to the dictionary
     such as length of the video and crop area. The dictionary is returned.
     This options dictionary could be used again to repeat the convert process
     (it is also saved to rippy.conf as text).
-    """
+    '''
     if options['subtitle_id'] is not None:
         print "# extract subtitles"
         apply_smart (extract_subtitles, options)
@@ -244,7 +239,7 @@ def convert (options):
             options['video_length'] = apply_smart (get_length, options)
             print "# Length of raw audio file : %d seconds (%0.2f minutes)" % (options['video_length'], float(options['video_length'])/60.0)
         if options['video_bitrate']=='calc':
-            options['video_bitrate'] = options['video_bitrate_overhead'] * apply_smart (calc_video_bitrate, options) 
+            options['video_bitrate'] = options['video_bitrate_overhead'] * apply_smart (calc_video_bitrate, options)
         print "# video bitrate : " + str(options['video_bitrate'])
         if options['video_crop_area']=='detect':
             options['video_crop_area'] = apply_smart (crop_detect, options)
@@ -263,7 +258,7 @@ def convert (options):
     else:
         print "no"
 
-    # Finish by saving options to rippy.conf and 
+    # Finish by saving options to rippy.conf and
     # calclating if final_size is less than target_size.
     o = ["# options used to create video\n"]
     video_actual_size = get_filesize (options['video_final_filename'])
@@ -296,9 +291,9 @@ def exit_with_usage(exit_code=1):
     os._exit(exit_code)
 
 def check_missing_requirements ():
-    """This list of missing requirements (mencoder, mplayer, lame, and mkvmerge).
+    '''This list of missing requirements (mencoder, mplayer, lame, and mkvmerge).
     Returns None if all requirements are in the execution path.
-    """
+    '''
     missing = []
     if pexpect.which("mencoder") is None:
         missing.append("mencoder")
@@ -309,7 +304,7 @@ def check_missing_requirements ():
     ar = re.findall("(mp3lame)", command_output)
     if len(ar)==0:
         missing.append("Mencoder was not compiled with mp3lame support.")
-    
+
     #if pexpect.which("lame") is None:
     #    missing.append("lame")
     #if pexpect.which("mkvmerge") is None:
@@ -319,16 +314,16 @@ def check_missing_requirements ():
     return missing
 
 def input_option (message, default_value="", help=None, level=0, max_level=0):
-    """This is a fancy raw_input function.
+    '''This is a fancy raw_input function.
     If the user enters '?' then the contents of help is printed.
-    
+
     The 'level' and 'max_level' are used to adjust which advanced options
     are printed. 'max_level' is the level of options that the user wants
     to see. 'level' is the level of difficulty for this particular option.
     If this level is <= the max_level the user wants then the
     message is printed and user input is allowed; otherwise, the
     default value is returned automatically without user input.
-    """
+    '''
     if default_value != '':
         message = "%s [%s] " % (message, default_value)
     if level > max_level:
@@ -344,9 +339,9 @@ def input_option (message, default_value="", help=None, level=0, max_level=0):
     return user_input
 
 def progress_callback (d=None):
-    """This callback simply prints a dot to show activity.
+    '''This callback simply prints a dot to show activity.
     This is used when running external commands with pexpect.run.
-    """
+    '''
     sys.stdout.write (".")
     sys.stdout.flush()
 
@@ -360,14 +355,14 @@ def run(cmd):
     return (command_output, exitstatus)
 
 def apply_smart (func, args):
-    """This is similar to func(**args), but this won't complain about 
-    extra keys in 'args'. This ignores keys in 'args' that are 
+    '''This is similar to func(**args), but this won't complain about
+    extra keys in 'args'. This ignores keys in 'args' that are
     not required by 'func'. This passes None to arguments that are
     not defined in 'args'. That's fine for arguments with a default valeue, but
     that's a bug for required arguments. I should probably raise a TypeError.
     The func parameter can be a function reference or a string.
     If it is a string then it is converted to a function reference.
-    """
+    '''
     if type(func) is type(''):
         if func in globals():
             func = globals()[func]
@@ -380,7 +375,7 @@ def apply_smart (func, args):
     return func(**required_args)
 
 def count_unique (items):
-    """This takes a list and returns a sorted list of tuples with a count of each unique item in the list.
+    '''This takes a list and returns a sorted list of tuples with a count of each unique item in the list.
     Example 1:
         count_unique(['a','b','c','a','c','c','a','c','c'])
     returns:
@@ -389,7 +384,7 @@ def count_unique (items):
         count_unique(['a','b','c','a','c','c','a','c','c'])[0][1]
     returns:
         'c'
-    """
+    '''
     stats = {}
     for i in items:
         if i in stats:
@@ -402,19 +397,19 @@ def count_unique (items):
     return stats
 
 def calculate_revised_bitrate (video_bitrate, video_target_size, video_actual_size):
-    """This calculates a revised video bitrate given the video_bitrate used,
+    '''This calculates a revised video bitrate given the video_bitrate used,
     the actual size that resulted, and the video_target_size.
     This can be used if you want to compress the video all over again in an
     attempt to get closer to the video_target_size.
-    """
+    '''
     return int(math.floor(video_bitrate * (float(video_target_size) / float(video_actual_size))))
 
 def get_aspect_ratio (video_source_filename):
-    """This returns the aspect ratio of the original video.
+    '''This returns the aspect ratio of the original video.
     This is usualy 1.78:1(16/9) or 1.33:1(4/3).
     This function is very lenient. It basically guesses 16/9 whenever
     it cannot figure out the aspect ratio.
-    """
+    '''
     cmd = "mplayer '%s' -vo png -ao null -frames 1" % video_source_filename
     (command_output, exitstatus) = run(cmd)
     ar = re.findall("Movie-Aspect is ([0-9]+\.?[0-9]*:[0-9]+\.?[0-9]*)", command_output)
@@ -437,9 +432,9 @@ def get_aspect_ratio (video_source_filename):
 
 
 def get_aid_list (video_source_filename):
-    """This returns a list of audio ids in the source video file.
+    '''This returns a list of audio ids in the source video file.
     TODO: Also extract ID_AID_nnn_LANG to associate language. Not all DVDs include this.
-    """
+    '''
     cmd = "mplayer '%s' -vo null -ao null -frames 0 -identify" % video_source_filename
     (command_output, exitstatus) = run(cmd)
     idl = re.findall("ID_AUDIO_ID=([0-9]+)", command_output)
@@ -447,20 +442,20 @@ def get_aid_list (video_source_filename):
     return idl
 
 def get_sid_list (video_source_filename):
-    """This returns a list of subtitle ids in the source video file.
+    '''This returns a list of subtitle ids in the source video file.
     TODO: Also extract ID_SID_nnn_LANG to associate language. Not all DVDs include this.
-    """
+    '''
     cmd = "mplayer '%s' -vo null -ao null -frames 0 -identify" % video_source_filename
     (command_output, exitstatus) = run(cmd)
     idl = re.findall("ID_SUBTITLE_ID=([0-9]+)", command_output)
     idl.sort()
     return idl
-    
+
 def extract_audio (video_source_filename, audio_id=128, verbose_flag=0, dry_run_flag=0):
-    """This extracts the given audio_id track as raw uncompressed PCM from the given source video.
+    '''This extracts the given audio_id track as raw uncompressed PCM from the given source video.
         Note that mplayer always saves this to audiodump.wav.
         At this time there is no way to set the output audio name.
-    """
+    '''
     #cmd = "mplayer %(video_source_filename)s -vc null -vo null -aid %(audio_id)s -ao pcm:fast -noframedrop" % locals()
     cmd = "mplayer -quiet '%(video_source_filename)s' -vc dummy -vo null -aid %(audio_id)s -ao pcm:fast -noframedrop" % locals()
     if verbose_flag: print cmd
@@ -469,8 +464,8 @@ def extract_audio (video_source_filename, audio_id=128, verbose_flag=0, dry_run_
         print
 
 def extract_subtitles (video_source_filename, subtitle_id=0, verbose_flag=0, dry_run_flag=0):
-    """This extracts the given subtitle_id track as VOBSUB format from the given source video.
-    """
+    '''This extracts the given subtitle_id track as VOBSUB format from the given source video.
+    '''
     cmd = "mencoder -quiet '%(video_source_filename)s' -o /dev/null -nosound -ovc copy -vobsubout subtitles -vobsuboutindex 0 -sid %(subtitle_id)s" % locals()
     if verbose_flag: print cmd
     if not dry_run_flag:
@@ -478,13 +473,13 @@ def extract_subtitles (video_source_filename, subtitle_id=0, verbose_flag=0, dry
         print
 
 def get_length (audio_raw_filename):
-    """This attempts to get the length of the media file (length is time in seconds).
+    '''This attempts to get the length of the media file (length is time in seconds).
     This should not be confused with size (in bytes) of the file data.
     This is best used on a raw PCM AUDIO file because mplayer cannot get an accurate
     time for many compressed video and audio formats -- notably MPEG4 and MP3.
     Weird...
     This returns -1 if it cannot get the length of the given file.
-    """
+    '''
     cmd = "mplayer %s -vo null -ao null -frames 0 -identify" % audio_raw_filename
     (command_output, exitstatus) = run(cmd)
     idl = re.findall("ID_LENGTH=([0-9.]*)", command_output)
@@ -499,11 +494,11 @@ def get_length (audio_raw_filename):
     return float(idl[0])
 
 def get_filesize (filename):
-    """This returns the number of bytes a file takes on storage."""
+    '''This returns the number of bytes a file takes on storage.'''
     return os.stat(filename)[stat.ST_SIZE]
 
 def calc_video_bitrate (video_target_size, audio_bitrate, video_length, extra_space=0, dry_run_flag=0):
-    """This gives an estimate of the video bitrate necessary to
+    '''This gives an estimate of the video bitrate necessary to
     fit the final target size.  This will take into account room to
     fit the audio and extra space if given (for container overhead or whatnot).
         video_target_size is in bytes,
@@ -514,7 +509,7 @@ def calc_video_bitrate (video_target_size, audio_bitrate, video_length, extra_sp
     a 550MB CDR (63 minutes) holds 580608000 bytes.
     a 650MB CDR (74 minutes) holds 681984000 bytes.
     a 700MB CDR (80 minutes) holds 737280000 bytes.
-    """
+    '''
     if dry_run_flag:
         return -1
     if extra_space is None: extra_space = 0
@@ -524,19 +519,19 @@ def calc_video_bitrate (video_target_size, audio_bitrate, video_length, extra_sp
     return (int)(calc_video_kbitrate (video_target_size, video_length))
 
 def calc_video_kbitrate (target_size, length_secs):
-    """Given a target byte size free for video data, this returns the bitrate in kBit/S.
+    '''Given a target byte size free for video data, this returns the bitrate in kBit/S.
     For mencoder vbitrate 1 kBit = 1000 Bits -- not 1024 bits.
         target_size = bitrate * 1000 * length_secs / 8
         target_size = bitrate * 125 * length_secs
         bitrate     = target_size/(125*length_secs)
-    """
+    '''
     return int(target_size / (125.0 * length_secs))
 
 def crop_detect (video_source_filename, video_length, dry_run_flag=0):
-    """This attempts to figure out the best crop for the given video file.
+    '''This attempts to figure out the best crop for the given video file.
     Basically it runs crop detect for 10 seconds on five different places in the video.
     It picks the crop area that was most often detected.
-    """
+    '''
     skip = int(video_length/9) # offset to skip (-ss option in mencoder)
     sample_length = 10
     cmd1 = "mencoder '%s' -quiet -ss %d -endpos %d -o /dev/null -nosound -ovc lavc -vf cropdetect" % (video_source_filename,   skip, sample_length)
@@ -565,7 +560,7 @@ def build_compression_command (video_source_filename, video_final_filename, vide
 #mencoder movie.avi -o movie.VOB -ovc lavc -oac lavc -lavcopts acodec=mp2:abitrate=224:vcodec=mpeg2video:vbitrate=2000
 
     #
-    # build video filter (-vf) argument 
+    # build video filter (-vf) argument
     #
     video_filter = ''
     if video_crop_area and video_crop_area.lower()!='none':
@@ -581,7 +576,7 @@ def build_compression_command (video_source_filename, video_final_filename, vide
     # optional video rotation -- were you holding your camera sideways?
     #if video_filter != '':
     #    video_filter = video_filter + ','
-    #video_filter = video_filter + 'rotate=2' 
+    #video_filter = video_filter + 'rotate=2'
     if video_filter != '':
         video_filter = '-vf ' + video_filter
 
@@ -601,7 +596,7 @@ def build_compression_command (video_source_filename, video_final_filename, vide
     if audio_sample_rate:
         if audio_filter != '':
             audio_filter = audio_filter + ','
-        audio_filter = audio_filter + 'lavcresample=%s' % audio_sample_rate 
+        audio_filter = audio_filter + 'lavcresample=%s' % audio_sample_rate
     if audio_volume_boost is not None:
         if audio_filter != '':
             audio_filter = audio_filter + ','
@@ -631,8 +626,8 @@ def build_compression_command (video_source_filename, video_final_filename, vide
     return cmd
 
 def compression_estimate (video_length, video_source_filename, video_final_filename, video_target_size, audio_id=128, video_bitrate=1000, video_codec='mpeg4', audio_codec='mp3', video_fourcc_override='FMP4', video_gray_flag=0, video_crop_area=None, video_aspect_ratio='16/9', video_scale=None, video_encode_passes=2, video_deinterlace_flag=0, audio_volume_boost=None, audio_sample_rate=None, audio_bitrate=None):
-    """This attempts to figure out the best compression ratio for a given set of compression options.
-    """
+    '''This attempts to figure out the best compression ratio for a given set of compression options.
+    '''
     # TODO Need to account for AVI overhead.
     skip = int(video_length/9) # offset to skip (-ss option in mencoder)
     sample_length = 10
@@ -650,9 +645,9 @@ def compression_estimate (video_length, video_source_filename, video_final_filen
     return (size / 5.0)
 
 def compress_video (video_source_filename, video_final_filename, video_target_size, audio_id=128, video_bitrate=1000, video_codec='mpeg4', audio_codec='mp3', video_fourcc_override='FMP4', video_gray_flag=0, video_crop_area=None, video_aspect_ratio='16/9', video_scale=None, video_encode_passes=2, video_deinterlace_flag=0, audio_volume_boost=None, audio_sample_rate=None, audio_bitrate=None, seek_skip=None, seek_length=None, video_chapter=None, verbose_flag=0, dry_run_flag=0):
-    """This compresses the video and audio of the given source video filename to the transcoded filename.
+    '''This compresses the video and audio of the given source video filename to the transcoded filename.
         This does a two-pass compression (I'm assuming mpeg4, I should probably make this smarter for other formats).
-    """
+    '''
     #
     # do the first pass video compression
     #
@@ -689,9 +684,9 @@ def compress_video (video_source_filename, video_final_filename, video_target_si
     return
 
 def compress_audio (audio_raw_filename, audio_compressed_filename, audio_lowpass_filter=None, audio_sample_rate=None, audio_bitrate=None, verbose_flag=0, dry_run_flag=0):
-    """This is depricated.
+    '''This is depricated.
     This compresses the raw audio file to the compressed audio filename.
-    """
+    '''
     cmd = 'lame -h --athaa-sensitivity 1' # --cwlimit 11"
     if audio_lowpass_filter:
         cmd = cmd + ' --lowpass ' + audio_lowpass_filter
@@ -709,15 +704,15 @@ def compress_audio (audio_raw_filename, audio_compressed_filename, audio_lowpass
             raise Exception('ERROR: lame failed to compress raw audio file.')
 
 def mux (video_final_filename, video_transcoded_filename, audio_compressed_filename, video_container_format, verbose_flag=0, dry_run_flag=0):
-    """This is depricated. I used to use a three-pass encoding where I would mix the audio track separately, but
-    this never worked very well (loss of audio sync)."""
+    '''This is depricated. I used to use a three-pass encoding where I would mix the audio track separately, but
+    this never worked very well (loss of audio sync).'''
     if video_container_format.lower() == 'mkv': # Matroska
         mux_mkv (video_final_filename, video_transcoded_filename, audio_compressed_filename, verbose_flag, dry_run_flag)
     if video_container_format.lower() == 'avi':
         mux_avi (video_final_filename, video_transcoded_filename, audio_compressed_filename, verbose_flag, dry_run_flag)
 
 def mux_mkv (video_final_filename, video_transcoded_filename, audio_compressed_filename, verbose_flag=0, dry_run_flag=0):
-    """This is depricated."""
+    '''This is depricated.'''
     cmd = 'mkvmerge -o %s --noaudio %s %s' % (video_final_filename, video_transcoded_filename, audio_compressed_filename)
     if verbose_flag: print cmd
     if not dry_run_flag:
@@ -725,7 +720,7 @@ def mux_mkv (video_final_filename, video_transcoded_filename, audio_compressed_f
         print
 
 def mux_avi (video_final_filename, video_transcoded_filename, audio_compressed_filename, verbose_flag=0, dry_run_flag=0):
-    """This is depricated."""
+    '''This is depricated.'''
     pass
 #    cmd = "mencoder -quiet -oac copy -ovc copy -o '%s' -audiofile %s '%s'" % (video_final_filename, audio_compressed_filename, video_transcoded_filename)
 #    if verbose_flag: print cmd
@@ -741,7 +736,7 @@ def delete_tmp_files (audio_raw_filename, verbose_flag=0, dry_run_flag=0):
     if not dry_run_flag:
         run(cmd)
         print
-    
+
 ##############################################################################
 # This is the interactive Q&A that is used if a conf file was not given.
 ##############################################################################
@@ -755,10 +750,10 @@ def interactive_convert ():
     print " Enter '?' at any question to get extra help."
     print "=============================================="
     print
-  
-    # Ask for the level of options the user wants. 
+
+    # Ask for the level of options the user wants.
     # A lot of code just to print a string!
-    level_sort = {0:'', 1:'', 2:''} 
+    level_sort = {0:'', 1:'', 2:''}
     for k in prompts:
         level = prompts[k][3]
         if level < 0 or level > 2:
@@ -779,7 +774,7 @@ def interactive_convert ():
         elif k == 'audio_id':
             aid_list = get_aid_list (options['video_source_filename'])
             default_id = '128'
-            if max_prompt_level>=prompts[k][3]: 
+            if max_prompt_level>=prompts[k][3]:
                 if len(aid_list) > 1:
                     print "This video has more than one audio stream. The following stream audio IDs were found:"
                     for aid in aid_list:
@@ -844,7 +839,7 @@ def interactive_convert ():
     return options
 
 def clean_options (d):
-    """This validates and cleans up the options dictionary.
+    '''This validates and cleans up the options dictionary.
     After reading options interactively or from a conf file
     we need to make sure that the values make sense and are
     converted to the correct type.
@@ -854,7 +849,7 @@ def clean_options (d):
     3. Certain values are converted from string to int.
     4. Certain combinations of options are invalid or override each other.
     This is a rather annoying function, but then so it most cleanup work.
-    """
+    '''
     for k in d:
         d[k] = d[k].strip()
         # convert all flag options to 0 or 1
@@ -892,7 +887,7 @@ def clean_options (d):
         d['subtitle_id'] = int(d['subtitle_id'])
     except:
         d['subtitle_id'] = None
-        
+
     try:
         d['video_bitrate_overhead'] = float(d['video_bitrate_overhead'])
     except:
@@ -968,7 +963,7 @@ def main ():
         options = clean_options(options)
         convert (options)
     print "# Done!"
-    
+
 if __name__ == "__main__":
     try:
         start_time = time.time()

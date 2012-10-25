@@ -1,8 +1,26 @@
-"""This implements an ANSI terminal emulator as a subclass of screen.
+'''This implements an ANSI (VT100) terminal emulator as a subclass of screen.
 
-$Id$
-"""
+PEXPECT LICENSE
+
+    This license is approved by the OSI and FSF as GPL-compatible.
+        http://opensource.org/licenses/isc-license.txt
+
+    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
+    PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
+    COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
+    THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+    WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+    MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+    ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+    WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+    ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+    OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
+'''
+
 # references:
+#     http://en.wikipedia.org/wiki/ANSI_escape_code
 #     http://www.retards.org/terminals/vt102.html
 #     http://vt100.net/docs/vt102-ug/contents.html
 #     http://vt100.net/docs/vt220-rm/
@@ -13,16 +31,19 @@ import FSM
 import copy
 import string
 
-def Emit (fsm):
+#
+# The 'Do.*' functions are helper functions for the ANSI class.
+#
+def DoEmit (fsm):
 
     screen = fsm.memory[0]
     screen.write_ch(fsm.input_symbol)
 
-def StartNumber (fsm):
+def DoStartNumber (fsm):
 
     fsm.memory.append (fsm.input_symbol)
 
-def BuildNumber (fsm):
+def DoBuildNumber (fsm):
 
     ns = fsm.memory.pop()
     ns = ns + fsm.input_symbol
@@ -114,11 +135,12 @@ def DoEraseEndOfLine (fsm):
 
 def DoEraseLine (fsm):
 
+    arg = int(fsm.memory.pop())
     screen = fsm.memory[0]
     if arg == 0:
-        screen.end_of_line()
+        screen.erase_end_of_line()
     elif arg == 1:
-        screen.start_of_line()
+        screen.erase_start_of_line()
     elif arg == 2:
         screen.erase_line()
 
@@ -150,7 +172,7 @@ def DoMode (fsm):
     mode = fsm.memory.pop() # Should be 4
     # screen.setReplaceMode ()
 
-def Log (fsm):
+def DoLog (fsm):
 
     screen = fsm.memory[0]
     fsm.memory = [screen]
@@ -159,16 +181,21 @@ def Log (fsm):
     fout.close()
 
 class term (screen.screen):
-    """This is a placeholder. 
-    In theory I might want to add other terminal types.
-    """
+
+    '''This class is an abstract, generic terminal.
+    This does nothing. This is a placeholder that
+    provides a common base class for other terminals
+    such as an ANSI terminal. '''
+
     def __init__ (self, r=24, c=80):
+
         screen.screen.__init__(self, r,c)
 
 class ANSI (term):
 
-    """This class encapsulates a generic terminal. It filters a stream and
-    maintains the state of a screen object. """
+    '''This class implements an ANSI (VT100) terminal.
+    It is a stream filter that recognizes ANSI terminal
+    escape sequences and maintains the state of a screen object. '''
 
     def __init__ (self, r=24,c=80):
 
@@ -176,10 +203,10 @@ class ANSI (term):
 
         #self.screen = screen (24,80)
         self.state = FSM.FSM ('INIT',[self])
-        self.state.set_default_transition (Log, 'INIT')
-        self.state.add_transition_any ('INIT', Emit, 'INIT')
+        self.state.set_default_transition (DoLog, 'INIT')
+        self.state.add_transition_any ('INIT', DoEmit, 'INIT')
         self.state.add_transition ('\x1b', 'INIT', None, 'ESC')
-        self.state.add_transition_any ('ESC', Log, 'INIT')
+        self.state.add_transition_any ('ESC', DoLog, 'INIT')
         self.state.add_transition ('(', 'ESC', None, 'G0SCS')
         self.state.add_transition (')', 'ESC', None, 'G1SCS')
         self.state.add_transition_list ('AB012', 'G0SCS', None, 'INIT')
@@ -204,8 +231,8 @@ class ANSI (term):
         self.state.add_transition ('r', 'ELB', DoEnableScroll, 'INIT')
         self.state.add_transition ('m', 'ELB', None, 'INIT')
         self.state.add_transition ('?', 'ELB', None, 'MODECRAP')
-        self.state.add_transition_list (string.digits, 'ELB', StartNumber, 'NUMBER_1')
-        self.state.add_transition_list (string.digits, 'NUMBER_1', BuildNumber, 'NUMBER_1')
+        self.state.add_transition_list (string.digits, 'ELB', DoStartNumber, 'NUMBER_1')
+        self.state.add_transition_list (string.digits, 'NUMBER_1', DoBuildNumber, 'NUMBER_1')
         self.state.add_transition ('D', 'NUMBER_1', DoBack, 'INIT')
         self.state.add_transition ('B', 'NUMBER_1', DoDown, 'INIT')
         self.state.add_transition ('C', 'NUMBER_1', DoForward, 'INIT')
@@ -217,22 +244,22 @@ class ANSI (term):
         ### number;number;number before it. I've never seen more than two,
         ### but the specs say it's allowed. crap!
         self.state.add_transition ('m', 'NUMBER_1', None, 'INIT')
-        ### LED control. Same problem as 'm' code.
-        self.state.add_transition ('q', 'NUMBER_1', None, 'INIT') 
-        
-        # \E[?47h appears to be "switch to alternate screen"
-        # \E[?47l restores alternate screen... I think.
-        self.state.add_transition_list (string.digits, 'MODECRAP', StartNumber, 'MODECRAP_NUM')
-        self.state.add_transition_list (string.digits, 'MODECRAP_NUM', BuildNumber, 'MODECRAP_NUM')
+        ### LED control. Same implementation problem as 'm' code.
+        self.state.add_transition ('q', 'NUMBER_1', None, 'INIT')
+
+        # \E[?47h switch to alternate screen
+        # \E[?47l restores to normal screen from alternate screen.
+        self.state.add_transition_list (string.digits, 'MODECRAP', DoStartNumber, 'MODECRAP_NUM')
+        self.state.add_transition_list (string.digits, 'MODECRAP_NUM', DoBuildNumber, 'MODECRAP_NUM')
         self.state.add_transition ('l', 'MODECRAP_NUM', None, 'INIT')
         self.state.add_transition ('h', 'MODECRAP_NUM', None, 'INIT')
 
 #RM   Reset Mode                Esc [ Ps l                   none
         self.state.add_transition (';', 'NUMBER_1', None, 'SEMICOLON')
-        self.state.add_transition_any ('SEMICOLON', Log, 'INIT')
-        self.state.add_transition_list (string.digits, 'SEMICOLON', StartNumber, 'NUMBER_2')
-        self.state.add_transition_list (string.digits, 'NUMBER_2', BuildNumber, 'NUMBER_2')
-        self.state.add_transition_any ('NUMBER_2', Log, 'INIT')
+        self.state.add_transition_any ('SEMICOLON', DoLog, 'INIT')
+        self.state.add_transition_list (string.digits, 'SEMICOLON', DoStartNumber, 'NUMBER_2')
+        self.state.add_transition_list (string.digits, 'NUMBER_2', DoBuildNumber, 'NUMBER_2')
+        self.state.add_transition_any ('NUMBER_2', DoLog, 'INIT')
         self.state.add_transition ('H', 'NUMBER_2', DoHome, 'INIT')
         self.state.add_transition ('f', 'NUMBER_2', DoHome, 'INIT')
         self.state.add_transition ('r', 'NUMBER_2', DoScrollRegion, 'INIT')
@@ -241,7 +268,16 @@ class ANSI (term):
         ### but the specs say it's allowed. crap!
         self.state.add_transition ('m', 'NUMBER_2', None, 'INIT')
         ### LED control. Same problem as 'm' code.
-        self.state.add_transition ('q', 'NUMBER_2', None, 'INIT') 
+        self.state.add_transition ('q', 'NUMBER_2', None, 'INIT')
+        self.state.add_transition (';', 'NUMBER_2', None, 'SEMICOLON_X')
+
+        # Create a state for 'q' and 'm' which allows an infinite number of ignored numbers
+        self.state.add_transition_any ('SEMICOLON_X', DoLog, 'INIT')
+        self.state.add_transition_list (string.digits, 'SEMICOLON_X', None, 'NUMBER_X')
+        self.state.add_transition_any ('NUMBER_X', DoLog, 'INIT')
+        self.state.add_transition ('m', 'NUMBER_X', None, 'INIT')
+        self.state.add_transition ('q', 'NUMBER_X', None, 'INIT')
+        self.state.add_transition (';', 'NUMBER_2', None, 'SEMICOLON_X')
 
     def process (self, c):
 
@@ -262,24 +298,22 @@ class ANSI (term):
 
     def write_ch (self, ch):
 
-        """This puts a character at the current cursor position. cursor
-        position if moved forward with wrap-around, but no scrolling is done if
-        the cursor hits the lower-right corner of the screen. """
+        '''This puts a character at the current cursor position. The cursor
+        position is moved forward with wrap-around, but no scrolling is done if
+        the cursor hits the lower-right corner of the screen. '''
 
-        #\r and \n both produce a call to crlf().
+        #\r and \n both produce a call to cr() and lf(), respectively.
         ch = ch[0]
 
         if ch == '\r':
-        #    self.crlf()
+            self.cr()
             return
         if ch == '\n':
             self.crlf()
             return
         if ch == chr(screen.BS):
             self.cursor_back()
-            self.put_abs(self.cur_r, self.cur_c, ' ')
             return
-
         if ch not in string.printable:
             fout = open ('log', 'a')
             fout.write ('Nonprint: ' + str(ord(ch)) + '\n')

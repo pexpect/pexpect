@@ -14,7 +14,7 @@ def my_forkpty():
     if pid == -1:
         raise ExceptionPexpect("Forkpty failed")
     elif pid == 0: # Child
-        if hasattr(termios, 'TIOCNOTTY'): 
+        if hasattr(termios, 'TIOCNOTTY'):
         #        Some platforms require an explicit detach of the
         #        current controlling tty before closing stdin, stdout, stderr.
         #        OpenBSD says that this is obsolete, but doesn't hurt.
@@ -66,7 +66,7 @@ def my_forkpty():
         if slave_fd > 2:
             os.close(slave_fd)
         pid = 0
-        
+
     else:
         # PARENT 
         os.close(slave_fd);

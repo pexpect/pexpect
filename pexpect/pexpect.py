@@ -80,7 +80,7 @@ try:
     import errno
     import traceback
     import signal
-except ImportError as e:
+except ImportError, e:
     raise ImportError(str(e) + '''
 
 A critical module was not found. Probably this operating system does not
@@ -260,10 +260,10 @@ def run(command, timeout=-1, withexitstatus=False, events=None,
             else:
                 raise TypeError('The callback must be a string or function.')
             event_count = event_count + 1
-        except TIMEOUT as e:
+        except TIMEOUT:
             child_result_list.append(child.before)
             break
-        except EOF as e:
+        except EOF:
             child_result_list.append(child.before)
             break
     child_result = ''.join(child_result_list)
@@ -558,7 +558,7 @@ class spawn(object):
         if self.use_native_pty_fork:
             try:
                 self.pid, self.child_fd = pty.fork()
-            except OSError as e:
+            except OSError, e:
                 raise ExceptionPexpect('pty.fork() failed: ' + str(e))
         else:
             # Use internal __fork_pty
@@ -872,7 +872,7 @@ class spawn(object):
         if self.child_fd in r:
             try:
                 s = os.read(self.child_fd, size)
-            except OSError as e:
+            except OSError:
                 # Linux does this
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Exception style platform.')
@@ -947,17 +947,18 @@ class spawn(object):
         '''This is to support iterators over a file-like object.
         '''
 
-        return self
+        #return iter(self)
+        return iter(self.readline, '')
 
-    def __next__(self):
-
-        '''This is to support iterators over a file-like object.
-        '''
-
-        result = self.readline()
-        if result == "":
-            raise StopIteration
-        return result
+#    def __next__(self):
+#
+#        '''This is to support iterators over a file-like object.
+#        '''
+#
+#        result = self.readline()
+#        if result == '':
+#            raise StopIteration
+#        return result
 
     def readlines(self, sizehint=-1):
 
@@ -1123,7 +1124,7 @@ class spawn(object):
                 else:
                     return False
             return False
-        except OSError as e:
+        except OSError:
             # I think there are kernel timing issues that sometimes cause
             # this to happen. I think isalive() reports True, but the
             # process is dead to the kernel.
@@ -1186,7 +1187,7 @@ class spawn(object):
 
         try:
             pid, status = os.waitpid(self.pid, waitpid_options)
-        except OSError as e:
+        except OSError, e:
             # No child processes
             if e[0] == errno.ECHILD:
                 raise ExceptionPexpect('isalive() encountered condition ' +
@@ -1204,7 +1205,7 @@ class spawn(object):
             try:
                 ### os.WNOHANG) # Solaris!
                 pid, status = os.waitpid(self.pid, waitpid_options)
-            except OSError as e:
+            except OSError, e:
                 # This should never happen...
                 if e[0] == errno.ECHILD:
                     raise ExceptionPexpect('isalive() encountered condition ' +
@@ -1459,7 +1460,7 @@ class spawn(object):
                 incoming = incoming + c
                 if timeout is not None:
                     timeout = end_time - time.time()
-        except EOF as e:
+        except EOF, e:
             self.buffer = ''
             self.before = incoming
             self.after = EOF
@@ -1472,7 +1473,7 @@ class spawn(object):
                 self.match = None
                 self.match_index = None
                 raise EOF(str(e) + '\n' + str(self))
-        except TIMEOUT as e:
+        except TIMEOUT, e:
             self.buffer = incoming
             self.before = incoming
             self.after = TIMEOUT
@@ -1632,7 +1633,7 @@ class spawn(object):
         while True:
             try:
                 return select.select(iwtd, owtd, ewtd, timeout)
-            except select.error as e:
+            except select.error, e:
                 if e[0] == errno.EINTR:
                     # if we loop back we have to subtract the
                     # amount of time we already waited.

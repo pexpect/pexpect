@@ -1,5 +1,6 @@
 '''This is like pexpect, but it will work with any file descriptor that you
 pass it. You are reponsible for opening and close the file descriptor.
+This allows you to use Pexpect with sockets and named pipes (FIFOs).
 
 PEXPECT LICENSE
 

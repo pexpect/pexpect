@@ -264,7 +264,11 @@ class FSM:
 #    2003
 ##############################################################################
 
-import sys, os, traceback, optparse, time, string
+import sys
+import os
+import traceback
+import time
+import string
 
 #
 # These define the actions.
@@ -308,7 +312,7 @@ def main():
     defined. Note that states are strings (such as 'INIT'). This is not
     necessary, but it makes the example easier to read. '''
 
-    f = FSM ('INIT', []) # "memory" will be used as a stack.
+    f = FSM ('INIT', [])
     f.set_default_transition (Error, 'INIT')
     f.add_transition_any  ('INIT', None, 'INIT')
     f.add_transition      ('=',               'INIT',            DoEqual,          'INIT')
@@ -326,21 +330,14 @@ def main():
     inputstr = raw_input ('> ')
     f.process_list(inputstr)
 
+
 if __name__ == '__main__':
     try:
-        start_time = time.time()
-        parser = optparse.OptionParser(formatter=optparse.TitledHelpFormatter(), usage=globals()['__doc__'], version='$Id: FSM.py 533 2012-10-20 02:19:33Z noah $')
-        parser.add_option ('-v', '--verbose', action='store_true', default=False, help='verbose output')
-        (options, args) = parser.parse_args()
-        if options.verbose: print time.asctime()
         main()
-        if options.verbose: print time.asctime()
-        if options.verbose: print 'TOTAL TIME IN MINUTES:',
-        if options.verbose: print (time.time() - start_time) / 60.0
         sys.exit(0)
-    except KeyboardInterrupt, e: # Ctrl-C
+    except KeyboardInterrupt, e:  # Ctrl-C
         raise e
-    except SystemExit, e: # sys.exit()
+    except SystemExit, e:  # sys.exit()
         raise e
     except Exception, e:
         print 'ERROR, UNEXPECTED EXCEPTION'

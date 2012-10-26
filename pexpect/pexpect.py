@@ -963,7 +963,11 @@ class spawn(object):
     def readlines(self, sizehint=-1):
 
         '''This reads until EOF using readline() and returns a list containing
-        the lines thus read. The optional 'sizehint' argument is ignored. '''
+        the lines thus read. The optional 'sizehint' argument is ignored.
+        Remember, because this reads until EOF that means the child
+        process should have closed its stdout. If you run this method on
+        a child that is still running with its stdout open then this
+        method will block until it timesout.'''
 
         lines = []
         while True:

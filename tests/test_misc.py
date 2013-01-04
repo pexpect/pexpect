@@ -56,12 +56,10 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         line5 = child.readline()
         assert line1  == '', "readline(0) did not return ''. Returned: " + repr(line1)
         assert line2 == 'abc\r\n', "readline() did not return 'abc\\r\\n'. Returned: " + repr(line2)
-        assert ( (line3 == 'abc\r\n' or line3 == '123\r\n'),
-                "readline(2) did not return 'abc\\r\\n'. Returned: "
-                + repr(line3) )
-        assert ( (line4 == '123\r\n' or line4 == 'abc\r\n'),
-                "readline(1) did not return '123\\r\\n'. Returned: "
-                + repr(line4) )
+        assert (line3 == 'abc\r\n' or line3 == '123\r\n'), \
+            "readline(2) did not return 'abc\\r\\n'. Returned: " + repr(line3)
+        assert (line4 == '123\r\n' or line4 == 'abc\r\n'), \
+            "readline(1) did not return '123\\r\\n'. Returned: " + repr(line4)
         assert line5 == '123\r\n', "readline() did not return '123\\r\\n'. Returned: " + repr(line5)
     def test_iter (self):
         '''See the note in test_readlines() for an explaination as to why
@@ -76,9 +74,9 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         page = ""
         for line in child:
             page = page + line
-        assert ( (page == 'abc\r\nabc\r\n123\r\n123\r\n' or
-                  page == 'abc\r\n123\r\nabc\r\n123\r\n') ,
-                  "iterator did not work. page=%s"%repr(page) )
+        assert (page == 'abc\r\nabc\r\n123\r\n123\r\n' or
+                page == 'abc\r\n123\r\nabc\r\n123\r\n') , \
+               "iterator did not work. page=%s"%repr(page)
     def test_readlines(self):
         '''Note that on some slow or heavily loaded systems that the lines
         coming back from 'cat' may come even after the EOF.
@@ -99,9 +97,9 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.sendeof()
         page = child.readlines()
         page = ''.join(page)
-        assert ( (page == 'abc\r\nabc\r\n123\r\n123\r\n' or 
-                page == 'abc\r\n123\r\nabc\r\n123\r\n'),
-                "readlines() did not work. page=%s"%repr(page) )
+        assert (page == 'abc\r\nabc\r\n123\r\n123\r\n' or 
+                page == 'abc\r\n123\r\nabc\r\n123\r\n'), \
+               "readlines() did not work. page=%s"%repr(page)
     def test_write (self):
         child = pexpect.spawn('cat')
         child.write('a')

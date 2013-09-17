@@ -988,7 +988,7 @@ class spawn(object):
 
         '''This calls write() for each element in the sequence. The sequence
         can be any iterable object producing strings, typically a list of
-        strings. This does not add line separators There is no return value.
+        strings. This does not add line separators. There is no return value.
         '''
 
         for s in sequence:

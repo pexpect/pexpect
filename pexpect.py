@@ -80,7 +80,7 @@ try:
     import errno
     import traceback
     import signal
-except ImportError, e:
+except ImportError as e:
     raise ImportError(str(e) + '''
 
 A critical module was not found. Probably this operating system does not
@@ -558,7 +558,7 @@ class spawn(object):
         if self.use_native_pty_fork:
             try:
                 self.pid, self.child_fd = pty.fork()
-            except OSError, e:
+            except OSError as e:
                 raise ExceptionPexpect('pty.fork() failed: ' + str(e))
         else:
             # Use internal __fork_pty
@@ -1191,7 +1191,7 @@ class spawn(object):
 
         try:
             pid, status = os.waitpid(self.pid, waitpid_options)
-        except OSError, e:
+        except OSError as e:
             # No child processes
             if e[0] == errno.ECHILD:
                 raise ExceptionPexpect('isalive() encountered condition ' +
@@ -1209,7 +1209,7 @@ class spawn(object):
             try:
                 ### os.WNOHANG) # Solaris!
                 pid, status = os.waitpid(self.pid, waitpid_options)
-            except OSError, e:
+            except OSError as e:
                 # This should never happen...
                 if e[0] == errno.ECHILD:
                     raise ExceptionPexpect('isalive() encountered condition ' +
@@ -1464,7 +1464,7 @@ class spawn(object):
                 incoming = incoming + c
                 if timeout is not None:
                     timeout = end_time - time.time()
-        except EOF, e:
+        except EOF as e:
             self.buffer = ''
             self.before = incoming
             self.after = EOF
@@ -1477,7 +1477,7 @@ class spawn(object):
                 self.match = None
                 self.match_index = None
                 raise EOF(str(e) + '\n' + str(self))
-        except TIMEOUT, e:
+        except TIMEOUT as e:
             self.buffer = incoming
             self.before = incoming
             self.after = TIMEOUT
@@ -1637,7 +1637,7 @@ class spawn(object):
         while True:
             try:
                 return select.select(iwtd, owtd, ewtd, timeout)
-            except select.error, e:
+            except select.error as e:
                 if e[0] == errno.EINTR:
                     # if we loop back we have to subtract the
                     # amount of time we already waited.

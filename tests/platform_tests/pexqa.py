@@ -19,7 +19,7 @@ class s:
         try:
             #self.pid, self.child_fd = posix.forkpty()
             self.pid, self.child_fd = pty.fork()
-        except OSError, e:
+        except OSError as e:
             raise Exception('pty fork() failed: ' + str(e))
 
         if self.pid == 0: # Child

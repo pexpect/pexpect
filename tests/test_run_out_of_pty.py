@@ -37,11 +37,11 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         for count in range (0,10000):
                 try:
                         plist.append (pexpect.spawn('ls -l'))
-                except pexpect.ExceptionPexpect, e:
+                except pexpect.ExceptionPexpect as e:
                         for c in range (0,count):
                             plist[c].close()
                         return
-                except Exception, e:
+                except Exception as e:
                         self.fail ('Expected ExceptionPexpect. ' + str(e))
         self.fail ('Could not run out of pty devices. This may be OK.')
 

@@ -272,7 +272,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p = pexpect.spawn('ls -l /bin')
         try:
             p.expect('_Z_XY_XZ') # Probably never see this in ls output.
-        except pexpect.EOF, e:
+        except pexpect.EOF as e:
             pass
         else:
             self.fail ('Expected an EOF exception.')

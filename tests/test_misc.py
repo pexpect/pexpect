@@ -129,7 +129,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.terminated = 0 # Force invalid state to test code
         try:
             child.isalive()
-        except pexpect.ExceptionPexpect, e:
+        except pexpect.ExceptionPexpect as e:
             pass
         else:
             self.fail ("child.isalive() should have raised a pexpect.ExceptionPexpect")
@@ -138,13 +138,13 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         '''This tests that we get a graceful error when passing bad arguments.'''
         try:
             p = pexpect.spawn(1)
-        except pexpect.ExceptionPexpect, e:
+        except pexpect.ExceptionPexpect as e:
             pass
         else:
             self.fail ("pexpect.spawn(1) should have raised a pexpect.ExceptionPexpect.")
         try:
             p = pexpect.spawn('ls', '-la') # should really use pexpect.spawn('ls', ['-ls'])
-        except TypeError, e:
+        except TypeError as e:
             pass
         else:
             self.fail ("pexpect.spawn('ls', '-la') should have raised a TypeError.")
@@ -152,7 +152,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
             p = pexpect.spawn('cat')
             p.close()
             p.read_nonblocking(size=1, timeout=3)
-        except ValueError, e:
+        except ValueError as e:
             pass
         else:
             self.fail ("read_nonblocking on closed spawn object should have raised a ValueError.")
@@ -166,7 +166,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat')
         try:
             child.expect({}) # We don't support dicts yet. Should give TypeError
-        except TypeError, e:
+        except TypeError as e:
             pass
         else:
             self.fail ("child.expect({}) should have raised a TypeError")

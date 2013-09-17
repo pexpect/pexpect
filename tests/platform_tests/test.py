@@ -12,7 +12,7 @@ print 'PART 1 -- Test signal handling with empty pipe.'
 # Create a child process for us to kill.
 try:
     pid, fd = pty.fork()
-except Exception, e:
+except Exception as e:
     print str(e)
 
 if pid == 0:
@@ -37,14 +37,14 @@ except:
 try:
     os.kill(pid, 0)
     print 'Child is alive. This is ambiguous because it may be a Zombie.'
-except OSError, e:
+except OSError as e:
     print 'Child appears to be dead.'
 
 print 'PART 2 -- Test signal handling with full pipe.'
 # Create a child process for us to kill.
 try:
     pid, fd = pty.fork()
-except Exception, e:
+except Exception as e:
     print str(e)
 
 if pid == 0:
@@ -69,6 +69,6 @@ except:
 try:
     os.kill(pid, 0)
     print 'Child is alive. This is ambiguous because it may be a Zombie.'
-except OSError, e:
+except OSError as e:
     print 'Child appears to be dead.'
 

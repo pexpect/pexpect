@@ -42,7 +42,7 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
         time.sleep(1)
         try:
             p.wait()
-        except pexpect.ExceptionPexpect, e:
+        except pexpect.ExceptionPexpect as e:
             pass
         else:
             self.fail ('Should have raised ExceptionPython because you can\'t call wait on a dead process.')

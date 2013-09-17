@@ -45,7 +45,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
 #                child.send(unicode('%d'%i, encoding='utf-8'))
                 child.send(chr(i))
                 child.expect ('%d\r\n' % i)
-        except Exception, e:
+        except Exception as e:
             msg = "Did not echo character value: " + str(i) + "\n"
             msg = msg + str(e)
             self.fail(msg)
@@ -55,7 +55,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
             child = pexpect.spawn('python getch.py')
             child.sendintr()
             child.expect ('3\r\n')
-        except Exception, e:
+        except Exception as e:
             msg = "Did not echo character value: 3\n"
             msg = msg + str(e)
             self.fail(msg)

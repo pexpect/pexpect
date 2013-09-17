@@ -37,6 +37,6 @@ else:
 try:
 	os.kill(pid, 0)
 	print 'Child is alive. This is ambiguous because it may be a Zombie.'
-except OSError, e:
+except OSError as e:
 	print 'Child appears to be dead.'
 

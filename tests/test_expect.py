@@ -272,7 +272,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p = pexpect.spawn('ls -l /bin')
         try:
             p.expect('_Z_XY_XZ') # Probably never see this in ls output.
-        except pexpect.EOF as e:
+        except pexpect.EOF:
             pass
         else:
             self.fail ('Expected an EOF exception.')
@@ -360,7 +360,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         # the newline and sleep will (I hope) guarantee that
         # pexpect is fed two distinct batches of data,
         # "foo\r\n" + "bar\r\n".
-        foo_then_bar = 'print "f"+"o"+"o" ; time.sleep(3); print "b"+"a"+"r"'
+        foo_then_bar = 'print "f"+"o"+"o" ; time.sleep(1); print "b"+"a"+"r"'
 
         p.sendline(foo_then_bar)
         self.assertEqual(p.expect(['foo\r\nbar']), 0)

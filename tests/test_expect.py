@@ -20,7 +20,7 @@ PEXPECT LICENSE
 '''
 import pexpect
 import unittest
-import commands
+import subprocess
 import sys, time
 import PexpectTestCase
 #import pdb
@@ -44,23 +44,23 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_expect_basic (self):
         p = pexpect.spawn('cat')
-        p.sendline ('Hello')
-        p.sendline ('there')
-        p.sendline ('Mr. Python')
-        p.expect ('Hello')
-        p.expect ('there')
-        p.expect ('Mr. Python')
+        p.sendline (b'Hello')
+        p.sendline (b'there')
+        p.sendline (b'Mr. Python')
+        p.expect (b'Hello')
+        p.expect (b'there')
+        p.expect (b'Mr. Python')
         p.sendeof ()
         p.expect (pexpect.EOF)
 
     def test_expect_exact_basic (self):
         p = pexpect.spawn('cat')
-        p.sendline ('Hello')
-        p.sendline ('there')
-        p.sendline ('Mr. Python')
-        p.expect_exact ('Hello')
-        p.expect_exact ('there')
-        p.expect_exact ('Mr. Python')
+        p.sendline (b'Hello')
+        p.sendline (b'there')
+        p.sendline (b'Mr. Python')
+        p.expect_exact (b'Hello')
+        p.expect_exact (b'there')
+        p.expect_exact (b'Mr. Python')
         p.sendeof ()
         p.expect_exact (pexpect.EOF)
 
@@ -69,10 +69,10 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         even if case is different using the regex (?i) directive.
         '''
         p = pexpect.spawn('cat')
-        p.sendline ('HELLO')
-        p.sendline ('there')
-        p.expect ('(?i)hello')
-        p.expect ('(?i)THERE')
+        p.sendline (b'HELLO')
+        p.sendline (b'there')
+        p.expect (b'(?i)hello')
+        p.expect (b'(?i)THERE')
         p.sendeof ()
         p.expect (pexpect.EOF)
 
@@ -82,10 +82,10 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         '''
         p = pexpect.spawn('cat')
         p.ignorecase = True
-        p.sendline ('HELLO')
-        p.sendline ('there')
-        p.expect ('hello')
-        p.expect ('THERE')
+        p.sendline (b'HELLO')
+        p.sendline (b'there')
+        p.expect (b'hello')
+        p.expect (b'THERE')
         p.sendeof ()
         p.expect (pexpect.EOF)
 
@@ -106,26 +106,26 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self._expect_order(p)
 
     def _expect_order (self, p):
-        p.sendline ('1234')
-        p.sendline ('abcd')
-        p.sendline ('wxyz')
-        p.sendline ('7890')
+        p.sendline (b'1234')
+        p.sendline (b'abcd')
+        p.sendline (b'wxyz')
+        p.sendline (b'7890')
         p.sendeof ()
-        index = p.expect (['1234','abcd','wxyz',pexpect.EOF,'7890'])
+        index = p.expect ([b'1234',b'abcd',b'wxyz',pexpect.EOF,b'7890'])
         assert index == 0, "index="+str(index)
-        index = p.expect (['1234','abcd','wxyz',pexpect.EOF,'7890'])
+        index = p.expect ([b'1234',b'abcd',b'wxyz',pexpect.EOF,b'7890'])
         assert index == 0, "index="+str(index)
-        index = p.expect ([pexpect.EOF,pexpect.TIMEOUT,'wxyz','abcd','1234'])
+        index = p.expect ([pexpect.EOF,pexpect.TIMEOUT,b'wxyz',b'abcd',b'1234'])
         assert index == 3, "index="+str(index)
-        index = p.expect (['54321',pexpect.TIMEOUT,'1234','abcd','wxyz',pexpect.EOF], timeout=5)
+        index = p.expect ([b'54321',pexpect.TIMEOUT,b'1234',b'abcd',b'wxyz',pexpect.EOF], timeout=5)
         assert index == 3, "index="+str(index)
-        index = p.expect (['54321',pexpect.TIMEOUT,'1234','abcd','wxyz',pexpect.EOF], timeout=5)
+        index = p.expect ([b'54321',pexpect.TIMEOUT,b'1234',b'abcd',b'wxyz',pexpect.EOF], timeout=5)
         assert index == 4, "index="+str(index)
-        index = p.expect (['54321',pexpect.TIMEOUT,'1234','abcd','wxyz',pexpect.EOF], timeout=5)
+        index = p.expect ([b'54321',pexpect.TIMEOUT,b'1234',b'abcd',b'wxyz',pexpect.EOF], timeout=5)
         assert index == 4, "index="+str(index)
-        index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
+        index = p.expect ([pexpect.EOF,b'abcd',b'wxyz',b'7890'])
         assert index == 3, "index="+str(index)
-        index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
+        index = p.expect ([pexpect.EOF,b'abcd',b'wxyz',b'7890'])
         assert index == 3, "index="+str(index)
 
     def test_waitnoecho (self):
@@ -170,23 +170,23 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self._expect_echo(p)
 
     def _expect_echo (self, p):
-        p.sendline ('1234') # Should see this twice (once from tty echo and again from cat).
-        index = p.expect (['1234','abcd','wxyz',pexpect.EOF,pexpect.TIMEOUT])
+        p.sendline (b'1234') # Should see this twice (once from tty echo and again from cat).
+        index = p.expect ([b'1234',b'abcd',b'wxyz',pexpect.EOF,pexpect.TIMEOUT])
         assert index == 0, "index="+str(index)+"\n"+p.before
-        index = p.expect (['1234','abcd','wxyz',pexpect.EOF])
+        index = p.expect ([b'1234',b'abcd',b'wxyz',pexpect.EOF])
         assert index == 0, "index="+str(index)
         p.setecho(0) # Turn off tty echo
-        p.sendline ('abcd') # Now, should only see this once.
-        p.sendline ('wxyz') # Should also be only once.
-        index = p.expect ([pexpect.EOF,pexpect.TIMEOUT,'abcd','wxyz','1234'])
+        p.sendline (b'abcd') # Now, should only see this once.
+        p.sendline (b'wxyz') # Should also be only once.
+        index = p.expect ([pexpect.EOF,pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234'])
         assert index == 2, "index="+str(index)
-        index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
+        index = p.expect ([pexpect.EOF,b'abcd',b'wxyz',b'7890'])
         assert index == 2, "index="+str(index)
         p.setecho(1) # Turn on tty echo
-        p.sendline ('7890') # Should see this twice.
-        index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
+        p.sendline (b'7890') # Should see this twice.
+        index = p.expect ([pexpect.EOF,b'abcd',b'wxyz',b'7890'])
         assert index == 3, "index="+str(index)
-        index = p.expect ([pexpect.EOF,'abcd','wxyz','7890'])
+        index = p.expect ([pexpect.EOF,b'abcd',b'wxyz',b'7890'])
         assert index == 3, "index="+str(index)
         p.sendeof()
 
@@ -207,66 +207,67 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def _expect_index (self, p):
         p.setecho(0)
-        p.sendline ('1234')
-        index = p.expect (['abcd','wxyz','1234',pexpect.EOF])
+        p.sendline (b'1234')
+        index = p.expect ([b'abcd',b'wxyz',b'1234',pexpect.EOF])
         assert index == 2, "index="+str(index)
-        p.sendline ('abcd')
-        index = p.expect ([pexpect.TIMEOUT,'abcd','wxyz','1234',pexpect.EOF])
+        p.sendline (b'abcd')
+        index = p.expect ([pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF])
         assert index == 1, "index="+str(index)
-        p.sendline ('wxyz')
-        index = p.expect (['54321',pexpect.TIMEOUT,'abcd','wxyz','1234',pexpect.EOF], timeout=5)
+        p.sendline (b'wxyz')
+        index = p.expect ([b'54321',pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF], timeout=5)
         assert index == 3, "index="+str(index) # Expect 'wxyz'
-        p.sendline ('$*!@?')
-        index = p.expect (['54321',pexpect.TIMEOUT,'abcd','wxyz','1234',pexpect.EOF], timeout=5)
+        p.sendline (b'$*!@?')
+        index = p.expect ([b'54321',pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF], timeout=5)
         assert index == 1, "index="+str(index) # Expect TIMEOUT
         p.sendeof ()
-        index = p.expect (['54321',pexpect.TIMEOUT,'abcd','wxyz','1234',pexpect.EOF], timeout=5)
+        index = p.expect ([b'54321',pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF], timeout=5)
         assert index == 5, "index="+str(index) # Expect EOF
 
     def test_expect (self):
-        the_old_way = commands.getoutput('ls -l /bin')
+        the_old_way = subprocess.check_output(['ls', '-l', '/bin']).rstrip()
         p = pexpect.spawn('ls -l /bin')
-        the_new_way = ''
+        the_new_way = b''
         while 1:
             i = p.expect (['\n', pexpect.EOF])
             the_new_way = the_new_way + p.before
             if i == 1:
                 break
-        the_new_way = the_new_way[:-1]
-        the_new_way = the_new_way.replace('\r','\n')
+        the_new_way = the_new_way.rstrip()
+        the_new_way = the_new_way.replace(b'\r',b'\n')
         # For some reason I get an extra newline under OS X evey once in a while.
         # I found it by looking through the hex_dump().
         assert the_old_way == the_new_way, hex_dump(the_new_way) + "\n" + hex_dump(the_old_way)
 
     def test_expect_exact (self):
-        the_old_way = commands.getoutput('ls -l /bin')
+        the_old_way = subprocess.check_output(['ls', '-l', '/bin']).rstrip()
         p = pexpect.spawn('ls -l /bin')
-        the_new_way = ''
+        the_new_way = b''
         while 1:
-            i = p.expect_exact (['\n', pexpect.EOF])
+            i = p.expect_exact ([b'\n', pexpect.EOF])
             the_new_way = the_new_way + p.before
             if i == 1:
                 break
-        the_new_way = the_new_way[:-1]
-        the_new_way = the_new_way.replace('\r','\n')
-        assert the_old_way == the_new_way, repr(the_old_way) + '\n' + repr(the_new_way)
+        the_new_way = the_new_way.rstrip()
+        the_new_way = the_new_way.replace(b'\r',b'\n')
+        self.assertEqual(the_old_way, the_new_way)
         p = pexpect.spawn('echo hello.?world')
-        i = p.expect_exact('.?')
-        assert p.before == 'hello' and p.after == '.?'
+        i = p.expect_exact(b'.?')
+        self.assertEqual(p.before, b'hello')
+        self.assertEqual(p.after, b'.?')
 
     def test_expect_eof (self):
-        the_old_way = commands.getoutput('/bin/ls -l /bin')
+        the_old_way = subprocess.check_output(['/bin/ls', '-l', '/bin']).rstrip()
         p = pexpect.spawn('/bin/ls -l /bin')
         p.expect(pexpect.EOF) # This basically tells it to read everything. Same as pexpect.run() function.
         the_new_way = p.before
-        the_new_way = the_new_way.replace('\r','') # Remember, pty line endings are '\r\n'.
-        the_new_way = the_new_way[:-1]
-        assert the_old_way == the_new_way
+        the_new_way = the_new_way.replace(b'\r',b'') # Remember, pty line endings are '\r\n'.
+        the_new_way = the_new_way.rstrip()
+        self.assertEqual(the_old_way, the_new_way)
 
     def test_expect_timeout (self):
         p = pexpect.spawn('ed', timeout=10)
         i = p.expect(pexpect.TIMEOUT) # This tells it to wait for timeout.
-        assert p.after == pexpect.TIMEOUT
+        self.assertEqual(p.after, pexpect.TIMEOUT)
 
     def test_unexpected_eof (self):
         p = pexpect.spawn('ls -l /bin')
@@ -280,19 +281,19 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
     def _before_after(self, p):
         p.timeout = 5
 
-        p.expect('>>> ')
-        self.assertEqual(p.after, '>>> ')
-        self.assert_(p.before.startswith('Python '))
+        p.expect(b'>>> ')
+        self.assertEqual(p.after, b'>>> ')
+        assert p.before.startswith(b'Python '), p.before
 
-        p.sendline('range(4*3)')
+        p.sendline(b'list(range(4*3))')
 
-        p.expect('5')
-        self.assertEqual(p.after, '5')
-        self.assert_(p.before.startswith('range(4*3)'))
+        p.expect(b'5')
+        self.assertEqual(p.after, b'5')
+        assert p.before.startswith(b'list(range(4*3))'), p.before
 
-        p.expect('>>> ')
-        self.assertEqual(p.after, '>>> ')
-        self.assert_(p.before.startswith(', 6, 7, 8'))
+        p.expect(b'>>> ')
+        self.assertEqual(p.after, b'>>> ')
+        assert p.before.startswith(b', 6, 7, 8'), p.before
 
     def test_before_after(self):
         '''This tests expect() for some simple before/after things.
@@ -311,26 +312,26 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def _ordering(self, p):
         p.timeout = 5
-        p.expect('>>> ')
+        p.expect(b'>>> ')
 
-        p.sendline('range(4*3)')
-        self.assertEqual(p.expect(['5,', '5,']), 0)
-        p.expect('>>> ')
+        p.sendline('list(range(4*3))')
+        self.assertEqual(p.expect([b'5,', b'5,']), 0)
+        p.expect(b'>>> ')
 
-        p.sendline('range(4*3)')
-        self.assertEqual(p.expect(['7,', '5,']), 1)
-        p.expect('>>> ')
+        p.sendline(b'list(range(4*3))')
+        self.assertEqual(p.expect([b'7,', b'5,']), 1)
+        p.expect(b'>>> ')
 
-        p.sendline('range(4*3)')
-        self.assertEqual(p.expect(['5,', '7,']), 0)
-        p.expect('>>> ')
+        p.sendline(b'list(range(4*3))')
+        self.assertEqual(p.expect([b'5,', b'7,']), 0)
+        p.expect(b'>>> ')
 
-        p.sendline('range(4*5)')
-        self.assertEqual(p.expect(['2,', '12,']), 0)
-        p.expect('>>> ')
+        p.sendline(b'list(range(4*5))')
+        self.assertEqual(p.expect([b'2,', b'12,']), 0)
+        p.expect(b'>>> ')
 
-        p.sendline('range(4*5)')
-        self.assertEqual(p.expect(['12,', '2,']), 1)
+        p.sendline(b'list(range(4*5))')
+        self.assertEqual(p.expect([b'12,', b'2,']), 1)
 
     def test_ordering(self):
         '''This tests expect() for which pattern is returned
@@ -354,33 +355,33 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def _greed(self, p):
         p.timeout = 5
-        p.expect('>>> ')
-        p.sendline('import time')
-        p.expect('>>> ')
+        p.expect(b'>>> ')
+        p.sendline(b'import time')
+        p.expect(b'>>> ')
         # the newline and sleep will (I hope) guarantee that
         # pexpect is fed two distinct batches of data,
         # "foo\r\n" + "bar\r\n".
-        foo_then_bar = 'print "f"+"o"+"o" ; time.sleep(1); print "b"+"a"+"r"'
+        foo_then_bar = b'print("f"+"o"+"o") ; time.sleep(1); print("b"+"a"+"r")'
 
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect(['foo\r\nbar']), 0)
-        p.expect('>>> ')
+        self.assertEqual(p.expect([b'foo\r\nbar']), 0)
+        p.expect(b'>>> ')
 
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect(['\r\nbar']), 0)
-        p.expect('>>> ')
+        self.assertEqual(p.expect([b'\r\nbar']), 0)
+        p.expect(b'>>> ')
 
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect(['foo\r\nbar', 'foo', 'bar']), 1)
-        p.expect('>>> ')
+        self.assertEqual(p.expect([b'foo\r\nbar', b'foo', b'bar']), 1)
+        p.expect(b'>>> ')
 
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect(['foo', 'foo\r\nbar', 'foo', 'bar']), 0)
-        p.expect('>>> ')
+        self.assertEqual(p.expect([b'foo', b'foo\r\nbar', b'foo', b'bar']), 0)
+        p.expect(b'>>> ')
 
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect(['bar', 'foo\r\nbar']), 1)
-        p.expect('>>> ')
+        self.assertEqual(p.expect([b'bar', b'foo\r\nbar']), 1)
+        p.expect(b'>>> ')
 
         # If the expect works as if we rematch for every new character,
         # 'o\r\nb' should win over 'oo\r\nba'. The latter is longer and
@@ -388,17 +389,17 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         # arrives.
         # However, pexpect doesn't do that (version 2.1 didn't).
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect(['oo\r\nba', 'o\r\nb']), 0)
-        p.expect('>>> ')
+        self.assertEqual(p.expect([b'oo\r\nba', b'o\r\nb']), 0)
+        p.expect(b'>>> ')
 
         # distinct patterns, but both suddenly match when the 'r' arrives.
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect(['foo\r\nbar', 'ar']), 0)
-        p.expect('>>> ')
+        self.assertEqual(p.expect([b'foo\r\nbar', b'ar']), 0)
+        p.expect(b'>>> ')
 
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect(['ar', 'foo\r\nbar']), 1)
-        p.expect('>>> ')
+        self.assertEqual(p.expect([b'ar', b'foo\r\nbar']), 1)
+        p.expect(b'>>> ')
 
     def test_greed(self):
         p = pexpect.spawn(self.PYTHONBIN)

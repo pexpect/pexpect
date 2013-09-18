@@ -27,7 +27,7 @@ import signal, time, struct, fcntl, termios, os, sys
 # our password might be visibly echod back to us. Sounds unlikely?
 # It happens.
 
-print "fake password:"
+print("fake password:")
 sys.stdout.flush()
 time.sleep(3)
 attr = termios.tcgetattr(sys.stdout)

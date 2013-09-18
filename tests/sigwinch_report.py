@@ -17,7 +17,9 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-import signal, time, struct, fcntl, termios, os, sys
+from __future__ import print_function
+
+import signal, time, struct, fcntl, termios, sys
 
 def getwinsize():
     '''This returns the window size of the child tty.
@@ -26,18 +28,18 @@ def getwinsize():
     if 'TIOCGWINSZ' in dir(termios):
         TIOCGWINSZ = termios.TIOCGWINSZ
     else:
-        TIOCGWINSZ = 1074295912L # Assume
+        TIOCGWINSZ = 1074295912 # Assume
     s = struct.pack('HHHH', 0, 0, 0, 0)
     x = fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ, s)
     return struct.unpack('HHHH', x)[0:2]
 
 def handler(signum, frame):
-    print 'signal'
+    print('signal')
     sys.stdout.flush()
-    print 'SIGWINCH:', getwinsize ()
+    print('SIGWINCH:', getwinsize ())
     sys.stdout.flush()
 
-print "setting handler for SIGWINCH"
+print("setting handler for SIGWINCH")
 signal.signal(signal.SIGWINCH, handler)
 
 while 1:

@@ -22,7 +22,6 @@ import pexpect
 import unittest
 import PexpectTestCase
 import time
-import sys, os, signal
 
 class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
 
@@ -35,20 +34,20 @@ class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
         time.sleep(10)
         p1.setwinsize (11,22)
         time.sleep(3)
-        index = p1.expect ([pexpect.TIMEOUT, 'SIGWINCH: \(([0-9]*), ([0-9]*)\)'], timeout=30)
+        index = p1.expect ([pexpect.TIMEOUT, b'SIGWINCH: \(([0-9]*), ([0-9]*)\)'], timeout=30)
         if index == 0:
             self.fail ("TIMEOUT -- this platform may not support sigwinch properly.\n" + str(p1))
         r = p1.match.group(1)
         c = p1.match.group(2)
-        assert (r=="11" and c=="22")
+        assert (r==b"11" and c==b"22")
         time.sleep(1)
         p1.setwinsize (24,80)
-        index = p1.expect ([pexpect.TIMEOUT, 'SIGWINCH: \(([0-9]*), ([0-9]*)\)'], timeout=10)
+        index = p1.expect ([pexpect.TIMEOUT, b'SIGWINCH: \(([0-9]*), ([0-9]*)\)'], timeout=10)
         if index == 0:
             self.fail ("TIMEOUT -- this platform may not support sigwinch properly.\n" + str(p1))
         r = p1.match.group(1)
         c = p1.match.group(2)
-        assert (r=="24" and c=="80")
+        assert (r==b"24" and c==b"80")
         p1.close()
 
 #    def test_parent_resize (self):

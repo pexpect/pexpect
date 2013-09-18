@@ -27,14 +27,14 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
+from __future__ import print_function
 
 import unittest
 import os, os.path
 import sys
 
 import pexpect
-print "Testing pexpect version:", pexpect.__version__
-print "Testing pexpect revision:", pexpect.__revision__
+print("Testing pexpect version:", pexpect.__version__)
 
 def add_tests_to_list (import_list, dirname, names):
     # Only check directories named 'tests'.
@@ -51,11 +51,13 @@ def add_tests_to_list (import_list, dirname, names):
 def find_modules_and_add_paths (root_path):
     import_list = []
     module_list = []
-    os.path.walk (root_path, add_tests_to_list, import_list)
+    for (dirpath, dirnames, filenames) in os.walk(root_path):
+        add_tests_to_list(import_list, dirpath, filenames)
+
     for module_file in import_list:
         path, module = os.path.split(module_file)
         module_list.append (module)
-        print 'Adding:', module_file
+        print('Adding:', module_file)
         if not path in sys.path:
             sys.path.append (path)
         if not os.path.dirname(path) in sys.path:

@@ -20,8 +20,6 @@ PEXPECT LICENSE
 '''
 import pexpect
 import unittest
-import commands
-import sys
 import PexpectTestCase
 
 class ExpectTestCase(PexpectTestCase.PexpectTestCase):

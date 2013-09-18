@@ -20,7 +20,6 @@ PEXPECT LICENSE
 '''
 import pexpect
 import unittest
-import sys, os, time
 import PexpectTestCase
 
 class Exp_TimeoutTestCase(PexpectTestCase.PexpectTestCase):

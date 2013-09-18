@@ -18,10 +18,18 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
+from __future__ import print_function
 
-import unittest, time
+import unittest, time, sys
 import pexpect
 import PexpectTestCase
+
+if sys.version_info[0] >= 3:
+    def b(s):
+        return s.encode('ascii')
+else:
+    def b(s):
+        return s
 
 # This isn't exactly a unit test, but it fits in nicely with the rest of the tests.
 
@@ -32,58 +40,58 @@ class PerformanceTestCase (PexpectTestCase.PexpectTestCase):
 
     def plain_range(self, n):
         e = pexpect.spawn('python')
-        self.assertEqual(e.expect('>>>'), 0)
-        e.sendline('for n in range(1, %d+1): print n' % n)
-        self.assertEqual(e.expect(r'\.{3}'), 0)
-        e.sendline('')
-        self.assertEqual(e.expect(['inquisition', '%d' % n]), 1)
+        self.assertEqual(e.expect(b'>>>'), 0)
+        e.sendline(b('for n in range(1, %d+1): print(n)' % n))
+        self.assertEqual(e.expect(br'\.{3}'), 0)
+        e.sendline(b'')
+        self.assertEqual(e.expect([b'inquisition', b('%d' % n)]), 1)
 
     def window_range(self, n):
         e = pexpect.spawn('python')
-        self.assertEqual(e.expect('>>>'), 0)
-        e.sendline('for n in range(1, %d+1): print n' % n)
+        self.assertEqual(e.expect(b'>>>'), 0)
+        e.sendline(b('for n in range(1, %d+1): print(n)' % n))
         self.assertEqual(e.expect(r'\.{3}'), 0)
-        e.sendline('')
-        self.assertEqual(e.expect(['inquisition', '%d' % n], searchwindowsize=10), 1)
+        e.sendline(b'')
+        self.assertEqual(e.expect([b'inquisition', b('%d' % n)], searchwindowsize=10), 1)
 
     def exact_range(self, n):
         e = pexpect.spawn('python')
-        self.assertEqual(e.expect_exact(['>>>']), 0)
-        e.sendline('for n in range(1, %d+1): print n' % n)
-        self.assertEqual(e.expect_exact(['...']), 0)
-        e.sendline('')
-        self.assertEqual(e.expect_exact(['inquisition', '%d' % n],timeout=520), 1)
+        self.assertEqual(e.expect_exact([b'>>>']), 0)
+        e.sendline(b('for n in range(1, %d+1): print(n)' % n))
+        self.assertEqual(e.expect_exact([b'...']), 0)
+        e.sendline(b'')
+        self.assertEqual(e.expect_exact([b'inquisition', b('%d' % n)],timeout=520), 1)
 
     def ewin_range(self, n):
         e = pexpect.spawn('python')
-        self.assertEqual(e.expect_exact(['>>>']), 0)
-        e.sendline('for n in range(1, %d+1): print n' % n)
-        self.assertEqual(e.expect_exact(['...']), 0)
-        e.sendline('')
-        self.assertEqual(e.expect_exact(['inquisition', '%d' % n], searchwindowsize=10), 1)
+        self.assertEqual(e.expect_exact([b'>>>']), 0)
+        e.sendline(b('for n in range(1, %d+1): print(n)' % n))
+        self.assertEqual(e.expect_exact([b'...']), 0)
+        e.sendline(b'')
+        self.assertEqual(e.expect_exact([b'inquisition', b('%d' % n)], searchwindowsize=10), 1)
 
     def faster_range(self, n):
         e = pexpect.spawn('python')
-        self.assertEqual(e.expect('>>>'), 0)
-        e.sendline('range(1, %d+1)' % n)
-        self.assertEqual(e.expect(['inquisition', '%d' % n]), 1)
+        self.assertEqual(e.expect(b'>>>'), 0)
+        e.sendline(b('range(1, %d+1)' % n))
+        self.assertEqual(e.expect([b'inquisition', b('%d' % n)]), 1)
 
     def test_100000(self):
         start_time = time.time()
         self.plain_range (100000)
-        print "100000 calls to plain_range:", (time.time() - start_time)
+        print("100000 calls to plain_range:", (time.time() - start_time))
         start_time = time.time()
         self.window_range(100000)
-        print "100000 calls to window_range:", (time.time() - start_time)
+        print("100000 calls to window_range:", (time.time() - start_time))
         start_time = time.time()
         self.exact_range (100000)
-        print "100000 calls to exact_range:", (time.time() - start_time)
+        print("100000 calls to exact_range:", (time.time() - start_time))
         start_time = time.time()
         self.ewin_range  (100000)
-        print "100000 calls to ewin_range:", (time.time() - start_time)
+        print("100000 calls to ewin_range:", (time.time() - start_time))
         start_time = time.time()
         self.faster_range(100000)
-        print "100000 calls to faster_range:", (time.time() - start_time)
+        print("100000 calls to faster_range:", (time.time() - start_time))
 
 if __name__ == "__main__":
     unittest.main()

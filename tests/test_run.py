@@ -20,8 +20,7 @@ PEXPECT LICENSE
 '''
 import pexpect
 import unittest
-import commands
-import sys
+import subprocess
 import PexpectTestCase
 
 # TODO Many of these test cases blindly assume that sequential
@@ -41,11 +40,11 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         assert exitstatus == 1, "Exit status of 'python exit1.py' should be 1."
 
     def test_run (self):
-        the_old_way = commands.getoutput('ls -l /bin')
+        the_old_way = subprocess.check_output(['ls', '-l', '/bin']).rstrip()
         (the_new_way, exitstatus) = pexpect.run ('ls -l /bin', withexitstatus=1)
-        the_new_way = the_new_way.replace('\r','')[:-1]
-        assert the_old_way == the_new_way
-        assert exitstatus == 0
+        the_new_way = the_new_way.replace(b'\r',b'').rstrip()
+        self.assertEqual(the_old_way, the_new_way)
+        self.assertEqual(exitstatus, 0)
 
     def test_run_callback (self): # TODO it seems like this test could block forever if run fails...
         pexpect.run("cat", timeout=1, events={pexpect.TIMEOUT:timeout_callback})

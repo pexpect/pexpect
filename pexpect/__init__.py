@@ -86,6 +86,8 @@ except ImportError as e:
 A critical module was not found. Probably this operating system does not
 support it. Pexpect is intended for UNIX-like operating systems.''')
 
+from . import six
+
 __version__ = '2.6'
 __revision__ = '1'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which',
@@ -266,7 +268,7 @@ def run(command, timeout=-1, withexitstatus=False, events=None,
         except EOF:
             child_result_list.append(child.before)
             break
-    child_result = ''.join(child_result_list)
+    child_result = b''.join(child_result_list)
     if withexitstatus:
         child.close()
         return (child_result, child.exitstatus)
@@ -275,6 +277,12 @@ def run(command, timeout=-1, withexitstatus=False, events=None,
 
 
 class spawn(object):
+    string_type = bytes
+    if six.PY3:
+        allowed_string_types = (bytes, str)
+    else:
+        allowed_string_types = basestring  # analysis:ignore
+
 
     '''This is the main class interface for Pexpect. Use this class to start
     and control child applications. '''
@@ -422,7 +430,7 @@ class spawn(object):
         # max bytes to read at one time into buffer
         self.maxread = maxread
         # This is the read buffer. See maxread.
-        self.buffer = ''
+        self.buffer = self.string_type()
         # Data before searchwindowsize point is preserved, but not searched.
         self.searchwindowsize = searchwindowsize
         # Delay used before sending data to child. Time in seconds.
@@ -456,6 +464,12 @@ class spawn(object):
             self.name = '<pexpect factory incomplete>'
         else:
             self._spawn(command, args)
+
+    @staticmethod
+    def _coerce_string(s):
+        if not isinstance(s, bytes):
+            return s.encode('ascii')
+        return s
 
     def __del__(self):
 
@@ -899,7 +913,7 @@ class spawn(object):
         immediately. '''
 
         if size == 0:
-            return ''
+            return self.string_type()
         if size < 0:
             # delimiter default is EOF
             self.expect(self.delimiter)
@@ -912,7 +926,7 @@ class spawn(object):
         # worry about if I have to later modify read() or expect().
         # Note, it's OK if size==-1 in the regex. That just means it
         # will never match anything in which case we stop only on EOF.
-        cre = re.compile('.{%d}' % size, re.DOTALL)
+        cre = re.compile(self._coerce_string('.{%d}' % size), re.DOTALL)
         # delimiter default is EOF
         index = self.expect([cre, self.delimiter])
         if index == 0:
@@ -934,11 +948,11 @@ class spawn(object):
         behavior for a file-like object. '''
 
         if size == 0:
-            return ''
+            return self.string_type()
         # delimiter default is EOF
-        index = self.expect(['\r\n', self.delimiter])
+        index = self.expect([b'\r\n', self.delimiter])
         if index == 0:
-            return self.before + '\r\n'
+            return self.before + b'\r\n'
         else:
             return self.before
 
@@ -948,7 +962,7 @@ class spawn(object):
         '''
 
         #return iter(self)
-        return iter(self.readline, '')
+        return iter(self.readline, self.string_type())
 
 #    def __next__(self):
 #
@@ -1007,7 +1021,10 @@ class spawn(object):
         if self.logfile_send is not None:
             self.logfile_send.write(s)
             self.logfile_send.flush()
-        c = os.write(self.child_fd, s.encode("utf-8"))
+        
+        if not isinstance(s, bytes):
+            s = s.encode('utf-8')
+        c = os.write(self.child_fd, s)
         return c
 
     def sendline(self, s=''):
@@ -1193,7 +1210,7 @@ class spawn(object):
             pid, status = os.waitpid(self.pid, waitpid_options)
         except OSError as e:
             # No child processes
-            if e[0] == errno.ECHILD:
+            if e.errno == errno.ECHILD:
                 raise ExceptionPexpect('isalive() encountered condition ' +
                         'where "terminated" is 0, but there was no child ' +
                         'process. Did someone else call waitpid() ' +
@@ -1293,7 +1310,8 @@ class spawn(object):
             compile_flags = compile_flags | re.IGNORECASE
         compiled_pattern_list = []
         for p in patterns:
-            if type(p) in types.StringTypes:
+            if isinstance(p, self.allowed_string_types):
+                p = self._coerce_string(p)
                 compiled_pattern_list.append(re.compile(p, compile_flags))
             elif p is EOF:
                 compiled_pattern_list.append(EOF)
@@ -1418,7 +1436,7 @@ class spawn(object):
         This method is also useful when you don't want to have to worry about
         escaping regular expression characters that you want to match.'''
 
-        if (type(pattern_list) in types.StringTypes or
+        if (isinstance(pattern_list, self.allowed_string_types) or
             pattern_list in (TIMEOUT, EOF)):
             pattern_list = [pattern_list]
         return self.expect_loop(searcher_string(pattern_list),
@@ -1465,7 +1483,7 @@ class spawn(object):
                 if timeout is not None:
                     timeout = end_time - time.time()
         except EOF as e:
-            self.buffer = ''
+            self.buffer = self.string_type()
             self.before = incoming
             self.after = EOF
             index = searcher.eof_index
@@ -1572,7 +1590,7 @@ class spawn(object):
         # Flush the buffer.
         self.stdout.write(self.buffer)
         self.stdout.flush()
-        self.buffer = ''
+        self.buffer = self.string_type()
         mode = tty.tcgetattr(self.STDIN_FILENO)
         tty.setraw(self.STDIN_FILENO)
         try:
@@ -1704,7 +1722,7 @@ class searcher_string(object):
         self.eof_index = -1
         self.timeout_index = -1
         self._strings = []
-        for n, s in zip(list(range(len(strings))), strings):
+        for n, s in enumerate(strings):
             if s is EOF:
                 self.eof_index = n
                 continue
@@ -1726,7 +1744,7 @@ class searcher_string(object):
             ss.append((self.timeout_index,
                 '    %d: TIMEOUT' % self.timeout_index))
         ss.sort()
-        ss = zip(*ss)[1]
+        ss = list(zip(*ss))[1]
         return '\n'.join(ss)
 
     def search(self, buffer, freshlen, searchwindowsize=None):
@@ -1828,7 +1846,7 @@ class searcher_re(object):
             ss.append((self.timeout_index, '    %d: TIMEOUT' %
                 self.timeout_index))
         ss.sort()
-        ss = zip(*ss)[1]
+        ss = list(zip(*ss))[1]
         return '\n'.join(ss)
 
     def search(self, buffer, freshlen, searchwindowsize=None):
@@ -1881,7 +1899,7 @@ def which(filename):
         p = os.defpath
     else:
         p = os.environ['PATH']
-    pathlist = string.split(p, os.pathsep)
+    pathlist = p.split(os.pathsep)
     for path in pathlist:
         ff = os.path.join(path, filename)
         if os.access(ff, os.X_OK):

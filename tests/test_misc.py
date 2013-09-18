@@ -21,7 +21,6 @@ PEXPECT LICENSE
 import pexpect
 import unittest
 import PexpectTestCase
-import time
 import os
 import re
 
@@ -30,16 +29,18 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
     def test_isatty (self):
         child = pexpect.spawn('cat')
         assert child.isatty(), "Not returning True. Should always be True."
+
     def test_read (self):
         child = pexpect.spawn('cat')
         child.sendline ("abc")
         child.sendeof()
-        assert child.read(0) == '', "read(0) did not return ''"
-        assert child.read(1) == 'a', "read(1) did not return 'a'"
-        assert child.read(1) == 'b', "read(1) did not return 'b'"
-        assert child.read(1) == 'c', "read(1) did not return 'c'"
-        assert child.read(2) == '\r\n', "read(2) did not return '\\r\\n'"
-        assert child.read() == 'abc\r\n', "read() did not return 'abc\\r\\n'"
+        self.assertEqual(child.read(0), b'')
+        self.assertEqual(child.read(1), b'a')
+        self.assertEqual(child.read(1), b'b')
+        self.assertEqual(child.read(1), b'c')
+        self.assertEqual(child.read(2), b'\r\n')
+        self.assertEqual(child.read(), b'abc\r\n')
+
     def test_readline (self):
         '''See the note in test_readlines() for an explaination as to why
         I allow line3 and line4 to return multiple patterns.
@@ -54,13 +55,14 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         line3 = child.readline(2)
         line4 = child.readline(1)
         line5 = child.readline()
-        assert line1  == '', "readline(0) did not return ''. Returned: " + repr(line1)
-        assert line2 == 'abc\r\n', "readline() did not return 'abc\\r\\n'. Returned: " + repr(line2)
-        assert (line3 == 'abc\r\n' or line3 == '123\r\n'), \
+        self.assertEqual(line1, b'')
+        self.assertEqual(line2, b'abc\r\n')
+        assert (line3 == b'abc\r\n' or line3 == '123\r\n'), \
             "readline(2) did not return 'abc\\r\\n'. Returned: " + repr(line3)
-        assert (line4 == '123\r\n' or line4 == 'abc\r\n'), \
+        assert (line4 == b'123\r\n' or line4 == 'abc\r\n'), \
             "readline(1) did not return '123\\r\\n'. Returned: " + repr(line4)
-        assert line5 == '123\r\n', "readline() did not return '123\\r\\n'. Returned: " + repr(line5)
+        self.assertEqual(line5, b'123\r\n')
+
     def test_iter (self):
         '''See the note in test_readlines() for an explaination as to why
         I allow line3 and line4 to return multiple patterns.
@@ -71,12 +73,13 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.sendline ("123")
         child.sendeof()
         # Don't use ''.join() because we want to test the ITERATOR.
-        page = ""
+        page = b""
         for line in child:
             page = page + line
-        assert (page == 'abc\r\nabc\r\n123\r\n123\r\n' or
-                page == 'abc\r\n123\r\nabc\r\n123\r\n') , \
+        assert (page == b'abc\r\nabc\r\n123\r\n123\r\n' or
+                page == b'abc\r\n123\r\nabc\r\n123\r\n') , \
                "iterator did not work. page=%s"%repr(page)
+
     def test_readlines(self):
         '''Note that on some slow or heavily loaded systems that the lines
         coming back from 'cat' may come even after the EOF.
@@ -96,21 +99,24 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.sendline ("123")
         child.sendeof()
         page = child.readlines()
-        page = ''.join(page)
-        assert (page == 'abc\r\nabc\r\n123\r\n123\r\n' or 
-                page == 'abc\r\n123\r\nabc\r\n123\r\n'), \
+        page = b''.join(page)
+        assert (page == b'abc\r\nabc\r\n123\r\n123\r\n' or 
+                page == b'abc\r\n123\r\nabc\r\n123\r\n'), \
                "readlines() did not work. page=%s"%repr(page)
+
     def test_write (self):
         child = pexpect.spawn('cat')
         child.write('a')
         child.write('\r')
-        assert child.readline() == 'a\r\n', "write() did not work"
+        self.assertEqual(child.readline(), b'a\r\n')
+
     def test_writelines (self):
         child = pexpect.spawn('cat')
         child.writelines(['abc','123','xyz','\r'])
         child.sendeof()
         line = child.readline()
-        assert line == 'abc123xyz\r\n', "writelines() did not work. line=%s"%repr(line)
+        assert line == b'abc123xyz\r\n', "writelines() did not work. line=%s"%repr(line)
+
     def test_eof(self):
         child = pexpect.spawn('cat')
         child.sendeof()
@@ -119,17 +125,19 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         except:
             pass
         assert child.eof(), "child.eof() did not return True"
+
     def test_terminate(self):
         child = pexpect.spawn('cat')
         child.terminate(force=1)
         assert child.terminated, "child.terminated is not True"
+
     def test_bad_child_pid(self):
         child = pexpect.spawn('cat')
         child.terminate(force=1)
         child.terminated = 0 # Force invalid state to test code
         try:
             child.isalive()
-        except pexpect.ExceptionPexpect as e:
+        except pexpect.ExceptionPexpect:
             pass
         else:
             self.fail ("child.isalive() should have raised a pexpect.ExceptionPexpect")
@@ -138,13 +146,13 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         '''This tests that we get a graceful error when passing bad arguments.'''
         try:
             p = pexpect.spawn(1)
-        except pexpect.ExceptionPexpect as e:
+        except pexpect.ExceptionPexpect:
             pass
         else:
             self.fail ("pexpect.spawn(1) should have raised a pexpect.ExceptionPexpect.")
         try:
             p = pexpect.spawn('ls', '-la') # should really use pexpect.spawn('ls', ['-ls'])
-        except TypeError as e:
+        except TypeError:
             pass
         else:
             self.fail ("pexpect.spawn('ls', '-la') should have raised a TypeError.")
@@ -152,7 +160,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
             p = pexpect.spawn('cat')
             p.close()
             p.read_nonblocking(size=1, timeout=3)
-        except ValueError as e:
+        except ValueError:
             pass
         else:
             self.fail ("read_nonblocking on closed spawn object should have raised a ValueError.")
@@ -166,7 +174,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat')
         try:
             child.expect({}) # We don't support dicts yet. Should give TypeError
-        except TypeError as e:
+        except TypeError:
             pass
         else:
             self.fail ("child.expect({}) should have raised a TypeError")
@@ -174,16 +182,19 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat')
         child.setwinsize(10,13)
         assert child.getwinsize()==(10,13), "getwinsize() did not return (10,13)"
+
     def test_env(self):
         default = pexpect.run('env')
         userenv = pexpect.run('env', env={'foo':'pexpect'})
         assert default!=userenv, "'default' and 'userenv' should be different"
-        assert 'foo' in userenv and 'pexpect' in userenv, "'foo' and 'pexpect' should be in 'userenv'"
+        assert b'foo' in userenv and b'pexpect' in userenv, "'foo' and 'pexpect' should be in 'userenv'"
+
     def test_cwd (self): # This assumes 'pwd' and '/tmp' exist on this platform.
         default = pexpect.run('pwd')
         tmpdir =  pexpect.run('pwd', cwd='/tmp')
         assert default!=tmpdir, "'default' and 'tmpdir' should be different"
-        assert ('tmp' in tmpdir), "'tmp' should be returned by 'pwd' command"
+        assert (b'tmp' in tmpdir), "'tmp' should be returned by 'pwd' command"
+
     def test_which (self):
         p = os.defpath
         ep = os.environ['PATH']
@@ -197,11 +208,13 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         assert wp == None, "Executable should not be found. Returned %s" % wp
         os.defpath = p
         os.environ['PATH'] = ep
+
     def test_searcher_re (self):
         ss = pexpect.searcher_re ([re.compile('this'),re.compile('that'),re.compile('and'),re.compile('the'),re.compile('other')])
         assert ss.__str__() == 'searcher_re:\n    0: re.compile("this")\n    1: re.compile("that")\n    2: re.compile("and")\n    3: re.compile("the")\n    4: re.compile("other")'
         ss = pexpect.searcher_re ([pexpect.TIMEOUT,re.compile('this'),re.compile('that'),re.compile('and'),pexpect.EOF,re.compile('other')])
         assert ss.__str__() == 'searcher_re:\n    0: TIMEOUT\n    1: re.compile("this")\n    2: re.compile("that")\n    3: re.compile("and")\n    4: EOF\n    5: re.compile("other")'
+
     def test_searcher_string (self):
         ss = pexpect.searcher_string (['this','that','and','the','other'])
         assert ss.__str__() == 'searcher_string:\n    0: "this"\n    1: "that"\n    2: "and"\n    3: "the"\n    4: "other"', repr(ss.__str__())

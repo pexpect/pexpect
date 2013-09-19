@@ -19,7 +19,7 @@ PEXPECT LICENSE
 
 '''
 
-import ANSI
+from pexpect import ANSI
 import unittest
 import PexpectTestCase
 

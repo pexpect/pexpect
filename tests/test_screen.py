@@ -19,7 +19,7 @@ PEXPECT LICENSE
 
 '''
 
-import screen
+from pexpect import screen
 import unittest
 import PexpectTestCase
 

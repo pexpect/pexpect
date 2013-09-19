@@ -68,7 +68,6 @@ try:
     import sys
     import time
     import select
-    import string
     import re
     import struct
     import resource
@@ -277,15 +276,19 @@ def run(command, timeout=-1, withexitstatus=False, events=None,
 
 
 class spawn(object):
+    '''This is the main class interface for Pexpect. Use this class to start
+    and control child applications. '''
     string_type = bytes
     if six.PY3:
         allowed_string_types = (bytes, str)
+        @staticmethod
+        def _chr(c):
+            return bytes([c])
     else:
         allowed_string_types = basestring  # analysis:ignore
+        _chr = staticmethod(chr)
 
-
-    '''This is the main class interface for Pexpect. Use this class to start
-    and control child applications. '''
+    encoding = None
 
     def __init__(self, command, args=[], timeout=30, maxread=2000,
         searchwindowsize=None, logfile=None, cwd=None, env=None):
@@ -444,7 +447,6 @@ class spawn(object):
         self.delayafterterminate = 0.1
         self.softspace = False
         self.name = '<' + repr(self) + '>'
-        self.encoding = None
         self.closed = True
         self.cwd = cwd
         self.env = env
@@ -466,9 +468,19 @@ class spawn(object):
             self._spawn(command, args)
 
     @staticmethod
-    def _coerce_string(s):
+    def _coerce_expect_string(s):
         if not isinstance(s, bytes):
             return s.encode('ascii')
+        return s
+
+    @staticmethod
+    def _coerce_send_string(s):
+        if not isinstance(s, bytes):
+            return s.encode('utf-8')
+        return s
+
+    @staticmethod
+    def _coerce_read_string(s):
         return s
 
     def __del__(self):
@@ -823,6 +835,15 @@ class spawn(object):
         # TCSADRAIN would probably be ideal if it worked.
         termios.tcsetattr(self.child_fd, termios.TCSANOW, attr)
 
+    def _log(self, s, direction):
+        if self.logfile is not None:
+            self.logfile.write(s)
+            self.logfile.flush()
+        second_log = self.logfile_send if (direction=='send') else self.logfile_read
+        if second_log is not None:
+            second_log.write(s)
+            second_log.flush()
+
     def read_nonblocking(self, size=1, timeout=-1):
 
         '''This reads at most size characters from the child application. It
@@ -890,16 +911,13 @@ class spawn(object):
                 # Linux does this
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Exception style platform.')
-            if s == '':
+            if s == b'':
                 # BSD style
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Empty string style platform.')
-            if self.logfile is not None:
-                self.logfile.write(s)
-                self.logfile.flush()
-            if self.logfile_read is not None:
-                self.logfile_read.write(s)
-                self.logfile_read.flush()
+
+            s = self._coerce_read_string(s)
+            self._log(s, 'read')
             return s
 
         raise ExceptionPexpect('Reached an unexpected state.')
@@ -926,7 +944,7 @@ class spawn(object):
         # worry about if I have to later modify read() or expect().
         # Note, it's OK if size==-1 in the regex. That just means it
         # will never match anything in which case we stop only on EOF.
-        cre = re.compile(self._coerce_string('.{%d}' % size), re.DOTALL)
+        cre = re.compile(self._coerce_expect_string('.{%d}' % size), re.DOTALL)
         # delimiter default is EOF
         index = self.expect([cre, self.delimiter])
         if index == 0:
@@ -1015,17 +1033,14 @@ class spawn(object):
         the log. '''
 
         time.sleep(self.delaybeforesend)
-        if self.logfile is not None:
-            self.logfile.write(s)
-            self.logfile.flush()
-        if self.logfile_send is not None:
-            self.logfile_send.write(s)
-            self.logfile_send.flush()
         
-        if not isinstance(s, bytes):
-            s = s.encode('utf-8')
-        c = os.write(self.child_fd, s)
-        return c
+        s = self._coerce_send_string(s)
+        self._log(s, 'send')
+
+        return self._send(s)
+
+    def _send(self, s):
+        return os.write(self.child_fd, s)
 
     def sendline(self, s=''):
 
@@ -1050,7 +1065,7 @@ class spawn(object):
         a = ord(char)
         if a >= 97 and a <= 122:
             a = a - ord('a') + 1
-            return self.send(chr(a))
+            return self.send(self._chr(a))
         d = {'@': 0, '`': 0,
             '[': 27, '{': 27,
             '\\': 28, '|': 28,
@@ -1060,7 +1075,7 @@ class spawn(object):
             '?': 127}
         if char not in d:
             return 0
-        return self.send(chr(d[char]))
+        return self.send(self._chr(d[char]))
 
     def sendeof(self):
 
@@ -1090,11 +1105,11 @@ class spawn(object):
         #finally: # restore state
         #    termios.tcsetattr(fd, termios.TCSADRAIN, old)
         if hasattr(termios, 'VEOF'):
-            char = termios.tcgetattr(self.child_fd)[6][termios.VEOF]
+            char = ord(termios.tcgetattr(self.child_fd)[6][termios.VEOF])
         else:
             # platform does not define VEOF so assume CTRL-D
-            char = chr(4)
-        self.send(char)
+            char = 4
+        self.send(self._chr(char))
 
     def sendintr(self):
 
@@ -1102,11 +1117,11 @@ class spawn(object):
         the SIGINT to be the first character on a line. '''
 
         if hasattr(termios, 'VINTR'):
-            char = termios.tcgetattr(self.child_fd)[6][termios.VINTR]
+            char = ord(termios.tcgetattr(self.child_fd)[6][termios.VINTR])
         else:
             # platform does not define VINTR so assume CTRL-C
-            char = chr(3)
-        self.send(char)
+            char = 3
+        self.send(self._chr(char))
 
     def eof(self):
 
@@ -1311,7 +1326,7 @@ class spawn(object):
         compiled_pattern_list = []
         for p in patterns:
             if isinstance(p, self.allowed_string_types):
-                p = self._coerce_string(p)
+                p = self._coerce_expect_string(p)
                 compiled_pattern_list.append(re.compile(p, compile_flags))
             elif p is EOF:
                 compiled_pattern_list.append(EOF)
@@ -1439,6 +1454,13 @@ class spawn(object):
         if (isinstance(pattern_list, self.allowed_string_types) or
             pattern_list in (TIMEOUT, EOF)):
             pattern_list = [pattern_list]
+
+        def prepare_string(pattern):
+            if pattern in (TIMEOUT, EOF):
+                return pattern
+            return self._coerce_expect_string(pattern)
+
+        pattern_list = [prepare_string(p) for p in pattern_list]
         return self.expect_loop(searcher_string(pattern_list),
                 timeout, searchwindowsize)
 
@@ -1692,6 +1714,44 @@ class spawn(object):
 ##############################################################################
 # End of spawn class
 ##############################################################################
+
+class spawnu(spawn):
+    """Works like spawn, but accepts and returns unicode strings.
+
+    Extra parameters:
+
+    :param encoding: The encoding to use for communications (default: 'utf-8')
+    :param errors: How to handle encoding/decoding errors; one of 'strict'
+                   (the default), 'ignore', or 'replace', as described
+                   for :meth:`~bytes.decode` and :meth:`~str.encode`.
+    """
+    if six.PY3:
+        string_type = str
+        allowed_string_types = str
+        _chr = staticmethod(chr)
+    else:
+        string_type = unicode
+        allowed_string_types = unicode
+        _chr = staticmethod(unichr)
+
+    def __init__(self, *args, **kwargs):
+        self.encoding = kwargs.pop('encoding', 'utf-8')
+        self.errors = kwargs.pop('errors', 'strict')
+        super(spawnu, self).__init__(*args, **kwargs)
+
+    @staticmethod
+    def _coerce_expect_string(s):
+        return s
+
+    @staticmethod
+    def _coerce_send_string(s):
+        return s
+
+    def _coerce_read_string(self, s):
+        return s.decode(self.encoding, self.errors)
+
+    def _send(self, s):
+        return os.write(self.child_fd, s.encode(self.encoding, self.errors))
 
 
 class searcher_string(object):

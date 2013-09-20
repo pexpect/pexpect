@@ -18,7 +18,8 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-import fdpexpect, pexpect
+import pexpect
+from pexpect import fdpexpect
 import unittest
 import PexpectTestCase
 import os

@@ -115,13 +115,15 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
         assert str(s) == write_target
     def test_torturet (self):
         s = ANSI.ANSI (24,80)
-        sample_text = open ('torturet.vt').read()
+        with open('torturet.vt') as f:
+            sample_text = f.read()
         for c in sample_text:
             s.process (c)
         assert s.pretty() == torture_target, 'processed: \n' + s.pretty() + '\nexpected:\n' + torture_target
     def test_tetris (self):
         s = ANSI.ANSI (24,80)
-        tetris_text = open ('tetris.data').read()
+        with open('tetris.data') as f:
+            tetris_text = f.read()
         for c in tetris_text:
             s.process (c)
         assert str(s) == tetris_target

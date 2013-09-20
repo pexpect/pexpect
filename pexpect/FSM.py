@@ -92,7 +92,7 @@ class ExceptionFSM(Exception):
         self.value = value
 
     def __str__(self):
-        return `self.value`
+        return 'ExceptionFSM: ' + str(self.value)
 
 class FSM:
 
@@ -215,9 +215,9 @@ class FSM:
         4. No transition was defined. If we get here then raise an exception.
         '''
 
-        if self.state_transitions.has_key((input_symbol, state)):
+        if (input_symbol, state) in self.state_transitions:
             return self.state_transitions[(input_symbol, state)]
-        elif self.state_transitions_any.has_key (state):
+        elif state in self.state_transitions_any:
             return self.state_transitions_any[state]
         elif self.default_transition is not None:
             return self.default_transition
@@ -267,7 +267,6 @@ class FSM:
 import sys
 import os
 import traceback
-import time
 import string
 
 #
@@ -300,11 +299,11 @@ def DoOperator (fsm):
         fsm.memory.append (al / ar)
 
 def DoEqual (fsm):
-    print str(fsm.memory.pop())
+    print(str(fsm.memory.pop()))
 
 def Error (fsm):
-    print 'That does not compute.'
-    print str(fsm.input_symbol)
+    print('That does not compute.')
+    print(str(fsm.input_symbol))
 
 def main():
 
@@ -321,12 +320,12 @@ def main():
     f.add_transition_list (string.whitespace, 'BUILDING_NUMBER', EndBuildNumber,   'INIT')
     f.add_transition_list ('+-*/',            'INIT',            DoOperator,       'INIT')
 
-    print
-    print 'Enter an RPN Expression.'
-    print 'Numbers may be integers. Operators are * / + -'
-    print 'Use the = sign to evaluate and print the expression.'
-    print 'For example: '
-    print '    167 3 2 2 * * * 1 - ='
+    print()
+    print('Enter an RPN Expression.')
+    print('Numbers may be integers. Operators are * / + -')
+    print('Use the = sign to evaluate and print the expression.')
+    print('For example: ')
+    print('    167 3 2 2 * * * 1 - =')
     inputstr = raw_input ('> ')
     f.process_list(inputstr)
 
@@ -335,12 +334,12 @@ if __name__ == '__main__':
     try:
         main()
         sys.exit(0)
-    except KeyboardInterrupt, e:  # Ctrl-C
-        raise e
-    except SystemExit, e:  # sys.exit()
-        raise e
-    except Exception, e:
-        print 'ERROR, UNEXPECTED EXCEPTION'
-        print str(e)
+    except KeyboardInterrupt:  # Ctrl-C
+        raise
+    except SystemExit:  # sys.exit()
+        raise
+    except Exception as e:
+        print('ERROR, UNEXPECTED EXCEPTION')
+        print(str(e))
         traceback.print_exc()
         os._exit(1)

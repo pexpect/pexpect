@@ -21,7 +21,7 @@ PEXPECT LICENSE
 
 '''
 
-from pexpect import *
+from pexpect import spawn, ExceptionPexpect
 import os
 
 __all__ = ['fdspawn']
@@ -45,12 +45,12 @@ class fdspawn (spawn):
             fd = fd.fileno()
 
         if type(fd) != type(0):
-            raise ExceptionPexpect ('The fd argument is not an int. If this is a command string then maybe you want to use pexpect.spawn.')
+            raise ExceptionPexpect('The fd argument is not an int. If this is a command string then maybe you want to use pexpect.spawn.')
 
         try: # make sure fd is a valid file descriptor
             os.fstat(fd)
         except OSError:
-            raise ExceptionPexpect, 'The fd argument is not a valid file descriptor.'
+            raise ExceptionPexpect('The fd argument is not a valid file descriptor.')
 
         self.args = None
         self.command = None
@@ -61,23 +61,18 @@ class fdspawn (spawn):
         self.name = '<file descriptor %d>' % fd
 
     def __del__ (self):
-
         return
 
     def close (self):
-
         if self.child_fd == -1:
             return
-        if self.own_fd:
-            self.close (self)
-        else:
-            self.flush()
-            os.close(self.child_fd)
-            self.child_fd = -1
-            self.closed = True
+
+        self.flush()
+        os.close(self.child_fd)
+        self.child_fd = -1
+        self.closed = True
 
     def isalive (self):
-
         '''This checks if the file descriptor is still valid. If os.fstat()
         does not raise an exception then we assume it is alive. '''
 
@@ -90,10 +85,8 @@ class fdspawn (spawn):
             return False
 
     def terminate (self, force=False):
-
-        raise ExceptionPexpect ('This method is not valid for file descriptors.')
+        raise ExceptionPexpect('This method is not valid for file descriptors.')
 
     def kill (self, sig):
-
+        """No-op - no process to kill."""
         return
-

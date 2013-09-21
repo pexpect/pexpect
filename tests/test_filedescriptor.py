@@ -32,9 +32,9 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def test_fd (self):
         fd = os.open ('TESTDATA.txt', os.O_RDONLY)
         s = fdpexpect.fdspawn (fd)
-        s.expect ('This is the end of test data:')
-        s.expect (pexpect.EOF)
-        assert s.before == ' END\n'
+        s.expect(b'This is the end of test data:')
+        s.expect(pexpect.EOF)
+        self.assertEqual(s.before, b' END\n')
 
     def test_maxread (self):
         fd = os.open ('TESTDATA.txt', os.O_RDONLY)
@@ -43,13 +43,13 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         s.expect('2')
         s.expect ('This is the end of test data:')
         s.expect (pexpect.EOF)
-        assert s.before == ' END\n'
+        self.assertEqual(s.before, b' END\n')
 
     def test_fd_isalive (self):
         fd = os.open ('TESTDATA.txt', os.O_RDONLY)
-        s = fdpexpect.fdspawn (fd)
+        s = fdpexpect.fdspawn(fd)
         assert s.isalive()
-        os.close (fd)
+        os.close(fd)
         assert not s.isalive(), "Should not be alive after close()"
 
     def test_fd_isatty (self):

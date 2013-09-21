@@ -242,18 +242,18 @@ def run(command, timeout=-1, withexitstatus=False, events=None,
     while True:
         try:
             index = child.expect(patterns)
-            if type(child.after) in types.StringTypes:
+            if isinstance(child.after, child.allowed_string_types):
                 child_result_list.append(child.before + child.after)
             else:
                 # child.after may have been a TIMEOUT or EOF,
                 # which we don't want appended to the list.
                 child_result_list.append(child.before)
-            if type(responses[index]) in types.StringTypes:
+            if isinstance(responses[index], child.allowed_string_types):
                 child.send(responses[index])
             elif isinstance(responses[index], types.FunctionType):
                 callback_result = responses[index](locals())
                 sys.stdout.flush()
-                if type(callback_result) in types.StringTypes:
+                if isinstance(callback_result, child.allowed_string_types):
                     child.send(callback_result)
                 elif callback_result:
                     break

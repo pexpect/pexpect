@@ -92,7 +92,6 @@ __revision__ = '1'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which',
     'split_command_line', '__version__', '__revision__']
 
-
 # Exception classes used by this module.
 class ExceptionPexpect(Exception):
 
@@ -284,9 +283,11 @@ class spawn(object):
         @staticmethod
         def _chr(c):
             return bytes([c])
+        linesep = os.linesep.encode('ascii')
     else:
         allowed_string_types = basestring  # analysis:ignore
         _chr = staticmethod(chr)
+        linesep = os.linesep
 
     encoding = None
 
@@ -1048,7 +1049,7 @@ class spawn(object):
         returns the number of bytes written. '''
 
         n = self.send(s)
-        n = n + self.send(os.linesep)
+        n = n + self.send(self.linesep)
         return n
 
     def sendcontrol(self, char):
@@ -1729,10 +1730,12 @@ class spawnu(spawn):
         string_type = str
         allowed_string_types = str
         _chr = staticmethod(chr)
+        linesep = os.linesep
     else:
         string_type = unicode
         allowed_string_types = unicode
         _chr = staticmethod(unichr)
+        linesep = os.linesep.decode('ascii')
 
     def __init__(self, *args, **kwargs):
         self.encoding = kwargs.pop('encoding', 'utf-8')

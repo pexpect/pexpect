@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals
 
+import io, tempfile
+
 import pexpect
 import unittest
 import PexpectTestCase
@@ -27,13 +29,13 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         p.expect_exact('Mr. þython')
         p.sendeof()
         p.expect_exact (pexpect.EOF)
-    
+
     def test_expect_echo (self):
         '''This tests that echo can be turned on and off.
         '''
         p = pexpect.spawnu('cat', timeout=10)
         self._expect_echo(p)
-    
+
     def test_expect_echo_exact (self):
         '''Like test_expect_echo(), but using expect_exact().
         '''
@@ -61,20 +63,41 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         index = p.expect ([pexpect.EOF, 'abcdé', 'wxyz', '7890'])
         assert index == 3, "index="+str(index)
         p.sendeof()
-    
+
+    def test_log_unicode(self):
+        msg = "abcΩ÷"
+        filename_send = tempfile.mktemp()
+        filename_read = tempfile.mktemp()
+        p = pexpect.spawnu('cat')
+        p.logfile_send = io.open(filename_send, 'w', encoding='utf-8')
+        p.logfile_read = io.open(filename_read, 'w', encoding='utf-8')
+        p.sendline(msg)
+        p.sendeof()
+        p.expect(pexpect.EOF)
+        p.close()
+        p.logfile_send.close()
+        p.logfile_read.close()
+
+        with io.open(filename_send, encoding='utf-8') as f:
+            self.assertEqual(f.read(), msg+'\n\x04')
+
+        with io.open(filename_read, encoding='utf-8', newline='') as f:
+            self.assertEqual(f.read(), (msg+'\r\n')*2 )
+
+
     def test_spawn_expect_ascii_unicode(self):
         # A bytes-based spawn should be able to handle ASCII-only unicode, for
         # backwards compatibility.
         p = pexpect.spawn('cat')
         p.sendline('Camelot')
         p.expect('Camelot')
-        
+
         p.sendline('Aargh')
         p.expect_exact('Aargh')
-        
+
         p.sendeof()
         p.expect(pexpect.EOF)
-    
+
     def test_spawn_send_unicode(self):
         # A bytes-based spawn should be able to send arbitrary unicode
         p = pexpect.spawn('cat')

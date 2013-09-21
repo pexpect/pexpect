@@ -29,38 +29,38 @@ class TestCaseLog(PexpectTestCase.PexpectTestCase):
     def test_log (self):
         log_message = 'This is a test.'
         filename = tempfile.mktemp()
-        mylog = open (filename, 'w')
+        mylog = open(filename, 'wb')
         p = pexpect.spawn('echo', [log_message])
         p.logfile = mylog
-        p.expect (pexpect.EOF)
+        p.expect(pexpect.EOF)
         p.logfile = None
         mylog.close()
-        lf = open(filename).read()
-        lf = lf[:-2]
-        os.unlink (filename)
-        assert lf == log_message
+        with open(filename, 'rb') as f:
+            lf = f.read()
+        os.unlink(filename)
+        self.assertEqual(lf.rstrip(), log_message.encode('ascii'))
 
     def test_log_logfile_read (self):
         log_message = 'This is a test.'
         filename = tempfile.mktemp()
-        mylog = open (filename, 'w')
+        mylog = open(filename, 'wb')
         p = pexpect.spawn('cat')
         p.logfile_read = mylog
         p.sendline(log_message)
         p.sendeof()
-        p.expect (pexpect.EOF)
+        p.expect(pexpect.EOF)
         p.logfile = None
         mylog.close()
-        lf = open(filename).read()
-        lf = lf[:-2]
+        with open(filename, 'rb') as f:
+            lf = f.read()
         os.unlink (filename)
-        lf = lf.replace(chr(4),'')
-        assert lf == 'This is a test.\r\nThis is a test.', "The read log file has bad data. Note logfile_read should only record what we read from child and nothing else.\n" + repr(lf)
+        lf = lf.replace(b'\x04', b'')
+        self.assertEqual(lf.rstrip(), b'This is a test.\r\nThis is a test.')
 
     def test_log_logfile_send (self):
-        log_message = 'This is a test.'
+        log_message = b'This is a test.'
         filename = tempfile.mktemp()
-        mylog = open (filename, 'w')
+        mylog = open (filename, 'wb')
         p = pexpect.spawn('cat')
         p.logfile_send = mylog
         p.sendline(log_message)
@@ -68,10 +68,11 @@ class TestCaseLog(PexpectTestCase.PexpectTestCase):
         p.expect (pexpect.EOF)
         p.logfile = None
         mylog.close()
-        lf = open(filename).read()
-        lf = lf[:-2]
-        os.unlink (filename)
-        assert lf == log_message, "The send log file has bad data. Note logfile_send should only record what we sent to child and nothing else."
+        with open(filename, 'rb') as f:
+            lf = f.read()
+        os.unlink(filename)
+        lf = lf.replace(b'\x04', b'')
+        self.assertEqual(lf.rstrip(), log_message)
 
     def test_log_send_and_received (self):
 
@@ -82,7 +83,7 @@ class TestCaseLog(PexpectTestCase.PexpectTestCase):
 
         log_message = 'This is a test.'
         filename = tempfile.mktemp()
-        mylog = open (filename, 'w')
+        mylog = open(filename, 'wb')
         p = pexpect.spawn('cat')
         p.logfile = mylog
         p.sendline(log_message)
@@ -90,10 +91,11 @@ class TestCaseLog(PexpectTestCase.PexpectTestCase):
         p.expect (pexpect.EOF)
         p.logfile = None
         mylog.close()
-        lf = open(filename).read()
-        os.unlink (filename)
-        lf = lf.replace(chr(4),'')
-        assert lf == 'This is a test.\nThis is a test.\r\nThis is a test.\r\n', repr(lf)
+        with open(filename, 'rb') as f:
+            lf = f.read()
+        os.unlink(filename)
+        lf = lf.replace(b'\x04', b'')
+        self.assertEqual(lf, b'This is a test.\nThis is a test.\r\nThis is a test.\r\n')
 
 if __name__ == '__main__':
     unittest.main()

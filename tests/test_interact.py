@@ -80,7 +80,7 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         assert p.exitstatus == 0, (p.exitstatus, p.before)
 
     def test_interact_unicode (self):
-        p = pexpect.spawnu('%s interact.py' % self.PYTHONBIN)
+        p = pexpect.spawnu('%s interact.py' % (self.PYTHONBIN,))
         p.sendline (u'Hello')
         p.sendline (u'theré')
         p.sendline (u'Mr. Python🐹')

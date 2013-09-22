@@ -8,7 +8,7 @@ python:
   - pypy
 
 before_script:
-  - . test.env
+  - source test.env
 
 script:
-  - testall
+  - python tools/testall.py

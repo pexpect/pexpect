@@ -21,8 +21,6 @@ PEXPECT LICENSE
 import pexpect
 import unittest
 import PexpectTestCase
-import time
-import os
 
 class TestCtrlChars(PexpectTestCase.PexpectTestCase):
 
@@ -76,29 +74,29 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('python getch.py')
         #child.delaybeforesend = 0.1
         for i in 'abcdefghijklmnopqrstuvwxyz':
-            child.sendcontrol(i)
+            assert child.sendcontrol(i) == 1
             child.expect ('[0-9]+\r\n')
             #print child.after
 
-        child.sendcontrol('@')
+        assert child.sendcontrol('@') == 1
         child.expect ('0\r\n')
         #print child.after
-        child.sendcontrol('[')
+        assert child.sendcontrol('[') == 1
         child.expect ('27\r\n')
         #print child.after
-        child.sendcontrol('\\')
+        assert child.sendcontrol('\\') == 1
         child.expect ('28\r\n')
         #print child.after
-        child.sendcontrol(']')
+        assert child.sendcontrol(']') == 1
         child.expect ('29\r\n')
         #print child.after
-        child.sendcontrol('^')
+        assert child.sendcontrol('^') == 1
         child.expect ('30\r\n')
         #print child.after
-        child.sendcontrol('_')
+        assert child.sendcontrol('_') == 1
         child.expect ('31\r\n')
         #print child.after
-        child.sendcontrol('?')
+        assert child.sendcontrol('?') == 1
         child.expect ('127\r\n')
         #print child.after
 

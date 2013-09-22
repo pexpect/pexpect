@@ -1029,12 +1029,12 @@ class spawn(object):
 
     def send(self, s):
 
-        '''This sends a string to the child process. This returns the number of
-        bytes written. If a log file was set then the data is also written to
-        the log. '''
+        '''Sends string ``s`` to the child process, returning the number of
+        bytes written. If a logfile is specified, a copy is written to that
+        log. '''
 
         time.sleep(self.delaybeforesend)
-        
+
         s = self._coerce_send_string(s)
         self._log(s, 'send')
 
@@ -1045,8 +1045,8 @@ class spawn(object):
 
     def sendline(self, s=''):
 
-        '''This is like send(), but it adds a linefeed (os.linesep). This
-        returns the number of bytes written. '''
+        '''Sends string ``s`` to child process like send(), but it adds a
+        linefeed (os.linesep), returning number of bytes written. '''
 
         n = self.send(s)
         n = n + self.send(self.linesep)
@@ -1055,7 +1055,7 @@ class spawn(object):
     def sendcontrol(self, char):
 
         '''This sends a control character to the child such as Ctrl-C or
-        Ctrl-D. For example, to send a Ctrl-G (ASCII 7)::
+        Ctrl-D. For example, to send a Ctrl-G (ASCII 7, bell)::
 
             child.sendcontrol('g')
 

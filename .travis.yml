@@ -7,6 +7,8 @@ python:
   - 3.2
   - pypy
 
+before_script:
+  - . test.env
+
 script:
-  - python setup.py install
-  - python tools/testall.py
+  - testall

@@ -32,9 +32,11 @@ from __future__ import print_function
 import unittest
 import os, os.path
 import sys
+import platform
 
 import pexpect
-print("Testing pexpect version:", pexpect.__version__)
+print("Testing pexpect %s using python %s:" % (
+    pexpect.__version__, platform.python_version()))
 
 def add_tests_to_list (import_list, dirname, names):
     # Only check directories named 'tests'.

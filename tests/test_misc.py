@@ -24,6 +24,9 @@ import PexpectTestCase
 import os
 import re
 
+# the program cat(1) may display ^D\x08\x08 when \x04 (EOF, Ctrl-D) is sent
+_CAT_EOF = b'^D\x08\x08'
+
 class TestCaseMisc(PexpectTestCase.PexpectTestCase):
 
     def test_isatty (self):
@@ -39,7 +42,10 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         self.assertEqual(child.read(1), b'b')
         self.assertEqual(child.read(1), b'c')
         self.assertEqual(child.read(2), b'\r\n')
-        self.assertEqual(child.read(), b'abc\r\n')
+        remaining = child.read()
+        if remaining.endswith(_CAT_EOF):
+            remaining = remaining[:-len(_CAT_EOF)]
+        self.assertEqual(remaining, b'abc\r\n')
 
     def test_readline (self):
         '''See the note in test_readlines() for an explaination as to why
@@ -76,6 +82,8 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         page = b""
         for line in child:
             page = page + line
+        if page.endswith(_CAT_EOF):
+            page = page[:-len(_CAT_EOF)]
         assert (page == b'abc\r\nabc\r\n123\r\n123\r\n' or
                 page == b'abc\r\n123\r\nabc\r\n123\r\n') , \
                "iterator did not work. page=%s"%repr(page)
@@ -100,6 +108,8 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.sendeof()
         page = child.readlines()
         page = b''.join(page)
+        if page.endswith(_CAT_EOF):
+            page = page[:-len(_CAT_EOF)]
         assert (page == b'abc\r\nabc\r\n123\r\n123\r\n' or 
                 page == b'abc\r\n123\r\nabc\r\n123\r\n'), \
                "readlines() did not work. page=%s"%repr(page)

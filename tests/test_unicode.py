@@ -7,6 +7,9 @@ import pexpect
 import unittest
 import PexpectTestCase
 
+# the program cat(1) may display ^D\x08\x08 when \x04 (EOF, Ctrl-D) is sent
+_CAT_EOF = b'^D\x08\x08'
+
 class UnicodeTests(PexpectTestCase.PexpectTestCase):
     def test_expect_basic (self):
         p = pexpect.spawnu('cat')
@@ -82,7 +85,14 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
             self.assertEqual(f.read(), msg+'\n\x04')
 
         with io.open(filename_read, encoding='utf-8', newline='') as f:
-            self.assertEqual(f.read(), (msg+'\r\n')*2 )
+            output = f.read()
+            # ^D\x08\x08 may be found twice, at the end of each ``msg``,
+            # strip if found.
+            idx = output.find(_CAT_EOF.decode('utf-8'))
+            while idx != -1:
+                output = output[:idx] + output[idx + len(_CAT_EOF):]
+                idx = output.find(_CAT_EOF.decode('utf-8'))
+            self.assertEqual(output, (msg+'\r\n')*2 )
 
 
     def test_spawn_expect_ascii_unicode(self):

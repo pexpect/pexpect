@@ -24,6 +24,9 @@ import os
 import tempfile
 import PexpectTestCase
 
+# the program cat(1) may display ^D\x08\x08 when \x04 (EOF, Ctrl-D) is sent
+_CAT_EOF = b'^D\x08\x08'
+
 class TestCaseLog(PexpectTestCase.PexpectTestCase):
 
     def test_log (self):
@@ -54,8 +57,9 @@ class TestCaseLog(PexpectTestCase.PexpectTestCase):
         with open(filename, 'rb') as f:
             lf = f.read()
         os.unlink (filename)
-        lf = lf.replace(b'\x04', b'')
-        self.assertEqual(lf.rstrip(), b'This is a test.\r\nThis is a test.')
+        if lf.endswith(_CAT_EOF):
+            lf = lf[:-len(_CAT_EOF)]
+        self.assertEqual(lf, b'This is a test.\r\nThis is a test.\r\n')
 
     def test_log_logfile_send (self):
         log_message = b'This is a test.'
@@ -95,7 +99,10 @@ class TestCaseLog(PexpectTestCase.PexpectTestCase):
             lf = f.read()
         os.unlink(filename)
         lf = lf.replace(b'\x04', b'')
-        self.assertEqual(lf, b'This is a test.\nThis is a test.\r\nThis is a test.\r\n')
+        if lf.endswith(_CAT_EOF):
+            lf = lf[:-len(_CAT_EOF)]
+        self.assertEqual(lf,
+                b'This is a test.\nThis is a test.\r\nThis is a test.\r\n')
 
 if __name__ == '__main__':
     unittest.main()

@@ -7,8 +7,16 @@ python:
   - 3.2
   - pypy
 
+
+virtualenv:
+  system_site_packages: true
+
 before_script:
   - source test.env
 
+install:
+  - export PYTHONIOENCODING=UTF8
+  - python setup.py install
+
 script:
-  - python tools/testall.py
+  - ./tools/testall.py

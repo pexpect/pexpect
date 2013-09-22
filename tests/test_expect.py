@@ -265,7 +265,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self.assertEqual(the_old_way, the_new_way)
 
     def test_expect_timeout (self):
-        p = pexpect.spawn('ed', timeout=5)
+        p = pexpect.spawn('cat', timeout=5)
         i = p.expect(pexpect.TIMEOUT) # This tells it to wait for timeout.
         self.assertEqual(p.after, pexpect.TIMEOUT)
 

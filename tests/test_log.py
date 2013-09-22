@@ -57,8 +57,7 @@ class TestCaseLog(PexpectTestCase.PexpectTestCase):
         with open(filename, 'rb') as f:
             lf = f.read()
         os.unlink (filename)
-        if lf.endswith(_CAT_EOF):
-            lf = lf[:-len(_CAT_EOF)]
+        lf = lf.replace(_CAT_EOF, b'')
         self.assertEqual(lf, b'This is a test.\r\nThis is a test.\r\n')
 
     def test_log_logfile_send (self):
@@ -98,9 +97,7 @@ class TestCaseLog(PexpectTestCase.PexpectTestCase):
         with open(filename, 'rb') as f:
             lf = f.read()
         os.unlink(filename)
-        lf = lf.replace(b'\x04', b'')
-        if lf.endswith(_CAT_EOF):
-            lf = lf[:-len(_CAT_EOF)]
+        lf = lf.replace(b'\x04', b'').replace(_CAT_EOF, b'')
         self.assertEqual(lf,
                 b'This is a test.\nThis is a test.\r\nThis is a test.\r\n')
 

@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals
 
-import io, tempfile
+import tempfile
 
 import pexpect
 import unittest
 import PexpectTestCase
 
 # the program cat(1) may display ^D\x08\x08 when \x04 (EOF, Ctrl-D) is sent
-_CAT_EOF = b'^D\x08\x08'
+_CAT_EOF = '^D\x08\x08'
 
 class UnicodeTests(PexpectTestCase.PexpectTestCase):
     def test_expect_basic (self):
@@ -72,8 +72,8 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         filename_send = tempfile.mktemp()
         filename_read = tempfile.mktemp()
         p = pexpect.spawnu('cat')
-        p.logfile_send = io.open(filename_send, 'w', encoding='utf-8')
-        p.logfile_read = io.open(filename_read, 'w', encoding='utf-8')
+        p.logfile_send = open(filename_send, 'w', encoding='utf-8')
+        p.logfile_read = open(filename_read, 'w', encoding='utf-8')
         p.sendline(msg)
         p.sendeof()
         p.expect(pexpect.EOF)
@@ -81,17 +81,13 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         p.logfile_send.close()
         p.logfile_read.close()
 
-        with io.open(filename_send, encoding='utf-8') as f:
+        # ensure the 'send' log is correct,
+        with open(filename_send, encoding='utf-8') as f:
             self.assertEqual(f.read(), msg+'\n\x04')
 
-        with io.open(filename_read, encoding='utf-8', newline='') as f:
-            output = f.read()
-            # ^D\x08\x08 may be found twice, at the end of each ``msg``,
-            # strip if found.
-            idx = output.find(_CAT_EOF.decode('utf-8'))
-            while idx != -1:
-                output = output[:idx] + output[idx + len(_CAT_EOF):]
-                idx = output.find(_CAT_EOF.decode('utf-8'))
+        # ensure the 'read' log is correct,
+        with open(filename_read, encoding='utf-8', newline='') as f:
+            output = f.read().replace(_CAT_EOF, u'')
             self.assertEqual(output, (msg+'\r\n')*2 )
 
 

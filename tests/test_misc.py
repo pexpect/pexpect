@@ -42,9 +42,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         self.assertEqual(child.read(1), b'b')
         self.assertEqual(child.read(1), b'c')
         self.assertEqual(child.read(2), b'\r\n')
-        remaining = child.read()
-        if remaining.endswith(_CAT_EOF):
-            remaining = remaining[:-len(_CAT_EOF)]
+        remaining = child.read().replace(_CAT_EOF, b'')
         self.assertEqual(remaining, b'abc\r\n')
 
     def test_readline (self):
@@ -81,9 +79,8 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         # Don't use ''.join() because we want to test the ITERATOR.
         page = b""
         for line in child:
-            page = page + line
-        if page.endswith(_CAT_EOF):
-            page = page[:-len(_CAT_EOF)]
+            page += line
+        page = page.replace(_CAT_EOF, b'')
         assert (page == b'abc\r\nabc\r\n123\r\n123\r\n' or
                 page == b'abc\r\n123\r\nabc\r\n123\r\n') , \
                "iterator did not work. page=%s"%repr(page)
@@ -106,11 +103,8 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.sendline ("abc")
         child.sendline ("123")
         child.sendeof()
-        page = child.readlines()
-        page = b''.join(page)
-        if page.endswith(_CAT_EOF):
-            page = page[:-len(_CAT_EOF)]
-        assert (page == b'abc\r\nabc\r\n123\r\n123\r\n' or 
+        page = b''.join(child.readlines()).replace(_CAT_EOF, b'')
+        assert (page == b'abc\r\nabc\r\n123\r\n123\r\n' or
                 page == b'abc\r\n123\r\nabc\r\n123\r\n'), \
                "readlines() did not work. page=%s"%repr(page)
 

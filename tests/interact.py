@@ -19,5 +19,10 @@ PEXPECT LICENSE
 
 '''
 import pexpect
-p = pexpect.spawn('cat')
-p.interact()
+
+def main():
+    p = pexpect.spawn('cat')
+    p.interact()
+
+if __name__ == '__main__':
+    main()

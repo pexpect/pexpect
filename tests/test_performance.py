@@ -18,7 +18,7 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-from __future__ import print_function
+from __future__ import print_function, with_statement
 
 import unittest, time, sys
 import pexpect

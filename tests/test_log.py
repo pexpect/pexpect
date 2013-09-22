@@ -18,6 +18,7 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
+from __future__ import with_statement  # bring 'with' stmt to py25
 import pexpect
 import unittest
 import os

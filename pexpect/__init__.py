@@ -1045,8 +1045,8 @@ class spawn(object):
 
     def sendline(self, s=''):
 
-        '''Sends string ``s`` to child process like send(), but it adds a
-        linefeed (os.linesep), returning number of bytes written. '''
+        '''Wraps send(), sending string ``s`` to child process, with os.linesep
+        automatically appended. Returns number of bytes written. '''
 
         n = self.send(s)
         n = n + self.send(self.linesep)
@@ -1054,8 +1054,9 @@ class spawn(object):
 
     def sendcontrol(self, char):
 
-        '''This sends a control character to the child such as Ctrl-C or
-        Ctrl-D. For example, to send a Ctrl-G (ASCII 7, bell)::
+        '''Helper method that wraps send() with mnumonic access for sending control
+        character to the child (such as Ctrl-C or Ctrl-D).  For example, to send
+        Ctrl-G (ASCII 7, bell, '\a')::
 
             child.sendcontrol('g')
 
@@ -1611,7 +1612,7 @@ class spawn(object):
         '''
 
         # Flush the buffer.
-        self.stdout.write(self.buffer)
+        self.stdout.write(self.buffer.decode('ascii'))
         self.stdout.flush()
         self.buffer = self.string_type()
         mode = tty.tcgetattr(self.STDIN_FILENO)
@@ -1626,7 +1627,7 @@ class spawn(object):
         '''This is used by the interact() method.
         '''
 
-        while data != '' and self.isalive():
+        while data != b'' and self.isalive():
             n = os.write(fd, data)
             data = data[n:]
 
@@ -1657,7 +1658,7 @@ class spawn(object):
                 data = self.__interact_read(self.STDIN_FILENO)
                 if input_filter:
                     data = input_filter(data)
-                i = data.rfind(escape_character)
+                i = data.rfind(self._coerce_expect_string(escape_character))
                 if i != -1:
                     data = data[:i]
                     self.__interact_writen(self.child_fd, data)

@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 '''
 PEXPECT LICENSE
 
@@ -20,7 +21,7 @@ PEXPECT LICENSE
 '''
 import pexpect
 import unittest
-import sys, os, time, tty
+import time, tty
 import PexpectTestCase
 import threading
 
@@ -66,14 +67,32 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_interact (self):
         p = pexpect.spawn('%s interact.py' % self.PYTHONBIN)
-        p.sendline ('Hello')
-        p.sendline ('there')
-        p.sendline ('Mr. Python')
-        p.expect ('Hello')
-        p.expect ('there')
-        p.expect ('Mr. Python')
+        p.sendline (b'Hello')
+        p.sendline (b'there')
+        p.sendline (b'Mr. Python')
+        p.expect (b'Hello')
+        p.expect (b'there')
+        p.expect (b'Mr. Python')
+        assert p.isalive() == True, p.isalive()
         p.sendeof ()
         p.expect (pexpect.EOF)
+        assert p.isalive() == False, p.isalive()
+        assert p.exitstatus == 0, (p.exitstatus, p.before)
+
+    def test_interact_unicode (self):
+        p = pexpect.spawnu('%s interact.py' % self.PYTHONBIN)
+        p.sendline (u'Hello')
+        p.sendline (u'theré')
+        p.sendline (u'Mr. Python🐹')
+        p.expect (u'Hello')
+        p.expect (u'theré')
+        p.expect (u'Mr. Python🐹')
+        assert p.isalive() == True, p.isalive()
+        p.sendeof ()
+        p.expect (pexpect.EOF)
+        assert p.isalive() == False, p.isalive()
+        assert p.exitstatus == 0, (p.exitstatus, p.before)
+
 
 if __name__ == '__main__':
     unittest.main()

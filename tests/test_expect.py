@@ -21,7 +21,7 @@ PEXPECT LICENSE
 import pexpect
 import unittest
 import subprocess
-import sys, time
+import time
 import PexpectTestCase
 #import pdb
 

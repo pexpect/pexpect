@@ -58,8 +58,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
             child.expect ('3\r\n')
         except Exception:
             err = sys.exc_info()[1]
-            msg = " ".join("Did not echo character value: 3\n", str(err))
-            self.fail(msg)
+            self.fail(" ".join(["Did not echo character value: 3\n", str(err))])
 
     def test_bad_sendcontrol_chars (self):
 

@@ -22,7 +22,10 @@ import sys, tty, termios
 
 def main():
     while True:
-        val = ord(sys.stdin.read(1))
+        try:
+            val = ord(sys.stdin.read(1))
+        except KeyboardInterrupt:
+            val = 3
         sys.stdout.write('%d\r\n' % (val,))
         if val == 0:
             # StopIteration equivalent is ctrl+' ' (\x00, NUL)

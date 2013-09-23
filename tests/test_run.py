@@ -41,8 +41,8 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         assert exitstatus == 1, "Exit status of 'python exit1.py' should be 1."
 
     def test_run (self):
-        the_old_way = subprocess.subprocess.Popen(args=['ls', '-l', '/bin']
-                ).communicate()[0].rstrip()
+        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
+                stdout=subprocess.PIPE).communicate()[0].rstrip()
         (the_new_way, exitstatus) = pexpect.run ('ls -l /bin', withexitstatus=1)
         the_new_way = the_new_way.replace(six.b('\r'),six.b('')).rstrip()
         self.assertEqual(the_old_way, the_new_way)

@@ -18,13 +18,11 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-from __future__ import with_statement
+from __future__ import print_function
 
-import unittest, time, sys
+import unittest, time
 import pexpect
 import PexpectTestCase
-
-from pexpect import six
 
 # This isn't exactly a unit test, but it fits in nicely with the rest of the tests.
 
@@ -35,58 +33,58 @@ class PerformanceTestCase (PexpectTestCase.PexpectTestCase):
 
     def plain_range(self, n):
         e = pexpect.spawn('python')
-        self.assertEqual(e.expect(six.b('>>>')), 0)
-        e.sendline(six.b('for n in range(1, %d+1): print(n)' % n))
-        self.assertEqual(e.expect(six.b(r'\.{3}')), 0)
-        e.sendline(six.b(''))
-        self.assertEqual(e.expect([six.b('inquisition'), six.b('%d' % n)]), 1)
+        self.assertEqual(e.expect(b'>>>'), 0)
+        e.sendline(b'for n in range(1, %d+1): print(n)' % n)
+        self.assertEqual(e.expect(br'\.{3}'), 0)
+        e.sendline(b'')
+        self.assertEqual(e.expect([b'inquisition', b'%d' % n]), 1)
 
     def window_range(self, n):
         e = pexpect.spawn('python')
-        self.assertEqual(e.expect(six.b('>>>')), 0)
-        e.sendline(six.b('for n in range(1, %d+1): print(n)' % n))
+        self.assertEqual(e.expect(b'>>>'), 0)
+        e.sendline(b'for n in range(1, %d+1): print(n)' % n)
         self.assertEqual(e.expect(r'\.{3}'), 0)
-        e.sendline(six.b(''))
-        self.assertEqual(e.expect([six.b('inquisition'), six.b('%d' % n)], searchwindowsize=10), 1)
+        e.sendline(b'')
+        self.assertEqual(e.expect([b'inquisition', b'%d' % n], searchwindowsize=10), 1)
 
     def exact_range(self, n):
         e = pexpect.spawn('python')
-        self.assertEqual(e.expect_exact([six.b('>>>')]), 0)
-        e.sendline(six.b('for n in range(1, %d+1): print(n)' % n))
-        self.assertEqual(e.expect_exact([six.b('...')]), 0)
-        e.sendline(six.b(''))
-        self.assertEqual(e.expect_exact([six.b('inquisition'), six.b('%d' % n)],timeout=520), 1)
+        self.assertEqual(e.expect_exact([b'>>>']), 0)
+        e.sendline(b'for n in range(1, %d+1): print(n)' % n)
+        self.assertEqual(e.expect_exact([b'...']), 0)
+        e.sendline(b'')
+        self.assertEqual(e.expect_exact([b'inquisition', b'%d' % n],timeout=520), 1)
 
     def ewin_range(self, n):
         e = pexpect.spawn('python')
-        self.assertEqual(e.expect_exact([six.b('>>>')]), 0)
-        e.sendline(six.b('for n in range(1, %d+1): print(n)' % n))
-        self.assertEqual(e.expect_exact([six.b('...')]), 0)
-        e.sendline(six.b(''))
-        self.assertEqual(e.expect_exact([six.b('inquisition'), six.b('%d' % n)], searchwindowsize=10), 1)
+        self.assertEqual(e.expect_exact([b'>>>']), 0)
+        e.sendline(b'for n in range(1, %d+1): print(n)' % n)
+        self.assertEqual(e.expect_exact([b'...']), 0)
+        e.sendline(b'')
+        self.assertEqual(e.expect_exact([b'inquisition', b'%d' % n], searchwindowsize=10), 1)
 
     def faster_range(self, n):
         e = pexpect.spawn('python')
-        self.assertEqual(e.expect(six.b('>>>')), 0)
-        e.sendline(six.b('range(1, %d+1)' % n))
-        self.assertEqual(e.expect([six.b('inquisition'), six.b('%d' % n)]), 1)
+        self.assertEqual(e.expect(b'>>>'), 0)
+        e.sendline(b'range(1, %d+1)' % n)
+        self.assertEqual(e.expect([b'inquisition', b'%d' % n]), 1)
 
     def test_100000(self):
         start_time = time.time()
         self.plain_range (100000)
-        six.print_("100000 calls to plain_range:", (time.time() - start_time))
+        print("100000 calls to plain_range:", (time.time() - start_time))
         start_time = time.time()
         self.window_range(100000)
-        six.print_("100000 calls to window_range:", (time.time() - start_time))
+        print("100000 calls to window_range:", (time.time() - start_time))
         start_time = time.time()
         self.exact_range (100000)
-        six.print_("100000 calls to exact_range:", (time.time() - start_time))
+        print("100000 calls to exact_range:", (time.time() - start_time))
         start_time = time.time()
         self.ewin_range  (100000)
-        six.print_("100000 calls to ewin_range:", (time.time() - start_time))
+        print("100000 calls to ewin_range:", (time.time() - start_time))
         start_time = time.time()
         self.faster_range(100000)
-        six.print_("100000 calls to faster_range:", (time.time() - start_time))
+        print("100000 calls to faster_range:", (time.time() - start_time))
 
 if __name__ == "__main__":
     unittest.main()

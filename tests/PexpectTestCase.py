@@ -18,10 +18,11 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
+from __future__ import print_function
+
 import unittest
 import sys
 import os
-from pexpect import six
 
 class PexpectTestCase(unittest.TestCase):
     def setUp(self):
@@ -29,7 +30,7 @@ class PexpectTestCase(unittest.TestCase):
         self.original_path = os.getcwd()
         newpath = os.path.join (os.environ['PROJECT_PEXPECT_HOME'], 'tests')
         os.chdir (newpath)
-        six.print_('\n', self.id(), end='')
+        print('\n', self.id(), end='')
         unittest.TestCase.setUp(self)
     def tearDown(self):
         os.chdir (self.original_path)

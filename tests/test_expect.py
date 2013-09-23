@@ -308,9 +308,9 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
                 break
         the_new_way = the_new_way.rstrip()
         the_new_way = the_new_way.replace(six.b('\r\n'), six.b('\n')
-                ).replace(six.b('\r'), six.b('\n')).replace('\n\n', '\n').rstrip()
+                ).replace(six.b('\r'), six.b('\n')).replace(six.b('\n\n'), six.b('\n')).rstrip()
         the_old_way = the_old_way.replace(six.b('\r\n'), six.b('\n')
-                ).replace(six.b('\r'), six.b('\n')).replace('\n\n', '\n').rstrip()
+                ).replace(six.b('\r'), six.b('\n')).replace(six.b('\n\n'), six.b('\n')).rstrip()
         assert the_old_way == the_new_way, hex_diff(the_old_way, the_new_way)
 
     def test_expect_exact (self):
@@ -324,9 +324,9 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
             if i == 1:
                 break
         the_new_way = the_new_way.replace(six.b('\r\n'), six.b('\n')
-                ).replace(six.b('\r'), six.b('\n')).replace('\n\n', '\n').rstrip()
+                ).replace(six.b('\r'), six.b('\n')).replace(six.b('\n\n'), six.b('\n')).rstrip()
         the_old_way = the_old_way.replace(six.b('\r\n'), six.b('\n')
-                ).replace(six.b('\r'), six.b('\n')).replace('\n\n', '\n').rstrip()
+                ).replace(six.b('\r'), six.b('\n')).replace(six.b('\n\n'), six.b('\n')).rstrip()
         assert the_old_way == the_new_way, hex_diff(the_old_way, the_new_way)
         p = pexpect.spawn('echo hello.?world')
         i = p.expect_exact(six.b('.?'))
@@ -340,9 +340,9 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.expect(pexpect.EOF) # This basically tells it to read everything. Same as pexpect.run() function.
         the_new_way = p.before
         the_new_way = the_new_way.replace(six.b('\r\n'), six.b('\n')
-                ).replace(six.b('\r'), six.b('\n')).replace('\n\n', '\n').rstrip()
+                ).replace(six.b('\r'), six.b('\n')).replace(six.b('\n\n'), six.b('\n')).rstrip()
         the_old_way = the_old_way.replace(six.b('\r\n'), six.b('\n')
-                ).replace(six.b('\r'), six.b('\n')).replace('\n\n', '\n').rstrip()
+                ).replace(six.b('\r'), six.b('\n')).replace(six.b('\n\n'), six.b('\n')).rstrip()
         assert the_old_way == the_new_way, hex_diff(the_old_way, the_new_way)
 
     def test_expect_timeout (self):
@@ -483,11 +483,18 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.expect(six.b('>>> '))
 
         try:
-            p.expect(12345)
+            p.expect([1,'2','3','4','5'])
             assert False, 'TypeError should have been raised'
         except TypeError:
             err = sys.exc_info()[1]
             e_msg = "pattern is <type 'int'> at position 0, must be one of"
+            if hasattr(err, 'message'):
+                assert err.message.startswith(e_msg), err.message
+            else:
+                assert str(err).startswith(e_msg), err
+        except AttributeError:
+            err = sys.exc_info()[1]
+            e_msg = "'int' object has no attribute 'encode'"
             if hasattr(err, 'message'):
                 assert err.message.startswith(e_msg), err.message
             else:

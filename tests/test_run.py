@@ -22,6 +22,7 @@ import pexpect
 import unittest
 import subprocess
 import PexpectTestCase
+from pexpect import six
 
 # TODO Many of these test cases blindly assume that sequential
 # TODO listing of the /bin directory will yield the same results.
@@ -40,9 +41,10 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         assert exitstatus == 1, "Exit status of 'python exit1.py' should be 1."
 
     def test_run (self):
-        the_old_way = subprocess.check_output(['ls', '-l', '/bin']).rstrip()
+        the_old_way = subprocess.subprocess.Popen(args=['ls', '-l', '/bin']
+                ).communicate()[0].rstrip()
         (the_new_way, exitstatus) = pexpect.run ('ls -l /bin', withexitstatus=1)
-        the_new_way = the_new_way.replace(b'\r',b'').rstrip()
+        the_new_way = the_new_way.replace(six.b('\r'),six.b('')).rstrip()
         self.assertEqual(the_old_way, the_new_way)
         self.assertEqual(exitstatus, 0)
 

@@ -23,6 +23,7 @@ from pexpect import fdpexpect
 import unittest
 import PexpectTestCase
 import os
+from pexpect import six
 
 class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def setUp(self):
@@ -32,9 +33,9 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def test_fd (self):
         fd = os.open ('TESTDATA.txt', os.O_RDONLY)
         s = fdpexpect.fdspawn (fd)
-        s.expect(b'This is the end of test data:')
+        s.expect(six.b('This is the end of test data:'))
         s.expect(pexpect.EOF)
-        self.assertEqual(s.before, b' END\n')
+        self.assertEqual(s.before, six.b(' END\n'))
 
     def test_maxread (self):
         fd = os.open ('TESTDATA.txt', os.O_RDONLY)
@@ -43,7 +44,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         s.expect('2')
         s.expect ('This is the end of test data:')
         s.expect (pexpect.EOF)
-        self.assertEqual(s.before, b' END\n')
+        self.assertEqual(s.before, six.b(' END\n'))
 
     def test_fd_isalive (self):
         fd = os.open ('TESTDATA.txt', os.O_RDONLY)

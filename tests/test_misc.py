@@ -24,9 +24,10 @@ import unittest
 import PexpectTestCase
 import os
 import re
+from pexpect import six
 
 # the program cat(1) may display ^D\x08\x08 when \x04 (EOF, Ctrl-D) is sent
-_CAT_EOF = b'^D\x08\x08'
+_CAT_EOF = six.b('^D\x08\x08')
 
 class TestCaseMisc(PexpectTestCase.PexpectTestCase):
 
@@ -38,13 +39,13 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat')
         child.sendline ("abc")
         child.sendeof()
-        self.assertEqual(child.read(0), b'')
-        self.assertEqual(child.read(1), b'a')
-        self.assertEqual(child.read(1), b'b')
-        self.assertEqual(child.read(1), b'c')
-        self.assertEqual(child.read(2), b'\r\n')
-        remaining = child.read().replace(_CAT_EOF, b'')
-        self.assertEqual(remaining, b'abc\r\n')
+        self.assertEqual(child.read(0), six.b(''))
+        self.assertEqual(child.read(1), six.b('a'))
+        self.assertEqual(child.read(1), six.b('b'))
+        self.assertEqual(child.read(1), six.b('c'))
+        self.assertEqual(child.read(2), six.b('\r\n'))
+        remaining = child.read().replace(_CAT_EOF, six.b(''))
+        self.assertEqual(remaining, six.b('abc\r\n'))
 
     def test_readline (self):
         '''See the note in test_readlines() for an explaination as to why
@@ -60,13 +61,13 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         line3 = child.readline(2)
         line4 = child.readline(1)
         line5 = child.readline()
-        self.assertEqual(line1, b'')
-        self.assertEqual(line2, b'abc\r\n')
-        assert (line3 == b'abc\r\n' or line3 == '123\r\n'), \
+        self.assertEqual(line1, six.b(''))
+        self.assertEqual(line2, six.b('abc\r\n'))
+        assert (line3 == six.b('abc\r\n') or line3 == '123\r\n'), \
             "readline(2) did not return 'abc\\r\\n'. Returned: " + repr(line3)
-        assert (line4 == b'123\r\n' or line4 == 'abc\r\n'), \
+        assert (line4 == six.b('123\r\n') or line4 == 'abc\r\n'), \
             "readline(1) did not return '123\\r\\n'. Returned: " + repr(line4)
-        self.assertEqual(line5, b'123\r\n')
+        self.assertEqual(line5, six.b('123\r\n'))
 
     def test_iter (self):
         '''See the note in test_readlines() for an explaination as to why
@@ -78,12 +79,12 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.sendline ("123")
         child.sendeof()
         # Don't use ''.join() because we want to test the ITERATOR.
-        page = b""
+        page = six.b('')
         for line in child:
             page += line
-        page = page.replace(_CAT_EOF, b'')
-        assert (page == b'abc\r\nabc\r\n123\r\n123\r\n' or
-                page == b'abc\r\n123\r\nabc\r\n123\r\n') , \
+        page = page.replace(_CAT_EOF, six.b(''))
+        assert (page == six.b('abc\r\nabc\r\n123\r\n123\r\n') or
+                page == six.b('abc\r\n123\r\nabc\r\n123\r\n')) , \
                "iterator did not work. page=%s"%repr(page)
 
     def test_readlines(self):
@@ -104,23 +105,23 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.sendline ("abc")
         child.sendline ("123")
         child.sendeof()
-        page = b''.join(child.readlines()).replace(_CAT_EOF, b'')
-        assert (page == b'abc\r\nabc\r\n123\r\n123\r\n' or
-                page == b'abc\r\n123\r\nabc\r\n123\r\n'), \
+        page = six.b('').join(child.readlines()).replace(_CAT_EOF, six.b(''))
+        assert (page == six.b('abc\r\nabc\r\n123\r\n123\r\n') or
+                page == six.b('abc\r\n123\r\nabc\r\n123\r\n')), \
                "readlines() did not work. page=%s"%repr(page)
 
     def test_write (self):
         child = pexpect.spawn('cat')
         child.write('a')
         child.write('\r')
-        self.assertEqual(child.readline(), b'a\r\n')
+        self.assertEqual(child.readline(), six.b('a\r\n'))
 
     def test_writelines (self):
         child = pexpect.spawn('cat')
         child.writelines(['abc','123','xyz','\r'])
         child.sendeof()
         line = child.readline()
-        assert line == b'abc123xyz\r\n', "writelines() did not work. line=%s"%repr(line)
+        assert line == six.b('abc123xyz\r\n'), "writelines() did not work. line=%s"%repr(line)
 
     def test_eof(self):
         child = pexpect.spawn('cat')
@@ -192,13 +193,13 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         default = pexpect.run('env')
         userenv = pexpect.run('env', env={'foo':'pexpect'})
         assert default!=userenv, "'default' and 'userenv' should be different"
-        assert b'foo' in userenv and b'pexpect' in userenv, "'foo' and 'pexpect' should be in 'userenv'"
+        assert six.b('foo') in userenv and six.b('pexpect') in userenv, "'foo' and 'pexpect' should be in 'userenv'"
 
     def test_cwd (self): # This assumes 'pwd' and '/tmp' exist on this platform.
         default = pexpect.run('pwd')
         tmpdir =  pexpect.run('pwd', cwd='/tmp')
         assert default!=tmpdir, "'default' and 'tmpdir' should be different"
-        assert (b'tmp' in tmpdir), "'tmp' should be returned by 'pwd' command"
+        assert (six.b('tmp') in tmpdir), "'tmp' should be returned by 'pwd' command"
 
     def test_which (self):
         p = os.defpath

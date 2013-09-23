@@ -43,7 +43,7 @@ class Exp_TimeoutTestCase(PexpectTestCase.PexpectTestCase):
             p.sendline('Hello')
             p.expect('Hello')
             p.expect('Goodbye',timeout=5)
-        except pexpect.TIMEOUT as expTimeoutInst:
+        except pexpect.TIMEOUT:
             assert p.match_index == None
         else:
             self.fail("Did not generate a TIMEOUT exception.")
@@ -63,9 +63,10 @@ class Exp_TimeoutTestCase(PexpectTestCase.PexpectTestCase):
             p = pexpect.spawn('cat')
             p.sendline('Hello')
             p.expect('Goodbye',timeout=5)
-        except pexpect.TIMEOUT as e:
-            if e.get_trace().count("pexpect.py") != 0:
-                self.fail("The TIMEOUT get_trace() referenced pexpect.py. It should only reference the caller.\n"+e.get_trace())
+        except pexpect.TIMEOUT, err:
+            if err.get_trace().count("pexpect.py") != 0:
+                self.fail("The TIMEOUT get_trace() referenced pexpect.py. "
+                    "It should only reference the caller.\n" + err.get_trace())
 
     def test_correctStackTrace (self):
         '''Verify that the stack trace returned with a TIMEOUT instance correctly handles function calls.'''
@@ -76,9 +77,11 @@ class Exp_TimeoutTestCase(PexpectTestCase.PexpectTestCase):
             p = pexpect.spawn('cat')
             p.sendline('Hello')
             nestedFunction(p)
-        except pexpect.TIMEOUT as e:
-            if e.get_trace().count("nestedFunction") == 0:
-                self.fail("The TIMEOUT get_trace() did not show the call to the nestedFunction function.\n" + str(e) + "\n" + e.get_trace())
+        except pexpect.TIMEOUT, err:
+            if err.get_trace().count("nestedFunction") == 0:
+                self.fail("The TIMEOUT get_trace() did not show the call "
+                    "to the nestedFunction function.\n" + str(err) + "\n"
+                    + err.get_trace())
 
 if __name__ == '__main__':
     unittest.main()

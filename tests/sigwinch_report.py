@@ -17,9 +17,8 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-from __future__ import print_function
-
 import signal, time, struct, fcntl, termios, sys
+from pexpect import six
 
 def getwinsize():
     '''This returns the window size of the child tty.
@@ -36,7 +35,7 @@ def getwinsize():
 def handler(signum, frame):
     print('signal')
     sys.stdout.flush()
-    print('SIGWINCH:', getwinsize ())
+    six.print_('SIGWINCH:', getwinsize ())
     sys.stdout.flush()
 
 print("setting handler for SIGWINCH")

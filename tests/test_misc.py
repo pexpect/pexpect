@@ -107,6 +107,8 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.sendline ("abc")
         child.sendline ("123")
         child.sendeof()
+        assert child.isalive() is False, child.isalive
+        assert child.exitstatus == 0, child.exitstatus
         page = six.b('').join(child.readlines()).replace(_CAT_EOF, six.b(''))
         assert (page == six.b('abc\r\nabc\r\n123\r\n123\r\n') or
                 page == six.b('abc\r\n123\r\nabc\r\n123\r\n')), \

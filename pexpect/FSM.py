@@ -338,8 +338,8 @@ if __name__ == '__main__':
         raise
     except SystemExit:  # sys.exit()
         raise
-    except Exception as e:
+    except Exception(err):
         print('ERROR, UNEXPECTED EXCEPTION')
-        print(str(e))
+        print(str(err))
         traceback.print_exc()
         os._exit(1)

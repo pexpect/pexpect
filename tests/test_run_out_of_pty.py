@@ -39,7 +39,8 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
                         for c in range (0, count):
                             plist[c].close()
                         return
-                except Exception, err:
+                except Exception:
+                        err = sys.exc_info()[1]
                         self.fail ('Expected ExceptionPexpect. ' + str(err))
         self.fail ('Could not run out of pty devices. This may be OK.')
 

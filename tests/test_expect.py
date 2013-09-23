@@ -493,7 +493,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
                 assert (err.message.startswith(e_msg_py2)
                         or err.message.startswith(e_msg_py3)), err.message
             else:
-                assert str(err).startswith(e_msg), err
+                assert str(err).startswith(e_msg_py3), err
         except AttributeError:
             err = sys.exc_info()[1]
             e_msg = "'int' object has no attribute 'encode'"

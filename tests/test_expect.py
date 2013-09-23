@@ -487,9 +487,11 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
             assert False, 'TypeError should have been raised'
         except TypeError:
             err = sys.exc_info()[1]
-            e_msg = "pattern is <type 'int'> at position 0, must be one of"
+            e_msg_py2 = "pattern is <type 'int'> at position 0, must be one of"
+            e_msg_py3 = "pattern is <type 'int'> at position 0, must be one of"
             if hasattr(err, 'message'):
-                assert err.message.startswith(e_msg), err.message
+                assert (err.message.startswith(e_msg_py2)
+                        or err.message.startswith(e_msg_py3)), err.message
             else:
                 assert str(err).startswith(e_msg), err
         except AttributeError:

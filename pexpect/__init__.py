@@ -80,7 +80,8 @@ try:
     import traceback
     import signal
     import platform
-except ImportError, err:
+except ImportError:
+    err = sys.exc_info()[1]
     raise ImportError(str(err) + '''
 
 A critical module was not found. Probably this operating system does not
@@ -267,7 +268,7 @@ def run(command, timeout=-1, withexitstatus=False, events=None,
         except EOF:
             child_result_list.append(child.before)
             break
-    child_result = six.b(''.join(child_result_list))
+    child_result = child.string_type().join(child_result_list)
     if withexitstatus:
         child.close()
         return (child_result, child.exitstatus)
@@ -587,7 +588,8 @@ class spawn(object):
         if self.use_native_pty_fork:
             try:
                 self.pid, self.child_fd = pty.fork()
-            except OSError, err:
+            except OSError:
+                err = sys.exc_info()[1]
                 raise ExceptionPexpect('pty.fork() failed: ' + str(err))
         else:
             # Use internal __fork_pty
@@ -1230,7 +1232,8 @@ class spawn(object):
 
         try:
             pid, status = os.waitpid(self.pid, waitpid_options)
-        except OSError, err:
+        except OSError:
+            err = sys.exc_info()[1]
             # No child processes
             if err.errno == errno.ECHILD:
                 raise ExceptionPexpect('isalive() encountered condition ' +
@@ -1248,15 +1251,16 @@ class spawn(object):
             try:
                 ### os.WNOHANG) # Solaris!
                 pid, status = os.waitpid(self.pid, waitpid_options)
-            except OSError, err:
+            except OSError:
+                e = sys.exc_info()[1]
                 # This should never happen...
-                if e[0] == errno.ECHILD:
+                if err[0] == errno.ECHILD:
                     raise ExceptionPexpect('isalive() encountered condition ' +
                             'that should never happen. There was no child ' +
                             'process. Did someone else call waitpid() ' +
                             'on our process?')
                 else:
-                    raise e
+                    raise err
 
             # If pid is still 0 after two calls to waitpid() then the process
             # really is alive. This seems to work on all platforms, except for
@@ -1342,13 +1346,12 @@ class spawn(object):
             elif isinstance(p, type(re.compile(''))):
                 compiled_pattern_list.append(p)
             else:
-                raise TypeError('pattern is type %s at position %d, '
-                        'must be one of: %s' % (type(p), idx,
-                            ', '.join([str(ast)
-                                for ast in self.allowed_string_types]
-                                + [type(EOF), type(TIMEOUT),
-                                    type(re.compile(''))]),))
-
+                raise TypeError('pattern is %s at position %d, '
+                    'must be one of: %s' % (
+                        str(type(p)), idx, ', '.join([str(ast)
+                            for ast in self.allowed_string_types
+                            ] + [str(EOF), str(TIMEOUT),
+                                str(type(re.compile('')))]),))
         return compiled_pattern_list
 
     def expect(self, pattern, timeout=-1, searchwindowsize=-1):
@@ -1514,7 +1517,8 @@ class spawn(object):
                 incoming = incoming + c
                 if timeout is not None:
                     timeout = end_time - time.time()
-        except EOF, err:
+        except EOF:
+            err = sys.exc_info()[1]
             self.buffer = self.string_type()
             self.before = incoming
             self.after = EOF
@@ -1527,7 +1531,8 @@ class spawn(object):
                 self.match = None
                 self.match_index = None
                 raise EOF(str(err) + '\n' + str(self))
-        except TIMEOUT, err:
+        except TIMEOUT:
+            err = sys.exc_info()[1]
             self.buffer = incoming
             self.before = incoming
             self.after = TIMEOUT
@@ -1687,8 +1692,9 @@ class spawn(object):
         while True:
             try:
                 return select.select(iwtd, owtd, ewtd, timeout)
-            except select.error, err:
-                if e[0] == errno.EINTR:
+            except select.error:
+                err = sys.exc_info()[1]
+                if err[0] == errno.EINTR:
                     # if we loop back we have to subtract the
                     # amount of time we already waited.
                     if timeout is not None:

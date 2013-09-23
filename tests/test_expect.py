@@ -108,6 +108,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
         (Or does it?  Doesn't it also pass if expect() always chooses
         (one of the) the leftmost matches in the input? -- grahn)
+        ... agreed! -jquast, the buffer ptr isn't forwarded on match, see first two test cases
         '''
         p = pexpect.spawn('cat')
         self._expect_order(p)
@@ -131,21 +132,21 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
             six.b('wxyz'),
             pexpect.EOF,
             six.b('7890') ])
-        assert index == 0, "index="+str(index)
+        assert index == 0, (index, p.before, p.after)
         index = p.expect ([
             six.b('1234'),
             six.b('abcd'),
             six.b('wxyz'),
             pexpect.EOF,
             six.b('7890') ])
-        assert index == 0, "index="+str(index)
+        assert index == 0, (index, p.before, p.after)
         index = p.expect ([
             pexpect.EOF,
             pexpect.TIMEOUT,
             six.b('wxyz'),
             six.b('abcd'),
             six.b('1234') ])
-        assert index == 3, "index="+str(index)
+        assert index == 3, (index, p.before, p.after)
         index = p.expect ([
             six.b('54321'),
             pexpect.TIMEOUT,
@@ -153,7 +154,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
             six.b('abcd'),
             six.b('wxyz'),
             pexpect.EOF], timeout=5)
-        assert index == 3, "index="+str(index)
+        assert index == 3, (index, p.before, p.after)
         index = p.expect ([
             six.b('54321'),
             pexpect.TIMEOUT,
@@ -161,7 +162,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
             six.b('abcd'),
             six.b('wxyz'),
             pexpect.EOF], timeout=5)
-        assert index == 4, "index="+str(index)
+        assert index == 4, (index, p.before, p.after)
         index = p.expect ([
             six.b('54321'),
             pexpect.TIMEOUT,
@@ -169,19 +170,19 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
             six.b('abcd'),
             six.b('wxyz'),
             pexpect.EOF], timeout=5)
-        assert index == 4, "index="+str(index)
+        assert index == 4, (index, p.before, p.after)
         index = p.expect ([
             pexpect.EOF,
             six.b('abcd'),
             six.b('wxyz'),
             six.b('7890') ])
-        assert index == 3, "index="+str(index)
+        assert index == 3, (index, p.before, p.after)
         index = p.expect ([
             pexpect.EOF,
             six.b('abcd'),
             six.b('wxyz'),
             six.b('7890') ])
-        assert index == 3, "index="+str(index)
+        assert index == 3, (index, p.before, p.after)
 
     def test_waitnoecho (self):
 
@@ -488,7 +489,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         except TypeError:
             err = sys.exc_info()[1]
             e_msg_py2 = "pattern is <type 'int'> at position 0, must be one of"
-            e_msg_py3 = "pattern is <type 'int'> at position 0, must be one of"
+            e_msg_py3 = "pattern is <class 'int'> at position 0, must be one of"
             if hasattr(err, 'message'):
                 assert (err.message.startswith(e_msg_py2)
                         or err.message.startswith(e_msg_py3)), err.message

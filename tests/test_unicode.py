@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function, unicode_literals, with_statement
 
+import platform
 import tempfile
 
 import pexpect
@@ -72,6 +73,16 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         filename_send = tempfile.mktemp()
         filename_read = tempfile.mktemp()
         p = pexpect.spawnu('cat')
+        if platform.python_version_tuple() < ('3', '0', '0'):
+            import codecs
+            def open(fname, mode, **kwargs):
+                if 'newline' in kwargs:
+                    del kwargs['newline']
+                return codecs.open(fname, mode, **kwargs)
+        else:
+            import io
+            open = io.open
+
         p.logfile_send = open(filename_send, 'w', encoding='utf-8')
         p.logfile_read = open(filename_read, 'w', encoding='utf-8')
         p.sendline(msg)
@@ -82,11 +93,11 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         p.logfile_read.close()
 
         # ensure the 'send' log is correct,
-        with open(filename_send, encoding='utf-8') as f:
+        with open(filename_send, 'r', encoding='utf-8') as f:
             self.assertEqual(f.read(), msg+'\n\x04')
 
         # ensure the 'read' log is correct,
-        with open(filename_read, encoding='utf-8', newline='') as f:
+        with open(filename_read, 'r', encoding='utf-8', newline='') as f:
             output = f.read().replace(_CAT_EOF, u'')
             self.assertEqual(output, (msg+'\r\n')*2 )
 

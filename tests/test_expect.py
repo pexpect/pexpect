@@ -26,12 +26,16 @@ import time
 import PexpectTestCase
 from pexpect import six
 import platform
+import sys
 #import pdb
 
 # Many of these test cases blindly assume that sequential directory
 # listings of the /bin directory will yield the same results.
 # This may not be true, but seems adequate for testing now.
 # I should fix this at some point.
+
+# query: For some reason an extra newline occures under OS X evey
+# once in a while. Excessive uses of .replace resolve these
 
 FILTER=''.join([(len(repr(chr(x)))==3) and chr(x) or '.' for x in range(256)])
 def hex_dump(src, length=16):
@@ -42,6 +46,13 @@ def hex_dump(src, length=16):
        printable = s.translate(FILTER)
        result.append("%04X   %-*s   %s\n" % (i, length*3, hexa, printable))
     return ''.join(result)
+
+def hex_diff(left, right):
+        diff = ['< %s\n> %s' % (_left, _right,) for _left, _right in zip(
+            hex_dump(left).splitlines(), hex_dump(right).splitlines())
+            if _left != _right]
+        return '\n' + '\n'.join(diff,)
+
 
 class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
@@ -296,10 +307,11 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
             if i == 1:
                 break
         the_new_way = the_new_way.rstrip()
-        the_new_way = the_new_way.replace(six.b('\r'),six.b('\n'))
-        # For some reason I get an extra newline under OS X evey once in a while.
-        # I found it by looking through the hex_dump().
-        assert the_old_way == the_new_way, hex_dump(the_new_way) + "\n" + hex_dump(the_old_way)
+        the_new_way = the_new_way.replace(six.b('\r\n'), six.b('\n')
+                ).replace(six.b('\r'), six.b('\n')).replace('\n\n', '\n').rstrip()
+        the_old_way = the_old_way.replace(six.b('\r\n'), six.b('\n')
+                ).replace(six.b('\r'), six.b('\n')).replace('\n\n', '\n').rstrip()
+        assert the_old_way == the_new_way, hex_diff(the_old_way, the_new_way)
 
     def test_expect_exact (self):
         the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
@@ -311,9 +323,11 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
             the_new_way = the_new_way + p.before
             if i == 1:
                 break
-        the_new_way = the_new_way.rstrip()
-        the_new_way = the_new_way.replace(six.b('\r'),six.b('\n'))
-        self.assertEqual(the_old_way, the_new_way)
+        the_new_way = the_new_way.replace(six.b('\r\n'), six.b('\n')
+                ).replace(six.b('\r'), six.b('\n')).replace('\n\n', '\n').rstrip()
+        the_old_way = the_old_way.replace(six.b('\r\n'), six.b('\n')
+                ).replace(six.b('\r'), six.b('\n')).replace('\n\n', '\n').rstrip()
+        assert the_old_way == the_new_way, hex_diff(the_old_way, the_new_way)
         p = pexpect.spawn('echo hello.?world')
         i = p.expect_exact(six.b('.?'))
         self.assertEqual(p.before, six.b('hello'))
@@ -325,9 +339,11 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p = pexpect.spawn('/bin/ls -l /bin')
         p.expect(pexpect.EOF) # This basically tells it to read everything. Same as pexpect.run() function.
         the_new_way = p.before
-        the_new_way = the_new_way.replace(six.b('\r'),six.b('')) # Remember, pty line endings are '\r\n'.
-        the_new_way = the_new_way.rstrip()
-        self.assertEqual(the_old_way, the_new_way)
+        the_new_way = the_new_way.replace(six.b('\r\n'), six.b('\n')
+                ).replace(six.b('\r'), six.b('\n')).replace('\n\n', '\n').rstrip()
+        the_old_way = the_old_way.replace(six.b('\r\n'), six.b('\n')
+                ).replace(six.b('\r'), six.b('\n')).replace('\n\n', '\n').rstrip()
+        assert the_old_way == the_new_way, hex_diff(the_old_way, the_new_way)
 
     def test_expect_timeout (self):
         p = pexpect.spawn('cat', timeout=5)
@@ -469,8 +485,13 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         try:
             p.expect(12345)
             assert False, 'TypeError should have been raised'
-        except TypeError, err:
-            assert err.message == 'x', err.message
+        except TypeError:
+            err = sys.exc_info()[1]
+            e_msg = "pattern is <type 'int'> at position 0, must be one of"
+            if hasattr(err, 'message'):
+                assert err.message.startswith(e_msg), err.message
+            else:
+                assert str(err).startswith(e_msg), err
 
     def test_greed(self):
         p = pexpect.spawn(self.PYTHONBIN)

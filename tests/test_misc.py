@@ -61,7 +61,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         line3 = child.readline(2)
         line4 = child.readline(1)
         line5 = child.readline()
-        assert child.isalive() is False, child.isalive()
+        assert not child.isalive(), child.isalive()
         assert child.exitstatus == 0, child.exitstatus
         self.assertEqual(line1, six.b(''))
         self.assertEqual(line2, six.b('abc\r\n'))
@@ -107,7 +107,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.sendline ("abc")
         child.sendline ("123")
         child.sendeof()
-        assert child.isalive() is False, child.isalive
+        assert not child.isalive(), child.isalive()
         assert child.exitstatus == 0, child.exitstatus
         page = six.b('').join(child.readlines()).replace(_CAT_EOF, six.b(''))
         assert (page == six.b('abc\r\nabc\r\n123\r\n123\r\n') or
@@ -176,10 +176,10 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
             self.fail ("read_nonblocking on closed spawn object should have raised a ValueError.")
     def test_isalive(self):
         child = pexpect.spawn('cat')
-        assert child.isalive(), "child.isalive() did not return True"
+        assert child.isalive(), child.isalive()
         child.sendeof()
         child.expect(pexpect.EOF)
-        assert not child.isalive(), "child.isalive() did not return False"
+        assert not child.isalive(), child.isalive()
     def test_bad_type_in_expect(self):
         child = pexpect.spawn('cat')
         try:

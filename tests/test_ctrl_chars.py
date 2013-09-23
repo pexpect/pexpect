@@ -44,7 +44,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
             for i in range(256):
 #                child.send(unicode('%d'%i, encoding='utf-8'))
                 child.send(chr(i))
-                child.expect ('%d\r\n' % i)
+                child.expect ('%d\r\n' % (i,))
         except Exception:
             err = sys.exc_info()[1]
             msg = "Did not echo character value: " + str(i) + "\n"
@@ -78,9 +78,9 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         for ctrl in 'abcdefghijklmnopqrstuvwxyz':
             assert child.sendcontrol(ctrl) == 1
             # Strange: on travis-ci, getch.py actually displays ^A, not '1' !?
-            child.expect ('^(%d|\^%s)\r\n' % (
-                ord(ctrl) - (ord('a') - 1),
-                ctrl.upper(),), timeout=1)
+            val = ord(ctrl) - (ord('a') - 1),
+            alpha = ctrl.upper()
+            child.expect ('(%d|\^%s)\r\n' % (val, alpha), timeout=2)
 
         # escape character
         assert child.sendcontrol('[') == 1

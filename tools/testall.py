@@ -27,13 +27,14 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
+from __future__ import print_function
+
 import unittest
 import os, os.path
 import sys
 import platform
 
 import pexpect
-from pexpect import six
 
 print("Testing pexpect %s using python %s:" % (
     pexpect.__version__, platform.python_version()))
@@ -59,7 +60,7 @@ def find_modules_and_add_paths (root_path):
     for module_file in import_list:
         path, module = os.path.split(module_file)
         module_list.append (module)
-        six.print_('Adding:', module_file)
+        print('Adding:', module_file)
         if not path in sys.path:
             sys.path.append (path)
         if not os.path.dirname(path) in sys.path:

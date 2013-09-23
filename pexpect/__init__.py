@@ -1920,7 +1920,7 @@ class searcher_re(object):
         for n, s in self._searches:
             try:
                 ss.append((n, '    %d: re.compile("%s")' % (n, str(s.pattern))))
-            except UnicodeDecodeError:
+            except UnicodeEncodeError:
                 # for test cases that display __str__ of searches, dont throw
                 # another exception just because stdout is ascii-only, using
                 # repr()

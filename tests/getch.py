@@ -23,7 +23,7 @@ import sys, tty, termios
 def main():
     while True:
         val = ord(sys.stdin.read(1))
-        sys.stdout.write('%i\r\n' % (val,))
+        sys.stdout.write('%d\r\n' % (val,))
         if val == 0:
             # StopIteration equivalent is ctrl+' ' (\x00, NUL)
             break

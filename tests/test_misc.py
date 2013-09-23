@@ -61,6 +61,8 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         line3 = child.readline(2)
         line4 = child.readline(1)
         line5 = child.readline()
+        assert child.isalive() is False, child.isalive()
+        assert child.exitstatus != 0, child.exitstatus
         self.assertEqual(line1, six.b(''))
         self.assertEqual(line2, six.b('abc\r\n'))
         assert (line3 == six.b('abc\r\n') or line3 == '123\r\n'), \

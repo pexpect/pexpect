@@ -14,23 +14,23 @@ _CAT_EOF = '^D\x08\x08'
 class UnicodeTests(PexpectTestCase.PexpectTestCase):
     def test_expect_basic (self):
         p = pexpect.spawnu('cat')
-        p.sendline('Hello')
-        p.sendline('there')
-        p.sendline('Mr. þython') # þ is more like th than p, but never mind
-        p.expect('Hello')
-        p.expect('there')
-        p.expect('Mr. þython')
+        p.sendline(u'Hello')
+        p.sendline(u'there')
+        p.sendline(u'Mr. þython') # þ is more like th than p, but never mind
+        p.expect(u'Hello')
+        p.expect(u'there')
+        p.expect(u'Mr. þython')
         p.sendeof ()
         p.expect (pexpect.EOF)
 
     def test_expect_exact_basic (self):
         p = pexpect.spawnu('cat')
-        p.sendline('Hello')
-        p.sendline('there')
-        p.sendline('Mr. þython')
-        p.expect_exact('Hello')
-        p.expect_exact('there')
-        p.expect_exact('Mr. þython')
+        p.sendline(u'Hello')
+        p.sendline(u'there')
+        p.sendline(u'Mr. þython')
+        p.expect_exact(u'Hello')
+        p.expect_exact(u'there')
+        p.expect_exact(u'Mr. þython')
         p.sendeof()
         p.expect_exact (pexpect.EOF)
 
@@ -48,28 +48,28 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         self._expect_echo(p)
 
     def _expect_echo (self, p):
-        p.sendline('1234') # Should see this twice (once from tty echo and again from cat).
-        index = p.expect (['1234', 'abcdé', 'wxyz', pexpect.EOF, pexpect.TIMEOUT])
-        assert index == 0, "index="+str(index)+"\n"+p.before
-        index = p.expect (['1234', 'abcdé', 'wxyz',pexpect.EOF])
-        assert index == 0, "index="+str(index)
+        p.sendline(u'1234') # Should see this twice (once from tty echo and again from cat).
+        index = p.expect ([u'1234', u'abcdé', u'wxyz', pexpect.EOF, pexpect.TIMEOUT])
+        assert index == 0, (index, p.before)
+        index = p.expect ([u'1234', u'abcdé', u'wxyz', pexpect.EOF])
+        assert index == 0, index
         p.setecho(0) # Turn off tty echo
-        p.sendline('abcdé') # Now, should only see this once.
-        p.sendline('wxyz') # Should also be only once.
-        index = p.expect ([pexpect.EOF,pexpect.TIMEOUT, 'abcdé', 'wxyz', '1234'])
-        assert index == 2, "index="+str(index)
-        index = p.expect ([pexpect.EOF, 'abcdé', 'wxyz', '7890'])
-        assert index == 2, "index="+str(index)
+        p.sendline(u'abcdé') # Now, should only see this once.
+        p.sendline(u'wxyz') # Should also be only once.
+        index = p.expect ([pexpect.EOF,pexpect.TIMEOUT, u'abcdé', u'wxyz', u'1234'])
+        assert index == 2, index
+        index = p.expect ([pexpect.EOF, u'abcdé', u'wxyz', u'7890'])
+        assert index == 2, index
         p.setecho(1) # Turn on tty echo
-        p.sendline ('7890') # Should see this twice.
-        index = p.expect ([pexpect.EOF, 'abcdé', 'wxyz', '7890'])
-        assert index == 3, "index="+str(index)
-        index = p.expect ([pexpect.EOF, 'abcdé', 'wxyz', '7890'])
-        assert index == 3, "index="+str(index)
+        p.sendline (u'7890') # Should see this twice.
+        index = p.expect ([pexpect.EOF, u'abcdé', u'wxyz', u'7890'])
+        assert index == 3, index
+        index = p.expect ([pexpect.EOF, u'abcdé', u'wxyz', u'7890'])
+        assert index == 3, index
         p.sendeof()
 
     def test_log_unicode(self):
-        msg = "abcΩ÷"
+        msg = u"abcΩ÷"
         filename_send = tempfile.mktemp()
         filename_read = tempfile.mktemp()
         p = pexpect.spawnu('cat')
@@ -94,12 +94,12 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
 
         # ensure the 'send' log is correct,
         with open(filename_send, 'r', encoding='utf-8') as f:
-            self.assertEqual(f.read(), msg+'\n\x04')
+            self.assertEqual(f.read(), msg + u'\n\x04')
 
         # ensure the 'read' log is correct,
         with open(filename_read, 'r', encoding='utf-8', newline='') as f:
             output = f.read().replace(_CAT_EOF, u'')
-            self.assertEqual(output, (msg+'\r\n')*2 )
+            self.assertEqual(output, (msg + u'\r\n')*2 )
 
 
     def test_spawn_expect_ascii_unicode(self):
@@ -110,6 +110,7 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         p.expect('Camelot')
 
         p.sendline('Aargh')
+        p.sendline('Aårgh')
         p.expect_exact('Aargh')
 
         p.sendeof()

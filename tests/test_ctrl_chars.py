@@ -78,7 +78,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         for ctrl in 'abcdefghijklmnopqrstuvwxyz':
             assert child.sendcontrol(ctrl) == 1
             # Strange: on travis-ci, getch.py actually displays ^A, not '1' !?
-            val = ord(ctrl) - (ord('a') - 1),
+            val = ord(ctrl) - (ord('a') - 1)
             alpha = ctrl.upper()
             child.expect ('(%d|\^%s)\r\n' % (val, alpha), timeout=2)
 

@@ -18,6 +18,8 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
+from  __future__ import print_function
+
 import pexpect
 import time
 
@@ -26,10 +28,9 @@ print(p.exitstatus)
 p.expect (pexpect.EOF)
 print(p.before)
 time.sleep(1)
-from pexpect import six
-six.print_('exitstatus:', p.exitstatus)
-six.print_('isalive',p.isalive())
-six.print_('exitstatus',p.exitstatus)
-six.print_('isalive',p.isalive())
-six.print_('exitstatus',p.exitstatus)
+print('exitstatus:', p.exitstatus)
+print('isalive',p.isalive())
+print('exitstatus',p.exitstatus)
+print('isalive',p.isalive())
+print('exitstatus',p.exitstatus)
 

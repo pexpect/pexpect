@@ -18,16 +18,14 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-from __future__ import with_statement  # bring 'with' stmt to py25
 import pexpect
 import unittest
 import os
 import tempfile
 import PexpectTestCase
-from pexpect import six
 
 # the program cat(1) may display ^D\x08\x08 when \x04 (EOF, Ctrl-D) is sent
-_CAT_EOF = six.b('^D\x08\x08')
+_CAT_EOF = b'^D\x08\x08'
 
 class TestCaseLog(PexpectTestCase.PexpectTestCase):
 
@@ -59,11 +57,11 @@ class TestCaseLog(PexpectTestCase.PexpectTestCase):
         with open(filename, 'rb') as f:
             lf = f.read()
         os.unlink (filename)
-        lf = lf.replace(_CAT_EOF, six.b(''))
-        self.assertEqual(lf, six.b('This is a test.\r\nThis is a test.\r\n'))
+        lf = lf.replace(_CAT_EOF, b'')
+        self.assertEqual(lf, b'This is a test.\r\nThis is a test.\r\n')
 
     def test_log_logfile_send (self):
-        log_message = six.b('This is a test.')
+        log_message = b'This is a test.'
         filename = tempfile.mktemp()
         mylog = open (filename, 'wb')
         p = pexpect.spawn('cat')
@@ -76,7 +74,7 @@ class TestCaseLog(PexpectTestCase.PexpectTestCase):
         with open(filename, 'rb') as f:
             lf = f.read()
         os.unlink(filename)
-        lf = lf.replace(six.b('\x04'), six.b(''))
+        lf = lf.replace(b'\x04', b'')
         self.assertEqual(lf.rstrip(), log_message)
 
     def test_log_send_and_received (self):
@@ -99,9 +97,9 @@ class TestCaseLog(PexpectTestCase.PexpectTestCase):
         with open(filename, 'rb') as f:
             lf = f.read()
         os.unlink(filename)
-        lf = lf.replace(six.b('\x04'), six.b('')).replace(_CAT_EOF, six.b(''))
+        lf = lf.replace(b'\x04', b'').replace(_CAT_EOF, b'')
         self.assertEqual(lf,
-                six.b('This is a test.\nThis is a test.\r\nThis is a test.\r\n'))
+                b'This is a test.\nThis is a test.\r\nThis is a test.\r\n')
 
 if __name__ == '__main__':
     unittest.main()

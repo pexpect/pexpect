@@ -79,7 +79,6 @@ try:
     import errno
     import traceback
     import signal
-    import platform
 except ImportError:
     err = sys.exc_info()[1]
     raise ImportError(str(err) + '''
@@ -87,12 +86,12 @@ except ImportError:
 A critical module was not found. Probably this operating system does not
 support it. Pexpect is intended for UNIX-like operating systems.''')
 
-from . import six
-
 __version__ = '2.6'
 __revision__ = '1'
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which',
     'split_command_line', '__version__', '__revision__']
+
+PY3 = (sys.version_info[0] >= 3)
 
 # Exception classes used by this module.
 class ExceptionPexpect(Exception):
@@ -275,13 +274,12 @@ def run(command, timeout=-1, withexitstatus=False, events=None,
     else:
         return child_result
 
-
 class spawn(object):
     '''This is the main class interface for Pexpect. Use this class to start
     and control child applications. '''
-    string_type = six.binary_type
-    if six.PY3:
-        allowed_string_types = (six.binary_type, str)
+    string_type = bytes
+    if PY3:
+        allowed_string_types = (bytes, str)
         @staticmethod
         def _chr(c):
             return bytes([c])
@@ -472,13 +470,13 @@ class spawn(object):
 
     @staticmethod
     def _coerce_expect_string(s):
-        if not isinstance(s, six.binary_type):
+        if not isinstance(s, bytes):
             return s.encode('ascii')
         return s
 
     @staticmethod
     def _coerce_send_string(s):
-        if not isinstance(s, six.binary_type):
+        if not isinstance(s, bytes):
             return s.encode('utf-8')
         return s
 
@@ -919,7 +917,7 @@ class spawn(object):
                 # Linux does this
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Exception style platform.')
-            if s == six.b(''):
+            if s == b'':
                 # BSD style
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Empty string style platform.')
@@ -976,9 +974,9 @@ class spawn(object):
         if size == 0:
             return self.string_type()
         # delimiter default is EOF
-        index = self.expect([six.b('\r\n'), self.delimiter])
+        index = self.expect([b'\r\n', self.delimiter])
         if index == 0:
-            return self.before + six.b('\r\n')
+            return self.before + b'\r\n'
         else:
             return self.before
 
@@ -1251,16 +1249,15 @@ class spawn(object):
             try:
                 ### os.WNOHANG) # Solaris!
                 pid, status = os.waitpid(self.pid, waitpid_options)
-            except OSError:
-                e = sys.exc_info()[1]
+            except OSError as e:
                 # This should never happen...
-                if err[0] == errno.ECHILD:
+                if e.errno == errno.ECHILD:
                     raise ExceptionPexpect('isalive() encountered condition ' +
                             'that should never happen. There was no child ' +
                             'process. Did someone else call waitpid() ' +
                             'on our process?')
                 else:
-                    raise err
+                    raise
 
             # If pid is still 0 after two calls to waitpid() then the process
             # really is alive. This seems to work on all platforms, except for
@@ -1640,7 +1637,7 @@ class spawn(object):
         '''This is used by the interact() method.
         '''
 
-        while data != six.b('') and self.isalive():
+        while data != b'' and self.isalive():
             n = os.write(fd, data)
             data = data[n:]
 
@@ -1741,7 +1738,7 @@ class spawnu(spawn):
                    (the default), 'ignore', or 'replace', as described
                    for :meth:`~bytes.decode` and :meth:`~str.encode`.
     """
-    if six.PY3:
+    if PY3:
         string_type = str
         allowed_string_types = (str, )
         _chr = staticmethod(chr)

@@ -24,8 +24,6 @@ import unittest
 import subprocess
 import time
 import PexpectTestCase
-from pexpect import six
-import platform
 import sys
 #import pdb
 
@@ -58,23 +56,23 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_expect_basic (self):
         p = pexpect.spawn('cat')
-        p.sendline (six.b('Hello'))
-        p.sendline (six.b('there'))
-        p.sendline (six.b('Mr. Python'))
-        p.expect (six.b('Hello'))
-        p.expect (six.b('there'))
-        p.expect (six.b('Mr. Python'))
+        p.sendline (b'Hello')
+        p.sendline (b'there')
+        p.sendline (b'Mr. Python')
+        p.expect (b'Hello')
+        p.expect (b'there')
+        p.expect (b'Mr. Python')
         p.sendeof ()
         p.expect (pexpect.EOF)
 
     def test_expect_exact_basic (self):
         p = pexpect.spawn('cat')
-        p.sendline (six.b('Hello'))
-        p.sendline (six.b('there'))
-        p.sendline (six.b('Mr. Python'))
-        p.expect_exact (six.b('Hello'))
-        p.expect_exact (six.b('there'))
-        p.expect_exact (six.b('Mr. Python'))
+        p.sendline (b'Hello')
+        p.sendline (b'there')
+        p.sendline (b'Mr. Python')
+        p.expect_exact (b'Hello')
+        p.expect_exact (b'there')
+        p.expect_exact (b'Mr. Python')
         p.sendeof ()
         p.expect_exact (pexpect.EOF)
 
@@ -83,10 +81,10 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         even if case is different using the regex (?i) directive.
         '''
         p = pexpect.spawn('cat')
-        p.sendline (six.b('HELLO'))
-        p.sendline (six.b('there'))
-        p.expect (six.b('(?i)hello'))
-        p.expect (six.b('(?i)THERE'))
+        p.sendline (b'HELLO')
+        p.sendline (b'there')
+        p.expect (b'(?i)hello')
+        p.expect (b'(?i)THERE')
         p.sendeof ()
         p.expect (pexpect.EOF)
 
@@ -96,10 +94,10 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         '''
         p = pexpect.spawn('cat')
         p.ignorecase = True
-        p.sendline (six.b('HELLO'))
-        p.sendline (six.b('there'))
-        p.expect (six.b('hello'))
-        p.expect (six.b('THERE'))
+        p.sendline (b'HELLO')
+        p.sendline (b'there')
+        p.expect (b'hello')
+        p.expect (b'THERE')
         p.sendeof ()
         p.expect (pexpect.EOF)
 
@@ -121,24 +119,24 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self._expect_order(p)
 
     def _expect_order (self, p):
-        p.sendline (six.b('1234'))
-        p.sendline (six.b('abcd'))
-        p.sendline (six.b('wxyz'))
-        p.sendline (six.b('7890'))
+        p.sendline (b'1234')
+        p.sendline (b'abcd')
+        p.sendline (b'wxyz')
+        p.sendline (b'7890')
         p.sendeof ()
         index = p.expect ([
-            six.b('1234'),
-            six.b('abcd'),
-            six.b('wxyz'),
+            b'1234',
+            b'abcd',
+            b'wxyz',
             pexpect.EOF,
-            six.b('7890') ])
+            b'7890' ])
         assert index == 0, (index, p.before, p.after)
         index = p.expect ([
-            six.b('1234'),
-            six.b('abcd'),
-            six.b('wxyz'),
+            b'1234',
+            b'abcd',
+            b'wxyz',
             pexpect.EOF,
-            six.b('7890') ])
+            b'7890' ])
         # XXX this can be 0, or 1, depending on the platform. Per
         # comments above, this is a very strange edge case that
         # is in need of resolution.
@@ -146,46 +144,46 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         index = p.expect ([
             pexpect.EOF,
             pexpect.TIMEOUT,
-            six.b('wxyz'),
-            six.b('abcd'),
-            six.b('1234') ])
+            b'wxyz',
+            b'abcd',
+            b'1234' ])
         # XXX see above
         assert index in (3,4), (index, p.before, p.after)
         index = p.expect ([
-            six.b('54321'),
+            b'54321',
             pexpect.TIMEOUT,
-            six.b('1234'),
-            six.b('abcd'),
-            six.b('wxyz'),
+            b'1234',
+            b'abcd',
+            b'wxyz',
             pexpect.EOF], timeout=5)
         assert index == 3, (index, p.before, p.after)
         index = p.expect ([
-            six.b('54321'),
+            b'54321',
             pexpect.TIMEOUT,
-            six.b('1234'),
-            six.b('abcd'),
-            six.b('wxyz'),
+            b'1234',
+            b'abcd',
+            b'wxyz',
             pexpect.EOF], timeout=5)
         assert index == 4, (index, p.before, p.after)
         index = p.expect ([
-            six.b('54321'),
+            b'54321',
             pexpect.TIMEOUT,
-            six.b('1234'),
-            six.b('abcd'),
-            six.b('wxyz'),
+            b'1234',
+            b'abcd',
+            b'wxyz',
             pexpect.EOF], timeout=5)
         assert index == 4, (index, p.before, p.after)
         index = p.expect ([
             pexpect.EOF,
-            six.b('abcd'),
-            six.b('wxyz'),
-            six.b('7890') ])
+            b'abcd',
+            b'wxyz',
+            b'7890' ])
         assert index == 3, (index, p.before, p.after)
         index = p.expect ([
             pexpect.EOF,
-            six.b('abcd'),
-            six.b('wxyz'),
-            six.b('7890') ])
+            b'abcd',
+            b'wxyz',
+            b'7890' ])
         assert index == 3, (index, p.before, p.after)
 
     def test_waitnoecho (self):
@@ -230,41 +228,41 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self._expect_echo(p)
 
     def _expect_echo (self, p):
-        p.sendline (six.b('1234')) # Should see this twice (once from tty echo and again from cat).
+        p.sendline (b'1234') # Should see this twice (once from tty echo and again from cat).
         index = p.expect ([
-            six.b('1234'),
-            six.b('abcd'),
-            six.b('wxyz'),
+            b'1234',
+            b'abcd',
+            b'wxyz',
             pexpect.EOF,
             pexpect.TIMEOUT])
         assert index == 0, "index="+str(index)+"\n"+p.before
         index = p.expect ([
-            six.b('1234'),
-            six.b('abcd'),
-            six.b('wxyz'),
+            b'1234',
+            b'abcd',
+            b'wxyz',
             pexpect.EOF])
         assert index == 0, "index="+str(index)
         p.setecho(0) # Turn off tty echo
-        p.sendline (six.b('abcd')) # Now, should only see this once.
-        p.sendline (six.b('wxyz')) # Should also be only once.
+        p.sendline (b'abcd') # Now, should only see this once.
+        p.sendline (b'wxyz') # Should also be only once.
         index = p.expect ([
             pexpect.EOF,
             pexpect.TIMEOUT,
-            six.b('abcd'),
-            six.b('wxyz'),
-            six.b('1234')])
+            b'abcd',
+            b'wxyz',
+            b'1234'])
         assert index == 2, "index="+str(index)
         index = p.expect ([
             pexpect.EOF,
-            six.b('abcd'),
-            six.b('wxyz'),
-            six.b('7890')])
+            b'abcd',
+            b'wxyz',
+            b'7890'])
         assert index == 2, "index="+str(index)
         p.setecho(1) # Turn on tty echo
-        p.sendline (six.b('7890')) # Should see this twice.
-        index = p.expect ([pexpect.EOF,six.b('abcd'),six.b('wxyz'),six.b('7890')])
+        p.sendline (b'7890') # Should see this twice.
+        index = p.expect ([pexpect.EOF,b'abcd',b'wxyz',b'7890'])
         assert index == 3, "index="+str(index)
-        index = p.expect ([pexpect.EOF,six.b('abcd'),six.b('wxyz'),six.b('7890')])
+        index = p.expect ([pexpect.EOF,b'abcd',b'wxyz',b'7890'])
         assert index == 3, "index="+str(index)
         p.sendeof()
 
@@ -285,58 +283,58 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def _expect_index (self, p):
         p.setecho(0)
-        p.sendline (six.b('1234'))
-        index = p.expect ([six.b('abcd'),six.b('wxyz'),six.b('1234'),pexpect.EOF])
+        p.sendline (b'1234')
+        index = p.expect ([b'abcd',b'wxyz',b'1234',pexpect.EOF])
         assert index == 2, "index="+str(index)
-        p.sendline (six.b('abcd'))
-        index = p.expect ([pexpect.TIMEOUT,six.b('abcd'),six.b('wxyz'),six.b('1234'),pexpect.EOF])
+        p.sendline (b'abcd')
+        index = p.expect ([pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF])
         assert index == 1, "index="+str(index)
-        p.sendline (six.b('wxyz'))
-        index = p.expect ([six.b('54321'),pexpect.TIMEOUT,six.b('abcd'),six.b('wxyz'),six.b('1234'),pexpect.EOF], timeout=5)
+        p.sendline (b'wxyz')
+        index = p.expect ([b'54321',pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF], timeout=5)
         assert index == 3, "index="+str(index) # Expect 'wxyz'
-        p.sendline (six.b('$*!@?'))
-        index = p.expect ([six.b('54321'),pexpect.TIMEOUT,six.b('abcd'),six.b('wxyz'),six.b('1234'),pexpect.EOF], timeout=5)
+        p.sendline (b'$*!@?')
+        index = p.expect ([b'54321',pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF], timeout=5)
         assert index == 1, "index="+str(index) # Expect TIMEOUT
         p.sendeof ()
-        index = p.expect ([six.b('54321'),pexpect.TIMEOUT,six.b('abcd'),six.b('wxyz'),six.b('1234'),pexpect.EOF], timeout=5)
+        index = p.expect ([b'54321',pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF], timeout=5)
         assert index == 5, "index="+str(index) # Expect EOF
 
     def test_expect (self):
         the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
                 stdout=subprocess.PIPE).communicate()[0].rstrip()
         p = pexpect.spawn('ls -l /bin')
-        the_new_way = six.b('')
+        the_new_way = b''
         while 1:
-            i = p.expect ([six.b('\n'), pexpect.EOF])
+            i = p.expect ([b'\n', pexpect.EOF])
             the_new_way = the_new_way + p.before
             if i == 1:
                 break
         the_new_way = the_new_way.rstrip()
-        the_new_way = the_new_way.replace(six.b('\r\n'), six.b('\n')
-                ).replace(six.b('\r'), six.b('\n')).replace(six.b('\n\n'), six.b('\n')).rstrip()
-        the_old_way = the_old_way.replace(six.b('\r\n'), six.b('\n')
-                ).replace(six.b('\r'), six.b('\n')).replace(six.b('\n\n'), six.b('\n')).rstrip()
+        the_new_way = the_new_way.replace(b'\r\n', b'\n'
+                ).replace(b'\r', b'\n').replace(b'\n\n', b'\n').rstrip()
+        the_old_way = the_old_way.replace(b'\r\n', b'\n'
+                ).replace(b'\r', b'\n').replace(b'\n\n', b'\n').rstrip()
         assert the_old_way == the_new_way, hex_diff(the_old_way, the_new_way)
 
     def test_expect_exact (self):
         the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
                 stdout=subprocess.PIPE).communicate()[0].rstrip()
         p = pexpect.spawn('ls -l /bin')
-        the_new_way = six.b('')
+        the_new_way = b''
         while 1:
-            i = p.expect_exact ([six.b('\n'), pexpect.EOF])
+            i = p.expect_exact ([b'\n', pexpect.EOF])
             the_new_way = the_new_way + p.before
             if i == 1:
                 break
-        the_new_way = the_new_way.replace(six.b('\r\n'), six.b('\n')
-                ).replace(six.b('\r'), six.b('\n')).replace(six.b('\n\n'), six.b('\n')).rstrip()
-        the_old_way = the_old_way.replace(six.b('\r\n'), six.b('\n')
-                ).replace(six.b('\r'), six.b('\n')).replace(six.b('\n\n'), six.b('\n')).rstrip()
+        the_new_way = the_new_way.replace(b'\r\n', b'\n'
+                ).replace(b'\r', b'\n').replace(b'\n\n', b'\n').rstrip()
+        the_old_way = the_old_way.replace(b'\r\n', b'\n'
+                ).replace(b'\r', b'\n').replace(b'\n\n', b'\n').rstrip()
         assert the_old_way == the_new_way, hex_diff(the_old_way, the_new_way)
         p = pexpect.spawn('echo hello.?world')
-        i = p.expect_exact(six.b('.?'))
-        self.assertEqual(p.before, six.b('hello'))
-        self.assertEqual(p.after, six.b('.?'))
+        i = p.expect_exact(b'.?')
+        self.assertEqual(p.before, b'hello')
+        self.assertEqual(p.after, b'.?')
 
     def test_expect_eof (self):
         the_old_way = subprocess.Popen(args=['/bin/ls', '-l', '/bin'],
@@ -344,10 +342,10 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p = pexpect.spawn('/bin/ls -l /bin')
         p.expect(pexpect.EOF) # This basically tells it to read everything. Same as pexpect.run() function.
         the_new_way = p.before
-        the_new_way = the_new_way.replace(six.b('\r\n'), six.b('\n')
-                ).replace(six.b('\r'), six.b('\n')).replace(six.b('\n\n'), six.b('\n')).rstrip()
-        the_old_way = the_old_way.replace(six.b('\r\n'), six.b('\n')
-                ).replace(six.b('\r'), six.b('\n')).replace(six.b('\n\n'), six.b('\n')).rstrip()
+        the_new_way = the_new_way.replace(b'\r\n', b'\n'
+                ).replace(b'\r', b'\n').replace(b'\n\n', b'\n').rstrip()
+        the_old_way = the_old_way.replace(b'\r\n', b'\n'
+                ).replace(b'\r', b'\n').replace(b'\n\n', b'\n').rstrip()
         assert the_old_way == the_new_way, hex_diff(the_old_way, the_new_way)
 
     def test_expect_timeout (self):
@@ -367,19 +365,19 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
     def _before_after(self, p):
         p.timeout = 5
 
-        p.expect(six.b('>>> '))
-        self.assertEqual(p.after, six.b('>>> '))
-        assert p.before.startswith(six.b('Python ')), p.before
+        p.expect(b'>>> ')
+        self.assertEqual(p.after, b'>>> ')
+        assert p.before.startswith(b'Python '), p.before
 
-        p.sendline(six.b('list(range(4*3))'))
+        p.sendline(b'list(range(4*3))')
 
-        p.expect(six.b('5'))
-        self.assertEqual(p.after, six.b('5'))
-        assert p.before.startswith(six.b('list(range(4*3))')), p.before
+        p.expect(b'5')
+        self.assertEqual(p.after, b'5')
+        assert p.before.startswith(b'list(range(4*3))'), p.before
 
-        p.expect(six.b('>>> '))
-        self.assertEqual(p.after, six.b('>>> '))
-        assert p.before.startswith(six.b(', 6, 7, 8')), p.before
+        p.expect(b'>>> ')
+        self.assertEqual(p.after, b'>>> ')
+        assert p.before.startswith(b', 6, 7, 8'), p.before
 
     def test_before_after(self):
         '''This tests expect() for some simple before/after things.
@@ -398,26 +396,26 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def _ordering(self, p):
         p.timeout = 5
-        p.expect(six.b('>>> '))
+        p.expect(b'>>> ')
 
         p.sendline('list(range(4*3))')
-        self.assertEqual(p.expect([six.b('5,'), six.b('5,')]), 0)
-        p.expect(six.b('>>> '))
+        self.assertEqual(p.expect([b'5,', b'5,']), 0)
+        p.expect(b'>>> ')
 
-        p.sendline(six.b('list(range(4*3))'))
-        self.assertEqual(p.expect([six.b('7,'), six.b('5,')]), 1)
-        p.expect(six.b('>>> '))
+        p.sendline(b'list(range(4*3))')
+        self.assertEqual(p.expect([b'7,', b'5,']), 1)
+        p.expect(b'>>> ')
 
-        p.sendline(six.b('list(range(4*3))'))
-        self.assertEqual(p.expect([six.b('5,'), six.b('7,')]), 0)
-        p.expect(six.b('>>> '))
+        p.sendline(b'list(range(4*3))')
+        self.assertEqual(p.expect([b'5,', b'7,']), 0)
+        p.expect(b'>>> ')
 
-        p.sendline(six.b('list(range(4*5))'))
-        self.assertEqual(p.expect([six.b('2,'), six.b('12,')]), 0)
-        p.expect(six.b('>>> '))
+        p.sendline(b'list(range(4*5))')
+        self.assertEqual(p.expect([b'2,', b'12,']), 0)
+        p.expect(b'>>> ')
 
-        p.sendline(six.b('list(range(4*5))'))
-        self.assertEqual(p.expect([six.b('12,'), six.b('2,')]), 1)
+        p.sendline(b'list(range(4*5))')
+        self.assertEqual(p.expect([b'12,', b'2,']), 1)
 
     def test_ordering(self):
         '''This tests expect() for which pattern is returned
@@ -441,51 +439,51 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def _greed(self, p):
         p.timeout = 5
-        p.expect(six.b('>>> '))
-        p.sendline(six.b('import time'))
-        p.expect(six.b('>>> '))
+        p.expect(b'>>> ')
+        p.sendline(b'import time')
+        p.expect(b'>>> ')
         # the newline and sleep will (I hope) guarantee that
         # pexpect is fed two distinct batches of data,
         # "foo\r\n" + "bar\r\n".
-        foo_then_bar = six.b('print("f"+"o"+"o") ; time.sleep(1); print("b"+"a"+"r")')
+        foo_then_bar = b'print("f"+"o"+"o") ; time.sleep(1); print("b"+"a"+"r")'
 
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([six.b('foo\r\nbar')]), 0)
-        p.expect(six.b('>>> '))
+        self.assertEqual(p.expect([b'foo\r\nbar']), 0)
+        p.expect(b'>>> ')
 
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([six.b('\r\nbar')]), 0)
-        p.expect(six.b('>>> '))
+        self.assertEqual(p.expect([b'\r\nbar']), 0)
+        p.expect(b'>>> ')
 
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([six.b('foo\r\nbar'), six.b('foo'), six.b('bar')]), 1)
-        p.expect(six.b('>>> '))
+        self.assertEqual(p.expect([b'foo\r\nbar', b'foo', b'bar']), 1)
+        p.expect(b'>>> ')
 
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([six.b('foo'), six.b('foo\r\nbar'), six.b('foo'), six.b('bar')]), 0)
-        p.expect(six.b('>>> '))
+        self.assertEqual(p.expect([b'foo', b'foo\r\nbar', b'foo', b'bar']), 0)
+        p.expect(b'>>> ')
 
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([six.b('bar'), six.b('foo\r\nbar')]), 1)
-        p.expect(six.b('>>> '))
+        self.assertEqual(p.expect([b'bar', b'foo\r\nbar']), 1)
+        p.expect(b'>>> ')
 
         # If the expect works as if we rematch for every new character,
-        # 'o\r\nsix.b(' should win over ')oo\r\nba'. The latter is longer and
+        # 'o\r\nb' should win over 'oo\r\nba'. The latter is longer and
         # matches earlier in the input, but isn't satisfied until the 'a'
         # arrives.
         # However, pexpect doesn't do that (version 2.1 didn't).
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([six.b('oo\r\nba'), six.b('o\r\nb')]), 0)
-        p.expect(six.b('>>> '))
+        self.assertEqual(p.expect([b'oo\r\nba', b'o\r\nb']), 0)
+        p.expect(b'>>> ')
 
         # distinct patterns, but both suddenly match when the 'r' arrives.
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([six.b('foo\r\nbar'), six.b('ar')]), 0)
-        p.expect(six.b('>>> '))
+        self.assertEqual(p.expect([b'foo\r\nbar', b'ar']), 0)
+        p.expect(b'>>> ')
 
         p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([six.b('ar'), six.b('foo\r\nbar')]), 1)
-        p.expect(six.b('>>> '))
+        self.assertEqual(p.expect([b'ar', b'foo\r\nbar']), 1)
+        p.expect(b'>>> ')
 
         try:
             p.expect([1,'2','3','4','5'])
@@ -522,10 +520,10 @@ if __name__ == '__main__':
 
 suite = unittest.makeSuite(ExpectTestCase,'test')
 
-#fout = open('delete_me_1','wsix.b(')
+#fout = open('delete_me_1','wb')
 #fout.write(the_old_way)
 #fout.close
-#fout = open(')delete_me_2', 'wsix.b(')
+#fout = open('delete_me_2', 'wb')
 #fout.write(the_new_way)
 #fout.close
 

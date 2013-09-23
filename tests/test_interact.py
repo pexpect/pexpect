@@ -24,7 +24,6 @@ import unittest
 import time, tty
 import PexpectTestCase
 import threading
-from pexpect import six
 
 def start_interact (p):
     p.interact()
@@ -68,12 +67,12 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_interact (self):
         p = pexpect.spawn('%s interact.py' % (self.PYTHONBIN,))
-        p.sendline (six.b('Hello'))
-        p.sendline (six.b('there'))
-        p.sendline (six.b('Mr. Python'))
-        p.expect (six.b('Hello'))
-        p.expect (six.b('there'))
-        p.expect (six.b('Mr. Python'))
+        p.sendline (b'Hello')
+        p.sendline (b'there')
+        p.sendline (b'Mr. Python')
+        p.expect (b'Hello')
+        p.expect (b'there')
+        p.expect (b'Mr. Python')
         assert p.isalive() == True, p.isalive()
         p.sendeof ()
         p.expect (pexpect.EOF)

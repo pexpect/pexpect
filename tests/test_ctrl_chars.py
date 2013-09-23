@@ -78,7 +78,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
             assert child.sendcontrol(ctrl) == 1
             # Strange: on travis-ci, getch.py actually displays ^A, not '1' !?
             child.expect ('^(%d|%s)\r\n' % (
-                ord(ctrl) - (ord('a') - 1)
+                ord(ctrl) - (ord('a') - 1),
                 ctrl.upper(),), timeout=1)
 
         # escape character

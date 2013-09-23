@@ -55,7 +55,9 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         '''
         child = pexpect.spawn('cat')
         child.sendline ("abc")
+        time.sleep(0.5)
         child.sendline ("123")
+        time.sleep(0.5)
         child.sendeof()
         line1 = child.readline(0)
         line2 = child.readline()
@@ -67,10 +69,8 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         assert child.exitstatus == 0, child.exitstatus
         self.assertEqual(line1, six.b(''))
         self.assertEqual(line2, six.b('abc\r\n'))
-        assert (line3 == six.b('abc\r\n') or line3 == '123\r\n'), \
-            "readline(2) did not return 'abc\\r\\n'. Returned: " + repr(line3)
-        assert (line4 == six.b('123\r\n') or line4 == 'abc\r\n'), \
-            "readline(1) did not return '123\\r\\n'. Returned: " + repr(line4)
+        assert (line3 == six.b('abc\r\n') or line3 == '123\r\n'), line3
+        assert (line4 == six.b('123\r\n') or line4 == 'abc\r\n'), line4
         self.assertEqual(line5, six.b('123\r\n'))
 
     def test_iter (self):
@@ -80,16 +80,23 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         '''
         child = pexpect.spawn('cat')
         child.sendline ("abc")
+        time.sleep(0.5)
         child.sendline ("123")
+        time.sleep(0.5)
         child.sendeof()
         # Don't use ''.join() because we want to test the ITERATOR.
         page = six.b('')
         for line in child:
             page += line
         page = page.replace(_CAT_EOF, six.b(''))
+        # This is just a really bad test all together, we should write our
+        # own 'cat' utility that only writes to stdout after EOF is recv,
+        # this must take into consideration all possible platform impl.'s
+        # of `cat', and their related terminal and line-buffer handling
         assert (page == six.b('abc\r\nabc\r\n123\r\n123\r\n') or
-                page == six.b('abc\r\n123\r\nabc\r\n123\r\n')) , \
-               "iterator did not work. page=%s"%repr(page)
+                page == six.b('abc\r\n123\r\nabc\r\n123\r\n') or
+                page == six.b('abc\r\n123abc\r\n\r\n123\r\n') , \
+               "iterator did not work. page=%r"(page,)
 
     def test_readlines(self):
         '''Note that on some slow or heavily loaded systems that the lines
@@ -107,7 +114,9 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         '''
         child = pexpect.spawn('cat')
         child.sendline ("abc")
+        time.sleep(0.5)
         child.sendline ("123")
+        time.sleep(0.5)
         child.sendeof()
         time.sleep(1) # time for child to "complete" ;/
         assert not child.isalive(), child.isalive()
@@ -128,7 +137,8 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.writelines(['abc','123','xyz','\r'])
         child.sendeof()
         line = child.readline()
-        assert line == six.b('abc123xyz\r\n'), "writelines() did not work. line=%s"%repr(line)
+        assert line == six.b('abc123xyz\r\n'), (
+            "writelines() did not work. line=%r" % (line,))
 
     def test_eof(self):
         child = pexpect.spawn('cat')

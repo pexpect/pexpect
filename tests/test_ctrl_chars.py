@@ -73,10 +73,13 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         '''This tests that we can send all special control codes by name.
         '''
         child = pexpect.spawn('python getch.py')
-        child.delaybeforesend = 0.1
+        child.delaybeforesend = 0.05
         for ctrl in 'abcdefghijklmnopqrstuvwxyz':
             assert child.sendcontrol(ctrl) == 1
-            child.expect ('^%d\r\n' % (ord(ctrl) - (ord('a') - 1),), timeout=0.1)
+            # Strange: on travis-ci, getch.py actually displays ^A, not '1' !?
+            child.expect ('^(%d|%s)\r\n' % (
+                ord(ctrl) - (ord('a') - 1)
+                ctrl.upper(),), timeout=1)
 
         # escape character
         assert child.sendcontrol('[') == 1

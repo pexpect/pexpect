@@ -231,7 +231,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
             re.compile('other') ])
         out = ('searcher_re:\n    0: re.compile("this")\n    '
                '1: re.compile("that")\n    2: re.compile("and")\n    '
-               '3: re.compile("the")\n    4: re.compile("other")'
+               '3: re.compile("the")\n    4: re.compile("other")')
         assert ss.__str__() == out, (ss.__str__(), out)
         ss = pexpect.searcher_re ([
             pexpect.TIMEOUT, re.compile('this'),

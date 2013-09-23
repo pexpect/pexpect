@@ -24,6 +24,7 @@ import unittest
 import PexpectTestCase
 import os
 import re
+import time
 from pexpect import six
 
 # the program cat(1) may display ^D\x08\x08 when \x04 (EOF, Ctrl-D) is sent

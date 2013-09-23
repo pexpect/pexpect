@@ -38,7 +38,7 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
 
         # Note that I had to add a delay in the swapcase_echo.py script.
         # I'm not sure why this helped.
-        p = pexpect.spawn('%s swapcase_echo.py' % self.PYTHONBIN)
+        p = pexpect.spawn('%s swapcase_echo.py' % (self.PYTHONBIN,))
         mode = tty.tcgetattr(p.STDIN_FILENO)
         t = threading.Thread (target=start_interact, args=(p,))
         t.start()
@@ -67,7 +67,7 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
 #        tty.tcsetattr(p.STDIN_FILENO, tty.TCSAFLUSH, mode)
 
     def test_interact (self):
-        p = pexpect.spawn('%s interact.py' % self.PYTHONBIN)
+        p = pexpect.spawn('%s interact.py' % (self.PYTHONBIN,))
         p.sendline (six.b('Hello'))
         p.sendline (six.b('there'))
         p.sendline (six.b('Mr. Python'))

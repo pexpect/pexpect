@@ -22,6 +22,7 @@ from __future__ import with_statement  # bring 'with' stmt to py25
 import pexpect
 import unittest
 import PexpectTestCase
+import sys
 
 class Exp_TimeoutTestCase(PexpectTestCase.PexpectTestCase):
     def test_matches_exp_timeout (self):
@@ -63,7 +64,8 @@ class Exp_TimeoutTestCase(PexpectTestCase.PexpectTestCase):
             p = pexpect.spawn('cat')
             p.sendline('Hello')
             p.expect('Goodbye',timeout=5)
-        except pexpect.TIMEOUT, err:
+        except pexpect.TIMEOUT:
+            err = sys.exc_info()[1]
             if err.get_trace().count("pexpect.py") != 0:
                 self.fail("The TIMEOUT get_trace() referenced pexpect.py. "
                     "It should only reference the caller.\n" + err.get_trace())
@@ -77,7 +79,8 @@ class Exp_TimeoutTestCase(PexpectTestCase.PexpectTestCase):
             p = pexpect.spawn('cat')
             p.sendline('Hello')
             nestedFunction(p)
-        except pexpect.TIMEOUT, err:
+        except pexpect.TIMEOUT:
+            err = sys.exc_info()[1]
             if err.get_trace().count("nestedFunction") == 0:
                 self.fail("The TIMEOUT get_trace() did not show the call "
                     "to the nestedFunction function.\n" + str(err) + "\n"

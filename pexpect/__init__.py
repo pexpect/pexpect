@@ -1919,12 +1919,12 @@ class searcher_re(object):
         ss = list()
         for n, s in self._searches:
             try:
-                ss.append((n, '    %d: re.compile("%s")' % (n, str(s.pattern))))
+                ss.append((n, '    %d: re.compile("%s")' % (n, s.pattern)))
             except UnicodeEncodeError:
                 # for test cases that display __str__ of searches, dont throw
                 # another exception just because stdout is ascii-only, using
                 # repr()
-                ss.append((n, '    %d: re.compile(%r)' % (n, str(s.pattern))))
+                ss.append((n, '    %d: re.compile(%r)' % (n, s.pattern)))
         ss.append((-1, 'searcher_re:'))
         if self.eof_index >= 0:
             ss.append((self.eof_index, '    %d: EOF' % self.eof_index))

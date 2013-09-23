@@ -95,7 +95,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         # of `cat', and their related terminal and line-buffer handling
         assert (page == six.b('abc\r\nabc\r\n123\r\n123\r\n') or
                 page == six.b('abc\r\n123\r\nabc\r\n123\r\n') or
-                page == six.b('abc\r\n123abc\r\n\r\n123\r\n') , \
+                page == six.b('abc\r\n123abc\r\n\r\n123\r\n')) , \
                "iterator did not work. page=%r"(page,)
 
     def test_readlines(self):

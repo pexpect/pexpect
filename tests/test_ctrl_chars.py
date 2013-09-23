@@ -21,6 +21,7 @@ PEXPECT LICENSE
 import pexpect
 import unittest
 import PexpectTestCase
+import time
 
 class TestCtrlChars(PexpectTestCase.PexpectTestCase):
 
@@ -70,35 +71,38 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
 
         '''This tests that we can send all special control codes by name.
         '''
-
         child = pexpect.spawn('python getch.py')
-        #child.delaybeforesend = 0.1
-        for i in 'abcdefghijklmnopqrstuvwxyz':
-            assert child.sendcontrol(i) == 1
-            child.expect ('[0-9]+\r\n')
-            #print child.after
+        child.delaybeforesend = 0.1
+        for ctrl in 'abcdefghijklmnopqrstuvwxyz':
+            assert child.sendcontrol(ctrl) == 1
+            child.expect ('^%d\r\n' % (ord(ctrl) - (ord('a') - 1),), timeout=0.1)
 
-        assert child.sendcontrol('@') == 1
-        child.expect ('0\r\n')
-        #print child.after
+        # escape character
         assert child.sendcontrol('[') == 1
         child.expect ('27\r\n')
-        #print child.after
         assert child.sendcontrol('\\') == 1
         child.expect ('28\r\n')
-        #print child.after
+        # telnet escape character
         assert child.sendcontrol(']') == 1
         child.expect ('29\r\n')
-        #print child.after
         assert child.sendcontrol('^') == 1
         child.expect ('30\r\n')
-        #print child.after
+        # irc protocol uses this to underline ...
         assert child.sendcontrol('_') == 1
         child.expect ('31\r\n')
-        #print child.after
+        # the real "backspace is delete"
         assert child.sendcontrol('?') == 1
         child.expect ('127\r\n')
-        #print child.after
+        # NUL, same as ctrl + ' '
+        assert child.sendcontrol('@') == 1
+        child.expect ('0\r\n')
+        # 0 is sentinel value to getch.py, assert exit:
+        #   causes child to exit, but, if immediately tested,
+        #   isalive() still returns True unless an artifical timer
+        #   is used.
+        time.sleep(1)
+        assert child.isalive() == False, child.isalive()
+        assert child.exitstatus == 0
 
 if __name__ == '__main__':
     unittest.main()

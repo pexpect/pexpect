@@ -1916,7 +1916,7 @@ class searcher_re(object):
         the object.'''
 
         ss = [(n, '    %d: re.compile("%s")' %
-            (n, str(s.pattern))) for n, s in self._searches]
+            (n, repr(s.pattern))) for n, s in self._searches]
         ss.append((-1, 'searcher_re:'))
         if self.eof_index >= 0:
             ss.append((self.eof_index, '    %d: EOF' % self.eof_index))

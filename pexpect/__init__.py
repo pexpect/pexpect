@@ -1837,8 +1837,7 @@ class searcher_string(object):
         If there is a match this returns the index of that string, and sets
         'start', 'end' and 'match'. Otherwise, this returns -1. '''
 
-        absurd_match = len(buffer)
-        first_match = absurd_match
+        first_match = None
 
         # 'freshlen' helps a lot here. Further optimizations could
         # possibly include:
@@ -1861,10 +1860,10 @@ class searcher_string(object):
                 # better obey searchwindowsize
                 offset = -searchwindowsize
             n = buffer.find(s, offset)
-            if n >= 0 and n < first_match:
+            if n >= 0 and (first_match is None or n < first_match):
                 first_match = n
                 best_index, best_match = index, s
-        if first_match == absurd_match:
+        if first_match is None:
             return -1
         self.match = best_match
         self.start = first_match
@@ -1938,8 +1937,7 @@ class searcher_re(object):
         If there is a match this returns the index of that string, and sets
         'start', 'end' and 'match'. Otherwise, returns -1.'''
 
-        absurd_match = len(buffer)
-        first_match = absurd_match
+        first_match = None
         # 'freshlen' doesn't help here -- we cannot predict the
         # length of a match, and the re module provides no help.
         if searchwindowsize is None:
@@ -1951,11 +1949,11 @@ class searcher_re(object):
             if match is None:
                 continue
             n = match.start()
-            if n < first_match:
+            if first_match is None or n < first_match:
                 first_match = n
                 the_match = match
                 best_index = index
-        if first_match == absurd_match:
+        if first_match is None:
             return -1
         self.start = first_match
         self.match = the_match

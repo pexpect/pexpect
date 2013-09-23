@@ -61,6 +61,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         line3 = child.readline(2)
         line4 = child.readline(1)
         line5 = child.readline()
+        time.sleep(1) # time for child to "complete" ;/
         assert not child.isalive(), child.isalive()
         assert child.exitstatus == 0, child.exitstatus
         self.assertEqual(line1, six.b(''))
@@ -107,6 +108,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.sendline ("abc")
         child.sendline ("123")
         child.sendeof()
+        time.sleep(1) # time for child to "complete" ;/
         assert not child.isalive(), child.isalive()
         assert child.exitstatus == 0, child.exitstatus
         page = six.b('').join(child.readlines()).replace(_CAT_EOF, six.b(''))
@@ -220,16 +222,40 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         os.environ['PATH'] = ep
 
     def test_searcher_re (self):
-        ss = pexpect.searcher_re ([re.compile('this'),re.compile('that'),re.compile('and'),re.compile('the'),re.compile('other')])
-        assert ss.__str__() == 'searcher_re:\n    0: re.compile("this")\n    1: re.compile("that")\n    2: re.compile("and")\n    3: re.compile("the")\n    4: re.compile("other")'
-        ss = pexpect.searcher_re ([pexpect.TIMEOUT,re.compile('this'),re.compile('that'),re.compile('and'),pexpect.EOF,re.compile('other')])
-        assert ss.__str__() == 'searcher_re:\n    0: TIMEOUT\n    1: re.compile("this")\n    2: re.compile("that")\n    3: re.compile("and")\n    4: EOF\n    5: re.compile("other")'
+        # This should be done programatically, if we copied and pasted output,
+        # there wouldnt be a whole lot to test, really, other than our ability
+        # to copy and paste correctly :-)
+        ss = pexpect.searcher_re ([
+            re.compile('this'), re.compile('that'),
+            re.compile('and'), re.compile('the'),
+            re.compile('other') ])
+        out = ('searcher_re:\n    0: re.compile("this")\n    '
+               '1: re.compile("that")\n    2: re.compile("and")\n    '
+               '3: re.compile("the")\n    4: re.compile("other")'
+        assert ss.__str__() == out, (ss.__str__(), out)
+        ss = pexpect.searcher_re ([
+            pexpect.TIMEOUT, re.compile('this'),
+            re.compile('that'), re.compile('and'),
+            pexpect.EOF,re.compile('other')
+            ])
+        out = ('searcher_re:\n    0: TIMEOUT\n    1: re.compile("this")\n    '
+               '2: re.compile("that")\n    3: re.compile("and")\n    '
+               '4: EOF\n    5: re.compile("other")')
+        assert ss.__str__() == out, (ss.__str__(), out)
 
     def test_searcher_string (self):
-        ss = pexpect.searcher_string (['this','that','and','the','other'])
-        assert ss.__str__() == 'searcher_string:\n    0: "this"\n    1: "that"\n    2: "and"\n    3: "the"\n    4: "other"', repr(ss.__str__())
-        ss = pexpect.searcher_string (['this',pexpect.EOF,'that','and','the','other',pexpect.TIMEOUT])
-        assert ss.__str__() == 'searcher_string:\n    0: "this"\n    1: EOF\n    2: "that"\n    3: "and"\n    4: "the"\n    5: "other"\n    6: TIMEOUT'
+        ss = pexpect.searcher_string ([
+            'this', 'that', 'and', 'the', 'other' ])
+        out = ('searcher_string:\n    0: "this"\n    1: "that"\n    '
+               '2: "and"\n    3: "the"\n    4: "other"')
+        assert ss.__str__() == out, (ss.__str__(), out)
+        ss = pexpect.searcher_string ([
+            'this', pexpect.EOF, 'that', 'and',
+            'the', 'other', pexpect.TIMEOUT ])
+        out = ('searcher_string:\n    0: "this"\n    1: EOF\n    '
+               '2: "that"\n    3: "and"\n    4: "the"\n    '
+               '5: "other"\n    6: TIMEOUT')
+        assert ss.__str__() == out, (ss.__str__(), out)
 
 if __name__ == '__main__':
     unittest.main()

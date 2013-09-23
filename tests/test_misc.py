@@ -114,8 +114,8 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         assert child.exitstatus == 0, child.exitstatus
         page = six.b('').join(child.readlines()).replace(_CAT_EOF, six.b(''))
         assert (page == six.b('abc\r\nabc\r\n123\r\n123\r\n') or
-                page == six.b('abc\r\n123\r\nabc\r\n123\r\n')), \
-               "readlines() did not work. page=%s"%repr(page)
+                page == six.b('abc\r\n123\r\nabc\r\n123\r\n')), (
+               "readlines() did not work. page=%r" % (page,))
 
     def test_write (self):
         child = pexpect.spawn('cat')

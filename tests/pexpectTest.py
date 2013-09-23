@@ -39,13 +39,13 @@ def getProcessResults(cmd, timeLimit=20):
       # will mess up the formatting for the viewer
       output += child.read_nonblocking(timeout=timeLimit).replace("\r","")
     except pexpect.EOF as e:
-      print str(e)
+      print(str(e))
       # process terminated normally
       break
     except pexpect.TIMEOUT as e:
-      print str(e)
+      print(str(e))
       output += "\nProcess aborted by FlashTest after %s seconds.\n" % timeLimit
-      print child.isalive()
+      print(child.isalive())
       child.kill(9)
       break
 
@@ -61,7 +61,7 @@ cmd = "./ticker.py"
 
 result, duration, exitStatus = getProcessResults(cmd)
 
-print "result: %s" % result
-print "duration: %s" % duration
-print "exit-status: %s" % exitStatus
+print("result: %s" % result)
+print("duration: %s" % duration)
+print("exit-status: %s" % exitStatus)
 

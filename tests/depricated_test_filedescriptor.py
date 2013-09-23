@@ -26,7 +26,7 @@ import os
 
 class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def setUp(self):
-        print self.id()
+        print(self.id())
         PexpectTestCase.PexpectTestCase.setUp(self)
 
     def test_fd (self):

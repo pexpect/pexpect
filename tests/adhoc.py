@@ -22,13 +22,13 @@ import pexpect
 import time
 
 p = pexpect.spawn ('./a.out')
-print p.exitstatus
+print(p.exitstatus)
 p.expect (pexpect.EOF)
-print p.before
+print(p.before)
 time.sleep(1)
-print 'exitstatus:', p.exitstatus
-print 'isalive',p.isalive()
-print 'exitstatus',p.exitstatus
-print 'isalive',p.isalive()
-print 'exitstatus',p.exitstatus
+print('exitstatus:', p.exitstatus)
+print('isalive',p.isalive())
+print('exitstatus',p.exitstatus)
+print('isalive',p.isalive())
+print('exitstatus',p.exitstatus)
 

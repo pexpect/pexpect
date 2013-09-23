@@ -79,8 +79,9 @@ try:
     import errno
     import traceback
     import signal
-except ImportError as e:
-    raise ImportError(str(e) + '''
+    import platform
+except ImportError, err:
+    raise ImportError(str(err) + '''
 
 A critical module was not found. Probably this operating system does not
 support it. Pexpect is intended for UNIX-like operating systems.''')
@@ -266,7 +267,7 @@ def run(command, timeout=-1, withexitstatus=False, events=None,
         except EOF:
             child_result_list.append(child.before)
             break
-    child_result = b''.join(child_result_list)
+    child_result = six.b(''.join(child_result_list))
     if withexitstatus:
         child.close()
         return (child_result, child.exitstatus)
@@ -277,15 +278,15 @@ def run(command, timeout=-1, withexitstatus=False, events=None,
 class spawn(object):
     '''This is the main class interface for Pexpect. Use this class to start
     and control child applications. '''
-    string_type = bytes
+    string_type = six.binary_type
     if six.PY3:
-        allowed_string_types = (bytes, str)
+        allowed_string_types = (six.binary_type, str)
         @staticmethod
         def _chr(c):
             return bytes([c])
         linesep = os.linesep.encode('ascii')
     else:
-        allowed_string_types = basestring  # analysis:ignore
+        allowed_string_types = (basestring,)  # analysis:ignore
         _chr = staticmethod(chr)
         linesep = os.linesep
 
@@ -470,13 +471,13 @@ class spawn(object):
 
     @staticmethod
     def _coerce_expect_string(s):
-        if not isinstance(s, bytes):
+        if not isinstance(s, six.binary_type):
             return s.encode('ascii')
         return s
 
     @staticmethod
     def _coerce_send_string(s):
-        if not isinstance(s, bytes):
+        if not isinstance(s, six.binary_type):
             return s.encode('utf-8')
         return s
 
@@ -498,6 +499,7 @@ class spawn(object):
             # trigger an exception because os.close may be None.
             try:
                 self.close()
+            # which exception, shouldnt' we catch explicitly .. ?
             except:
                 pass
 
@@ -585,8 +587,8 @@ class spawn(object):
         if self.use_native_pty_fork:
             try:
                 self.pid, self.child_fd = pty.fork()
-            except OSError as e:
-                raise ExceptionPexpect('pty.fork() failed: ' + str(e))
+            except OSError, err:
+                raise ExceptionPexpect('pty.fork() failed: ' + str(err))
         else:
             # Use internal __fork_pty
             self.pid, self.child_fd = self.__fork_pty()
@@ -597,6 +599,7 @@ class spawn(object):
                 # used by setwinsize()
                 self.child_fd = sys.stdout.fileno()
                 self.setwinsize(24, 80)
+            # which exception, shouldnt' we catch explicitly .. ?
             except:
                 # Some platforms do not like setwinsize (Cygwin).
                 # This will cause problem when running applications that
@@ -679,6 +682,7 @@ class spawn(object):
             fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
             if fd >= 0:
                 os.close(fd)
+        # which exception, shouldnt' we catch explicitly .. ?
         except:
             # Already disconnected. This happens if running inside cron.
             pass
@@ -693,6 +697,7 @@ class spawn(object):
                 os.close(fd)
                 raise ExceptionPexpect('Failed to disconnect from ' +
                     'controlling tty. It is still possible to open /dev/tty.')
+        # which exception, shouldnt' we catch explicitly .. ?
         except:
             # Good! We are disconnected from a controlling tty.
             pass
@@ -912,7 +917,7 @@ class spawn(object):
                 # Linux does this
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Exception style platform.')
-            if s == b'':
+            if s == six.b(''):
                 # BSD style
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Empty string style platform.')
@@ -969,9 +974,9 @@ class spawn(object):
         if size == 0:
             return self.string_type()
         # delimiter default is EOF
-        index = self.expect([b'\r\n', self.delimiter])
+        index = self.expect([six.b('\r\n'), self.delimiter])
         if index == 0:
-            return self.before + b'\r\n'
+            return self.before + six.b('\r\n')
         else:
             return self.before
 
@@ -1054,7 +1059,7 @@ class spawn(object):
 
     def sendcontrol(self, char):
 
-        '''Helper method that wraps send() with mnumonic access for sending control
+        '''Helper method that wraps send() with mnemonic access for sending control
         character to the child (such as Ctrl-C or Ctrl-D).  For example, to send
         Ctrl-G (ASCII 7, bell, '\a')::
 
@@ -1225,15 +1230,15 @@ class spawn(object):
 
         try:
             pid, status = os.waitpid(self.pid, waitpid_options)
-        except OSError as e:
+        except OSError, err:
             # No child processes
-            if e.errno == errno.ECHILD:
+            if err.errno == errno.ECHILD:
                 raise ExceptionPexpect('isalive() encountered condition ' +
                         'where "terminated" is 0, but there was no child ' +
                         'process. Did someone else call waitpid() ' +
                         'on our process?')
             else:
-                raise e
+                raise err
 
         # I have to do this twice for Solaris.
         # I can't even believe that I figured this out...
@@ -1243,7 +1248,7 @@ class spawn(object):
             try:
                 ### os.WNOHANG) # Solaris!
                 pid, status = os.waitpid(self.pid, waitpid_options)
-            except OSError as e:
+            except OSError, err:
                 # This should never happen...
                 if e[0] == errno.ECHILD:
                     raise ExceptionPexpect('isalive() encountered condition ' +
@@ -1326,7 +1331,7 @@ class spawn(object):
         if self.ignorecase:
             compile_flags = compile_flags | re.IGNORECASE
         compiled_pattern_list = []
-        for p in patterns:
+        for idx, p in enumerate(patterns):
             if isinstance(p, self.allowed_string_types):
                 p = self._coerce_expect_string(p)
                 compiled_pattern_list.append(re.compile(p, compile_flags))
@@ -1337,9 +1342,12 @@ class spawn(object):
             elif isinstance(p, type(re.compile(''))):
                 compiled_pattern_list.append(p)
             else:
-                raise TypeError('Argument must be one of StringTypes, ' +
-                        'EOF, TIMEOUT, SRE_Pattern, or a list of those ' +
-                        'type. %s' % str(type(p)))
+                raise TypeError('pattern is type %s at position %d, '
+                        'must be one of: %s' % (type(p), idx,
+                            ', '.join([str(ast)
+                                for ast in self.allowed_string_types]
+                                + [type(EOF), type(TIMEOUT),
+                                    type(re.compile(''))]),))
 
         return compiled_pattern_list
 
@@ -1454,7 +1462,7 @@ class spawn(object):
         escaping regular expression characters that you want to match.'''
 
         if (isinstance(pattern_list, self.allowed_string_types) or
-            pattern_list in (TIMEOUT, EOF)):
+                pattern_list in (TIMEOUT, EOF)):
             pattern_list = [pattern_list]
 
         def prepare_string(pattern):
@@ -1506,7 +1514,7 @@ class spawn(object):
                 incoming = incoming + c
                 if timeout is not None:
                     timeout = end_time - time.time()
-        except EOF as e:
+        except EOF, err:
             self.buffer = self.string_type()
             self.before = incoming
             self.after = EOF
@@ -1518,8 +1526,8 @@ class spawn(object):
             else:
                 self.match = None
                 self.match_index = None
-                raise EOF(str(e) + '\n' + str(self))
-        except TIMEOUT as e:
+                raise EOF(str(err) + '\n' + str(self))
+        except TIMEOUT, err:
             self.buffer = incoming
             self.before = incoming
             self.after = TIMEOUT
@@ -1531,7 +1539,7 @@ class spawn(object):
             else:
                 self.match = None
                 self.match_index = None
-                raise TIMEOUT(str(e) + '\n' + str(self))
+                raise TIMEOUT(str(err) + '\n' + str(self))
         except:
             self.before = incoming
             self.after = None
@@ -1627,7 +1635,7 @@ class spawn(object):
         '''This is used by the interact() method.
         '''
 
-        while data != b'' and self.isalive():
+        while data != six.b('') and self.isalive():
             n = os.write(fd, data)
             data = data[n:]
 
@@ -1679,7 +1687,7 @@ class spawn(object):
         while True:
             try:
                 return select.select(iwtd, owtd, ewtd, timeout)
-            except select.error as e:
+            except select.error, err:
                 if e[0] == errno.EINTR:
                     # if we loop back we have to subtract the
                     # amount of time we already waited.
@@ -1729,12 +1737,12 @@ class spawnu(spawn):
     """
     if six.PY3:
         string_type = str
-        allowed_string_types = str
+        allowed_string_types = (str, )
         _chr = staticmethod(chr)
         linesep = os.linesep
     else:
         string_type = unicode
-        allowed_string_types = unicode
+        allowed_string_types = (unicode, )
         _chr = staticmethod(unichr)
         linesep = os.linesep.decode('ascii')
 

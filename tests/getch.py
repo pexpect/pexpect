@@ -19,21 +19,20 @@ PEXPECT LICENSE
 
 '''
 import sys, tty, termios
-def getch():
+
+def main():
+    while True:
+        val = ord(sys.stdin.read(1))
+        sys.stdout.write('%i\r\n' % (val,))
+        if val == 0:
+            # StopIteration equivalent is ctrl+' ' (\x00, NUL)
+            break
+
+if __name__ == '__main__':
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     try:
         tty.setraw(sys.stdin.fileno())
-        ch = sys.stdin.read(1)
+        main()
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-    return ch
-
-#for i in range(256):
-# Current Python unicode support was too hard to figure out.
-# This only tests the true ASCII characters now:
-for i in range(126):
-    c = getch()
-    a = ord(c) # chr(a)
-    print a
-

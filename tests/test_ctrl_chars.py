@@ -22,6 +22,7 @@ import pexpect
 import unittest
 import PexpectTestCase
 import time
+import sys
 
 class TestCtrlChars(PexpectTestCase.PexpectTestCase):
 

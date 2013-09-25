@@ -329,38 +329,3 @@ class ANSI (term):
                 self.scroll_up ()
                 self.cursor_home (self.cur_r, 1)
                 self.erase_line()
-
-#    def test (self):
-#
-#        import sys
-#        write_text = 'I\'ve got a ferret sticking up my nose.\n' + \
-#        '(He\'s got a ferret sticking up his nose.)\n' + \
-#        'How it got there I can\'t tell\n' + \
-#        'But now it\'s there it hurts like hell\n' + \
-#        'And what is more it radically affects my sense of smell.\n' + \
-#        '(His sense of smell.)\n' + \
-#        'I can see a bare-bottomed mandril.\n' + \
-#        '(Slyly eyeing his other nostril.)\n' + \
-#        'If it jumps inside there too I really don\'t know what to do\n' + \
-#        'I\'ll be the proud posessor of a kind of nasal zoo.\n' + \
-#        '(A nasal zoo.)\n' + \
-#        'I\'ve got a ferret sticking up my nose.\n' + \
-#        '(And what is worst of all it constantly explodes.)\n' + \
-#        '"Ferrets don\'t explode," you say\n' + \
-#        'But it happened nine times yesterday\n' + \
-#        'And I should know for each time I was standing in the way.\n' + \
-#        'I\'ve got a ferret sticking up my nose.\n' + \
-#        '(He\'s got a ferret sticking up his nose.)\n' + \
-#        'How it got there I can\'t tell\n' + \
-#        'But now it\'s there it hurts like hell\n' + \
-#        'And what is more it radically affects my sense of smell.\n' + \
-#        '(His sense of smell.)'
-#        self.fill('.')
-#        self.cursor_home()
-#        for c in write_text:
-#            self.write_ch (c)
-#        print str(self)
-#
-#if __name__ == '__main__':
-#    t = ANSI(6,65)
-#    t.test()

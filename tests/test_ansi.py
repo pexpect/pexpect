@@ -18,7 +18,6 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-from __future__ import with_statement  # bring 'with' stmt to py25
 from pexpect import ANSI
 import unittest
 import PexpectTestCase
@@ -113,6 +112,7 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
         for c in write_text:
             s.write (c)
         assert str(s) == write_target
+
     def test_torturet (self):
         s = ANSI.ANSI (24,80)
         with open('torturet.vt') as f:
@@ -120,6 +120,7 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
         for c in sample_text:
             s.process (c)
         assert s.pretty() == torture_target, 'processed: \n' + s.pretty() + '\nexpected:\n' + torture_target
+
     def test_tetris (self):
         s = ANSI.ANSI (24,80)
         with open('tetris.data') as f:

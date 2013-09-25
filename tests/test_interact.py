@@ -54,16 +54,6 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
             raise
         p.close(force = True)
         tty.tcsetattr(p.STDIN_FILENO, tty.TCSAFLUSH, mode)
-#    def test_interact_thread (self):
-#        # I can't believe this actually works...
-#        p = pexpect.spawn('%s swapcase_echo.py' % self.PYTHONBIN)
-#        mode = tty.tcgetattr(p.STDIN_FILENO)
-#        thread.start_new_thread (start_interact, (p,))
-#        time.sleep(1)
-#        p.sendline ('Hello')
-#        time.sleep(2)
-#        p.close(force = False)
-#        tty.tcsetattr(p.STDIN_FILENO, tty.TCSAFLUSH, mode)
 
     def test_interact (self):
         p = pexpect.spawn('%s interact.py' % (self.PYTHONBIN,))
@@ -84,10 +74,10 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         p = pexpect.spawnu('%s interact.py' % (self.PYTHONBIN,))
         p.sendline (u'Hello')
         p.sendline (u'theré')
-        p.sendline (u'Mr. Python🐹')
+        p.sendline (u'Mr. Pyþon')
         p.expect (u'Hello')
         p.expect (u'theré')
-        p.expect (u'Mr. Python🐹')
+        p.expect (u'Mr. Pyþon')
         assert p.isalive() == True, p.isalive()
         p.sendeof ()
         p.expect (pexpect.EOF)

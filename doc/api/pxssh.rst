@@ -1,5 +1,5 @@
-pxssh module
-============
+pxssh - control an SSH session
+==============================
 
 .. automodule:: pexpect.pxssh
 

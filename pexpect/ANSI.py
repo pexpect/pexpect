@@ -191,7 +191,6 @@ class term (screen.screen):
         screen.screen.__init__(self, r,c)
 
 class ANSI (term):
-
     '''This class implements an ANSI (VT100) terminal.
     It is a stream filter that recognizes ANSI terminal
     escape sequences and maintains the state of a screen object. '''
@@ -279,7 +278,7 @@ class ANSI (term):
         self.state.add_transition (';', 'NUMBER_2', None, 'SEMICOLON_X')
 
     def process (self, c):
-
+        """Process a single byte. Called by :meth:`write`."""
         self.state.process(c)
 
     def process_list (self, l):
@@ -287,16 +286,16 @@ class ANSI (term):
         self.write(l)
 
     def write (self, s):
-
+        """Process text, writing it to the virtual screen while handling
+        ANSI escape codes.
+        """
         for c in s:
             self.process(c)
 
     def flush (self):
-
         pass
 
     def write_ch (self, ch):
-
         '''This puts a character at the current cursor position. The cursor
         position is moved forward with wrap-around, but no scrolling is done if
         the cursor hits the lower-right corner of the screen. '''

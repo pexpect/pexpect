@@ -1,5 +1,5 @@
-fdpexpect module
-================
+fdpexpect - use pexpect with a file descriptor
+==============================================
 
 .. automodule:: pexpect.fdpexpect
 

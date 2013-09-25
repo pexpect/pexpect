@@ -1,5 +1,5 @@
-pexpect module
-==============
+Core pexpect components
+=======================
 
 .. automodule:: pexpect
 

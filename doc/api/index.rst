@@ -7,3 +7,5 @@ API documentation
    pexpect
    fdpexpect
    pxssh
+   screen
+   ANSI

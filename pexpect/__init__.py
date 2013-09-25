@@ -485,7 +485,6 @@ class spawn(object):
         return s
 
     def __del__(self):
-
         '''This makes sure that no system resources are left open. Python only
         garbage collects Python objects. OS file descriptors are not Python
         objects, so they must be handled explicitly. If the child file
@@ -503,7 +502,6 @@ class spawn(object):
                 pass
 
     def __str__(self):
-
         '''This returns a human-readable string that represents the state of
         the object. '''
 
@@ -537,7 +535,6 @@ class spawn(object):
         return '\n'.join(s)
 
     def _spawn(self, command, args=[]):
-
         '''This starts the given command in a child process. This does all the
         fork/exec type of stuff for a pty. This is called by __init__. If args
         is empty then command will be parsed (split on spaces) and args will be
@@ -631,7 +628,6 @@ class spawn(object):
         self.closed = False
 
     def __fork_pty(self):
-
         '''This implements a substitute for the forkpty system call. This
         should be more portable than the pty.fork() function. Specifically,
         this should work on Solaris.
@@ -670,7 +666,6 @@ class spawn(object):
         return pid, parent_fd
 
     def __pty_make_controlling_tty(self, tty_fd):
-
         '''This makes the pseudo-terminal the controlling tty. This should be
         more portable than the pty.fork() function. Specifically, this should
         work on Solaris. '''
@@ -717,14 +712,11 @@ class spawn(object):
             os.close(fd)
 
     def fileno(self):
-
         '''This returns the file descriptor of the pty for the child.
         '''
-
         return self.child_fd
 
     def close(self, force=True):
-
         '''This closes the connection with the child application. Note that
         calling close() more than once is valid. This emulates standard Python
         behavior with files. Set force to True if you want to make sure that
@@ -744,21 +736,18 @@ class spawn(object):
             #self.pid = None
 
     def flush(self):
-
         '''This does nothing. It is here to support the interface for a
         File-like object. '''
 
         pass
 
     def isatty(self):
-
         '''This returns True if the file descriptor is open and connected to a
         tty(-like) device, else False. '''
 
         return os.isatty(self.child_fd)
 
     def waitnoecho(self, timeout=-1):
-
         '''This waits until the terminal ECHO flag is set False. This returns
         True if the echo mode is off. This returns False if the ECHO flag was
         not set False before the timeout. This can be used to detect when the
@@ -789,7 +778,6 @@ class spawn(object):
             time.sleep(0.1)
 
     def getecho(self):
-
         '''This returns the terminal echo mode. This returns True if echo is
         on or False if echo is off. Child applications that are expecting you
         to enter a password often set ECHO False. See waitnoecho(). '''
@@ -800,7 +788,6 @@ class spawn(object):
         return False
 
     def setecho(self, state):
-
         '''This sets the terminal echo mode on or off. Note that anything the
         child sent before the echo will be lost, so you should be sure that
         your input buffer is empty before you call setecho(). For example, the
@@ -851,7 +838,6 @@ class spawn(object):
             second_log.flush()
 
     def read_nonblocking(self, size=1, timeout=-1):
-
         '''This reads at most size characters from the child application. It
         includes a timeout. If the read does not complete within the timeout
         period then a TIMEOUT exception is raised. If the end of file is read
@@ -929,7 +915,6 @@ class spawn(object):
         raise ExceptionPexpect('Reached an unexpected state.')
 
     def read(self, size=-1):
-
         '''This reads at most "size" bytes from the file (less if the read hits
         EOF before obtaining size bytes). If the size argument is negative or
         omitted, read all data until EOF is reached. The bytes are returned as
@@ -959,7 +944,6 @@ class spawn(object):
         return self.before
 
     def readline(self, size=-1):
-
         '''This reads and returns one entire line. The newline at the end of
         line is returned as part of the string, unless the file ends without a
         newline. An empty string is returned if EOF is encountered immediately.
@@ -981,25 +965,11 @@ class spawn(object):
             return self.before
 
     def __iter__(self):
-
         '''This is to support iterators over a file-like object.
         '''
-
-        #return iter(self)
         return iter(self.readline, self.string_type())
 
-#    def __next__(self):
-#
-#        '''This is to support iterators over a file-like object.
-#        '''
-#
-#        result = self.readline()
-#        if result == '':
-#            raise StopIteration
-#        return result
-
     def readlines(self, sizehint=-1):
-
         '''This reads until EOF using readline() and returns a list containing
         the lines thus read. The optional 'sizehint' argument is ignored.
         Remember, because this reads until EOF that means the child
@@ -1016,14 +986,12 @@ class spawn(object):
         return lines
 
     def write(self, s):
-
         '''This is similar to send() except that there is no return value.
         '''
 
         self.send(s)
 
     def writelines(self, sequence):
-
         '''This calls write() for each element in the sequence. The sequence
         can be any iterable object producing strings, typically a list of
         strings. This does not add line separators. There is no return value.
@@ -1033,7 +1001,6 @@ class spawn(object):
             self.write(s)
 
     def send(self, s):
-
         '''Sends string ``s`` to the child process, returning the number of
         bytes written. If a logfile is specified, a copy is written to that
         log. '''
@@ -1049,7 +1016,6 @@ class spawn(object):
         return os.write(self.child_fd, s)
 
     def sendline(self, s=''):
-
         '''Wraps send(), sending string ``s`` to child process, with os.linesep
         automatically appended. Returns number of bytes written. '''
 
@@ -1633,7 +1599,6 @@ class spawn(object):
             tty.tcsetattr(self.STDIN_FILENO, tty.TCSAFLUSH, mode)
 
     def __interact_writen(self, fd, data):
-
         '''This is used by the interact() method.
         '''
 
@@ -1642,7 +1607,6 @@ class spawn(object):
             data = data[n:]
 
     def __interact_read(self, fd):
-
         '''This is used by the interact() method.
         '''
 
@@ -1657,7 +1621,12 @@ class spawn(object):
         while self.isalive():
             r, w, e = self.__select([self.child_fd, self.STDIN_FILENO], [], [])
             if self.child_fd in r:
-                data = self.__interact_read(self.child_fd)
+                try:
+                    data = self.__interact_read(self.child_fd)
+                except OSError as e:
+                    # The subprocess may have closed before we get to reading it
+                    if e.errno != errno.EIO:
+                        raise
                 if output_filter:
                     data = output_filter(data)
                 if self.logfile is not None:

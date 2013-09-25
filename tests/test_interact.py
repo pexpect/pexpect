@@ -21,39 +21,9 @@ PEXPECT LICENSE
 '''
 import pexpect
 import unittest
-import time, tty
 import PexpectTestCase
-import threading
-
-def start_interact (p):
-    p.interact()
 
 class InteractTestCase (PexpectTestCase.PexpectTestCase):
-
-    def test_interact_thread (self):
-        # I can't believe this actually works...
-        # ...it doesn't! And I can't work out what it's testing (TK, Sep 2013)
-        return "SKIP"
-
-        # Note that I had to add a delay in the swapcase_echo.py script.
-        # I'm not sure why this helped.
-        p = pexpect.spawn('%s swapcase_echo.py' % (self.PYTHONBIN,))
-        mode = tty.tcgetattr(p.STDIN_FILENO)
-        t = threading.Thread (target=start_interact, args=(p,))
-        t.start()
-        #thread.start_new_thread (start_interact, (p,))
-        time.sleep(1)
-        p.sendline ('Hello')
-        #time.sleep(1)
-        try:
-            p.expect ('hELLO', timeout=4)
-        except Exception:
-            p.close(force = False)
-            tty.tcsetattr(p.STDIN_FILENO, tty.TCSAFLUSH, mode)
-            #print(str(p))
-            raise
-        p.close(force = True)
-        tty.tcsetattr(p.STDIN_FILENO, tty.TCSAFLUSH, mode)
 
     def test_interact (self):
         p = pexpect.spawn('%s interact.py' % (self.PYTHONBIN,))

@@ -199,10 +199,10 @@ class pxssh (spawn):
         prompt was so weird that we could not match it, so we use a few tricks
         to guess when we have reached the prompt. Then we hope for the best and
         blindly try to reset the prompt to something more unique. If that fails
-        then login() raises an ExceptionPxssh exception.
+        then login() raises an :class:`ExceptionPxssh` exception.
 
         In some situations it is not possible or desirable to reset the
-        original prompt. In this case, set 'auto_prompt_reset' to False to
+        original prompt. In this case, set :attr:`auto_prompt_reset` to False to
         inhibit setting the prompt to the UNIQUE_PROMPT. Remember that pxssh
         uses a unique prompt in the prompt() method. If the original prompt is
         not reset then this will disable the prompt() method unless you
@@ -303,11 +303,13 @@ class pxssh (spawn):
         '''This matches the shell prompt. This is little more than a short-cut
         to the expect() method. This returns True if the shell prompt was
         matched. This returns False if a timeout was raised. Note that if you
-        called login() with auto_prompt_reset set to False then before calling
-        prompt() you must set the PROMPT attribute to a regex that prompt()
-        will use for matching the prompt. Calling prompt() will erase the
-        contents of the 'before' attribute even if no prompt is ever matched.
-        If timeout is not given or it is set to -1 then self.timeout is used.
+        called :meth:`login` with :attr:`auto_prompt_reset` set to False then
+        before calling :meth:`prompt` you must set the :attr:`PROMPT` attribute
+        to a regex that it will use for matching the prompt.
+
+        Calling :meth:`prompt` will erase the contents of the :attr:`before`
+        attribute even if no prompt is ever matched. If timeout is not given or
+        it is set to -1 then self.timeout is used.
         '''
 
         if timeout == -1:
@@ -320,8 +322,8 @@ class pxssh (spawn):
     def set_unique_prompt (self):
 
         '''This sets the remote prompt to something more unique than # or $.
-        This makes it easier for the prompt() method to match the shell prompt
-        unambiguously. This method is called automatically by the login()
+        This makes it easier for the :meth:`prompt` method to match the shell prompt
+        unambiguously. This method is called automatically by the :meth:`login`
         method, but you may want to call it manually if you somehow reset the
         shell prompt. For example, if you 'su' to a different user then you
         will need to manually reset the prompt. This sends shell commands to

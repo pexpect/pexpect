@@ -6,3 +6,4 @@ API documentation
 
    pexpect
    fdpexpect
+   pxssh

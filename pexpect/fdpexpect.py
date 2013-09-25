@@ -64,6 +64,11 @@ class fdspawn (spawn):
         return
 
     def close (self):
+        """Close the file descriptor.
+
+        Calling this method a second time does nothing, but if the file
+        descriptor was closed elsewhere, :class:`OSError` will be raised.
+        """
         if self.child_fd == -1:
             return
 
@@ -73,7 +78,7 @@ class fdspawn (spawn):
         self.closed = True
 
     def isalive (self):
-        '''This checks if the file descriptor is still valid. If os.fstat()
+        '''This checks if the file descriptor is still valid. If :func:`os.fstat`
         does not raise an exception then we assume it is alive. '''
 
         if self.child_fd == -1:

@@ -5,3 +5,4 @@ API documentation
    :maxdepth: 2
 
    pexpect
+   fdpexpect

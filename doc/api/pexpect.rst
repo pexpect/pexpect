@@ -3,8 +3,8 @@ pexpect module
 
 .. automodule:: pexpect
 
-spawn object
-------------
+spawn class
+-----------
 
 .. autoclass:: spawn
 

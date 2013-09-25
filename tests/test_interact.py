@@ -63,25 +63,24 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         p.expect (b'Hello')
         p.expect (b'there')
         p.expect (b'Mr. Python')
-        assert p.isalive() == True, p.isalive()
+        assert p.isalive()
         p.sendeof ()
         p.expect (pexpect.EOF)
-        assert p.isalive() == False, p.isalive()
+        assert not p.isalive()
         assert p.exitstatus == 0, (p.exitstatus, p.before)
 
-    # XXX TODO: interact_unicode.py
     def test_interact_unicode (self):
-        p = pexpect.spawnu('%s interact.py' % (self.PYTHONBIN,))
+        p = pexpect.spawnu('%s interact_unicode.py' % (self.PYTHONBIN,))
         p.sendline (u'Hello')
         p.sendline (u'theré')
         p.sendline (u'Mr. Pyþon')
         p.expect (u'Hello')
         p.expect (u'theré')
         p.expect (u'Mr. Pyþon')
-        assert p.isalive() == True, p.isalive()
+        assert p.isalive()
         p.sendeof ()
         p.expect (pexpect.EOF)
-        assert p.isalive() == False, p.isalive()
+        assert not p.isalive()
         assert p.exitstatus == 0, (p.exitstatus, p.before)
 
 

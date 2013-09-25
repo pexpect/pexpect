@@ -4,7 +4,8 @@ from pexpect import __version__
 
 setup (name='pexpect',
     version=__version__,
-    py_modules=['pexpect', 'pxssh', 'fdpexpect', 'FSM', 'screen', 'ANSI'],
+    py_modules=['pxssh', 'fdpexpect', 'FSM', 'screen', 'ANSI'],
+    packages=['pexpect'],
     description='Pexpect is a pure Python Expect. It allows easy control of other applications.',
     author='Noah Spurrier',
     author_email='noah@noah.org',

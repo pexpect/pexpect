@@ -1,8 +1,5 @@
-Pexpected version |version|
-===========================
-
-Pexpected is a Unicode-aware, Python 3 compatible fork of Pexpect, a pure Python
-Expect-like module.
+Pexpect version |version|
+=========================
 
 Pexpect makes Python a better tool for controlling other
 applications.

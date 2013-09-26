@@ -20,11 +20,17 @@ PEXPECT LICENSE
 '''
 import sys, tty, termios
 
+if hasattr(sys.stdin, 'buffer'):
+    # Python 3: we want to read raw bytes
+    stdin = sys.stdin.buffer
+else:
+    stdin = sys.stdin
+
 def main():
     print('READY')
     while True:
         try:
-            val = ord(sys.stdin.read(1))
+            val = ord(stdin.read(1))
         except KeyboardInterrupt:
             val = 3
         sys.stdout.write('%d\r\n' % (val,))

@@ -1,3 +1,8 @@
+.. image:: https://travis-ci.org/pexpect/pexpect.png?branch=master
+   :target: https://travis-ci.org/pexpect/pexpect
+   :align: right
+   :alt: Build status
+
 Pexpect is a Pure Python Expect-like module
 
 Pexpect makes Python a better tool for controlling other applications.

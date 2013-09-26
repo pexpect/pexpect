@@ -39,6 +39,9 @@ import pexpect
 print("Testing pexpect %s using python %s:" % (
     pexpect.__version__, platform.python_version()))
 
+# Don't bother checking performance on Travis, we know it's slow.
+TEST_PERFORMANCE = 'TRAVIS' not in os.environ
+
 def add_tests_to_list (import_list, dirname, names):
     # Only check directories named 'tests'.
     if os.path.basename(dirname) != 'tests':
@@ -47,6 +50,8 @@ def add_tests_to_list (import_list, dirname, names):
     for f in names:
         filename, ext = os.path.splitext(f)
         if ext != '.py':
+            continue
+        if (not TEST_PERFORMANCE) and (filename == 'test_performance'):
             continue
         if filename.find('test_') == 0:
             import_list.append (os.path.join(dirname, filename))
@@ -65,6 +70,7 @@ def find_modules_and_add_paths (root_path):
             sys.path.append (path)
         if not os.path.dirname(path) in sys.path:
             sys.path.append (os.path.dirname(path))
+
     module_list.sort()
     return module_list
 

@@ -19,9 +19,10 @@ PEXPECT LICENSE
 
 '''
 import pexpect
+import sys
 
 def main():
-    p = pexpect.spawn('cat')
+    p = pexpect.spawn(sys.executable + ' echo_w_prompt.py')
     p.interact()
 
 if __name__ == '__main__':

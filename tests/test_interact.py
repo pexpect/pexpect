@@ -30,12 +30,13 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_interact (self):
         p = pexpect.spawn(str('%s interact.py' % (self.PYTHONBIN,)))
+        p.expect('<in >')
         p.sendline (b'Hello')
         p.sendline (b'there')
         p.sendline (b'Mr. Python')
-        p.expect (b'Hello')
-        p.expect (b'there')
-        p.expect (b'Mr. Python')
+        p.expect (b'<out>Hello')
+        p.expect (b'<out>there')
+        p.expect (b'<out>Mr. Python')
         assert p.isalive()
         p.sendeof ()
         p.expect (pexpect.EOF)
@@ -45,12 +46,13 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
     def test_interact_unicode (self):
         p = pexpect.spawnu(str('%s interact_unicode.py' % (self.PYTHONBIN,)))
         try:
+            p.expect('<in >')
             p.sendline ('Hello')
             p.sendline ('theré')
             p.sendline ('Mr. Pyþon')
-            p.expect ('Hello')
-            p.expect ('theré')
-            p.expect ('Mr. Pyþon')
+            p.expect ('<out>Hello')
+            p.expect ('<out>theré')
+            p.expect ('<out>Mr. Pyþon')
             assert p.isalive()
             p.sendeof ()
             p.expect (pexpect.EOF)

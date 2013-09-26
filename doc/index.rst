@@ -28,6 +28,7 @@ Contents:
    install
    overview
    api/index
+   examples
 
 
 

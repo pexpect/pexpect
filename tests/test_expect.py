@@ -119,6 +119,11 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self._expect_order(p)
 
     def _expect_order (self, p):
+        # Disable echo so that the output we see is in an entirely predictable
+        # order
+        p.setecho(False)
+        p.waitnoecho()
+
         p.sendline (b'1234')
         p.sendline (b'abcd')
         p.sendline (b'wxyz')
@@ -132,24 +137,6 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
             b'7890' ])
         assert index == 0, (index, p.before, p.after)
         index = p.expect ([
-            b'1234',
-            b'abcd',
-            b'wxyz',
-            pexpect.EOF,
-            b'7890' ])
-        # XXX this can be 0, or 1, depending on the platform. Per
-        # comments above, this is a very strange edge case that
-        # is in need of resolution.
-        assert index in (0, 1), (index, p.before, p.after)
-        index = p.expect ([
-            pexpect.EOF,
-            pexpect.TIMEOUT,
-            b'wxyz',
-            b'abcd',
-            b'1234' ])
-        # XXX see above
-        assert index in (3,4), (index, p.before, p.after)
-        index = p.expect ([
             b'54321',
             pexpect.TIMEOUT,
             b'1234',
@@ -166,24 +153,17 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
             pexpect.EOF], timeout=5)
         assert index == 4, (index, p.before, p.after)
         index = p.expect ([
-            b'54321',
-            pexpect.TIMEOUT,
-            b'1234',
-            b'abcd',
-            b'wxyz',
-            pexpect.EOF], timeout=5)
-        assert index == 4, (index, p.before, p.after)
-        index = p.expect ([
             pexpect.EOF,
             b'abcd',
             b'wxyz',
             b'7890' ])
         assert index == 3, (index, p.before, p.after)
+
         index = p.expect ([
-            pexpect.EOF,
             b'abcd',
             b'wxyz',
-            b'7890' ])
+            b'7890',
+            pexpect.EOF])
         assert index == 3, (index, p.before, p.after)
 
     def test_waitnoecho (self):

@@ -25,14 +25,15 @@ If you want to work with the development version of the source code then please
 read the DEVELOPERS document in the root of the source code tree.
 
 Free, open source, and all that good stuff.
-http://pexpect.sourceforge.net/
+
+`Docs on ReadTheDocs <http://pexpect.readthedocs.org/>`_
 
 PEXPECT LICENSE
 
-    This license is approved by the OSI and FSF as GPL-compatible.
-        http://opensource.org/licenses/isc-license.txt
+    http://opensource.org/licenses/isc-license.txt
 
     Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+
     PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
     PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE
     COPYRIGHT NOTICE AND THIS PERMISSION NOTICE APPEAR IN ALL COPIES.
@@ -44,3 +45,4 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+This license is approved by the OSI and FSF as GPL-compatible.

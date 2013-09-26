@@ -1,22 +1,20 @@
 Installation
 ============
 
-Pexpected is on PyPI, and can be installed with standard tools::
+Pexpect is on PyPI, and can be installed with standard tools::
 
-    pip install pexpected
+    pip install pexpect
 
 Or::
 
-    easy_install pexpected
-
-Note that the name is 'pexpected' for installation, but 'pexpect' for imports.
+    easy_install pexpect
 
 Requirements
 ------------
 
-Pexpected requires Python 2.6 or 3.2 or above. For older versions of Python,
-continue using Pexpect.
+This version of Pexpect requires Python 2.6 or 3.2 or above. For older
+versions of Python, continue using Pexpect 2.4.
 
-Pexpected (and Pexpect) only work on POSIX systems, where the :mod:`pty` module
+Pexpect only works on POSIX systems, where the :mod:`pty` module
 is present in the standard library. It may be possible to run it on Windows
 using `Cygwin <http://www.cygwin.com/>`_.

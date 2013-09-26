@@ -336,14 +336,14 @@ class spawn(object):
         output are read back from the child. This feature is useful in
         conjunction with searchwindowsize.
 
-        The searchwindowsize attribute sets the how far back in the incomming
+        The searchwindowsize attribute sets the how far back in the incoming
         seach buffer Pexpect will search for pattern matches. Every time
         Pexpect reads some data from the child it will append the data to the
-        incomming buffer. The default is to search from the beginning of the
-        imcomming buffer each time new data is read from the child. But this is
+        incoming buffer. The default is to search from the beginning of the
+        incoming buffer each time new data is read from the child. But this is
         very inefficient if you are running a command that generates a large
-        amount of data where you want to match The searchwindowsize does not
-        effect the size of the incomming data buffer. You will still have
+        amount of data where you want to match. The searchwindowsize does not
+        affect the size of the incoming data buffer. You will still have
         access to the full buffer after expect() returns.
 
         The logfile member turns on or off logging. All input and output will

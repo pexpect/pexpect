@@ -21,6 +21,7 @@ PEXPECT LICENSE
 import sys, tty, termios
 
 def main():
+    print('READY')
     while True:
         try:
             val = ord(sys.stdin.read(1))

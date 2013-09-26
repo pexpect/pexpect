@@ -42,6 +42,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         # too hard, so I disabled this. I should fix this one day.
         return 0
         child = pexpect.spawn('python getch.py')
+        child.expect('READY', timeout=5)
         try:
             for i in range(256):
 #                child.send(unicode('%d'%i, encoding='utf-8'))
@@ -56,6 +57,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
     def test_sendintr (self):
         try:
             child = pexpect.spawn('python getch.py')
+            child.expect('READY', timeout=5)
             child.sendintr()
             child.expect ('3\r\n')
         except Exception:
@@ -64,7 +66,6 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
                 str(err), child.before, child.after,))
 
     def test_bad_sendcontrol_chars (self):
-
         '''This tests that sendcontrol will return 0 for an unknown char. '''
 
         child = pexpect.spawn('python getch.py')
@@ -72,18 +73,21 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         assert retval == 0, "sendcontrol() should have returned 0 because there is no such thing as ctrl-1."
 
     def test_sendcontrol(self):
-
         '''This tests that we can send all special control codes by name.
         '''
         child = pexpect.spawn('python getch.py')
+        # On slow machines, like Travis, the process is not ready in time to
+        # catch the first character unless we wait for it.
+        child.expect('READY', timeout=5)
         child.delaybeforesend = 0.05
         for ctrl in 'abcdefghijklmnopqrstuvwxyz':
-            print(ctrl, end='')
             assert child.sendcontrol(ctrl) == 1
-            # Strange: on travis-ci, getch.py actually displays ^A, not '1' !?
-            val = ord(ctrl) - (ord('a') - 1)
-            alpha = ctrl.upper()
-            child.expect ('(%d|\^%s)\r\n' % (val, alpha), timeout=2)
+            val = ord(ctrl) - ord('a') + 1
+            try:
+                child.expect_exact(str(val)+'\r\n', timeout=2)
+            except:
+                print(ctrl)
+                raise
 
         # escape character
         assert child.sendcontrol('[') == 1
@@ -108,7 +112,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         #   causes child to exit, but, if immediately tested,
         #   isalive() still returns True unless an artifical timer
         #   is used.
-        time.sleep(1)
+        time.sleep(0.5)
         assert child.isalive() == False, child.isalive()
         assert child.exitstatus == 0
 

@@ -26,28 +26,27 @@ import PexpectTestCase
 import time
 import sys
 
+if sys.version_info[0] >= 3:
+    def byte(i):
+        return bytes([i])
+else:
+    byte = chr
+
 class TestCtrlChars(PexpectTestCase.PexpectTestCase):
 
-    def test_control_chars (self):
-
-        '''FIXME: Python unicode was too hard to figure out, so
-        this tests only the true ASCII characters. This is lame
-        and should be fixed. I'm leaving this script here as a
-        placeholder so that it will remind me to fix this one day.
-        This is what it used to do:
-        This tests that we can send all 256 8-bit ASCII characters
-        to a child process.'''
-
-        # FIXME: Getting this to support Python's Unicode was
-        # too hard, so I disabled this. I should fix this one day.
-        return 0
+    def test_control_chars(self):
+        '''This tests that we can send all 256 8-bit characters to a child
+        process.'''
         child = pexpect.spawn('python getch.py')
         child.expect('READY', timeout=5)
         try:
-            for i in range(256):
-#                child.send(unicode('%d'%i, encoding='utf-8'))
-                child.send(chr(i))
+            for i in range(1,256):
+                child.send(byte(i))
                 child.expect ('%d\r\n' % (i,))
+            # This needs to be last, as getch.py exits on \x00
+            child.send(byte(0))
+            child.expect('0\r\n')
+            child.expect(pexpect.EOF)
         except Exception:
             err = sys.exc_info()[1]
             msg = "Did not echo character value: " + str(i) + "\n"

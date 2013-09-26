@@ -98,7 +98,7 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
 
         # ensure the 'read' log is correct,
         with open(filename_read, 'r', encoding='utf-8', newline='') as f:
-            output = f.read().replace(_CAT_EOF, u'')
+            output = f.read().replace(_CAT_EOF, '')
             self.assertEqual(output, (msg + '\r\n')*2 )
 
 

@@ -345,31 +345,31 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
     def _before_after(self, p):
         p.timeout = 5
 
-        p.expect(b'>>> ')
-        self.assertEqual(p.after, b'>>> ')
-        assert p.before.startswith(b'Python '), p.before
-
-        p.sendline(b'list(range(4*3))')
-
         p.expect(b'5')
         self.assertEqual(p.after, b'5')
-        assert p.before.startswith(b'list(range(4*3))'), p.before
+        assert p.before.startswith(b'[0, 1, 2'), p.before
 
-        p.expect(b'>>> ')
-        self.assertEqual(p.after, b'>>> ')
-        assert p.before.startswith(b', 6, 7, 8'), p.before
+        p.expect(b'50')
+        self.assertEqual(p.after, b'50')
+        assert p.before.startswith(b', 6, 7, 8'), p.before[:20]
+        assert p.before.endswith(b'48, 49, '), p.before[-20:]
+
+        p.expect(pexpect.EOF)
+        self.assertEqual(p.after, pexpect.EOF)
+        assert p.before.startswith(b', 51, 52'), p.before[:20]
+        assert p.before.endswith(b', 99]\r\n'), p.before[-20:]
 
     def test_before_after(self):
         '''This tests expect() for some simple before/after things.
         '''
-        p = pexpect.spawn(self.PYTHONBIN)
+        p = pexpect.spawn('%s list100.py' % self.PYTHONBIN)
         self._before_after(p)
 
     def test_before_after_exact(self):
         '''This tests some simple before/after things, for
         expect_exact(). (Grahn broke it at one point.)
         '''
-        p = pexpect.spawn(self.PYTHONBIN)
+        p = pexpect.spawn('%s list100.py' % self.PYTHONBIN)
         # mangle the spawn so we test expect_exact() instead
         p.expect = p.expect_exact
         self._before_after(p)

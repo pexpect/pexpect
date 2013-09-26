@@ -26,6 +26,8 @@ import time
 
 class TestCaseDestructor(PexpectTestCase.PexpectTestCase):
     def test_destructor (self):
+        gc.collect()
+        time.sleep(3)
         p1 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
         p2 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)
         p3 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)

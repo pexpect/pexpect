@@ -30,6 +30,7 @@ Contents:
    api/index
    examples
    FAQ
+   history
 
 
 

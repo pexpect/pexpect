@@ -64,6 +64,8 @@ Controlling the child process
 
       The file descriptor used to communicate with the child process.
 
+.. _unicode:
+
 Handling unicode
 ````````````````
 

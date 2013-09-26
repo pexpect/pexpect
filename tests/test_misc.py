@@ -68,8 +68,8 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         assert child.exitstatus == 0, child.exitstatus
         self.assertEqual(line1, b'')
         self.assertEqual(line2, b'abc\r\n')
-        assert (line3 == b'abc\r\n' or line3 == '123\r\n'), line3
-        assert (line4 == b'123\r\n' or line4 == 'abc\r\n'), line4
+        assert (line3 == b'abc\r\n' or line3 == b'123\r\n'), line3
+        assert (line4 == b'123\r\n' or line4 == b'abc\r\n'), line4
         self.assertEqual(line5, b'123\r\n')
 
     def test_iter (self):

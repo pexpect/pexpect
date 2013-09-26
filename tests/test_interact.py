@@ -20,6 +20,7 @@ PEXPECT LICENSE
 
 '''
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import pexpect
 import unittest
@@ -28,7 +29,7 @@ import PexpectTestCase
 class InteractTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_interact (self):
-        p = pexpect.spawn('%s interact.py' % (self.PYTHONBIN,))
+        p = pexpect.spawn(str('%s interact.py' % (self.PYTHONBIN,)))
         p.sendline (b'Hello')
         p.sendline (b'there')
         p.sendline (b'Mr. Python')
@@ -42,14 +43,14 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         assert p.exitstatus == 0, (p.exitstatus, p.before)
 
     def test_interact_unicode (self):
-        p = pexpect.spawnu('%s interact_unicode.py' % (self.PYTHONBIN,))
+        p = pexpect.spawnu(str('%s interact_unicode.py' % (self.PYTHONBIN,)))
         try:
-            p.sendline (u'Hello')
-            p.sendline (u'theré')
-            p.sendline (u'Mr. Pyþon')
-            p.expect (u'Hello')
-            p.expect (u'theré')
-            p.expect (u'Mr. Pyþon')
+            p.sendline ('Hello')
+            p.sendline ('theré')
+            p.sendline ('Mr. Pyþon')
+            p.expect ('Hello')
+            p.expect ('theré')
+            p.expect ('Mr. Pyþon')
             assert p.isalive()
             p.sendeof ()
             p.expect (pexpect.EOF)
@@ -63,5 +64,5 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(InteractTestCase,'test')
+suite = unittest.makeSuite(InteractTestCase, 'test')
 

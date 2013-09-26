@@ -284,10 +284,12 @@ class spawn(object):
         def _chr(c):
             return bytes([c])
         linesep = os.linesep.encode('ascii')
+        write_to_stdout = sys.stdout.buffer.write
     else:
         allowed_string_types = (basestring,)  # analysis:ignore
         _chr = staticmethod(chr)
         linesep = os.linesep
+        write_to_stdout = sys.stdout.write
 
     encoding = None
 
@@ -1588,11 +1590,13 @@ class spawn(object):
         '''
 
         # Flush the buffer.
-        self.stdout.write(self.buffer.decode('ascii'))
+        self.write_to_stdout(self.buffer)
         self.stdout.flush()
         self.buffer = self.string_type()
         mode = tty.tcgetattr(self.STDIN_FILENO)
         tty.setraw(self.STDIN_FILENO)
+        if PY3:
+            escape_character = escape_character.encode('latin-1')
         try:
             self.__interact_copy(escape_character, input_filter, output_filter)
         finally:
@@ -1637,7 +1641,7 @@ class spawn(object):
                 data = self.__interact_read(self.STDIN_FILENO)
                 if input_filter:
                     data = input_filter(data)
-                i = data.rfind(self._coerce_expect_string(escape_character))
+                i = data.rfind(escape_character)
                 if i != -1:
                     data = data[:i]
                     self.__interact_writen(self.child_fd, data)
@@ -1717,6 +1721,8 @@ class spawnu(spawn):
         allowed_string_types = (unicode, )
         _chr = staticmethod(unichr)
         linesep = os.linesep.decode('ascii')
+    # This can handle unicode in both Python 2 and 3
+    write_to_stdout = sys.stdout.write
 
     def __init__(self, *args, **kwargs):
         self.encoding = kwargs.pop('encoding', 'utf-8')

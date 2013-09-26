@@ -18,6 +18,8 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
+from __future__ import print_function
+
 import pexpect
 import unittest
 import PexpectTestCase
@@ -76,6 +78,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('python getch.py')
         child.delaybeforesend = 0.05
         for ctrl in 'abcdefghijklmnopqrstuvwxyz':
+            print(ctrl, end='')
             assert child.sendcontrol(ctrl) == 1
             # Strange: on travis-ci, getch.py actually displays ^A, not '1' !?
             val = ord(ctrl) - (ord('a') - 1)

@@ -19,6 +19,8 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
+from __future__ import print_function
+
 import pexpect
 import unittest
 import PexpectTestCase
@@ -41,17 +43,21 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_interact_unicode (self):
         p = pexpect.spawnu('%s interact_unicode.py' % (self.PYTHONBIN,))
-        p.sendline (u'Hello')
-        p.sendline (u'theré')
-        p.sendline (u'Mr. Pyþon')
-        p.expect (u'Hello')
-        p.expect (u'theré')
-        p.expect (u'Mr. Pyþon')
-        assert p.isalive()
-        p.sendeof ()
-        p.expect (pexpect.EOF)
-        assert not p.isalive()
-        assert p.exitstatus == 0, (p.exitstatus, p.before)
+        try:
+            p.sendline (u'Hello')
+            p.sendline (u'theré')
+            p.sendline (u'Mr. Pyþon')
+            p.expect (u'Hello')
+            p.expect (u'theré')
+            p.expect (u'Mr. Pyþon')
+            assert p.isalive()
+            p.sendeof ()
+            p.expect (pexpect.EOF)
+            assert not p.isalive()
+            assert p.exitstatus == 0, (p.exitstatus, p.before)
+        except:
+            print(p.before)
+            raise
 
 
 if __name__ == '__main__':

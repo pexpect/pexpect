@@ -5,7 +5,7 @@ Just like interact.py, but using spawnu instead of spawn
 import pexpect
 
 def main():
-    p = pexpect.spawn('cat')
+    p = pexpect.spawnu('cat')
     p.interact()
 
 if __name__ == '__main__':

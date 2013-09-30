@@ -7,6 +7,10 @@ Releases
 Version 3.0
 ```````````
 
+The new major version number doesn't indicate any deliberate API incompatibility.
+We have endeavoured to avoid breaking existing APIs. However, pexpect is under
+new maintenance after a long dormancy, so some caution is warranted.
+
 * A new :ref:`unicode API <unicode>` was introduced.
 * Python 3 is now supported, using a single codebase.
 * Pexpect now requires at least Python 2.6 or 3.2.

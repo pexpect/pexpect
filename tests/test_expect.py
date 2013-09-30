@@ -52,6 +52,29 @@ def hex_diff(left, right):
         return '\n' + '\n'.join(diff,)
 
 
+class assert_raises_msg(object):
+    def __init__(self, errtype, msgpart):
+        self.errtype = errtype
+        self.msgpart = msgpart
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, etype, value, traceback):
+        if value is None:
+            raise AssertionError('Expected %s, but no exception was raised' \
+                                    % self.errtype)
+        if not isinstance(value, self.errtype):
+            raise AssertionError('Expected %s, but %s was raised' \
+                                    % (self.errtype, etype))
+
+        errstr = str(value)
+        if self.msgpart not in errstr:
+            raise AssertionError('%r was not in %r' % (self.msgpart, errstr))
+
+        return True
+
+
 class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_expect_basic (self):
@@ -451,10 +474,15 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_bad_arg(self):
         p = pexpect.spawn('cat')
-        self.assertRaises(TypeError, p.expect, 1)
-        self.assertRaises(TypeError, p.expect, [1, b'2'])
-        self.assertRaises(TypeError, p.expect_exact, 1)
-        self.assertRaises(TypeError, p.expect_exact, [1, b'2'])
+        with assert_raises_msg(TypeError, 'must be one of'):
+            p.expect(1)
+        with assert_raises_msg(TypeError, 'must be one of'):
+            p.expect([1, b'2'])
+
+        with assert_raises_msg(TypeError, 'must be one of'):
+            p.expect_exact(1)
+        with assert_raises_msg(TypeError, 'must be one of'):
+            p.expect_exact([1, b'2'])
 
 if __name__ == '__main__':
     unittest.main()

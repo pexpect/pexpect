@@ -1265,6 +1265,16 @@ class spawn(object):
         if self.isalive():
             os.kill(self.pid, sig)
 
+    def _pattern_type_err(self, pattern):
+        raise TypeError('got {badtype} ({badobj!r}) as pattern, must be one'
+                        ' of: {goodtypes}, pexpect.EOF, pexpect.TIMEOUT'\
+                        .format(badtype=type(pattern),
+                                badobj=pattern,
+                                goodtypes=', '.join([str(ast)\
+                                    for ast in self.allowed_string_types])
+                                )
+                        )
+
     def compile_pattern_list(self, patterns):
 
         '''This compiles a pattern-string or a list of pattern-strings.
@@ -1311,12 +1321,7 @@ class spawn(object):
             elif isinstance(p, type(re.compile(''))):
                 compiled_pattern_list.append(p)
             else:
-                raise TypeError('pattern is %s at position %d, '
-                    'must be one of: %s' % (
-                        str(type(p)), idx, ', '.join([str(ast)
-                            for ast in self.allowed_string_types
-                            ] + [str(EOF), str(TIMEOUT),
-                                str(type(re.compile('')))]),))
+                self._pattern_type_err(p)
         return compiled_pattern_list
 
     def expect(self, pattern, timeout=-1, searchwindowsize=-1):
@@ -1433,12 +1438,18 @@ class spawn(object):
                 pattern_list in (TIMEOUT, EOF)):
             pattern_list = [pattern_list]
 
-        def prepare_string(pattern):
+        def prepare_pattern(pattern):
             if pattern in (TIMEOUT, EOF):
                 return pattern
-            return self._coerce_expect_string(pattern)
+            if isinstance(pattern, self.allowed_string_types):
+                return self._coerce_expect_string(pattern)
+            self._pattern_type_err(pattern)
 
-        pattern_list = [prepare_string(p) for p in pattern_list]
+        try:
+            pattern_list = iter(pattern_list)
+        except TypeError:
+            self._pattern_type_err(pattern_list)
+        pattern_list = [prepare_pattern(p) for p in pattern_list]
         return self.expect_loop(searcher_string(pattern_list),
                 timeout, searchwindowsize)
 

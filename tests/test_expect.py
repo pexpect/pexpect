@@ -330,7 +330,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_expect_timeout (self):
         p = pexpect.spawn('cat', timeout=5)
-        i = p.expect(pexpect.TIMEOUT) # This tells it to wait for timeout.
+        p.expect(pexpect.TIMEOUT) # This tells it to wait for timeout.
         self.assertEqual(p.after, pexpect.TIMEOUT)
 
     def test_unexpected_eof (self):
@@ -417,83 +417,44 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.expect = p.expect_exact
         self._ordering(p)
 
-    def _greed(self, p):
-        p.timeout = 5
-        p.expect(b'>>> ')
-        p.sendline(b'import time')
-        p.expect(b'>>> ')
-        # the newline and sleep will (I hope) guarantee that
-        # pexpect is fed two distinct batches of data,
-        # "foo\r\n" + "bar\r\n".
-        foo_then_bar = b'print("f"+"o"+"o") ; time.sleep(1); print("b"+"a"+"r")'
+    def _greed(self, expect):
+        # End at the same point: the one with the earliest start should win
+        self.assertEqual(expect([b'3, 4', b'2, 3, 4']), 1)
 
-        p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([b'foo\r\nbar']), 0)
-        p.expect(b'>>> ')
+        # Start at the same point: first pattern passed wins
+        self.assertEqual(expect([b'5,', b'5, 6']), 0)
 
-        p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([b'\r\nbar']), 0)
-        p.expect(b'>>> ')
+        # Same pattern passed twice: first instance wins
+        self.assertEqual(expect([b'7, 8', b'7, 8, 9', b'7, 8']), 0)
 
-        p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([b'foo\r\nbar', b'foo', b'bar']), 1)
-        p.expect(b'>>> ')
-
-        p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([b'foo', b'foo\r\nbar', b'foo', b'bar']), 0)
-        p.expect(b'>>> ')
-
-        p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([b'bar', b'foo\r\nbar']), 1)
-        p.expect(b'>>> ')
-
-        # If the expect works as if we rematch for every new character,
-        # 'o\r\nb' should win over 'oo\r\nba'. The latter is longer and
-        # matches earlier in the input, but isn't satisfied until the 'a'
-        # arrives.
-        # However, pexpect doesn't do that (version 2.1 didn't).
-        p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([b'oo\r\nba', b'o\r\nb']), 0)
-        p.expect(b'>>> ')
-
-        # distinct patterns, but both suddenly match when the 'r' arrives.
-        p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([b'foo\r\nbar', b'ar']), 0)
-        p.expect(b'>>> ')
-
-        p.sendline(foo_then_bar)
-        self.assertEqual(p.expect([b'ar', b'foo\r\nbar']), 1)
-        p.expect(b'>>> ')
-
-        try:
-            p.expect([1,'2','3','4','5'])
-            assert False, 'TypeError should have been raised'
-        except TypeError:
-            err = sys.exc_info()[1]
-            e_msg_py2 = "pattern is <type 'int'> at position 0, must be one of"
-            e_msg_py3 = "pattern is <class 'int'> at position 0, must be one of"
-            if hasattr(err, 'message'):
-                assert (err.message.startswith(e_msg_py2)
-                        or err.message.startswith(e_msg_py3)), err.message
-            else:
-                assert str(err).startswith(e_msg_py3), err
-        except AttributeError:
-            err = sys.exc_info()[1]
-            e_msg = "'int' object has no attribute 'encode'"
-            if hasattr(err, 'message'):
-                assert err.message.startswith(e_msg), err.message
-            else:
-                assert str(err).startswith(e_msg), err
+    def _greed_read1(self, expect):
+        # Here, one has an earlier start and a later end. When processing
+        # one character at a time, the one that finishes first should win,
+        # because we don't know about the other match when it wins.
+        # If maxread > 1, this behaviour is currently undefined, although in
+        # most cases the one that starts first will win.
+        self.assertEqual(expect([b'1, 2, 3', b'2,']), 1)
 
     def test_greed(self):
-        p = pexpect.spawn(self.PYTHONBIN)
-        self._greed(p)
+        p = pexpect.spawn(self.PYTHONBIN + ' list100.py')
+        self._greed(p.expect)
+
+        p = pexpect.spawn(self.PYTHONBIN + ' list100.py', maxread=1)
+        self._greed_read1(p.expect)
 
     def test_greed_exact(self):
-        p = pexpect.spawn(self.PYTHONBIN)
-        # mangle the spawn so we test expect_exact() instead
-        p.expect = p.expect_exact
-        self._greed(p)
+        p = pexpect.spawn(self.PYTHONBIN + ' list100.py')
+        self._greed(p.expect_exact)
+
+        p = pexpect.spawn(self.PYTHONBIN + ' list100.py', maxread=1)
+        self._greed_read1(p.expect_exact)
+
+    def test_bad_arg(self):
+        p = pexpect.spawn('cat')
+        self.assertRaises(TypeError, p.expect, 1)
+        self.assertRaises(TypeError, p.expect, [1, b'2'])
+        self.assertRaises(TypeError, p.expect_exact, 1)
+        self.assertRaises(TypeError, p.expect_exact, [1, b'2'])
 
 if __name__ == '__main__':
     unittest.main()

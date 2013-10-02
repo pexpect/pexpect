@@ -1,6 +1,11 @@
 Pexpect version |version|
 =========================
 
+.. image:: https://travis-ci.org/pexpect/pexpect.png?branch=master
+   :target: https://travis-ci.org/pexpect/pexpect
+   :align: right
+   :alt: Build status
+
 Pexpect makes Python a better tool for controlling other
 applications.
 
@@ -32,7 +37,8 @@ Contents:
    FAQ
    history
 
-
+Pexpect is developed `on Github <http://github.com/pexpect/pexpect>`_. Please
+report `issues <https://github.com/pexpect/pexpect/issues>`_ there as well.
 
 Indices and tables
 ==================

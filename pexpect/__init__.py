@@ -176,8 +176,7 @@ def run(command, timeout=-1, withexitstatus=False, events=None,
         from pexpect import *
         run('scp foo user@example.com:.', events={'(?i)password': mypassword})
 
-    Examples
-    ========
+    **Examples**
 
     Start the apache daemon on the local machine::
 
@@ -193,9 +192,6 @@ def run(command, timeout=-1, withexitstatus=False, events=None,
 
         from pexpect import *
         (command_output, exitstatus) = run('ls -l /bin', withexitstatus=1)
-
-    Tricky Examples
-    ===============
 
     The following will run SSH and execute 'ls -l' on the remote machine. The
     password 'secret' will be sent if the '(?i)password' pattern is ever seen::
@@ -331,9 +327,9 @@ class spawn(object):
         talk to. For normal use, see expect() and send() and sendline().
 
         Remember that Pexpect does NOT interpret shell meta characters such as
-        redirect, pipe, or wild cards (>, |, or *). This is a common mistake.
-        If you want to run a command and pipe it through another command then
-        you must also start a shell. For example::
+        redirect, pipe, or wild cards (``>``, ``|``, or ``*``). This is a
+        common mistake.  If you want to run a command and pipe it through
+        another command then you must also start a shell. For example::
 
             child = pexpect.spawn('/bin/bash -c "ls -l | grep LOG > logs.txt"')
             child.expect(pexpect.EOF)

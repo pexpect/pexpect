@@ -88,8 +88,8 @@ support it. Pexpect is intended for UNIX-like operating systems.''')
 
 __version__ = '3.0b1'
 __revision__ = '1'
-__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'run', 'which',
-    'split_command_line', '__version__', '__revision__']
+__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'spawnu', 'run', 'runu',
+           'which', 'split_command_line', '__version__', '__revision__']
 
 PY3 = (sys.version_info[0] >= 3)
 

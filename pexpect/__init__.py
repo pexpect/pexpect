@@ -1498,7 +1498,7 @@ class spawn(object):
                     self.match_index = index
                     return self.match_index
                 # No match at this point
-                if timeout < 0 and timeout is not None:
+                if (timeout is not None) and (timeout < 0):
                     raise TIMEOUT('Timeout exceeded in expect_any().')
                 # Still have time left, so read more data
                 c = self.read_nonblocking(self.maxread, timeout)

@@ -2,3 +2,6 @@
 doc/_build
 tests/log
 build/
+dist/
+MANIFEST
+*~

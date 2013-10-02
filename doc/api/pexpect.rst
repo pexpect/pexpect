@@ -77,6 +77,8 @@ However, for a proper unicode API to a subprocess, use this subclass:
 .. autoclass:: spawnu
    :show-inheritance:
 
+There is also a :func:`runu` function, the unicode counterpart to :func:`run`.
+
 .. note::
 
    Unicode handling with pexpect works the same way on Python 2 and 3, despite
@@ -89,6 +91,8 @@ run function
 ------------
 
 .. autofunction:: run
+
+.. autofunction:: runu
 
 Exceptions
 ----------

@@ -224,13 +224,31 @@ def run(command, timeout=-1, withexitstatus=False, events=None,
     the next event. A callback may also return a string which will be sent to
     the child. 'extra_args' is not used by directly run(). It provides a way to
     pass data to a callback function through run() through the locals
-    dictionary passed to a callback. '''
+    dictionary passed to a callback.
+    '''
+    return _run(command, timeout=timeout, withexitstatus=withexitstatus,
+                events=events, extra_args=extra_args, logfile=logfile, cwd=cwd,
+                env=env, _spawn=spawn)
 
+def runu(command, timeout=-1, withexitstatus=False, events=None,
+        extra_args=None, logfile=None, cwd=None, env=None, **kwargs):
+    """This offers the same interface as :func:`run`, but using unicode.
+
+    Like :class:`spawnu`, you can pass ``encoding`` and ``errors`` parameters,
+    which will be used for both input and output.
+    """
+    return _run(command, timeout=timeout, withexitstatus=withexitstatus,
+                events=events, extra_args=extra_args, logfile=logfile, cwd=cwd,
+                env=env, _spawn=spawnu, **kwargs)
+
+def _run(command, timeout, withexitstatus, events, extra_args, logfile, cwd,
+         env, _spawn, **kwargs):
     if timeout == -1:
-        child = spawn(command, maxread=2000, logfile=logfile, cwd=cwd, env=env)
+        child = _spawn(command, maxread=2000, logfile=logfile, cwd=cwd, env=env,
+                        **kwargs)
     else:
-        child = spawn(command, timeout=timeout, maxread=2000, logfile=logfile,
-                cwd=cwd, env=env)
+        child = _spawn(command, timeout=timeout, maxread=2000, logfile=logfile,
+                cwd=cwd, env=env, **kwargs)
     if events is not None:
         patterns = list(events.keys())
         responses = list(events.values())

@@ -484,6 +484,12 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         with assert_raises_msg(TypeError, 'must be one of'):
             p.expect_exact([1, b'2'])
 
+    def test_timeout_none(self):
+        p = pexpect.spawn('echo abcdef', timeout=None)
+        p.expect('abc')
+        p.expect_exact('def')
+        p.expect(pexpect.EOF)
+
 if __name__ == '__main__':
     unittest.main()
 

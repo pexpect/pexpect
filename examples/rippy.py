@@ -276,7 +276,7 @@ def convert (options):
     if options['video_target_size'] != 'none':
         revised_bitrate = calculate_revised_bitrate (options['video_bitrate'], options['video_target_size'], video_actual_size)
         o.append("# revised video_bitrate : %d\n" % revised_bitrate)
-    for k,v in options.iteritems():
+    for k,v in options.items():
         o.append (" %30s : %s\n" % (k, v))
     print('# '.join(o))
     fout = open("rippy.conf","wb").write(''.join(o))
@@ -838,7 +838,7 @@ def interactive_convert ():
     print("Ready to Rippy!")
     print()
     print("The following options will be used:")
-    for k,v in options.iteritems():
+    for k,v in options.items():
         print("%27s : %s" % (k, v))
 
     print()

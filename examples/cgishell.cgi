@@ -15,13 +15,17 @@ The client web browser needs nothing but CSS and Javascript.
 This project is probably not the most security concious thing I've ever built.
 This should be considered an experimental tool -- at best.
 """
+
+from __future__ import absolute_import
+from __future__ import print_function
+
 import sys,os
 sys.path.insert (0,os.getcwd()) # let local modules precede any installed modules
 import socket, random, string, traceback, cgi, time, getopt, getpass, threading, resource, signal
 import pxssh, pexpect, ANSI
 
 def exit_with_usage(exit_code=1):
-    print globals()['__doc__']
+    print(globals()['__doc__'])
     os._exit(exit_code)
 
 def client (command, host='localhost', port=-1):
@@ -59,25 +63,25 @@ def server (hostname, username, password, socket_filename='/tmp/server_sock', da
         child.login (hostname, username, password, login_naked=True)
     except:
         return   
-    if verbose: print 'login OK'
+    if verbose: print('login OK')
     virtual_screen.write (child.before)
     virtual_screen.write (child.after)
 
     if os.path.exists(socket_filename): os.remove(socket_filename)
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     s.bind(socket_filename)
-    os.chmod(socket_filename, 0777)
-    if verbose: print 'Listen'
+    os.chmod(socket_filename, 0o777)
+    if verbose: print('Listen')
     s.listen(1)
 
     r = roller (endless_poll, (child, child.PROMPT, virtual_screen))
     r.start()
-    if verbose: print "started screen-poll-updater in background thread"
+    if verbose: print("started screen-poll-updater in background thread")
     sys.stdout.flush()
     try:
         while True:
             conn, addr = s.accept()
-            if verbose: print 'Connected by', addr
+            if verbose: print('Connected by', addr)
             data = conn.recv(1024)
             request = data.split(' ', 1)
             if len(request)>1:
@@ -109,18 +113,18 @@ def server (hostname, username, password, socket_filename='/tmp/server_sock', da
 
             response = []
             response.append (shell_window)
-            if verbose: print '\n'.join(response)
+            if verbose: print('\n'.join(response))
             sent = conn.send('\n'.join(response))
             if sent < len (response):
-                if verbose: print "Sent is too short. Some data was cut off."
+                if verbose: print("Sent is too short. Some data was cut off.")
             conn.close()
     except e:
         pass
     r.cancel()
-    if verbose: print "cleaning up socket"
+    if verbose: print("cleaning up socket")
     s.close()
     if os.path.exists(socket_filename): os.remove(socket_filename)
-    if verbose: print "server done!"
+    if verbose: print("server done!")
 
 class roller (threading.Thread):
     """This class continuously loops a function in a thread.
@@ -173,8 +177,8 @@ def daemonize (stdin=None, stdout=None, stderr=None, daemon_pid_filename=None):
 
     try:
         pid = os.fork()
-    except OSError, e:
-        raise Exception, "%s [%d]" % (e.strerror, e.errno)
+    except OSError as e:
+        raise Exception("%s [%d]" % (e.strerror, e.errno))
 
     if pid != 0:   # The first child.
         os.waitpid(pid,0)
@@ -190,8 +194,8 @@ def daemonize (stdin=None, stdout=None, stderr=None, daemon_pid_filename=None):
 
     try:
         pid = os.fork() # fork second child
-    except OSError, e:
-        raise Exception, "%s [%d]" % (e.strerror, e.errno)
+    except OSError as e:
+        raise Exception("%s [%d]" % (e.strerror, e.errno))
 
     if pid != 0:
         if daemon_pid_filename is not None:
@@ -207,7 +211,7 @@ def daemonize (stdin=None, stdout=None, stderr=None, daemon_pid_filename=None):
         maxfd = MAXFD
   
     # close all file descriptors
-    for fd in xrange(0, maxfd):
+    for fd in range(0, maxfd):
         try:
             os.close(fd)
         except OSError:   # fd wasn't open to begin with (ignored)
@@ -233,10 +237,10 @@ def client_cgi ():
     TITLE="Shell"
     SHELL_OUTPUT=""
     SID="NOT"
-    print "Content-type: text/html;charset=utf-8\r\n"
+    print("Content-type: text/html;charset=utf-8\r\n")
     try:
         form = cgi.FieldStorage()
-        if form.has_key('ajax'):
+        if 'ajax' in form:
             ajax_mode = True
             ajax_cmd = form['ajax'].value
             SID=form['sid'].value
@@ -244,47 +248,47 @@ def client_cgi ():
                 command = 'xsend'
                 arg = form['arg'].value.encode('hex')
                 result = client (command + ' ' + arg, '/tmp/'+SID)
-                print result
+                print(result)
             elif ajax_cmd == 'refresh':
                 command = 'refresh'
                 result = client (command, '/tmp/'+SID)
-                print result
+                print(result)
             elif ajax_cmd == 'cursor':
                 command = 'cursor'
                 result = client (command, '/tmp/'+SID)
-                print result
+                print(result)
             elif ajax_cmd == 'exit':
                 command = 'exit'
                 result = client (command, '/tmp/'+SID)
-                print result
+                print(result)
             elif ajax_cmd == 'hash':
                 command = 'hash'
                 result = client (command, '/tmp/'+SID)
-                print result
-        elif not form.has_key('sid'):
+                print(result)
+        elif 'sid' not in form:
             SID=random_sid()
-            print LOGIN_HTML % locals();
+            print(LOGIN_HTML % locals());
         else:
             SID=form['sid'].value
-            if form.has_key('start_server'):
+            if 'start_server' in form:
                 USERNAME = form['username'].value
                 PASSWORD = form['password'].value
                 dpid = server ('127.0.0.1', USERNAME, PASSWORD, '/tmp/'+SID)
                 SHELL_OUTPUT="daemon pid: " + str(dpid)
             else:
-                if form.has_key('cli'):
+                if 'cli' in form:
                     command = 'sendline ' + form['cli'].value
                 else:
                     command = 'sendline'
                 SHELL_OUTPUT = client (command, '/tmp/'+SID)
-            print CGISH_HTML % locals()
+            print(CGISH_HTML % locals())
     except:
         tb_dump = traceback.format_exc()
         if ajax_mode:
-            print str(tb_dump)
+            print(str(tb_dump))
         else:
             SHELL_OUTPUT=str(tb_dump)
-            print CGISH_HTML % locals()
+            print(CGISH_HTML % locals())
 
 def server_cli():
     """This is the command line interface to starting the server.
@@ -293,8 +297,8 @@ def server_cli():
     """
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'h?d', ['help','h','?', 'hostname=', 'username=', 'password=', 'port=', 'watch'])
-    except Exception, e:
-        print str(e)
+    except Exception as e:
+        print(str(e))
         exit_with_usage()
 
     command_line_options = dict(optlist)
@@ -755,8 +759,8 @@ password: <input name="password" type="password" size="30"><br>
 if __name__ == "__main__":
     try:
         main()
-    except Exception, e:
-        print str(e)
+    except Exception as e:
+        print(str(e))
         tb_dump = traceback.format_exc()
-        print str(tb_dump)
+        print(str(tb_dump))
 

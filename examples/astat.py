@@ -38,10 +38,18 @@ import os, sys, time, re, getopt, getpass
 import traceback
 import pexpect, pxssh
 
+
+try:
+    raw_input
+except NameError:
+    raw_input = input
+
+
 def exit_with_usage():
 
     print(globals()['__doc__'])
     os._exit(1)
+
 
 def main():
 

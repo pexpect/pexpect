@@ -103,6 +103,13 @@ except ImportError:
     sys.stderr.write("    aptitude -y install python-pexpect\n")
     exit(1)
 
+
+try:
+    raw_input
+except NameError:
+    raw_input = input
+
+
 histfile = os.path.join(os.environ["HOME"], ".hive_history")
 try:
     readline.read_history_file(histfile)

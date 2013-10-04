@@ -45,9 +45,16 @@ from __future__ import print_function
 
 from __future__ import absolute_import
 
-import os, sys, time, re, getopt, getpass
+import os, sys, re, getopt, getpass
 import traceback
 import pexpect
+
+
+try:
+    raw_input
+except NameError:
+    raw_input = input
+
 
 #
 # Some constants.

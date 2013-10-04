@@ -64,9 +64,9 @@ PEXPECT LICENSE
 
 '''
 
-from __future__ import print_function
-
 from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
 
 # See http://pexpect.sourceforge.net/
 import pexpect
@@ -74,13 +74,19 @@ import pxssh
 import os
 import sys
 import time
-import re
 import getopt
 import pickle
 import getpass
 import smtplib
 import traceback
 from pprint import pprint
+
+
+try:
+    raw_input
+except NameError:
+    raw_input = input
+
 
 TOPIP_LOG_FILE = '/var/log/topip.log'
 TOPIP_LAST_RUN_STATS = '/var/run/topip.last'
@@ -109,10 +115,9 @@ def stats(r):
     total = sum(r)
     avg = float(total)/float(len(r))
     sdsq = sum([(i-avg)**2 for i in r])
-    s = list(r)
-    s.sort()
-    return dict(zip(['med', 'avg', 'stddev', 'min', 'max'],
-        (s[len(s)//2], avg, (sdsq/len(r))**.5, min(r), max(r))))
+    s = sorted(list(r))
+    return dict(list(zip(['med', 'avg', 'stddev', 'min', 'max'],
+        (s[len(s)//2], avg, (sdsq/len(r))**.5, min(r), max(r)))))
 
 def send_alert (message, subject, addr_from, addr_to, smtp_server='localhost'):
 
@@ -208,7 +213,7 @@ def main():
 
     # run netstat (either locally or via SSH).
     if use_localhost:
-        p = pexpect.spawn('netstat -n -t')
+        p = pexpect.spawnu('netstat -n -t')
         PROMPT = pexpect.TIMEOUT
     else:
         p = pxssh.pxssh()
@@ -235,20 +240,18 @@ def main():
     ip_list = dict([ (key,value) for key,value in ip_list.items() if '192.168.' not in key])
     ip_list = dict([ (key,value) for key,value in ip_list.items() if '127.0.0.1' not in key])
 
-    # sort dict by value (count)
-    #ip_list = sorted(ip_list.iteritems(),
-    #    lambda x,y:cmp(x[1], y[1]),reverse=True)
-    ip_list = ip_list.items()
+    ip_list = list(ip_list.items())
     if len(ip_list) < 1:
         if verbose: print('Warning: no networks connections worth looking at.')
         return 0
-    ip_list.sort(lambda x,y:cmp(y[1],x[1]))
+    ip_list.sort(key=lambda x:x[1])
 
     # generate some stats for the ip addresses found.
-    if average_n <= 1:
+    if average_n is not None and average_n <= 1:
         average_n = None
     # Reminder: the * unary operator treats the list elements as arguments.
-    s = stats(zip(*ip_list[0:average_n])[1])
+    zipped = zip(*ip_list[0:average_n])
+    s = stats(list(zipped)[1])
     s['maxip'] = ip_list[0]
 
     # print munin-style or verbose results for the stats.

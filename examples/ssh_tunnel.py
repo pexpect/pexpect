@@ -40,6 +40,13 @@ import pexpect
 import getpass
 import time
 
+
+try:
+    raw_input
+except NameError:
+    raw_input = input
+
+
 # SMTP:25 IMAP4:143 POP3:110
 tunnel_command = 'ssh -C -N -f -L 25:127.0.0.1:25 -L 143:127.0.0.1:143 -L 110:127.0.0.1:110 %(user)@%(host)'
 host = raw_input('Hostname: ')

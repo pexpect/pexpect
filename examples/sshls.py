@@ -29,6 +29,13 @@ from __future__ import absolute_import
 import pexpect
 import getpass, os
 
+
+try:
+    raw_input
+except NameError:
+    raw_input = input
+
+
 def ssh_command (user, host, password, command):
 
     '''This runs a command on the remote host. This could also be done with the

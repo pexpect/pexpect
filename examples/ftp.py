@@ -24,14 +24,14 @@ PEXPECT LICENSE
 
 '''
 
-from __future__ import print_function
-
 from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
 
 import pexpect
 import sys
 
-child = pexpect.spawn('ftp ftp.openbsd.org')
+child = pexpect.spawnu('ftp ftp.openbsd.org')
 child.expect('(?i)name .*: ')
 child.sendline('anonymous')
 child.expect('(?i)password')

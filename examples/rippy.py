@@ -71,6 +71,13 @@ from __future__ import absolute_import
 import sys, os, re, math, stat, getopt, traceback, types, time
 import pexpect
 
+
+try:
+    raw_input
+except NameError:
+    raw_input = input
+
+
 __version__ = '1.2'
 __revision__ = '$Revision: 11 $'
 __all__ = ['main', __version__, __revision__]

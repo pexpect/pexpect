@@ -29,6 +29,13 @@ from __future__ import absolute_import
 import pexpect
 import sys, getpass
 
+
+try:
+    raw_input
+except NameError:
+    raw_input = input
+
+
 USAGE = '''passmass host1 host2 host3 . . .'''
 COMMAND_PROMPT = '[$#] '
 TERMINAL_PROMPT = r'Terminal type\?'

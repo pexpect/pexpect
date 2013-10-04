@@ -35,6 +35,9 @@ PEXPECT LICENSE
 
 '''
 
+from __future__ import absolute_import
+from __future__ import print_function
+
 import os, sys, time
 import pexpect
 
@@ -63,16 +66,16 @@ def is_kb_sticky (filename):
         s = pexpect.spawn ('cvs status %s' % filename)
         i = s.expect (['Sticky Options:\s*(.*)\r\n',  'Status: Unknown'])
         if i==1 and VERBOSE:
-            print 'File not part of CVS repository:', filename
+            print('File not part of CVS repository:', filename)
             return 1 # Pretend it's OK.
         if s.match.group(1) == '-kb':
             return 1
         s = None
     except:
-        print 'Something went wrong trying to run external cvs command.'
-        print '    cvs status %s' % filename
-        print 'The cvs command returned:'
-        print s.before
+        print('Something went wrong trying to run external cvs command.')
+        print('    cvs status %s' % filename)
+        print('The cvs command returned:')
+        print(s.before)
     return 0
 
 def cvs_admin_kb (filename):
@@ -97,7 +100,7 @@ def walk_and_clean_cvs_binaries (arg, dirname, names):
             continue
         if is_binary(fullpath):
             if not is_kb_sticky (fullpath):
-                if VERBOSE: print fullpath
+                if VERBOSE: print(fullpath)
                 cvs_admin_kb (fullpath)
 
 def main ():

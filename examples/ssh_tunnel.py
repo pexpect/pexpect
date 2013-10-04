@@ -32,6 +32,10 @@ PEXPECT LICENSE
 
 '''
 
+from __future__ import print_function
+
+from __future__ import absolute_import
+
 import pexpect
 import getpass
 import time
@@ -59,8 +63,8 @@ def start_tunnel ():
         time.sleep (60) # Cygwin is slow to update process status.
         ssh_tunnel.expect (pexpect.EOF)
 
-    except Exception, e:
-        print str(e)
+    except Exception as e:
+        print(str(e))
 
 def main ():
 
@@ -69,15 +73,15 @@ def main ():
         time.sleep (1)
         index = ps.expect (['/usr/bin/ssh', pexpect.EOF, pexpect.TIMEOUT])
         if index == 2:
-            print 'TIMEOUT in ps command...'
-            print str(ps)
+            print('TIMEOUT in ps command...')
+            print(str(ps))
             time.sleep (13)
         if index == 1:
-            print time.asctime(),
-            print 'restarting tunnel'
+            print(time.asctime(), end=' ')
+            print('restarting tunnel')
             start_tunnel ()
             time.sleep (11)
-            print 'tunnel OK'
+            print('tunnel OK')
         else:
             # print 'tunnel OK'
             time.sleep (7)

@@ -41,6 +41,10 @@ PEXPECT LICENSE
 
 '''
 
+from __future__ import print_function
+
+from __future__ import absolute_import
+
 import os, sys, time, re, getopt, getpass
 import traceback
 import pexpect
@@ -56,7 +60,7 @@ SSH_NEWKEY = '(?i)are you sure you want to continue connecting'
 
 def exit_with_usage():
 
-    print globals()['__doc__']
+    print(globals()['__doc__'])
     os._exit(1)
 
 def main():
@@ -67,15 +71,15 @@ def main():
     ######################################################################
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'h?s:u:p:', ['help','h','?'])
-    except Exception, e:
-        print str(e)
+    except Exception as e:
+        print(str(e))
         exit_with_usage()
     options = dict(optlist)
     if len(args) > 1:
         exit_with_usage()
 
     if [elem for elem in options if elem in ['-h','--h','-?','--?','--help']]:
-        print "Help:"
+        print("Help:")
         exit_with_usage()
 
     if '-s' in options:
@@ -97,9 +101,9 @@ def main():
     child = pexpect.spawn('ssh -l %s %s'%(user, host))
     i = child.expect([pexpect.TIMEOUT, SSH_NEWKEY, COMMAND_PROMPT, '(?i)password'])
     if i == 0: # Timeout
-        print 'ERROR! could not login with SSH. Here is what SSH said:'
-        print child.before, child.after
-        print str(child)
+        print('ERROR! could not login with SSH. Here is what SSH said:')
+        print(child.before, child.after)
+        print(str(child))
         sys.exit (1)
     if i == 1: # In this case SSH does not have the public key cached.
         child.sendline ('yes')
@@ -124,24 +128,24 @@ def main():
     child.sendline ("PS1='[PEXPECT]\$ '") # In case of sh-style
     i = child.expect ([pexpect.TIMEOUT, COMMAND_PROMPT], timeout=10)
     if i == 0:
-        print "# Couldn't set sh-style prompt -- trying csh-style."
+        print("# Couldn't set sh-style prompt -- trying csh-style.")
         child.sendline ("set prompt='[PEXPECT]\$ '")
         i = child.expect ([pexpect.TIMEOUT, COMMAND_PROMPT], timeout=10)
         if i == 0:
-            print "Failed to set command prompt using sh or csh style."
-            print "Response was:"
-            print child.before
+            print("Failed to set command prompt using sh or csh style.")
+            print("Response was:")
+            print(child.before)
             sys.exit (1)
 
     # Now we should be at the command prompt and ready to run some commands.
-    print '---------------------------------------'
-    print 'Report of commands run on remote host.'
-    print '---------------------------------------'
+    print('---------------------------------------')
+    print('Report of commands run on remote host.')
+    print('---------------------------------------')
 
     # Run uname.
     child.sendline ('uname -a')
     child.expect (COMMAND_PROMPT)
-    print child.before
+    print(child.before)
     if 'linux' in child.before.lower():
         LINUX_MODE = 1
     else:
@@ -164,36 +168,36 @@ def main():
     if 'min' in duration:
         child.match = re.search('([0-9]+)\s+min',duration)
         mins = str(int(child.match.group(1)))
-    print
-    print 'Uptime: %s days, %s users, %s (1 min), %s (5 min), %s (15 min)' % (
-        duration, users, av1, av5, av15)
+    print()
+    print('Uptime: %s days, %s users, %s (1 min), %s (5 min), %s (15 min)' % (
+        duration, users, av1, av5, av15))
     child.expect (COMMAND_PROMPT)
 
     # Run iostat.
     child.sendline ('iostat')
     child.expect (COMMAND_PROMPT)
-    print child.before
+    print(child.before)
 
     # Run vmstat.
     child.sendline ('vmstat')
     child.expect (COMMAND_PROMPT)
-    print child.before
+    print(child.before)
 
     # Run free.
     if LINUX_MODE:
         child.sendline ('free') # Linux systems only.
         child.expect (COMMAND_PROMPT)
-        print child.before
+        print(child.before)
 
     # Run df.
     child.sendline ('df')
     child.expect (COMMAND_PROMPT)
-    print child.before
+    print(child.before)
 
     # Run lsof.
     child.sendline ('lsof')
     child.expect (COMMAND_PROMPT)
-    print child.before
+    print(child.before)
 
 #    # Run netstat
 #    child.sendline ('netstat')
@@ -219,8 +223,8 @@ if __name__ == "__main__":
 
     try:
         main()
-    except Exception, e:
-        print str(e)
+    except Exception as e:
+        print(str(e))
         traceback.print_exc()
         os._exit(1)
 

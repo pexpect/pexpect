@@ -26,6 +26,10 @@ PEXPECT LICENSE
 
 '''
 
+from __future__ import print_function
+
+from __future__ import absolute_import
+
 import pexpect
 
 child = pexpect.spawn ('df')
@@ -41,7 +45,7 @@ for dummy in range (0, 1000):
         break
 
 # Print report
-print
+print()
 for m in filesystem_list:
     s = "Filesystem %s is at %s%%" % (m[0], m[1])
     # highlight filesystems over 95% capacity
@@ -49,5 +53,5 @@ for m in filesystem_list:
         s = '! ' + s
     else:
         s = '  ' + s
-    print s
+    print(s)
 

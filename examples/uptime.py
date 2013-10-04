@@ -22,6 +22,10 @@ PEXPECT LICENSE
 
 '''
 
+from __future__ import print_function
+
+from __future__ import absolute_import
+
 import pexpect
 import re
 
@@ -68,6 +72,6 @@ if 'min' in duration:
     mins = str(int(p.match.group(1)))
 
 # Print the parsed fields in CSV format.
-print 'days, hours, minutes, users, cpu avg 1 min, cpu avg 5 min, cpu avg 15 min'
-print '%s, %s, %s, %s, %s, %s, %s' % (days, hours, mins, users, av1, av5, av15)
+print('days, hours, minutes, users, cpu avg 1 min, cpu avg 5 min, cpu avg 15 min')
+print('%s, %s, %s, %s, %s, %s, %s' % (days, hours, mins, users, av1, av5, av15))
 

@@ -72,7 +72,7 @@ def change_password(child, user, oldpassword, newpassword):
     if i == 0:
         print 'Host did not like new password. Here is what it said...'
         print child.before
-	child.send (chr(3)) # Ctrl-C
+        child.send (chr(3)) # Ctrl-C
         child.sendline('') # This should tell remote passwd command to quit.
         return
     child.sendline(newpassword)
@@ -106,4 +106,3 @@ if __name__ == '__main__':
         main()
     except pexpect.ExceptionPexpect, e:
         print str(e)
-

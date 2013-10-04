@@ -379,7 +379,7 @@ def apply_smart (func, args):
             func = globals()[func]
         else:
             raise NameError("name '%s' is not defined" % func)
-    if hasattr(func,'im_func'): # Handle case when func is a class method.
+    if hasattr(func, '__func__'): # Handle case when func is a class method.
         func = func.__func__
     argcount = func.__code__.co_argcount
     required_args = dict([(k,args.get(k)) for k in func.__code__.co_varnames[:argcount]])

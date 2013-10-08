@@ -2,3 +2,5 @@ recursive-include doc *
 recursive-include examples *
 include README LICENSE INSTALL
 include setup.py pexpect.py fdpexpect.py pxssh.py screen.py ANSI.py FSM.py
+include test.env tools/testall.py
+recursive-include tests *

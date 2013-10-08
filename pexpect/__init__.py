@@ -308,7 +308,8 @@ class spawn(object):
     encoding = None
 
     def __init__(self, command, args=[], timeout=30, maxread=2000,
-        searchwindowsize=None, logfile=None, cwd=None, env=None):
+        searchwindowsize=None, logfile=None, cwd=None, env=None,
+        ignore_sighup=False):
 
         '''This is the constructor. The command parameter may be a string that
         includes a command and any arguments to the command. For example::
@@ -467,6 +468,7 @@ class spawn(object):
         self.closed = True
         self.cwd = cwd
         self.env = env
+        self.ignore_sighup = ignore_sighup
         # This flags if we are running on irix
         self.__irix_hack = (sys.platform.lower().find('irix') >= 0)
         # Solaris uses internal __fork_pty(). All others use pty.fork().
@@ -627,10 +629,8 @@ class spawn(object):
                 except OSError:
                     pass
 
-            # I don't know why this works, but ignoring SIGHUP fixes a
-            # problem when trying to start a Java daemon with sudo
-            # (specifically, Tomcat).
-            signal.signal(signal.SIGHUP, signal.SIG_IGN)
+            if self.ignore_sighup:
+                signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
             if self.cwd is not None:
                 os.chdir(self.cwd)

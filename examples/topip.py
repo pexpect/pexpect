@@ -176,6 +176,7 @@ def main():
             password = options['-p']
         else:
             password = getpass.getpass('password: ')
+        use_localhost = False
     else:
         use_localhost = True
 
@@ -213,7 +214,7 @@ def main():
 
     # run netstat (either locally or via SSH).
     if use_localhost:
-        p = pexpect.spawnu('netstat -n -t')
+        p = pexpect.spawn('netstat -n -t')
         PROMPT = pexpect.TIMEOUT
     else:
         p = pxssh.pxssh()
@@ -228,7 +229,7 @@ def main():
             i = p.expect([PROMPT, netstat_pattern])
             if i == 0:
                 break
-            k = p.match.groups()[4]
+            k = p.match.groups()[4].decode('utf-8')
             if k in ip_list:
                 ip_list[k] = ip_list[k] + 1
             else:

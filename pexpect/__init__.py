@@ -1555,7 +1555,7 @@ class spawn(object):
 
         TIOCGWINSZ = getattr(termios, 'TIOCGWINSZ', 1074295912)
         s = struct.pack('HHHH', 0, 0, 0, 0)
-        x = fcntl.ioctl(self.fileno(), TIOCGWINSZ, s)
+        x = fcntl.ioctl(self.child_fd, TIOCGWINSZ, s)
         return struct.unpack('HHHH', x)[0:2]
 
     def setwinsize(self, rows, cols):

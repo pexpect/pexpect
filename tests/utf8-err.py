@@ -11,5 +11,5 @@ utf8_blurb = ('\xe2\x96\x81\xe2\x96\x82\xe2\x96\x83\xe2\x96\x84'
 for ch in utf8_blurb:
     sys.stderr.write(ch)
     sys.stderr.flush()
-    time.sleep(0.1)
+    time.sleep(0.05)
 sys.stderr.write('\n')

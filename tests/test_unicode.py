@@ -123,6 +123,18 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         p.sendeof()
         p.expect(pexpect.EOF)
 
+    def test_spawn_utf8_incomplete(self):
+        # This test case ensures correct incremental decoding, which
+        # otherwise fails when the stream inspected by os.read()
+        # does not align exactly at a utf-8 multibyte boundry:
+        #    UnicodeDecodeError: 'utf8' codec can't decode byte 0xe2 in
+        #                        position 0: unexpected end of data
+        p = pexpect.spawnu('cat', maxread=1)
+        p.sendline('▁▂▃▄▅▆▇█')
+        p.sendeof()
+        p.expect('▁▂▃▄▅▆▇█')
+
+
 if __name__ == '__main__':
     unittest.main()
 

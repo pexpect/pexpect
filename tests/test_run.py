@@ -84,6 +84,7 @@ class RunUnicodeFuncTestCase(RunFuncTestCase):
                 return True  # Stop the child process
 
         output = pexpect.runu(sys.executable + ' echo_w_prompt.py',
+                              env={'PYTHONIOENCODING':'utf-8'},
                               events={pattern:callback})
         assert isinstance(output, unicode_type), type(output)
         assert '<out>'+c in output, output

@@ -22,6 +22,10 @@ PEXPECT LICENSE
 
 '''
 
+from __future__ import absolute_import
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import pexpect
 import re
 
@@ -44,8 +48,12 @@ import re
 # OpenBSD box3 2.9 GENERIC#653 i386
 #  6:08PM  up 4 days, 22:26, 1 user, load averages: 0.13, 0.09, 0.08
 
+# Note that, for Python 3 compatibility reasons, we are using spawnu and
+# importing unicode_literals (above). spawnu accepts Unicode input and
+# unicode_literals makes all string literals in this script Unicode by default.
+p = pexpect.spawnu('uptime')
+
 # This parses uptime output into the major groups using regex group matching.
-p = pexpect.spawn ('uptime')
 p.expect('up\s+(.*?),\s+([0-9]+) users?,\s+load averages?: ([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9])')
 duration, users, av1, av5, av15 = p.match.groups()
 
@@ -68,6 +76,6 @@ if 'min' in duration:
     mins = str(int(p.match.group(1)))
 
 # Print the parsed fields in CSV format.
-print 'days, hours, minutes, users, cpu avg 1 min, cpu avg 5 min, cpu avg 15 min'
-print '%s, %s, %s, %s, %s, %s, %s' % (days, hours, mins, users, av1, av5, av15)
+print('days, hours, minutes, users, cpu avg 1 min, cpu avg 5 min, cpu avg 15 min')
+print('%s, %s, %s, %s, %s, %s, %s' % (days, hours, mins, users, av1, av5, av15))
 

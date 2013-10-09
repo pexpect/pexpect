@@ -22,6 +22,10 @@ PEXPECT LICENSE
 
 '''
 
+from __future__ import print_function
+
+from __future__ import absolute_import
+
 import pexpect
 import string
 import ANSI
@@ -37,11 +41,12 @@ class Chess:
 
         self.child.expect ('Chess')
         if self.child.after != 'Chess':
-            raise IOError, 'incompatible chess program'
+            raise IOError('incompatible chess program')
         self.term.process_list (self.before)
         self.term.process_list (self.after)
         self.last_computer_move = ''
-    def read_until_cursor (self, r,c)
+
+    def read_until_cursor (self, r,c):
         while 1:
             self.child.read(1, 60)
             self.term.process (c)
@@ -56,22 +61,19 @@ class Chess:
         return move
 
     def do_move (self, move):
-        read_until_cursor (19,60)
-        #self.child.expect ('\[19;60H')
+        self.read_until_cursor (19,60)
         self.child.sendline (move)
-        print 'do_move' move
         return move
 
     def get_first_computer_move (self):
         self.child.expect ('My move is')
         self.child.expect (REGEX_MOVE)
-#		print '', self.child.after
         return self.child.after
 
     def get_computer_move (self):
-        print 'Here'
+        print('Here')
         i = self.child.expect (['\[17;59H', '\[17;58H'])
-        print i
+        print(i)
         if i == 0:
             self.child.expect (REGEX_MOVE)
             if len(self.child.after) < 4:
@@ -79,7 +81,7 @@ class Chess:
         if i == 1:
             self.child.expect (REGEX_MOVE_PART)
             self.child.after = self.last_computer_move[0] + self.child.after
-        print '', self.child.after
+        print('', self.child.after)
         self.last_computer_move = self.child.after
         return self.child.after
 
@@ -94,7 +96,7 @@ class Chess:
     def quit(self):
         self.child.sendline ('quit')
 import sys, os
-print 'Starting...'
+print('Starting...')
 white = Chess()
 white.child.echo = 1
 white.child.expect ('Your move is')
@@ -102,17 +104,17 @@ white.set_depth(2)
 white.switch()
 
 move_white = white.get_first_computer_move()
-print 'first move white:', move_white
+print('first move white:', move_white)
 
 white.do_move ('e7e5')
 move_white = white.get_computer_move()
-print 'move white:', move_white
+print('move white:', move_white)
 white.do_move ('f8c5')
 move_white = white.get_computer_move()
-print 'move white:', move_white
+print('move white:', move_white)
 white.do_move ('b8a6')
 move_white = white.get_computer_move()
-print 'move white:', move_white
+print('move white:', move_white)
 
 sys.exit(1)
 
@@ -124,24 +126,24 @@ white.child.expect ('Your move is')
 white.switch()
 
 move_white = white.get_first_computer_move()
-print 'first move white:', move_white
+print('first move white:', move_white)
 
 black.do_first_move (move_white)
 move_black = black.get_first_computer_move()
-print 'first move black:', move_black
+print('first move black:', move_black)
 
 white.do_move (move_black)
 
 done = 0
 while not done:
     move_white = white.get_computer_move()
-    print 'move white:', move_white
+    print('move white:', move_white)
 
     black.do_move (move_white)
     move_black = black.get_computer_move()
-    print 'move black:', move_black
+    print('move black:', move_black)
 
     white.do_move (move_black)
-    print 'tail of loop'
+    print('tail of loop')
 
 g.quit()

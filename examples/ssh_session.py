@@ -25,6 +25,8 @@ PEXPECT LICENSE
 
 '''
 
+from __future__ import absolute_import
+
 from pexpect import *
 import os, sys
 import getpass

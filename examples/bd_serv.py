@@ -29,6 +29,10 @@ PEXPECT LICENSE
 
 '''
 
+from __future__ import print_function
+
+from __future__ import absolute_import
+
 # Having the password on the command line is not a good idea, but
 # then this entire project is probably not the most security concious thing
 # I've ever built. This should be considered an experimental tool -- at best.
@@ -37,7 +41,7 @@ import time, sys, os, getopt, getpass, traceback, threading, socket
 
 def exit_with_usage(exit_code=1):
 
-    print globals()['__doc__']
+    print(globals()['__doc__'])
     os._exit(exit_code)
 
 class roller (threading.Thread):
@@ -116,7 +120,7 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
         pid = os.fork()
         if pid > 0:
             sys.exit(0)   # Exit first parent.
-    except OSError, e:
+    except OSError as e:
         sys.stderr.write ("fork #1 failed: (%d) %s\n" % (e.errno, e.strerror) )
         sys.exit(1)
 
@@ -130,7 +134,7 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
         pid = os.fork()
         if pid > 0:
             sys.exit(0)   # Exit second parent.
-    except OSError, e:
+    except OSError as e:
         sys.stderr.write ("fork #2 failed: (%d) %s\n" % (e.errno, e.strerror) )
         sys.exit(1)
 
@@ -156,8 +160,8 @@ def main ():
 
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'h?d', ['help','h','?', 'hostname=', 'username=', 'password=', 'port=', 'watch'])
-    except Exception, e:
-        print str(e)
+    except Exception as e:
+        print(str(e))
         exit_with_usage()
 
     command_line_options = dict(optlist)
@@ -183,14 +187,14 @@ def main ():
         port = int(options['--port'])
     if '--username' in options:
         username = options['--username']
-    print "Login for %s@%s:%s" % (username, hostname, port)
+    print("Login for %s@%s:%s" % (username, hostname, port))
     if '--password' in options:
         password = options['--password']
     else:
         password = getpass.getpass('password: ')
 
     if daemon_mode:
-        print "daemonizing server"
+        print("daemonizing server")
         daemonize()
         #daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')
 
@@ -199,7 +203,7 @@ def main ():
     virtual_screen = ANSI.ANSI (24,80)
     child = pxssh.pxssh()
     child.login (hostname, username, password)
-    print 'created shell. command line prompt is', child.PROMPT
+    print('created shell. command line prompt is', child.PROMPT)
     #child.sendline ('stty -echo')
     #child.setecho(False)
     virtual_screen.write (child.before)
@@ -209,10 +213,10 @@ def main ():
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
     localhost = '127.0.0.1'
     s.bind('/tmp/mysock')
-    os.chmod('/tmp/mysock',0777)
-    print 'Listen'
+    os.chmod('/tmp/mysock',0o777)
+    print('Listen')
     s.listen(1)
-    print 'Accept'
+    print('Accept')
     #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #localhost = '127.0.0.1'
     #s.bind((localhost, port))
@@ -221,13 +225,13 @@ def main ():
 
     r = roller (0.01, endless_poll, (child, child.PROMPT, virtual_screen))
     r.start()
-    print "screen poll updater started in background thread"
+    print("screen poll updater started in background thread")
     sys.stdout.flush()
 
     try:
         while True:
             conn, addr = s.accept()
-            print 'Connected by', addr
+            print('Connected by', addr)
             data = conn.recv(1024)
             if data[0]!=':':
                 cmd = ':sendline'
@@ -262,16 +266,16 @@ def main ():
             response.append (shell_window)
             #response = add_cursor_blink (response, row, col)
             sent = conn.send('\n'.join(response))
-            if watch_mode: print '\n'.join(response)
+            if watch_mode: print('\n'.join(response))
             if sent < len (response):
-                print "Sent is too short. Some data was cut off."
+                print("Sent is too short. Some data was cut off.")
             conn.close()
     finally:
         r.cancel()
-        print "cleaning up socket"
+        print("cleaning up socket")
         s.close()
         if os.path.exists("/tmp/mysock"): os.remove("/tmp/mysock")
-        print "done!"
+        print("done!")
 
 def pretty_box (rows, cols, s):
 
@@ -322,13 +326,13 @@ if __name__ == "__main__":
 
     try:
         start_time = time.time()
-        print time.asctime()
+        print(time.asctime())
         main()
-        print time.asctime()
-        print "TOTAL TIME IN MINUTES:",
-        print (time.time() - start_time) / 60.0
-    except Exception, e:
-        print str(e)
+        print(time.asctime())
+        print("TOTAL TIME IN MINUTES:", end=' ')
+        print((time.time() - start_time) / 60.0)
+    except Exception as e:
+        print(str(e))
         tb_dump = traceback.format_exc()
-        print str(tb_dump)
+        print(str(tb_dump))
 

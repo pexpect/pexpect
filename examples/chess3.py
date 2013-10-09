@@ -22,6 +22,10 @@ PEXPECT LICENSE
 
 '''
 
+from __future__ import print_function
+
+from __future__ import absolute_import
+
 import pexpect
 import string
 import ANSI
@@ -70,9 +74,9 @@ class Chess:
         return move
 
     def get_computer_move (self):
-        print 'Here'
+        print('Here')
         i = self.child.expect (['\[17;59H', '\[17;58H'])
-        print i
+        print(i)
         if i == 0:
             self.child.expect (REGEX_MOVE)
             if len(self.child.after) < 4:
@@ -80,7 +84,7 @@ class Chess:
         if i == 1:
             self.child.expect (REGEX_MOVE_PART)
             self.child.after = self.last_computer_move[0] + self.child.after
-        print '', self.child.after
+        print('', self.child.after)
         self.last_computer_move = self.child.after
         return self.child.after
 
@@ -95,7 +99,7 @@ class Chess:
     def quit(self):
         self.child.sendline ('quit')
 import sys, os
-print 'Starting...'
+print('Starting...')
 white = Chess()
 white.do_move('b2b4')
 white.read_until_cursor (19,60)
@@ -131,24 +135,24 @@ white.child.expect ('Your move is')
 white.switch()
 
 move_white = white.get_first_computer_move()
-print 'first move white:', move_white
+print('first move white:', move_white)
 
 black.do_first_move (move_white)
 move_black = black.get_first_computer_move()
-print 'first move black:', move_black
+print('first move black:', move_black)
 
 white.do_move (move_black)
 
 done = 0
 while not done:
     move_white = white.get_computer_move()
-    print 'move white:', move_white
+    print('move white:', move_white)
 
     black.do_move (move_white)
     move_black = black.get_computer_move()
-    print 'move black:', move_black
+    print('move black:', move_black)
 
     white.do_move (move_black)
-    print 'tail of loop'
+    print('tail of loop')
 
 g.quit()

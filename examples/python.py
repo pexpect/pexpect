@@ -26,10 +26,10 @@ from __future__ import absolute_import
 from __future__ import print_function
 from __future__ import unicode_literals
 
-# Don't do this unless you like being John Malkovich
-# c = pexpect.spawn ('/usr/bin/env python ./python.py')
-
 import pexpect
+
+# Don't do this unless you like being John Malkovich
+# c = pexpect.spawnu('/usr/bin/env python ./python.py')
 
 # Note that, for Python 3 compatibility reasons, we are using spawnu and
 # importing unicode_literals (above). spawnu accepts Unicode input and

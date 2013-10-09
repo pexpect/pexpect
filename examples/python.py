@@ -30,7 +30,12 @@ from __future__ import unicode_literals
 # c = pexpect.spawn ('/usr/bin/env python ./python.py')
 
 import pexpect
+
+# Note that, for Python 3 compatibility reasons, we are using spawnu and
+# importing unicode_literals (above). spawnu accepts Unicode input and
+# unicode_literals makes all string literals in this script Unicode by default.
 c = pexpect.spawnu('/usr/bin/env python')
+
 c.expect('>>>')
 print('And now for something completely different...')
 print(''.join(reversed((c.before))))

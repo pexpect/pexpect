@@ -48,8 +48,12 @@ import re
 # OpenBSD box3 2.9 GENERIC#653 i386
 #  6:08PM  up 4 days, 22:26, 1 user, load averages: 0.13, 0.09, 0.08
 
-# This parses uptime output into the major groups using regex group matching.
+# Note that, for Python 3 compatibility reasons, we are using spawnu and
+# importing unicode_literals (above). spawnu accepts Unicode input and
+# unicode_literals makes all string literals in this script Unicode by default.
 p = pexpect.spawnu('uptime')
+
+# This parses uptime output into the major groups using regex group matching.
 p.expect('up\s+(.*?),\s+([0-9]+) users?,\s+load averages?: ([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9])')
 duration, users, av1, av5, av15 = p.match.groups()
 

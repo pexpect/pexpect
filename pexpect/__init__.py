@@ -79,6 +79,7 @@ try:
     import errno
     import traceback
     import signal
+    import codecs
 except ImportError:
     err = sys.exc_info()[1]
     raise ImportError(str(err) + '''
@@ -1752,6 +1753,7 @@ class spawnu(spawn):
     def __init__(self, *args, **kwargs):
         self.encoding = kwargs.pop('encoding', 'utf-8')
         self.errors = kwargs.pop('errors', 'strict')
+        self._decoder = codecs.getincrementaldecoder(self.encoding)(errors=self.errors)
         super(spawnu, self).__init__(*args, **kwargs)
 
     @staticmethod
@@ -1763,7 +1765,12 @@ class spawnu(spawn):
         return s
 
     def _coerce_read_string(self, s):
-        return s.decode(self.encoding, self.errors)
+        ucs_joined = u''
+        for byte in s:
+            ucs = self._decoder.decode(byte, final=False)
+            if ucs is not None:
+                ucs_joined += ucs
+        return ucs_joined
 
     def _send(self, s):
         return os.write(self.child_fd, s.encode(self.encoding, self.errors))

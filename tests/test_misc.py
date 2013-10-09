@@ -117,13 +117,14 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.sendline ("123")
         time.sleep(0.5)
         child.sendeof()
-        time.sleep(1) # time for child to "complete" ;/
-        assert not child.isalive(), child.isalive()
-        assert child.exitstatus == 0, child.exitstatus
         page = b''.join(child.readlines()).replace(_CAT_EOF, b'')
         assert (page == b'abc\r\nabc\r\n123\r\n123\r\n' or
                 page == b'abc\r\n123\r\nabc\r\n123\r\n'), (
                "readlines() did not work. page=%r" % (page,))
+
+        time.sleep(1) # time for child to "complete" ;/
+        assert not child.isalive(), child.isalive()
+        assert child.exitstatus == 0, child.exitstatus
 
     def test_write (self):
         child = pexpect.spawn('cat')

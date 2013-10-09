@@ -64,8 +64,19 @@ PEXPECT LICENSE
 
 '''
 
+from __future__ import print_function
+
+from __future__ import absolute_import
+
 import sys, os, re, math, stat, getopt, traceback, types, time
 import pexpect
+
+
+try:
+    raw_input
+except NameError:
+    raw_input = input
+
 
 __version__ = '1.2'
 __revision__ = '$Revision: 11 $'
@@ -218,10 +229,10 @@ def convert (options):
     (it is also saved to rippy.conf as text).
     '''
     if options['subtitle_id'] is not None:
-        print "# extract subtitles"
+        print("# extract subtitles")
         apply_smart (extract_subtitles, options)
     else:
-        print "# do not extract subtitles."
+        print("# do not extract subtitles.")
 
     # Optimization
     # I really only need to calculate the exact video length if the user
@@ -234,29 +245,29 @@ def convert (options):
         # and then calculate the length of that. This is because MP4 video is VBR, so
         # you cannot get exact time based on compressed size.
         if options['video_length']=='calc':
-            print "# extract PCM raw audio to %s" % (options['audio_raw_filename'])
+            print("# extract PCM raw audio to %s" % (options['audio_raw_filename']))
             apply_smart (extract_audio, options)
             options['video_length'] = apply_smart (get_length, options)
-            print "# Length of raw audio file : %d seconds (%0.2f minutes)" % (options['video_length'], float(options['video_length'])/60.0)
+            print("# Length of raw audio file : %d seconds (%0.2f minutes)" % (options['video_length'], float(options['video_length'])/60.0))
         if options['video_bitrate']=='calc':
             options['video_bitrate'] = options['video_bitrate_overhead'] * apply_smart (calc_video_bitrate, options)
-        print "# video bitrate : " + str(options['video_bitrate'])
+        print("# video bitrate : " + str(options['video_bitrate']))
         if options['video_crop_area']=='detect':
             options['video_crop_area'] = apply_smart (crop_detect, options)
-        print "# crop area : " + str(options['video_crop_area'])
-        print "# compression estimate"
-        print apply_smart (compression_estimate, options)
+        print("# crop area : " + str(options['video_crop_area']))
+        print("# compression estimate")
+        print(apply_smart (compression_estimate, options))
 
-    print "# compress video"
+    print("# compress video")
     apply_smart (compress_video, options)
     'audio_volume_boost',
 
-    print "# delete temporary files:",
+    print("# delete temporary files:", end=' ')
     if options['delete_tmp_files_flag']:
-        print "yes"
+        print("yes")
         apply_smart (delete_tmp_files, options)
     else:
-        print "no"
+        print("no")
 
     # Finish by saving options to rippy.conf and
     # calclating if final_size is less than target_size.
@@ -265,28 +276,28 @@ def convert (options):
     if options['video_target_size'] != 'none':
         revised_bitrate = calculate_revised_bitrate (options['video_bitrate'], options['video_target_size'], video_actual_size)
         o.append("# revised video_bitrate : %d\n" % revised_bitrate)
-    for k,v in options.iteritems():
+    for k,v in options.items():
         o.append (" %30s : %s\n" % (k, v))
-    print '# '.join(o)
+    print('# '.join(o))
     fout = open("rippy.conf","wb").write(''.join(o))
-    print "# final actual video size = %d" % video_actual_size
+    print("# final actual video size = %d" % video_actual_size)
     if options['video_target_size'] != 'none':
         if video_actual_size > options['video_target_size']:
-            print "# FINAL VIDEO SIZE IS GREATER THAN DESIRED TARGET"
-            print "# final video size is %d bytes over target size" % (video_actual_size - options['video_target_size'])
+            print("# FINAL VIDEO SIZE IS GREATER THAN DESIRED TARGET")
+            print("# final video size is %d bytes over target size" % (video_actual_size - options['video_target_size']))
         else:
-            print "# final video size is %d bytes under target size" % (options['video_target_size'] - video_actual_size)
-        print "# If you want to run the entire compression process all over again"
-        print "# to get closer to the target video size then trying using a revised"
-        print "# video_bitrate of %d" % revised_bitrate
+            print("# final video size is %d bytes under target size" % (options['video_target_size'] - video_actual_size))
+        print("# If you want to run the entire compression process all over again")
+        print("# to get closer to the target video size then trying using a revised")
+        print("# video_bitrate of %d" % revised_bitrate)
 
     return options
 
 ##############################################################################
 
 def exit_with_usage(exit_code=1):
-    print globals()['__doc__']
-    print 'version:', globals()['__version__']
+    print(globals()['__doc__'])
+    print('version:', globals()['__version__'])
     sys.stdout.flush()
     os._exit(exit_code)
 
@@ -331,7 +342,7 @@ def input_option (message, default_value="", help=None, level=0, max_level=0):
     while 1:
         user_input = raw_input (message)
         if user_input=='?':
-            print help
+            print(help)
         elif user_input=='':
             return default_value
         else:
@@ -347,11 +358,11 @@ def progress_callback (d=None):
 
 def run(cmd):
     global GLOBAL_LOGFILE
-    print >>GLOBAL_LOGFILE, cmd
+    print(cmd, file=GLOBAL_LOGFILE)
     (command_output, exitstatus) = pexpect.run(cmd, events={pexpect.TIMEOUT:progress_callback}, timeout=5, withexitstatus=True, logfile=GLOBAL_LOGFILE)
     if exitstatus != 0:
-        print "RUN FAILED. RETURNED EXIT STATUS:", exitstatus
-        print >>GLOBAL_LOGFILE, "RUN FAILED. RETURNED EXIT STATUS:", exitstatus
+        print("RUN FAILED. RETURNED EXIT STATUS:", exitstatus)
+        print("RUN FAILED. RETURNED EXIT STATUS:", exitstatus, file=GLOBAL_LOGFILE)
     return (command_output, exitstatus)
 
 def apply_smart (func, args):
@@ -368,10 +379,10 @@ def apply_smart (func, args):
             func = globals()[func]
         else:
             raise NameError("name '%s' is not defined" % func)
-    if hasattr(func,'im_func'): # Handle case when func is a class method.
-        func = func.im_func
-    argcount = func.func_code.co_argcount
-    required_args = dict([(k,args.get(k)) for k in func.func_code.co_varnames[:argcount]])
+    if hasattr(func, '__func__'): # Handle case when func is a class method.
+        func = func.__func__
+    argcount = func.__code__.co_argcount
+    required_args = dict([(k,args.get(k)) for k in func.__code__.co_varnames[:argcount]])
     return func(**required_args)
 
 def count_unique (items):
@@ -458,19 +469,19 @@ def extract_audio (video_source_filename, audio_id=128, verbose_flag=0, dry_run_
     '''
     #cmd = "mplayer %(video_source_filename)s -vc null -vo null -aid %(audio_id)s -ao pcm:fast -noframedrop" % locals()
     cmd = "mplayer -quiet '%(video_source_filename)s' -vc dummy -vo null -aid %(audio_id)s -ao pcm:fast -noframedrop" % locals()
-    if verbose_flag: print cmd
+    if verbose_flag: print(cmd)
     if not dry_run_flag:
         run(cmd)
-        print
+        print()
 
 def extract_subtitles (video_source_filename, subtitle_id=0, verbose_flag=0, dry_run_flag=0):
     '''This extracts the given subtitle_id track as VOBSUB format from the given source video.
     '''
     cmd = "mencoder -quiet '%(video_source_filename)s' -o /dev/null -nosound -ovc copy -vobsubout subtitles -vobsuboutindex 0 -sid %(subtitle_id)s" % locals()
-    if verbose_flag: print cmd
+    if verbose_flag: print(cmd)
     if not dry_run_flag:
         run(cmd)
-        print
+        print()
 
 def get_length (audio_raw_filename):
     '''This attempts to get the length of the media file (length is time in seconds).
@@ -485,11 +496,11 @@ def get_length (audio_raw_filename):
     idl = re.findall("ID_LENGTH=([0-9.]*)", command_output)
     idl.sort()
     if len(idl) != 1:
-        print "ERROR: cannot get length of raw audio file."
-        print "command_output of mplayer identify:"
-        print command_output
-        print "parsed command_output:"
-        print str(idl)
+        print("ERROR: cannot get length of raw audio file.")
+        print("command_output of mplayer identify:")
+        print(command_output)
+        print("parsed command_output:")
+        print(str(idl))
         return -1
     return float(idl[0])
 
@@ -654,10 +665,10 @@ def compress_video (video_source_filename, video_final_filename, video_target_si
     #cmd = "mencoder -quiet '%(video_source_filename)s' -ss 65 -endpos 20 -aid %(audio_id)s -o '%(video_final_filename)s' -ffourcc %(video_fourcc_override)s -ovc lavc -oac lavc %(lavcopts)s %(video_filter)s %(audio_filter)s" % locals()
 
     cmd = build_compression_command (video_source_filename, video_final_filename, video_target_size, audio_id, video_bitrate, video_codec, audio_codec, video_fourcc_override, video_gray_flag, video_crop_area, video_aspect_ratio, video_scale, video_encode_passes, video_deinterlace_flag, audio_volume_boost, audio_sample_rate, audio_bitrate, seek_skip, seek_length, video_chapter)
-    if verbose_flag: print cmd
+    if verbose_flag: print(cmd)
     if not dry_run_flag:
         run(cmd)
-        print
+        print()
 
     # If not doing two passes then return early.
     if video_encode_passes!='2':
@@ -666,21 +677,21 @@ def compress_video (video_source_filename, video_final_filename, video_target_si
     if verbose_flag:
         video_actual_size = get_filesize (video_final_filename)
         if video_actual_size > video_target_size:
-            print "======================================================="
-            print "WARNING!"
-            print "First pass compression resulted in"
-            print "actual file size greater than target size."
-            print "Second pass will be too big."
-            print "======================================================="
+            print("=======================================================")
+            print("WARNING!")
+            print("First pass compression resulted in")
+            print("actual file size greater than target size.")
+            print("Second pass will be too big.")
+            print("=======================================================")
 
     #
     # do the second pass video compression
     #
     cmd = cmd.replace ('vpass=1', 'vpass=2')
-    if verbose_flag: print cmd
+    if verbose_flag: print(cmd)
     if not dry_run_flag:
         run(cmd)
-        print
+        print()
     return
 
 def compress_audio (audio_raw_filename, audio_compressed_filename, audio_lowpass_filter=None, audio_sample_rate=None, audio_bitrate=None, verbose_flag=0, dry_run_flag=0):
@@ -696,10 +707,10 @@ def compress_audio (audio_raw_filename, audio_compressed_filename, audio_lowpass
     if audio_sample_rate:
         cmd = cmd + ' --resample ' + audio_sample_rate
     cmd = cmd + ' ' + audio_raw_filename + ' ' + audio_compressed_filename
-    if verbose_flag: print cmd
+    if verbose_flag: print(cmd)
     if not dry_run_flag:
         (command_output, exitstatus) = run(cmd)
-        print
+        print()
         if exitstatus != 0:
             raise Exception('ERROR: lame failed to compress raw audio file.')
 
@@ -714,10 +725,10 @@ def mux (video_final_filename, video_transcoded_filename, audio_compressed_filen
 def mux_mkv (video_final_filename, video_transcoded_filename, audio_compressed_filename, verbose_flag=0, dry_run_flag=0):
     '''This is depricated.'''
     cmd = 'mkvmerge -o %s --noaudio %s %s' % (video_final_filename, video_transcoded_filename, audio_compressed_filename)
-    if verbose_flag: print cmd
+    if verbose_flag: print(cmd)
     if not dry_run_flag:
         run(cmd)
-        print
+        print()
 
 def mux_avi (video_final_filename, video_transcoded_filename, audio_compressed_filename, verbose_flag=0, dry_run_flag=0):
     '''This is depricated.'''
@@ -732,10 +743,10 @@ def delete_tmp_files (audio_raw_filename, verbose_flag=0, dry_run_flag=0):
     global GLOBAL_LOGFILE_NAME
     file_list = ' '.join([GLOBAL_LOGFILE_NAME, 'divx2pass.log', audio_raw_filename ])
     cmd = 'rm -f ' + file_list
-    if verbose_flag: print cmd
+    if verbose_flag: print(cmd)
     if not dry_run_flag:
         run(cmd)
-        print
+        print()
 
 ##############################################################################
 # This is the interactive Q&A that is used if a conf file was not given.
@@ -744,12 +755,12 @@ def interactive_convert ():
 
     global prompts, prompts_key_order
 
-    print globals()['__doc__']
-    print
-    print "=============================================="
-    print " Enter '?' at any question to get extra help."
-    print "=============================================="
-    print
+    print(globals()['__doc__'])
+    print()
+    print("==============================================")
+    print(" Enter '?' at any question to get extra help.")
+    print("==============================================")
+    print()
 
     # Ask for the level of options the user wants.
     # A lot of code just to print a string!
@@ -776,15 +787,15 @@ def interactive_convert ():
             default_id = '128'
             if max_prompt_level>=prompts[k][3]:
                 if len(aid_list) > 1:
-                    print "This video has more than one audio stream. The following stream audio IDs were found:"
+                    print("This video has more than one audio stream. The following stream audio IDs were found:")
                     for aid in aid_list:
-                        print "    " + aid
+                        print("    " + aid)
                     default_id = aid_list[0]
                 else:
-                    print "WARNING!"
-                    print "Rippy was unable to get the list of audio streams from this video."
-                    print "If reading directly from a DVD then the DVD device might be busy."
-                    print "Using a default setting of stream id 128 (main audio on most DVDs)."
+                    print("WARNING!")
+                    print("Rippy was unable to get the list of audio streams from this video.")
+                    print("If reading directly from a DVD then the DVD device might be busy.")
+                    print("Using a default setting of stream id 128 (main audio on most DVDs).")
                     default_id = '128'
             options[k] = input_option (prompts[k][1], default_id, prompts[k][2], prompts[k][3], max_prompt_level)
         elif k == 'subtitle_id':
@@ -792,15 +803,15 @@ def interactive_convert ():
             default_id = 'None'
             if max_prompt_level>=prompts[k][3]:
                 if len(sid_list) > 0:
-                    print "This video has one or more subtitle streams. The following stream subtitle IDs were found:"
+                    print("This video has one or more subtitle streams. The following stream subtitle IDs were found:")
                     for sid in sid_list:
-                        print "    " + sid
+                        print("    " + sid)
                     #default_id = sid_list[0]
                     default_id = prompts[k][0]
                 else:
-                    print "WARNING!"
-                    print "Unable to get the list of subtitle streams from this video. It may have none."
-                    print "Setting default to None."
+                    print("WARNING!")
+                    print("Unable to get the list of subtitle streams from this video. It may have none.")
+                    print("Setting default to None.")
                     default_id = 'None'
             options[k] = input_option (prompts[k][1], default_id, prompts[k][2], prompts[k][3], max_prompt_level)
         elif k == 'audio_lowpass_filter':
@@ -823,18 +834,18 @@ def interactive_convert ():
 
     #options['video_final_filename'] = options['video_final_filename'] + "." + options['video_container_format']
 
-    print "=========================================================================="
-    print "Ready to Rippy!"
-    print
-    print "The following options will be used:"
-    for k,v in options.iteritems():
-        print "%27s : %s" % (k, v)
+    print("==========================================================================")
+    print("Ready to Rippy!")
+    print()
+    print("The following options will be used:")
+    for k,v in options.items():
+        print("%27s : %s" % (k, v))
 
-    print
+    print()
     c = input_option("Continue?", "Y")
     c = c.strip().lower()
     if c[0] != 'y':
-        print "Exiting..."
+        print("Exiting...")
         os._exit(1)
     return options
 
@@ -929,8 +940,8 @@ def clean_options (d):
 def main ():
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'h?', ['help','h','?'])
-    except Exception, e:
-        print str(e)
+    except Exception as e:
+        print(str(e))
         exit_with_usage()
     command_line_options = dict(optlist)
     # There are a million ways to cry for help. These are but a few of them.
@@ -939,18 +950,18 @@ def main ():
 
     missing = check_missing_requirements()
     if missing is not None:
-        print
-        print "=========================================================================="
-        print "ERROR!"
-        print "Some required external commands are missing."
-        print "please install the following packages:"
-        print str(missing)
-        print "=========================================================================="
-        print
+        print()
+        print("==========================================================================")
+        print("ERROR!")
+        print("Some required external commands are missing.")
+        print("please install the following packages:")
+        print(str(missing))
+        print("==========================================================================")
+        print()
         c = input_option("Continue?", "Y")
         c = c.strip().lower()
         if c[0] != 'y':
-            print "Exiting..."
+            print("Exiting...")
             os._exit(1)
 
     if len(args) > 0:
@@ -962,27 +973,27 @@ def main ():
         options = interactive_convert ()
         options = clean_options(options)
         convert (options)
-    print "# Done!"
+    print("# Done!")
 
 if __name__ == "__main__":
     try:
         start_time = time.time()
-        print time.asctime()
+        print(time.asctime())
         main()
-        print time.asctime()
-        print "TOTAL TIME IN MINUTES:",
-        print (time.time() - start_time) / 60.0
-    except Exception, e:
+        print(time.asctime())
+        print("TOTAL TIME IN MINUTES:", end=' ')
+        print((time.time() - start_time) / 60.0)
+    except Exception as e:
         tb_dump = traceback.format_exc()
-        print "=========================================================================="
-        print "ERROR -- Unexpected exception in script."
-        print str(e)
-        print str(tb_dump)
-        print "=========================================================================="
-        print >>GLOBAL_LOGFILE, "=========================================================================="
-        print >>GLOBAL_LOGFILE, "ERROR -- Unexpected exception in script."
-        print >>GLOBAL_LOGFILE, str(e)
-        print >>GLOBAL_LOGFILE, str(tb_dump)
-        print >>GLOBAL_LOGFILE, "=========================================================================="
+        print("==========================================================================")
+        print("ERROR -- Unexpected exception in script.")
+        print(str(e))
+        print(str(tb_dump))
+        print("==========================================================================")
+        print("==========================================================================", file=GLOBAL_LOGFILE)
+        print("ERROR -- Unexpected exception in script.", file=GLOBAL_LOGFILE)
+        print(str(e), file=GLOBAL_LOGFILE)
+        print(str(tb_dump), file=GLOBAL_LOGFILE)
+        print("==========================================================================", file=GLOBAL_LOGFILE)
         exit_with_usage(3)
 

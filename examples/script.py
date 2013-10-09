@@ -35,6 +35,10 @@ PEXPECT LICENSE
 
 '''
 
+from __future__ import print_function
+
+from __future__ import absolute_import
+
 import os, sys, time, getopt
 import signal, fcntl, termios, struct
 import traceback
@@ -44,7 +48,7 @@ global_pexpect_instance = None # Used by signal handler
 
 def exit_with_usage():
 
-    print globals()['__doc__']
+    print(globals()['__doc__'])
     os._exit(1)
 
 def main():
@@ -54,15 +58,15 @@ def main():
     ######################################################################
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'h?ac:', ['help','h','?'])
-    except Exception, e:
-        print str(e)
+    except Exception as e:
+        print(str(e))
         exit_with_usage()
     options = dict(optlist)
     if len(args) > 1:
         exit_with_usage()
 
     if [elem for elem in options if elem in ['-h','--h','-?','--?','--help']]:
-        print "Help:"
+        print("Help:")
         exit_with_usage()
 
     if len(args) == 1:
@@ -70,9 +74,9 @@ def main():
     else:
         script_filename = "script.log"
     if '-a' in options:
-        fout = file (script_filename, "ab")
+        fout = open(script_filename, "ab")
     else:
-        fout = file (script_filename, "wb")
+        fout = open(script_filename, "wb")
     if '-c' in options:
         command = options['-c']
     else:
@@ -90,7 +94,7 @@ def main():
     global_pexpect_instance = p
     signal.signal(signal.SIGWINCH, sigwinch_passthrough)
 
-    print "Script recording started. Type ^] (ASCII 29) to escape from the script shell."
+    print("Script recording started. Type ^] (ASCII 29) to escape from the script shell.")
     p.interact(chr(29))
     fout.close()
     return 0
@@ -110,11 +114,11 @@ def sigwinch_passthrough (sig, data):
 if __name__ == "__main__":
     try:
         main()
-    except SystemExit, e:
+    except SystemExit as e:
         raise e
-    except Exception, e:
-        print "ERROR"
-        print str(e)
+    except Exception as e:
+        print("ERROR")
+        print(str(e))
         traceback.print_exc()
         os._exit(1)
 

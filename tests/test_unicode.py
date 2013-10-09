@@ -132,7 +132,7 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         #    UnicodeDecodeError: 'utf8' codec can't decode byte 0xe2 in
         #                        position 0: unexpected end of data
         p = pexpect.spawnu('./utf8-err.py')
-        p.expect(u'▁▂▃▄▅▆▇█')
+        p.expect('▁▂▃▄▅▆▇█')
 
 
 if __name__ == '__main__':

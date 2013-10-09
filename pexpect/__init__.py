@@ -1765,8 +1765,7 @@ class spawnu(spawn):
         return s
 
     def _coerce_read_string(self, s):
-        ucs = self._decoder.decode(s, final=False)
-        return ucs if ucs is not None else self.string_type()
+        return self._decoder.decode(s, final=False)
 
     def _send(self, s):
         return os.write(self.child_fd, s.encode(self.encoding, self.errors))

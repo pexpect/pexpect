@@ -219,10 +219,6 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
             pass
         else:
             self.fail ("child.expect({}) should have raised a TypeError")
-    def test_winsize(self):
-        child = pexpect.spawn('cat')
-        child.setwinsize(10,13)
-        assert child.getwinsize()==(10,13), "getwinsize() did not return (10,13)"
 
     def test_env(self):
         default = pexpect.run('env')

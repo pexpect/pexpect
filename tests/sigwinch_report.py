@@ -41,6 +41,7 @@ def handler(signum, frame):
 
 print("setting handler for SIGWINCH")
 signal.signal(signal.SIGWINCH, handler)
+print("READY")
 
 while 1:
     sys.stdout.flush()

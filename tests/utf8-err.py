@@ -6,10 +6,17 @@
 # incompletely decoded bytes, even though it looks fine in say, a Terminal
 # (unless you interrupt the output bytes by holding down the spacebar!)
 import sys, time
-utf8_blurb = ('\xe2\x96\x81\xe2\x96\x82\xe2\x96\x83\xe2\x96\x84'
-              '\xe2\x96\x85\xe2\x96\x86\xe2\x96\x87\xe2\x96\x88')
+utf8_blurb = (b'\xe2', b'\x96', b'\x81',
+              b'\xe2', b'\x96', b'\x82',
+              b'\xe2', b'\x96', b'\x83',
+              b'\xe2', b'\x96', b'\x84',
+              b'\xe2', b'\x96', b'\x85',
+              b'\xe2', b'\x96', b'\x86',
+              b'\xe2', b'\x96', b'\x87',
+              b'\xe2', b'\x96', b'\x88',)
+import os
 for ch in utf8_blurb:
-    sys.stderr.write(ch)
-    sys.stderr.flush()
+    os.write(sys.stderr.fileno(), ch)
     time.sleep(0.05)
+    sys.stderr.flush()
 sys.stderr.write('\n')

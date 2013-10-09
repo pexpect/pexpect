@@ -14,6 +14,8 @@ new maintenance after a long dormancy, so some caution is warranted.
 * A new :ref:`unicode API <unicode>` was introduced.
 * Python 3 is now supported, using a single codebase.
 * Pexpect now requires at least Python 2.6 or 3.2.
+* Ignoring ``SIGHUP`` is now optional - thanks to Kimmo Parviainen-Jalanko for
+  the patch.
 
 We also now have `docs on ReadTheDocs <http://pexpect.readthedocs.org/>`_,
 and `continuous integration on Travis CI <https://travis-ci.org/pexpect/pexpect>`_.

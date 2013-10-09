@@ -18,12 +18,12 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-from __future__ import with_statement  # bring 'with' stmt to py25
 import pexpect
 import unittest
 import PexpectTestCase
-import os
+import os, sys
 import re
+import signal
 import time
 
 # the program cat(1) may display ^D\x08\x08 when \x04 (EOF, Ctrl-D) is sent
@@ -152,6 +152,25 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat')
         child.terminate(force=1)
         assert child.terminated, "child.terminated is not True"
+
+    def test_sighup(self):
+        child = pexpect.spawn(sys.executable + ' getch.py', ignore_sighup=True)
+        child.expect('READY')
+        child.kill(signal.SIGHUP)
+        for _ in range(10):
+            if not child.isalive():
+                raise AssertionError('Child should not have exited.')
+            time.sleep(0.1)
+
+        child = pexpect.spawn(sys.executable + ' getch.py', ignore_sighup=False)
+        child.expect('READY')
+        child.kill(signal.SIGHUP)
+        for _ in range(10):
+            if not child.isalive():
+                break
+            time.sleep(0.1)
+        else:
+            raise AssertionError('Child should have exited.')
 
     def test_bad_child_pid(self):
         child = pexpect.spawn('cat')

@@ -45,28 +45,28 @@ SSH_NEWKEY = r'Are you sure you want to continue connecting \(yes/no\)\?'
 def login(host, user, password):
 
     child = pexpect.spawn('ssh -l %s %s'%(user, host))
-    fout = file ("LOG.TXT","wb")
-    child.setlog (fout)
+    fout = file("LOG.TXT","wb")
+    child.setlog(fout)
 
     i = child.expect([pexpect.TIMEOUT, SSH_NEWKEY, '[Pp]assword: '])
     if i == 0: # Timeout
         print('ERROR!')
         print('SSH could not login. Here is what SSH said:')
         print(child.before, child.after)
-        sys.exit (1)
+        sys.exit(1)
     if i == 1: # SSH does not have the public key. Just accept it.
-        child.sendline ('yes')
-        child.expect ('[Pp]assword: ')
+        child.sendline('yes')
+        child.expect('[Pp]assword: ')
     child.sendline(password)
     # Now we are either at the command prompt or
     # the login process is asking for our terminal type.
-    i = child.expect (['Permission denied', TERMINAL_PROMPT, COMMAND_PROMPT])
+    i = child.expect(['Permission denied', TERMINAL_PROMPT, COMMAND_PROMPT])
     if i == 0:
         print('Permission denied on host:', host)
-        sys.exit (1)
+        sys.exit(1)
     if i == 1:
-        child.sendline (TERMINAL_TYPE)
-        child.expect (COMMAND_PROMPT)
+        child.sendline(TERMINAL_TYPE)
+        child.expect(COMMAND_PROMPT)
     return child
 
 # (current) UNIX password:
@@ -83,7 +83,7 @@ def change_password(child, user, oldpassword, newpassword):
     if i == 0:
         print('Host did not like new password. Here is what it said...')
         print(child.before)
-        child.send (chr(3)) # Ctrl-C
+        child.send(chr(3)) # Ctrl-C
         child.sendline('') # This should tell remote passwd command to quit.
         return
     child.sendline(newpassword)

@@ -29,14 +29,13 @@ PEXPECT LICENSE
 
 '''
 
-from __future__ import print_function
-
 from __future__ import absolute_import
+from __future__ import print_function
 
 # Having the password on the command line is not a good idea, but
 # then this entire project is probably not the most security concious thing
 # I've ever built. This should be considered an experimental tool -- at best.
-import pxssh, pexpect, ANSI
+import pxssh, ANSI
 import time, sys, os, getopt, getpass, traceback, threading, socket
 
 def exit_with_usage(exit_code=1):
@@ -69,29 +68,20 @@ class roller (threading.Thread):
     def run(self):
 
         while not self.finished.isSet():
-            # self.finished.wait(self.interval)
             self.function(*self.args, **self.kwargs)
 
-def endless_poll (child, prompt, screen, refresh_timeout=0.1):
+def endless_poll(child, prompt, screen, refresh_timeout=0.1):
 
     '''This keeps the screen updated with the output of the child. This runs in
     a separate thread. See roller(). '''
 
-    #child.logfile_read = screen
     try:
         s = child.read_nonblocking(4000, 0.1)
         screen.write(s)
     except:
         pass
-    #while True:
-    #    #child.prompt (timeout=refresh_timeout)
-    #    try:
-    #        #child.read_nonblocking(1,timeout=refresh_timeout)
-    #        child.read_nonblocking(4000, 0.1)
-    #    except:
-    #        pass
 
-def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
+def daemonize(stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
 
     '''This forks the current process into a daemon. Almost none of this is
     necessary (or advisable) if your daemon is being started by inetd. In that
@@ -121,7 +111,7 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
         if pid > 0:
             sys.exit(0)   # Exit first parent.
     except OSError as e:
-        sys.stderr.write ("fork #1 failed: (%d) %s\n" % (e.errno, e.strerror) )
+        sys.stderr.write("fork #1 failed: (%d) %s\n" % (e.errno, e.strerror))
         sys.exit(1)
 
     # Decouple from parent environment.
@@ -135,7 +125,7 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
         if pid > 0:
             sys.exit(0)   # Exit second parent.
     except OSError as e:
-        sys.stderr.write ("fork #2 failed: (%d) %s\n" % (e.errno, e.strerror) )
+        sys.stderr.write("fork #2 failed: (%d) %s\n" % (e.errno, e.strerror))
         sys.exit(1)
 
     # Now I am a daemon!
@@ -151,12 +141,12 @@ def daemonize (stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
     # I now return as the daemon
     return 0
 
-def add_cursor_blink (response, row, col):
+def add_cursor_blink(response, row, col):
 
     i = (row-1) * 80 + col
     return response[:i]+'<img src="http://www.noah.org/cursor.gif">'+response[i:]
 
-def main ():
+def main():
 
     try:
         optlist, args = getopt.getopt(sys.argv[1:], 'h?d', ['help','h','?', 'hostname=', 'username=', 'password=', 'port=', 'watch'])
@@ -196,18 +186,15 @@ def main ():
     if daemon_mode:
         print("daemonizing server")
         daemonize()
-        #daemonize('/dev/null','/tmp/daemon.log','/tmp/daemon.log')
 
-    sys.stdout.write ('server started with pid %d\n' % os.getpid() )
+    sys.stdout.write('server started with pid %d\n' % os.getpid())
 
-    virtual_screen = ANSI.ANSI (24,80)
+    virtual_screen = ANSI.ANSI(24,80)
     child = pxssh.pxssh()
-    child.login (hostname, username, password)
+    child.login(hostname, username, password)
     print('created shell. command line prompt is', child.PROMPT)
-    #child.sendline ('stty -echo')
-    #child.setecho(False)
-    virtual_screen.write (child.before)
-    virtual_screen.write (child.after)
+    virtual_screen.write(child.before)
+    virtual_screen.write(child.after)
 
     if os.path.exists("/tmp/mysock"): os.remove("/tmp/mysock")
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -217,13 +204,8 @@ def main ():
     print('Listen')
     s.listen(1)
     print('Accept')
-    #s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #localhost = '127.0.0.1'
-    #s.bind((localhost, port))
-    #print 'Listen'
-    #s.listen(1)
 
-    r = roller (0.01, endless_poll, (child, child.PROMPT, virtual_screen))
+    r = roller(0.01, endless_poll, (child, child.PROMPT, virtual_screen))
     r.start()
     print("screen poll updater started in background thread")
     sys.stdout.flush()
@@ -247,14 +229,13 @@ def main ():
                 r.cancel()
                 break
             elif cmd == ':sendline':
-                child.sendline (arg)
-                #child.prompt(timeout=2)
+                child.sendline(arg)
                 time.sleep(0.2)
                 shell_window = str(virtual_screen)
             elif cmd == ':send' or cmd==':xsend':
                 if cmd==':xsend':
                     arg = arg.decode("hex")
-                child.send (arg)
+                child.send(arg)
                 time.sleep(0.2)
                 shell_window = str(virtual_screen)
             elif cmd == ':cursor':
@@ -263,11 +244,10 @@ def main ():
                 shell_window = str(virtual_screen)
 
             response = []
-            response.append (shell_window)
-            #response = add_cursor_blink (response, row, col)
+            response.append(shell_window)
             sent = conn.send('\n'.join(response))
             if watch_mode: print('\n'.join(response))
-            if sent < len (response):
+            if sent < len(response):
                 print("Sent is too short. Some data was cut off.")
             conn.close()
     finally:
@@ -277,7 +257,7 @@ def main ():
         if os.path.exists("/tmp/mysock"): os.remove("/tmp/mysock")
         print("done!")
 
-def pretty_box (rows, cols, s):
+def pretty_box(rows, cols, s):
 
     '''This puts an ASCII text box around the given string, s.
     '''
@@ -285,7 +265,7 @@ def pretty_box (rows, cols, s):
     top_bot = '+' + '-'*cols + '+\n'
     return top_bot + '\n'.join(['|'+line+'|' for line in s.split('\n')]) + '\n' + top_bot
 
-def error_response (msg):
+def error_response(msg):
 
     response = []
     response.append ('''All commands start with :
@@ -302,10 +282,10 @@ Example:
 is equivalent to:
     :sendline ls -l
 ''')
-    response.append (msg)
+    response.append(msg)
     return '\n'.join(response)
 
-def parse_host_connect_string (hcs):
+def parse_host_connect_string(hcs):
 
     '''This parses a host connection string in the form
     username:password@hostname:port. All fields are options expcet hostname. A
@@ -314,10 +294,10 @@ def parse_host_connect_string (hcs):
     then you must backslash escape it. '''
 
     if '@' in hcs:
-        p = re.compile (r'(?P<username>[^@:]*)(:?)(?P<password>.*)(?!\\)@(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
+        p = re.compile(r'(?P<username>[^@:]*)(:?)(?P<password>.*)(?!\\)@(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
     else:
-        p = re.compile (r'(?P<username>)(?P<password>)(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
-    m = p.search (hcs)
+        p = re.compile(r'(?P<username>)(?P<password>)(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
+    m = p.search(hcs)
     d = m.groupdict()
     d['password'] = d['password'].replace('\\@','@')
     return d
@@ -335,4 +315,3 @@ if __name__ == "__main__":
         print(str(e))
         tb_dump = traceback.format_exc()
         print(str(tb_dump))
-

@@ -119,13 +119,13 @@ def stats(r):
     return dict(list(zip(['med', 'avg', 'stddev', 'min', 'max'],
         (s[len(s)//2], avg, (sdsq/len(r))**.5, min(r), max(r)))))
 
-def send_alert (message, subject, addr_from, addr_to, smtp_server='localhost'):
+def send_alert(message, subject, addr_from, addr_to, smtp_server='localhost'):
 
     '''This sends an email alert.
     '''
 
-    message = ( 'From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n'
-            % (addr_from, addr_to, subject) + message )
+    message = ('From: %s\r\nTo: %s\r\nSubject: %s\r\n\r\n'
+            % (addr_from, addr_to, subject) + message)
     server = smtplib.SMTP(smtp_server)
     server.sendmail(addr_from, addr_to, message)
     server.quit()
@@ -238,8 +238,8 @@ def main():
         pass
 
     # remove a few common, uninteresting addresses from the dictionary.
-    ip_list = dict([ (key,value) for key,value in ip_list.items() if '192.168.' not in key])
-    ip_list = dict([ (key,value) for key,value in ip_list.items() if '127.0.0.1' not in key])
+    ip_list = dict([(key,value) for key,value in ip_list.items() if '192.168.' not in key])
+    ip_list = dict([(key,value) for key,value in ip_list.items() if '127.0.0.1' not in key])
 
     ip_list = list(ip_list.items())
     if len(ip_list) < 1:
@@ -262,9 +262,9 @@ def main():
         print('connections_stddev.value', s['stddev'])
         return 0
     if verbose:
-        pprint (s)
+        pprint(s)
         print()
-        pprint (ip_list[0:average_n])
+        pprint(ip_list[0:average_n])
 
     # load the stats from the last run.
     try:
@@ -272,8 +272,8 @@ def main():
     except:
         last_stats = {'maxip':None}
 
-    if ( s['maxip'][1] > (s['stddev'] * stddev_trigger)
-            and s['maxip']==last_stats['maxip'] ):
+    if (s['maxip'][1] > (s['stddev'] * stddev_trigger)
+            and s['maxip']==last_stats['maxip']):
         if verbose: print('The maxip has been above trigger for two consecutive samples.')
         if alert_flag:
             if verbose: print('SENDING ALERT EMAIL')
@@ -284,14 +284,14 @@ def main():
             fout = file(TOPIP_LOG_FILE,'a')
             #dts = time.strftime('%Y:%m:%d:%H:%M:%S', time.localtime())
             dts = time.asctime()
-            fout.write ('%s - %d connections from %s\n'
+            fout.write('%s - %d connections from %s\n'
                     % (dts,s['maxip'][1],str(s['maxip'][0])))
             fout.close()
 
     # save state to TOPIP_LAST_RUN_STATS
     try:
         pickle.dump(s, file(TOPIP_LAST_RUN_STATS,'w'))
-        os.chmod (TOPIP_LAST_RUN_STATS, 0o664)
+        os.chmod(TOPIP_LAST_RUN_STATS, 0o664)
     except:
         pass
     # p.logout()
@@ -306,4 +306,3 @@ if __name__ == '__main__':
         print(str(e))
         traceback.print_exc()
         os._exit(1)
-

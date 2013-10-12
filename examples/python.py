@@ -46,4 +46,3 @@ print(c.after, end=' ')
 c.interact()
 c.kill(1)
 print('is alive:', c.isalive())
-

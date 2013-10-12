@@ -36,7 +36,7 @@ except NameError:
     raw_input = input
 
 
-def ssh_command (user, host, password, command):
+def ssh_command(user, host, password, command):
 
     '''This runs a command on the remote host. This could also be done with the
     pxssh class, but this demonstrates what that class does at a simpler level.
@@ -53,8 +53,8 @@ def ssh_command (user, host, password, command):
         print(child.before, child.after)
         return None
     if i == 1: # SSH does not have the public key. Just accept it.
-        child.sendline ('yes')
-        child.expect ('password: ')
+        child.sendline('yes')
+        child.expect('password: ')
         i = child.expect([pexpect.TIMEOUT, 'password: '])
         if i == 0: # Timeout
             print('ERROR!')
@@ -64,12 +64,12 @@ def ssh_command (user, host, password, command):
     child.sendline(password)
     return child
 
-def main ():
+def main():
 
     host = raw_input('Hostname: ')
     user = raw_input('User: ')
     password = getpass.getpass('Password: ')
-    child = ssh_command (user, host, password, '/bin/ls -l')
+    child = ssh_command(user, host, password, '/bin/ls -l')
     child.expect(pexpect.EOF)
     print(child.before)
 
@@ -81,4 +81,3 @@ if __name__ == '__main__':
         print(str(e))
         traceback.print_exc()
         os._exit(1)
-

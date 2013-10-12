@@ -83,7 +83,7 @@ def main():
         command = "sh"
 
     # Begin log with date/time in the form CCCCyymm.hhmmss
-    fout.write ('# %4d%02d%02d.%02d%02d%02d \n' % time.localtime()[:-3])
+    fout.write('# %4d%02d%02d.%02d%02d%02d \n' % time.localtime()[:-3])
 
     ######################################################################
     # Start the interactive session
@@ -99,15 +99,15 @@ def main():
     fout.close()
     return 0
 
-def sigwinch_passthrough (sig, data):
+def sigwinch_passthrough(sig, data):
 
     # Check for buggy platforms (see pexpect.setwinsize()).
     if 'TIOCGWINSZ' in dir(termios):
         TIOCGWINSZ = termios.TIOCGWINSZ
     else:
         TIOCGWINSZ = 1074295912 # assume
-    s = struct.pack ("HHHH", 0, 0, 0, 0)
-    a = struct.unpack ('HHHH', fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ , s))
+    s = struct.pack("HHHH", 0, 0, 0, 0)
+    a = struct.unpack('HHHH', fcntl.ioctl(sys.stdout.fileno(), TIOCGWINSZ, s))
     global global_pexpect_instance
     global_pexpect_instance.setwinsize(a[0],a[1])
 
@@ -121,4 +121,3 @@ if __name__ == "__main__":
         print(str(e))
         traceback.print_exc()
         os._exit(1)
-

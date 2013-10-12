@@ -50,7 +50,7 @@ child.expect('ftp> ')
 child.sendline('pwd')
 child.expect('ftp> ')
 print("Escape character is '^]'.\n")
-sys.stdout.write (child.after)
+sys.stdout.write(child.after)
 sys.stdout.flush()
 child.interact() # Escape character defaults to ^]
 # At this point this script blocks until the user presses the escape character
@@ -70,4 +70,3 @@ if child.isalive():
     print('Child did not exit gracefully.')
 else:
     print('Child exited gracefully.')
-

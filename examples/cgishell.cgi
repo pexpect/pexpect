@@ -20,7 +20,7 @@ from __future__ import absolute_import
 from __future__ import print_function
 
 import sys,os
-sys.path.insert (0,os.getcwd()) # let local modules precede any installed modules
+sys.path.insert(0,os.getcwd()) # let local modules precede any installed modules
 import socket, random, string, traceback, cgi, time, getopt, getpass, threading, resource, signal
 import pxssh, pexpect, ANSI
 
@@ -28,7 +28,7 @@ def exit_with_usage(exit_code=1):
     print(globals()['__doc__'])
     os._exit(exit_code)
 
-def client (command, host='localhost', port=-1):
+def client(command, host='localhost', port=-1):
     """This sends a request to the server and returns the response.
     If port <= 0 then host is assumed to be the filename of a Unix domain socket.
     If port > 0 then host is an inet hostname.
@@ -40,11 +40,11 @@ def client (command, host='localhost', port=-1):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((host, port))
     s.send(command)
-    data = s.recv (2500)
+    data = s.recv(2500)
     s.close()
     return data
 
-def server (hostname, username, password, socket_filename='/tmp/server_sock', daemon_mode = True, verbose=False):
+def server(hostname, username, password, socket_filename='/tmp/server_sock', daemon_mode = True, verbose=False):
     """This starts and services requests from a client.
         If daemon_mode is True then this forks off a separate daemon process and returns the daemon's pid.
         If daemon_mode is False then this does not return until the server is done.
@@ -57,15 +57,15 @@ def server (hostname, username, password, socket_filename='/tmp/server_sock', da
             os.unlink(mypid_name)
             return daemon_pid
 
-    virtual_screen = ANSI.ANSI (24,80) 
+    virtual_screen = ANSI.ANSI(24,80)
     child = pxssh.pxssh()
     try:
-        child.login (hostname, username, password, login_naked=True)
+        child.login(hostname, username, password, login_naked=True)
     except:
-        return   
+        return
     if verbose: print('login OK')
-    virtual_screen.write (child.before)
-    virtual_screen.write (child.after)
+    virtual_screen.write(child.before)
+    virtual_screen.write(child.after)
 
     if os.path.exists(socket_filename): os.remove(socket_filename)
     s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
@@ -74,7 +74,7 @@ def server (hostname, username, password, socket_filename='/tmp/server_sock', da
     if verbose: print('Listen')
     s.listen(1)
 
-    r = roller (endless_poll, (child, child.PROMPT, virtual_screen))
+    r = roller(endless_poll, (child, child.PROMPT, virtual_screen))
     r.start()
     if verbose: print("started screen-poll-updater in background thread")
     sys.stdout.flush()
@@ -95,13 +95,13 @@ def server (hostname, username, password, socket_filename='/tmp/server_sock', da
                 r.cancel()
                 break
             elif cmd == 'sendline':
-                child.sendline (arg)
+                child.sendline(arg)
                 time.sleep(0.1)
                 shell_window = str(virtual_screen)
             elif cmd == 'send' or cmd=='xsend':
                 if cmd=='xsend':
                     arg = arg.decode("hex")
-                child.send (arg)
+                child.send(arg)
                 time.sleep(0.1)
                 shell_window = str(virtual_screen)
             elif cmd == 'cursor':
@@ -112,10 +112,10 @@ def server (hostname, username, password, socket_filename='/tmp/server_sock', da
                 shell_window = str(hash(str(virtual_screen)))
 
             response = []
-            response.append (shell_window)
+            response.append(shell_window)
             if verbose: print('\n'.join(response))
             sent = conn.send('\n'.join(response))
-            if sent < len (response):
+            if sent < len(response):
                 if verbose: print("Sent is too short. Some data was cut off.")
             conn.close()
     except e:
@@ -144,7 +144,7 @@ class roller (threading.Thread):
         while not self.finished.isSet():
             self.function(*self.args, **self.kwargs)
 
-def endless_poll (child, prompt, screen, refresh_timeout=0.1):
+def endless_poll(child, prompt, screen, refresh_timeout=0.1):
     """This keeps the screen updated with the output of the child.
         This will be run in a separate thread. See roller class.
     """
@@ -155,7 +155,7 @@ def endless_poll (child, prompt, screen, refresh_timeout=0.1):
     except:
         pass
 
-def daemonize (stdin=None, stdout=None, stderr=None, daemon_pid_filename=None):
+def daemonize(stdin=None, stdout=None, stderr=None, daemon_pid_filename=None):
     """This runs the current process in the background as a daemon.
     The arguments stdin, stdout, stderr allow you to set the filename that the daemon reads and writes to.
     If they are set to None then all stdio for the daemon will be directed to /dev/null.
@@ -209,7 +209,7 @@ def daemonize (stdin=None, stdout=None, stderr=None, daemon_pid_filename=None):
     maxfd = resource.getrlimit(resource.RLIMIT_NOFILE)[1]
     if maxfd == resource.RLIM_INFINITY:
         maxfd = MAXFD
-  
+
     # close all file descriptors
     for fd in range(0, maxfd):
         try:
@@ -217,7 +217,7 @@ def daemonize (stdin=None, stdout=None, stderr=None, daemon_pid_filename=None):
         except OSError:   # fd wasn't open to begin with (ignored)
             pass
 
-    os.open (DEVNULL, os.O_RDWR)  # standard input
+    os.open(DEVNULL, os.O_RDWR)  # standard input
 
     # redirect standard file descriptors
     si = open(stdin, 'r')
@@ -229,7 +229,7 @@ def daemonize (stdin=None, stdout=None, stderr=None, daemon_pid_filename=None):
 
     return 0
 
-def client_cgi ():
+def client_cgi():
     """This handles the request if this script was called as a cgi.
     """
     sys.stderr = sys.stdout
@@ -247,23 +247,23 @@ def client_cgi ():
             if ajax_cmd == 'send':
                 command = 'xsend'
                 arg = form['arg'].value.encode('hex')
-                result = client (command + ' ' + arg, '/tmp/'+SID)
+                result = client(command + ' ' + arg, '/tmp/'+SID)
                 print(result)
             elif ajax_cmd == 'refresh':
                 command = 'refresh'
-                result = client (command, '/tmp/'+SID)
+                result = client(command, '/tmp/'+SID)
                 print(result)
             elif ajax_cmd == 'cursor':
                 command = 'cursor'
-                result = client (command, '/tmp/'+SID)
+                result = client(command, '/tmp/'+SID)
                 print(result)
             elif ajax_cmd == 'exit':
                 command = 'exit'
-                result = client (command, '/tmp/'+SID)
+                result = client(command, '/tmp/'+SID)
                 print(result)
             elif ajax_cmd == 'hash':
                 command = 'hash'
-                result = client (command, '/tmp/'+SID)
+                result = client(command, '/tmp/'+SID)
                 print(result)
         elif 'sid' not in form:
             SID=random_sid()
@@ -273,14 +273,14 @@ def client_cgi ():
             if 'start_server' in form:
                 USERNAME = form['username'].value
                 PASSWORD = form['password'].value
-                dpid = server ('127.0.0.1', USERNAME, PASSWORD, '/tmp/'+SID)
+                dpid = server('127.0.0.1', USERNAME, PASSWORD, '/tmp/'+SID)
                 SHELL_OUTPUT="daemon pid: " + str(dpid)
             else:
                 if 'cli' in form:
                     command = 'sendline ' + form['cli'].value
                 else:
                     command = 'sendline'
-                SHELL_OUTPUT = client (command, '/tmp/'+SID)
+                SHELL_OUTPUT = client(command, '/tmp/'+SID)
             print(CGISH_HTML % locals())
     except:
         tb_dump = traceback.format_exc()
@@ -306,7 +306,7 @@ def server_cli():
     # There are a million ways to cry for help. These are but a few of them.
     if [elem for elem in command_line_options if elem in ['-h','--h','-?','--?','--help']]:
         exit_with_usage(0)
-  
+
     hostname = "127.0.0.1"
     #port = 1664
     username = os.getenv('USER')
@@ -328,15 +328,15 @@ def server_cli():
         password = options['--password']
     else:
         password = getpass.getpass('password: ')
-   
-    server (hostname, username, password, '/tmp/mysock', daemon_mode)
 
-def random_sid ():
+    server(hostname, username, password, '/tmp/mysock', daemon_mode)
+
+def random_sid():
     a=random.randint(0,65535)
     b=random.randint(0,65535)
     return '%04x%04x.sid' % (a,b)
 
-def parse_host_connect_string (hcs):
+def parse_host_connect_string(hcs):
     """This parses a host connection string in the form
     username:password@hostname:port. All fields are options expcet hostname. A
     dictionary is returned with all four keys. Keys that were not included are
@@ -344,21 +344,21 @@ def parse_host_connect_string (hcs):
     then you must backslash escape it.
     """
     if '@' in hcs:
-        p = re.compile (r'(?P<username>[^@:]*)(:?)(?P<password>.*)(?!\\)@(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
+        p = re.compile(r'(?P<username>[^@:]*)(:?)(?P<password>.*)(?!\\)@(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
     else:
-        p = re.compile (r'(?P<username>)(?P<password>)(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
-    m = p.search (hcs)
+        p = re.compile(r'(?P<username>)(?P<password>)(?P<hostname>[^:]*):?(?P<port>[0-9]*)')
+    m = p.search(hcs)
     d = m.groupdict()
     d['password'] = d['password'].replace('\\@','@')
     return d
-     
-def pretty_box (s, rows=24, cols=80):
+
+def pretty_box(s, rows=24, cols=80):
     """This puts an ASCII text box around the given string.
     """
     top_bot = '+' + '-'*cols + '+\n'
     return top_bot + '\n'.join(['|'+line+'|' for line in s.split('\n')]) + '\n' + top_bot
 
-def main ():
+def main():
     if os.getenv('REQUEST_METHOD') is None:
         server_cli()
     else:
@@ -376,8 +376,8 @@ a:hover {color: #0f0}
 hr {color: #0f0}
 html,body,textarea,input,form
 {
-font-family: "Courier New", Courier, mono; 
-font-size: 8pt; 
+font-family: "Courier New", Courier, mono;
+font-size: 8pt;
 color: #0c0;
 background-color: #020;
 margin:0;
@@ -455,7 +455,7 @@ function multibrowser_ajax ()
     return xmlHttp;
 }
 function load_url_to_screen(url)
-{ 
+{
     xmlhttp = multibrowser_ajax();
     //window.XMLHttpRequest?new XMLHttpRequest(): new ActiveXObject("Microsoft.XMLHTTP");
     xmlhttp.onreadystatechange = update_virtual_screen;
@@ -549,7 +549,7 @@ function key_shift()
         flag_shiftlock = 0;
         flag_shift = 1;
     }
-    update_button_colors(); 
+    update_button_colors();
 }
 function key_ctrl ()
 {
@@ -563,7 +563,7 @@ function key_ctrl ()
         flag_shiftlock = 0;
         flag_shift = 0;
     }
-    
+
     update_button_colors();
 }
 function update_button_colors ()
@@ -596,7 +596,7 @@ function update_button_colors ()
     {
         document.form['ShiftLock'].style.backgroundColor = document.form.style.backgroundColor;
     }
-    
+
 }
 function keyHandler(e)
 {
@@ -613,7 +613,7 @@ function keyHandler(e)
 //if (document.layers)
 //    document.captureEvents(Event.KEYPRESS);
 //http://sniptools.com/jskeys
-//document.onkeyup = KeyCheck;       
+//document.onkeyup = KeyCheck;
 function KeyCheck(e)
 {
     var KeyID = (window.event) ? event.keyCode : e.keyCode;
@@ -633,7 +633,7 @@ function KeyCheck(e)
 &nbsp;<input name="cli" id="cli" type="text" size="80"><br>
 <table border="0" align="left">
 <tr>
-<td width="86%%" align="center">    
+<td width="86%%" align="center">
     <input name="submit" type="submit" value="Submit">
     <input name="refresh" type="button" value="REFRESH" onclick="refresh_screen()">
     <input name="refresh" type="button" value="CURSOR" onclick="query_cursor()">
@@ -703,7 +703,7 @@ function KeyCheck(e)
     <input type="button" value="        FINAL FRONTIER        " onclick="type_key('  ')" />
 </td>
 </tr>
-</table>  
+</table>
 </form>
 </body>
 </html>
@@ -763,4 +763,3 @@ if __name__ == "__main__":
         print(str(e))
         tb_dump = traceback.format_exc()
         print(str(tb_dump))
-

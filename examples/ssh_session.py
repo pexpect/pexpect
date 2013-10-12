@@ -117,4 +117,3 @@ class ssh_session:
             return None # File doesn't exist
         else:
             return seen.split()[0] # Return permission field of listing.
-

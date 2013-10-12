@@ -78,4 +78,3 @@ if 'min' in duration:
 # Print the parsed fields in CSV format.
 print('days, hours, minutes, users, cpu avg 1 min, cpu avg 5 min, cpu avg 15 min')
 print('%s, %s, %s, %s, %s, %s, %s' % (days, hours, mins, users, av1, av5, av15))
-

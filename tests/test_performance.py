@@ -56,7 +56,7 @@ class PerformanceTestCase (PexpectTestCase.PexpectTestCase):
         e.sendline(self._iter_n(n))
         self.assertEqual(e.expect(r'\.{3}'), 0)
         e.sendline(b'')
-        self.assertEqual(e.expect([b'inquisition', '%d' % n], searchwindowsize=10), 1)
+        self.assertEqual(e.expect([b'inquisition', '%d' % n], searchwindowsize=20), 1)
 
     def exact_range(self, n):
         e = pexpect.spawn('python')
@@ -72,7 +72,7 @@ class PerformanceTestCase (PexpectTestCase.PexpectTestCase):
         e.sendline(self._iter_n(n))
         self.assertEqual(e.expect_exact([b'...']), 0)
         e.sendline(b'')
-        self.assertEqual(e.expect_exact([b'inquisition', '%d' % n], searchwindowsize=10), 1)
+        self.assertEqual(e.expect_exact([b'inquisition', '%d' % n], searchwindowsize=20), 1)
 
     def faster_range(self, n):
         e = pexpect.spawn('python')

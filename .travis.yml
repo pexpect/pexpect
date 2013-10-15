@@ -7,7 +7,6 @@ python:
   - 3.3
   - pypy
 
-
 virtualenv:
   system_site_packages: true
 
@@ -17,6 +16,10 @@ before_script:
 install:
   - export PYTHONIOENCODING=UTF8
   - python setup.py install
+  - pip install coveralls --use-mirrors
 
 script:
   - ./tools/testall.py
+
+after_success:
+  coveralls

@@ -19,7 +19,7 @@ install:
   - pip install coveralls --use-mirrors
 
 script:
-  - ./tools/testall.py
+  - coverage run tools/testall.py
 
 after_success:
   coveralls

@@ -18,6 +18,13 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
+try:
+    # This allows coverage to measure code run in this process
+    import coverage
+    coverage.process_startup()
+except ImportError:
+    pass
+
 import pexpect
 import sys
 

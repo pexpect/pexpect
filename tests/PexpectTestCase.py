@@ -28,11 +28,15 @@ class PexpectTestCase(unittest.TestCase):
     def setUp(self):
         self.PYTHONBIN = sys.executable
         self.original_path = os.getcwd()
-        newpath = os.path.join (os.environ['PROJECT_PEXPECT_HOME'], 'tests')
+        project_dir = os.environ['PROJECT_PEXPECT_HOME']
+        newpath = os.path.join (project_dir, 'tests')
         os.chdir (newpath)
+        os.environ['COVERAGE_PROCESS_START'] = os.path.join(project_dir, '.coveragerc')
+        os.environ['COVERAGE_FILE'] = os.path.join(project_dir, '.coverage')
         print('\n', self.id(), end=' ')
         sys.stdout.flush()
         unittest.TestCase.setUp(self)
+
     def tearDown(self):
         os.chdir (self.original_path)
 

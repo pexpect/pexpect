@@ -96,48 +96,32 @@ PY3 = (sys.version_info[0] >= 3)
 
 # Exception classes used by this module.
 class ExceptionPexpect(Exception):
-
     '''Base class for all exceptions raised by this module.
     '''
 
     def __init__(self, value):
-
         self.value = value
 
     def __str__(self):
-
         return str(self.value)
 
     def get_trace(self):
-
         '''This returns an abbreviated stack trace with lines that only concern
         the caller. In other words, the stack trace inside the Pexpect module
         is not included. '''
 
         tblist = traceback.extract_tb(sys.exc_info()[2])
-        #tblist = filter(self.__filter_not_pexpect, tblist)
-        tblist = [item for item in tblist if self.__filter_not_pexpect(item)]
+        tblist = [item for item in tblist if 'pexpect/__init__' not in item[0]]
         tblist = traceback.format_list(tblist)
         return ''.join(tblist)
 
-    def __filter_not_pexpect(self, trace_list_item):
-
-        '''This returns True if list item 0 the string 'pexpect.py' in it. '''
-
-        if trace_list_item[0].find('pexpect.py') == -1:
-            return True
-        else:
-            return False
-
 
 class EOF(ExceptionPexpect):
-
     '''Raised when EOF is read from a child.
     This usually means the child has exited.'''
 
 
 class TIMEOUT(ExceptionPexpect):
-
     '''Raised when a read time exceeds the timeout. '''
 
 ##class TIMEOUT_PATTERN(TIMEOUT):

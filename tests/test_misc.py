@@ -294,6 +294,17 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         p.expect('abc')
         p.sendeof()
 
+    def test_exception_tb(self):
+        p = pexpect.spawn('sleep 1')
+        try:
+            p.expect('BLAH')
+        except pexpect.ExceptionPexpect as e:
+            # get_trace should filter out frames in pexpect's own code
+            tb = e.get_trace()
+            assert 'raise ' not in tb, tb
+        else:
+            assert False, "Should have raised an exception."
+
 if __name__ == '__main__':
     unittest.main()
 

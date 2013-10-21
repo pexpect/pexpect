@@ -1,6 +1,26 @@
 FAQ
 ===
 
+**Q: Why don't shell pipe and redirect (| and >) work when I spawn a command?**
+
+A: Remember that Pexpect does NOT interpret shell meta characters such as
+redirect, pipe, or wild cards (``>``, ``|``, or *). That's done by a shell not
+the command you are spawning. This is a common mistake. If you want to run a
+command and pipe it through another command then you must also start a shell.
+For example::
+
+    child = pexpect.spawn('/bin/bash -c "ls -l | grep LOG > log_list.txt"')
+    child.expect(pexpect.EOF)
+
+The second form of spawn (where you pass a list of arguments) is useful in
+situations where you wish to spawn a command and pass it its own argument list.
+This can make syntax more clear. For example, the following is equivalent to the
+previous example::
+
+    shell_cmd = 'ls -l | grep LOG > log_list.txt'
+    child = pexpect.spawn('/bin/bash', ['-c', shell_cmd])
+    child.expect(pexpect.EOF)
+
 **Q: Isn't there already a Python Expect?**
 
 A: Yes, there are several of them. They usually require you to compile C.

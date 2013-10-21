@@ -182,7 +182,7 @@ Generally any star * expression will match as little as possible.
 
 One thing you can do is to try to force a non-ambiguous character at the end of
 your :regexp:`\\d+` pattern. Expect that character to delimit the string. For
-example, you might try making the end of your pattrn be :regexp:`\\D+` instead
+example, you might try making the end of your pattern be :regexp:`\\D+` instead
 of :regexp:`\\D*`. Number digits alone would not satisfy the :regexp:`(\\d+)\\D+`
 pattern. You would need some numbers and at least one non-number at the end.
 

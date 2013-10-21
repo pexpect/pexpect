@@ -269,6 +269,8 @@ import os
 import traceback
 import string
 
+PY3 = (sys.version_info[0] >= 3)
+
 #
 # These define the actions.
 # Note that "memory" is a list being used as a stack.
@@ -326,7 +328,7 @@ def main():
     print('Use the = sign to evaluate and print the expression.')
     print('For example: ')
     print('    167 3 2 2 * * * 1 - =')
-    inputstr = raw_input ('> ')
+    inputstr = (input if PY3 else raw_input)('> ')  # analysis:ignore
     f.process_list(inputstr)
 
 
@@ -338,7 +340,7 @@ if __name__ == '__main__':
         raise
     except SystemExit:  # sys.exit()
         raise
-    except Exception(err):
+    except Exception as err:
         print('ERROR, UNEXPECTED EXCEPTION')
         print(str(err))
         traceback.print_exc()

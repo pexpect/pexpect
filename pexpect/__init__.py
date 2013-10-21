@@ -80,7 +80,7 @@ try:
     import traceback
     import signal
     import codecs
-except ImportError:
+except ImportError:  # pragma: no cover
     err = sys.exc_info()[1]
     raise ImportError(str(err) + '''
 

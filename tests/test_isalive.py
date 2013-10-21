@@ -18,9 +18,9 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-from __future__ import with_statement  # bring 'with' stmt to py25
 import pexpect
 import unittest
+import signal
 import sys, os, time
 import PexpectTestCase
 
@@ -47,6 +47,15 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
             pass
         else:
             self.fail ('Should have raised ExceptionPython because you can\'t call wait on a dead process.')
+
+    def test_signal_wait(self):
+        '''Test calling wait with a process terminated by a signal.'''
+        if not hasattr(signal, 'SIGALRM'):
+            return 'SKIP'
+        p = pexpect.spawn(sys.executable, ['alarm_die.py'])
+        p.wait()
+        assert p.exitstatus is None, p.exitstatus
+        self.assertEqual(p.signalstatus, signal.SIGALRM)
 
     def test_expect_isalive_dead_after_normal_termination (self):
         p = pexpect.spawn('ls')

@@ -23,5 +23,5 @@ script:
   - coverage run tools/testall.py
 
 after_success:
-  coverage combine
-  coveralls
+  - coverage combine
+  - coveralls

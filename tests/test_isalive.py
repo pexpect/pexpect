@@ -90,9 +90,14 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
         if p.isalive():
             self.fail ('Child process is not dead. It should be.')
 
+    def test_forced_terminate(self):
+        p = pexpect.spawn(sys.executable, ['needs_kill.py'])
+        p.expect('READY')
+        res = p.terminate(force=True)
+        assert res, res
+
 ### Some platforms allow this. Some reset status after call to waitpid.
     def test_expect_isalive_consistent_multiple_calls (self):
-
         '''This tests that multiple calls to isalive() return same value.
         '''
 

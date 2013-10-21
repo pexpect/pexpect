@@ -283,6 +283,17 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
                '5: "other"\n    6: TIMEOUT')
         assert ss.__str__() == out, (ss.__str__(), out)
 
+    def test_nonnative_pty_fork(self):
+        class spawn_ourptyfork(pexpect.spawn):
+            def _spawn(self, command, args=[]):
+                self.use_native_pty_fork = False
+                pexpect.spawn._spawn(self, command, args)
+
+        p = spawn_ourptyfork('cat')
+        p.sendline('abc')
+        p.expect('abc')
+        p.sendeof()
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -4,7 +4,7 @@ import unittest
 
 from pexpect import pxssh
 
-class PxsshTestCase(unittest.TestCase):
+class SSHTestBase(unittest.TestCase):
     def setUp(self):
         self.orig_path = os.environ.get('PATH')
         fakessh_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'fakessh'))
@@ -16,7 +16,8 @@ class PxsshTestCase(unittest.TestCase):
             os.environ['PATH'] = self.orig_path
         else:
             del os.environ['PATH']
-        
+
+class PxsshTestCase(SSHTestBase):
     def test_fake_ssh(self):
         ssh = pxssh.pxssh()
         #ssh.logfile_read = sys.stdout  # DEBUG

@@ -283,6 +283,28 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
                '5: "other"\n    6: TIMEOUT')
         assert ss.__str__() == out, (ss.__str__(), out)
 
+    def test_nonnative_pty_fork(self):
+        class spawn_ourptyfork(pexpect.spawn):
+            def _spawn(self, command, args=[]):
+                self.use_native_pty_fork = False
+                pexpect.spawn._spawn(self, command, args)
+
+        p = spawn_ourptyfork('cat')
+        p.sendline('abc')
+        p.expect('abc')
+        p.sendeof()
+
+    def test_exception_tb(self):
+        p = pexpect.spawn('sleep 1')
+        try:
+            p.expect('BLAH')
+        except pexpect.ExceptionPexpect as e:
+            # get_trace should filter out frames in pexpect's own code
+            tb = e.get_trace()
+            assert 'raise ' not in tb, tb
+        else:
+            assert False, "Should have raised an exception."
+
 if __name__ == '__main__':
     unittest.main()
 

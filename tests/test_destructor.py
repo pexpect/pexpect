@@ -22,10 +22,14 @@ import pexpect
 import unittest
 import PexpectTestCase
 import gc
+import platform
 import time
 
 class TestCaseDestructor(PexpectTestCase.PexpectTestCase):
     def test_destructor (self):
+        if platform.python_implementation() != 'CPython':
+            # Details of garbage collection are different on other implementations
+            return 'SKIP'
         gc.collect()
         time.sleep(3)
         p1 = pexpect.spawn('%s hello_world.py' % self.PYTHONBIN)

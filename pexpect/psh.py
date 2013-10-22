@@ -21,16 +21,13 @@ PEXPECT LICENSE
 
 '''
 
-import pexpect, os, sys, re
-from types import *
+import pexpect, re
 
 class ExceptionPsh(pexpect.ExceptionPexpect):
-
     '''Raised for Psh exceptions.
     '''
 
 class ExceptionErrorCode(ExceptionPsh):
-
     '''Raised when an program returns an error code.
     '''
 
@@ -83,7 +80,7 @@ class psh (object):
         if group: group = ':' + group
         else: group = ""
 
-        return self.run("/bin/chmod %s %s%s %s" % (recurse,user,group,path))
+        return self.run("/bin/chown %s %s%s %s" % (xtra_flags,user,group,path))
 
     def chmod (self, path, perms='', recurse=False):
 
@@ -117,31 +114,25 @@ class psh (object):
         if not timeout: timeout = self.default_timeout
 
         def cmd_exp_loop(param):
-            if type(param) is DictType:
+            if isinstance(param, dict):
                 param = (param,)
             for item in param:
-                if type(item) is type(()) or type(item) is type([]):
+                if isinstance(item, (tuple, list)):
                     cmd_exp_loop(item)
-                elif type(item) is type(""):
+                elif isinstance(item, str):
                     self.exp.send(item)
-                elif type(item) is type({}):
-                    dict = item
+                elif isinstance(item, dict):
                     while(1):
-                        stimulus = dict.keys()
-                        idx = self.exp.expect_exact(stimulus, timeout)
-                        keys = dict.keys()
-                        respond = dict[keys[idx]]
-                        if ( type(respond) is type({})
-                                or type(respond) is type(())
-                                or type(item) is type([]) ):
+                        stimulus = list(item.keys())
+                        idx = self.exp.expect(stimulus, timeout)
+                        respond = item[stimulus[idx]]
+                        if isinstance(respond, (dict, tuple, list)):
                             cmd_exp_loop(respond)
-                        if type(respond) is type(""):
+                        if isinstance(respond, str):
                             self.exp.send(respond)
-                        elif ( type(respond) is InstanceType
-                                and Exception
-                                in inspect.getmro(respond.__class__) ):
+                        elif isinstance(respond, Exception):
                             raise respond
-                        elif type(respond) is type(0):
+                        elif isinstance(respond, int):
                             return (respond, self.exp.before)
                         elif respond is None:
                             break
@@ -152,10 +143,10 @@ class psh (object):
             stim_resp_dict = {}
 
         self.exp.sendline("")
-        if not self.exp.prompt(): raise SessionException("No prompt")
+        if not self.exp.prompt(): raise ExceptionPsh("No prompt")
         self.exp.sendline(cmd)
         self.exp.expect_exact([cmd])
-        stim_resp_dict[re.compile(self.exp.PROMPT)] = None
+        stim_resp_dict[self.exp.PROMPT] = None
         cmd_exp_loop(stim_resp_dict)
 
         output = self.exp.before
@@ -163,21 +154,21 @@ class psh (object):
         self.exp.sendline("echo $?")
         self.exp.expect_exact(["echo $?"])
         if not self.exp.prompt():
-            raise SessionException("No prompt", 0, self.exp.before)
+            raise ExceptionPsh("No prompt", 0, self.exp.before)
         try:
-            reg = re.compile("^(\d+)")
+            reg = re.compile(b"^(\d+)")
             s = self.exp.before.strip()
             #print s
             #pdb.set_trace()
             s = reg.search(s).groups()[0]
             error_code = int(s)
         except ValueError:
-            log.error("Cannot parse %s into an int!" % self.exp.before)
+            #log.error("Cannot parse %s into an int!" % self.exp.before)
             raise
 
         if not output[0:2] == '\r\n':
-            log.warning("Returned output lacks leading \\r\\n which may indicate a tae error")
-            log.debug2("Offending output string: [%s]" % output)
+            #log.warning("Returned output lacks leading \\r\\n which may indicate a tae error")
+            #log.debug2("Offending output string: [%s]" % output)
             return (error_code, output)
         else:
             return(error_code, output[2:])

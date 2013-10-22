@@ -32,7 +32,6 @@ class ExceptionPxssh(ExceptionPexpect):
     '''
 
 class pxssh (spawn):
-
     '''This class extends pexpect.spawn to specialize setting up SSH
     connections. This adds methods for login, logout, and expecting the shell
     prompt. It does various tricky things to handle many situations in the SSH

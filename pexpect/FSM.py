@@ -333,15 +333,4 @@ def main():
 
 
 if __name__ == '__main__':
-    try:
-        main()
-        sys.exit(0)
-    except KeyboardInterrupt:  # Ctrl-C
-        raise
-    except SystemExit:  # sys.exit()
-        raise
-    except Exception as err:
-        print('ERROR, UNEXPECTED EXCEPTION')
-        print(str(err))
-        traceback.print_exc()
-        os._exit(1)
+    main()

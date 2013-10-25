@@ -1,4 +1,5 @@
 recursive-include doc *
+prune doc/_build
 recursive-include examples *
 include README LICENSE INSTALL
 include setup.py pexpect.py fdpexpect.py pxssh.py screen.py ANSI.py FSM.py

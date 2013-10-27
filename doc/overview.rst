@@ -34,9 +34,9 @@ method waits for the child application to return a given string. The string you
 specify is a regular expression, so you can match complicated patterns. The
 :meth:`~pexpect.spawn.send` method writes a string to the child application.
 From the child's point of view it looks just like someone typed the text from a
-terminal. After each call to :meth:`~pexpect.spawn.expect` the before and after
-properties will be set to the text printed by child application. The before
-property will contain all text up to the expected string pattern. The after
+terminal. After each call to :meth:`~pexpect.spawn.expect` the ``before`` and ``after``
+properties will be set to the text printed by child application. The ``before``
+property will contain all text up to the expected string pattern. The ``after``
 string will contain the text that was matched by the expected pattern.
 The match property is set to the `re match object <http://docs.python.org/3/library/re#match-objects>`_.
 
@@ -68,7 +68,7 @@ If the child has died and you have read all the child's output then ordinarily
 :meth:`~pexpect.spawn.expect` will raise an :class:`~pexpect.EOF` exception.
 You can read everything up to the EOF without generating an exception by using
 the EOF pattern expect. In this case everything the child has output will be
-available in the before property.
+available in the ``before`` property.
 
 The pattern given to :meth:`~pexpect.spawn.expect` may be a regular expression
 or it may also be a list of regular expressions. This allows you to match

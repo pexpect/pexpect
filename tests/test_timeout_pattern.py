@@ -66,7 +66,7 @@ class Exp_TimeoutTestCase(PexpectTestCase.PexpectTestCase):
             p.expect('Goodbye',timeout=5)
         except pexpect.TIMEOUT:
             err = sys.exc_info()[1]
-            if err.get_trace().count("pexpect.py") != 0:
+            if err.get_trace().count("pexpect/__init__.py") != 0:
                 self.fail("The TIMEOUT get_trace() referenced pexpect.py. "
                     "It should only reference the caller.\n" + err.get_trace())
 

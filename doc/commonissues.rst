@@ -41,7 +41,7 @@ back to the TTY. I would call this an SSH bug.
 
 Pexpect now automatically adds a short delay before sending data to a child
 process. This more closely mimics what happens in the usual human-to-app
-interaction. The delay can be tuned with the 'delaybeforesend' attribute of the
+interaction. The delay can be tuned with the ``delaybeforesend`` attribute of the
 spawn class. In general, this fixes the problem for everyone and so this should
 not be an issue for most users. For some applications you might with to turn it
 off::
@@ -71,9 +71,9 @@ application quits it may not flush its output buffer. This means that your
 Pexpect application will receive an EOF even though it should have received a
 little more data before the child died. This is not generally a problem when
 talking to interactive child applications. One example where it is a problem is
-when trying to read output from a program like 'ls'. You may receive most of the
+when trying to read output from a program like *ls*. You may receive most of the
 directory listing, but the last few lines will get lost before you receive an EOF.
-The reason for this is that 'ls' runs; completes its task; and then exits. The
+The reason for this is that *ls* runs; completes its task; and then exits. The
 buffer is not flushed before exit so the last few lines are lost. The following
 example demonstrates the problem::
 

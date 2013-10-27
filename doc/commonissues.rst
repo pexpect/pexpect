@@ -92,7 +92,7 @@ expect SSH to ask you for a password using code like this::
     child.expect('assword')
     child.sendline('mypassword')
 
-You may see the following error come back from a spawned child SSH:
+You may see the following error come back from a spawned child SSH::
 
     Permission denied (publickey,keyboard-interactive). 
 
@@ -100,4 +100,4 @@ This means that SSH thinks it can't access the TTY to ask you for your password.
 The only solution I have found is to use public key authentication with SSH.
 This bypasses the need for a password. I'm not happy with this solution. The
 problem is due to poor support for Solaris Pseudo TTYs in the Python Standard
-Library. 
+Library.

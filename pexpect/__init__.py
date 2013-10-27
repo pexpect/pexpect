@@ -88,7 +88,7 @@ A critical module was not found. Probably this operating system does not
 support it. Pexpect is intended for UNIX-like operating systems.''')
 
 __version__ = '3.0rc1'
-__revision__ = None
+__revision__ = ''
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'spawnu', 'run', 'runu',
            'which', 'split_command_line', '__version__', '__revision__']
 
@@ -515,7 +515,7 @@ class spawn(object):
 
         s = []
         s.append(repr(self))
-        s.append('version: ' + __version__ + ' (' + __revision__ + ')')
+        s.append('version: ' + __version__)
         s.append('command: ' + str(self.command))
         s.append('args: %r' % (self.args,))
         s.append('searcher: %r' % (self.searcher,))

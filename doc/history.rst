@@ -14,6 +14,11 @@ new maintenance after a long dormancy, so some caution is warranted.
 * A new :ref:`unicode API <unicode>` was introduced.
 * Python 3 is now supported, using a single codebase.
 * Pexpect now requires at least Python 2.6 or 3.2.
+* The modules other than pexpect, such as :mod:`pexpect.fdpexpect` and
+  :mod:`pexpect.pxssh`, were moved into the pexpect package. For now, wrapper
+  modules are installed to the old locations for backwards compatibility (e.g.
+  ``import pxssh`` will still work), but these will be removed at some point in
+  the future.
 * Ignoring ``SIGHUP`` is now optional - thanks to Kimmo Parviainen-Jalanko for
   the patch.
 

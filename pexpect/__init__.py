@@ -87,8 +87,8 @@ except ImportError:  # pragma: no cover
 A critical module was not found. Probably this operating system does not
 support it. Pexpect is intended for UNIX-like operating systems.''')
 
-__version__ = '3.0b2'
-__revision__ = '1'
+__version__ = '3.0rc1'
+__revision__ = None
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'spawnu', 'run', 'runu',
            'which', 'split_command_line', '__version__', '__revision__']
 

@@ -4,7 +4,7 @@ FAQ
 **Q: Why don't shell pipe and redirect (| and >) work when I spawn a command?**
 
 A: Remember that Pexpect does NOT interpret shell meta characters such as
-redirect, pipe, or wild cards (``>``, ``|``, or *). That's done by a shell not
+redirect, pipe, or wild cards (``>``, ``|``, or ``*``). That's done by a shell not
 the command you are spawning. This is a common mistake. If you want to run a
 command and pipe it through another command then you must also start a shell.
 For example::

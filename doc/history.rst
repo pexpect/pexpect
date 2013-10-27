@@ -25,6 +25,12 @@ new maintenance after a long dormancy, so some caution is warranted.
 We also now have `docs on ReadTheDocs <http://pexpect.readthedocs.org/>`_,
 and `continuous integration on Travis CI <https://travis-ci.org/pexpect/pexpect>`_.
 
+Version 2.4
+```````````
+
+* Fix a bug regarding making the pty the controlling terminal when the process
+  spawning it is not, actually, a terminal (such as from cron)
+
 Version 2.3
 ```````````
 

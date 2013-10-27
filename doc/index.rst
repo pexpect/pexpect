@@ -34,6 +34,7 @@ Contents:
    overview
    api/index
    examples
+   commonissues
    FAQ
    history
 

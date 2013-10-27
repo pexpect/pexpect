@@ -15,9 +15,11 @@ Here is an example of Pexpect in action::
     child.expect('Password:')
     child.sendline('noah@example.com')
     child.expect('ftp> ')
+    child.sendline('lcd /tmp')
+    child.expect('ftp> ')
     child.sendline('cd pub')
     child.expect('ftp> ')
-    child.sendline('get ls-lR.gz')
+    child.sendline('get README')
     child.expect('ftp> ')
     child.sendline('bye')
 

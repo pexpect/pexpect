@@ -2,6 +2,9 @@
 It combines Pexpect and wraps many Standard Python Library functions
 to make them look more shell-like.
 
+This module is undocumented, so its API is provisional, and may change in
+future releases without a deprecation cycle.
+
 PEXPECT LICENSE
 
     This license is approved by the OSI and FSF as GPL-compatible.
@@ -98,14 +101,14 @@ class psh (object):
 
         return self.run("/bin/cat %s" % path)
 
-    def run (self, cmd, stim_resp_dict = {}, timeout=None):
+    def run (self, cmd, timeout=None):
 
-       (ret, output) = self.run_raw(cmd, stim_resp_dict, timeout)
+       (ret, output) = self.run_raw(cmd, timeout)
        if ret == 0: return output
        raise ExceptionErrorCode("Running command [%s] returned error [%d]"
                % (cmd,ret), ret, output)
 
-    def run_raw(self, cmd, stim_resp_dict=None, timeout=None):
+    def run_raw(self, cmd, timeout=None):
 
         '''Someone contributed this, but now I've lost touch and I forget the
         motive of this. It was sort of a sketch at the time which doesn't make
@@ -113,41 +116,11 @@ class psh (object):
 
         if not timeout: timeout = self.default_timeout
 
-        def cmd_exp_loop(param):
-            if isinstance(param, dict):
-                param = (param,)
-            for item in param:
-                if isinstance(item, (tuple, list)):
-                    cmd_exp_loop(item)
-                elif isinstance(item, str):
-                    self.exp.send(item)
-                elif isinstance(item, dict):
-                    while(1):
-                        stimulus = list(item.keys())
-                        idx = self.exp.expect(stimulus, timeout)
-                        respond = item[stimulus[idx]]
-                        if isinstance(respond, (dict, tuple, list)):
-                            cmd_exp_loop(respond)
-                        if isinstance(respond, str):
-                            self.exp.send(respond)
-                        elif isinstance(respond, Exception):
-                            raise respond
-                        elif isinstance(respond, int):
-                            return (respond, self.exp.before)
-                        elif respond is None:
-                            break
-                        else:
-                            self.exp.send(str(respond))
-
-        if stim_resp_dict == None:
-            stim_resp_dict = {}
-
         self.exp.sendline("")
         if not self.exp.prompt(): raise ExceptionPsh("No prompt")
         self.exp.sendline(cmd)
         self.exp.expect_exact([cmd])
-        stim_resp_dict[self.exp.PROMPT] = None
-        cmd_exp_loop(stim_resp_dict)
+        self.exp.prompt(timeout=timeout)
 
         output = self.exp.before
         # Get the return code
@@ -173,4 +146,3 @@ class psh (object):
         else:
             return(error_code, output[2:])
 
-#    def pipe (self, cmd, string_to_send):

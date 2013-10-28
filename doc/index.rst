@@ -34,8 +34,8 @@ Contents:
    overview
    api/index
    examples
-   commonissues
    FAQ
+   commonissues
    history
 
 Pexpect is developed `on Github <http://github.com/pexpect/pexpect>`_. Please

@@ -155,23 +155,40 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         assert child.terminated, "child.terminated is not True"
 
     def test_sighup(self):
-        child = pexpect.spawn(sys.executable + ' getch.py', ignore_sighup=True)
-        child.expect('READY')
-        child.kill(signal.SIGHUP)
-        for _ in range(10):
-            if not child.isalive():
-                raise AssertionError('Child should not have exited.')
-            time.sleep(0.1)
-
-        child = pexpect.spawn(sys.executable + ' getch.py', ignore_sighup=False)
-        child.expect('READY')
-        child.kill(signal.SIGHUP)
-        for _ in range(10):
-            if not child.isalive():
-                break
-            time.sleep(0.1)
+        # If a parent process sets an Ignore handler for SIGHUP (as on Fedora's
+        # build machines), this test breaks. We temporarily restore the default
+        # handler, so the child process will quit. However, we can't simply
+        # replace any installed handler, because getsignal returns None for
+        # handlers not set in Python code, so we wouldn't be able to restore
+        # them.
+        if signal.getsignal(signal.SIGHUP) == signal.SIG_IGN:
+            signal.signal(signal.SIGHUP, signal.SIG_DFL)
+            restore_sig_ign = True
         else:
-            raise AssertionError('Child should have exited.')
+            restore_sig_ign = False
+
+        try:
+            child = pexpect.spawn(sys.executable + ' getch.py', ignore_sighup=True)
+            child.expect('READY')
+            child.kill(signal.SIGHUP)
+            for _ in range(10):
+                if not child.isalive():
+                    raise AssertionError('Child should not have exited.')
+                time.sleep(0.1)
+
+            child = pexpect.spawn(sys.executable + ' getch.py', ignore_sighup=False)
+            child.expect('READY')
+            child.kill(signal.SIGHUP)
+            for _ in range(10):
+                if not child.isalive():
+                    break
+                time.sleep(0.1)
+            else:
+                raise AssertionError('Child should have exited.')
+
+        finally:
+            if restore_sig_ign:
+                signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
     def test_bad_child_pid(self):
         child = pexpect.spawn('cat')

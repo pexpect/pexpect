@@ -1646,6 +1646,7 @@ class spawn(object):
                     # The subprocess may have closed before we get to reading it
                     if e.errno != errno.EIO:
                         raise
+                    break
                 if output_filter:
                     data = output_filter(data)
                 if self.logfile is not None:
@@ -1653,7 +1654,13 @@ class spawn(object):
                     self.logfile.flush()
                 os.write(self.STDOUT_FILENO, data)
             if self.STDIN_FILENO in r:
-                data = self.__interact_read(self.STDIN_FILENO)
+                try:
+                    data = self.__interact_read(self.STDIN_FILENO)
+                except OSError as e:
+                    # The subprocess may have closed before we get to reading it
+                    if e.errno != errno.EIO:
+                        raise
+                    break
                 if input_filter:
                     data = input_filter(data)
                 i = data.rfind(escape_character)

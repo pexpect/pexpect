@@ -140,12 +140,38 @@ class pxssh (spawn):
                 current[j] = min(add, delete, change)
         return current[n]
 
-    def sync_original_prompt (self):
+    # JDE:  method to facilitate using comm timeouts rather than sleeps to
+    #       perform synchronization
+    def try_read_prompt(self, initial_timeout, interval_timeout, total_timeout):
+        done = False
+        prompt = ''
+        begin = time.time()
+        expired = 0
+        # Set time to wait for the first character
+        timeout = initial_timeout
+        while (not done) and (expired < total_timeout):
+            try:
+                c = self.read_nonblocking(size=1, timeout=timeout)
+                prompt  += c # append acquired content
+                expired = time.time() - begin # updated total time expired
+                timeout = interval_timeout # Set time to wait between characters
+            except TIMEOUT:
+                expired = total_timeout
+        return prompt
+
+    def sync_original_prompt (self, sync_multiplier=1):
 
         '''This attempts to find the prompt. Basically, press enter and record
         the response; press enter again and record the response; if the two
         responses are similar then assume we are at the original prompt. This
         is a slow function. It can take over 10 seconds. '''
+        # Timeouts which can be adjusted by a multiplier supplied by the user
+        # in the event of stations with very poor connections
+        # Worst case (with default multiplier) should be 12 seconds in the event
+        # that no response is ever received
+        initial_timeout = sync_multiplier * 0.5
+        interval_timeout   = sync_multiplier * 0.1
+        total_timeout   = sync_multiplier * 3
 
         # All of these timing pace values are magic.
         # I came up with these based on what seemed reliable for
@@ -156,21 +182,19 @@ class pxssh (spawn):
 
         try:
             # Clear the buffer before getting the prompt.
-            self.read_nonblocking(size=10000,timeout=1)
+            self.try_read_prompt(initial_timeout, interval_timeout, total_timeout)
         except TIMEOUT:
             pass
-        time.sleep(0.1)
+
         self.sendline()
-        time.sleep(0.5)
-        x = self.read_nonblocking(size=1000,timeout=1)
-        time.sleep(0.1)
+        x = self.try_read_prompt(initial_timeout, interval_timeout, total_timeout)
+
         self.sendline()
-        time.sleep(0.5)
-        a = self.read_nonblocking(size=1000,timeout=1)
-        time.sleep(0.1)
+        a = self.try_read_prompt(initial_timeout, interval_timeout, total_timeout)
+
         self.sendline()
-        time.sleep(0.5)
-        b = self.read_nonblocking(size=1000,timeout=1)
+        b = self.try_read_prompt(initial_timeout, interval_timeout, total_timeout)
+
         ld = self.levenshtein_distance(a,b)
         len_a = len(a)
         if len_a == 0:
@@ -181,7 +205,7 @@ class pxssh (spawn):
 
     ### TODO: This is getting messy and I'm pretty sure this isn't perfect.
     ### TODO: I need to draw a flow chart for this.
-    def login (self,server,username,password='',terminal_type='ansi',original_prompt=r"[#$]",login_timeout=10,port=None,auto_prompt_reset=True,ssh_key=None):
+    def login (self,server,username,password='',terminal_type='ansi',original_prompt=r"[#$]",login_timeout=10,port=None,auto_prompt_reset=True,ssh_key=None,quiet=True,sync_multiplier=1,check_local_ip=True):
 
         '''This logs the user into the given server. It uses the
         'original_prompt' to try to find the prompt right after login. When it
@@ -206,7 +230,11 @@ class pxssh (spawn):
         not reset then this will disable the prompt() method unless you
         manually set the PROMPT attribute. '''
 
-        ssh_options = '-q'
+        ssh_options = ''
+        if quiet:
+            ssh_options = ssh_options + ' -q'
+        if not check_local_ip:
+            ssh_options = ssh_options + " -o'NoHostAuthenticationForLocalhost=yes'"
         if self.force_password:
             ssh_options = ssh_options + ' ' + self.SSH_OPTS
         if port is not None:
@@ -273,7 +301,7 @@ class pxssh (spawn):
         else: # Unexpected
             self.close()
             raise ExceptionPxssh ('unexpected login response')
-        if not self.sync_original_prompt():
+        if not self.sync_original_prompt(sync_multiplier):
             self.close()
             raise ExceptionPxssh ('could not synchronize with original prompt')
         # We appear to be in.

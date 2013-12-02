@@ -29,12 +29,6 @@ Examples.
   This will start a subshell and log all input and output to a file.
   This demonstrates the :meth:`~pexpect.spawn.interact` method of Pexpect.
 
-`fix_cvs_files.py <https://github.com/pexpect/pexpect/blob/master/examples/fix_cvs_files.py>`_
-  This is for cleaning up binary files improperly added to CVS. This
-  script scans the given path to find binary files; checks with CVS to
-  see if the sticky options are set to -kb; finally if sticky options
-  are not -kb then uses 'cvs admin' to set the -kb option.
-
 `ftp.py <https://github.com/pexpect/pexpect/blob/master/examples/ftp.py>`_
   This demonstrates an FTP "bookmark". This connects to an ftp site;
   does a few ftp tasks; and then gives the user interactive control over
@@ -56,16 +50,6 @@ Examples.
   This starts the python interpreter and prints the greeting message
   backwards. It then gives the user iteractive control of Python. It's
   pretty useless!
-
-`rippy.py <https://github.com/pexpect/pexpect/blob/master/examples/rippy.py>`_
-  This is a wizard for mencoder. It greatly simplifies the process of
-  ripping a DVD to Divx (mpeg4) format. It can transcode from any video
-  file to another. It has options for resampling the audio stream;
-  removing interlace artifacts, fitting to a target file size, etc.
-  There are lots of options, but the process is simple and easy to use.
-
-`sshls.py <https://github.com/pexpect/pexpect/blob/master/examples/sshls.py>`_
-  This lists a directory on a remote machine.
 
 `ssh_tunnel.py <https://github.com/pexpect/pexpect/blob/master/examples/ssh_tunnel.py>`_
   This starts an SSH tunnel to a remote machine. It monitors the

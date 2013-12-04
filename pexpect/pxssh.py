@@ -140,60 +140,72 @@ class pxssh (spawn):
                 current[j] = min(add, delete, change)
         return current[n]
 
-    # JDE:  method to facilitate using comm timeouts rather than sleeps to
-    #       perform synchronization
-    def try_read_prompt(self, initial_timeout, interval_timeout, total_timeout):
-        done = False
+    def try_read_prompt(self, timeout_multiplier):
+
+        '''This facilitates using communication timeouts to perform
+        synchronization as quickly as possible, while supporting high latency
+        connections with a tunable worst case performance. Fast connections
+        should be read almost immediately. Worst case performance for this
+        method is timeout_multiplier * 3 seconds.
+        '''
+
+        # maximum time allowed to read the first response
+        first_char_timeout = timeout_multiplier * 0.5
+
+        # maximum time allowed between subsequent characters
+        inter_char_timeout = timeout_multiplier * 0.1
+
+        # maximum time for reading the entire prompt
+        total_timeout = timeout_multiplier * 3.0
+
         prompt = ''
         begin = time.time()
-        expired = 0
-        # Set time to wait for the first character
-        timeout = initial_timeout
-        while (not done) and (expired < total_timeout):
+        expired = 0.0
+        timeout = first_char_timeout
+
+        while expired < total_timeout:
             try:
                 c = self.read_nonblocking(size=1, timeout=timeout)
                 prompt  += c # append acquired content
                 expired = time.time() - begin # updated total time expired
-                timeout = interval_timeout # Set time to wait between characters
+                timeout = inter_char_timeout 
             except TIMEOUT:
+                # when the host has finished sending its response, the
+                # inter_char_timeout will drop us out of the loop quickly
                 expired = total_timeout
+
         return prompt
 
-    def sync_original_prompt (self, sync_multiplier=1):
+    def sync_original_prompt (self, sync_multiplier=1.0):
 
         '''This attempts to find the prompt. Basically, press enter and record
         the response; press enter again and record the response; if the two
-        responses are similar then assume we are at the original prompt. This
-        is a slow function. It can take over 10 seconds. '''
-        # Timeouts which can be adjusted by a multiplier supplied by the user
-        # in the event of stations with very poor connections
-        # Worst case (with default multiplier) should be 12 seconds in the event
-        # that no response is ever received
-        initial_timeout = sync_multiplier * 0.5
-        interval_timeout   = sync_multiplier * 0.1
-        total_timeout   = sync_multiplier * 3
+        responses are similar then assume we are at the original prompt.
+        This can be a slow function. Worst case with the default sync_multiplier
+        can take 12 seconds. Low latency connections are more likely to fail
+        with a low sync_multiplier. Best case sync time gets worse with a
+        high sync multiplier (500 ms with default). '''
 
         # All of these timing pace values are magic.
         # I came up with these based on what seemed reliable for
         # connecting to a heavily loaded machine I have.
         self.sendline()
         time.sleep(0.1)
-        # If latency is worse than these values then this will fail.
 
         try:
             # Clear the buffer before getting the prompt.
-            self.try_read_prompt(initial_timeout, interval_timeout, total_timeout)
+            self.try_read_prompt(sync_multiplier)
         except TIMEOUT:
             pass
 
         self.sendline()
-        x = self.try_read_prompt(initial_timeout, interval_timeout, total_timeout)
+        x = self.try_read_prompt(sync_multiplier)
 
         self.sendline()
-        a = self.try_read_prompt(initial_timeout, interval_timeout, total_timeout)
+        a = self.try_read_prompt(sync_multiplier)
 
         self.sendline()
-        b = self.try_read_prompt(initial_timeout, interval_timeout, total_timeout)
+        b = self.try_read_prompt(sync_multiplier)
 
         ld = self.levenshtein_distance(a,b)
         len_a = len(a)

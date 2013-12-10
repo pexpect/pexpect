@@ -159,18 +159,14 @@ class pxssh (spawn):
         # maximum time for reading the entire prompt
         total_timeout = timeout_multiplier * 3.0
 
-        prompt = None
+        prompt = b''
         begin = time.time()
         expired = 0.0
         timeout = first_char_timeout
 
         while expired < total_timeout:
             try:
-                c = self.read_nonblocking(size=1, timeout=timeout)
-                if prompt is None:
-                    prompt = c
-                else:
-                    prompt += c
+                prompt += self.read_nonblocking(size=1, timeout=timeout)
                 expired = time.time() - begin # updated total time expired
                 timeout = inter_char_timeout 
             except TIMEOUT:
@@ -178,11 +174,7 @@ class pxssh (spawn):
                 # inter_char_timeout will drop us out of the loop quickly
                 expired = total_timeout
 
-        result = ''
-        if prompt is not None:
-            result = prompt
-
-        return result
+        return prompt
 
     def sync_original_prompt (self, sync_multiplier=1.0):
 

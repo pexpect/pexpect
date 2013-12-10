@@ -21,6 +21,7 @@ PEXPECT LICENSE
 '''
 
 from pexpect import ExceptionPexpect, TIMEOUT, EOF, spawn
+import struct
 import time
 import os
 
@@ -158,15 +159,18 @@ class pxssh (spawn):
         # maximum time for reading the entire prompt
         total_timeout = timeout_multiplier * 3.0
 
-        prompt = ''
+        prompt = None
         begin = time.time()
         expired = 0.0
         timeout = first_char_timeout
 
         while expired < total_timeout:
             try:
-                c = self.read_nonblocking(size=1, timeout=timeout)
-                prompt  += c # append acquired content
+                c = self.read_nonblocking(size=1, timeout=timeout, coerce_result=False)
+                if prompt is None:
+                    prompt = c
+                else:
+                    prompt += c
                 expired = time.time() - begin # updated total time expired
                 timeout = inter_char_timeout 
             except TIMEOUT:
@@ -174,7 +178,11 @@ class pxssh (spawn):
                 # inter_char_timeout will drop us out of the loop quickly
                 expired = total_timeout
 
-        return prompt
+        result = ''
+        if prompt is not None:
+            result = self._coerce_read_string(prompt)
+
+        return result
 
     def sync_original_prompt (self, sync_multiplier=1.0):
 

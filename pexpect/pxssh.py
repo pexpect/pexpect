@@ -166,7 +166,7 @@ class pxssh (spawn):
 
         while expired < total_timeout:
             try:
-                c = self.read_nonblocking(size=1, timeout=timeout, coerce_result=False)
+                c = self.read_nonblocking(size=1, timeout=timeout)
                 if prompt is None:
                     prompt = c
                 else:

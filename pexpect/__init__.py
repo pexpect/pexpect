@@ -843,7 +843,7 @@ class spawn(object):
             second_log.write(s)
             second_log.flush()
 
-    def read_nonblocking(self, size=1, timeout=-1, coerce_result=True):
+    def read_nonblocking(self, size=1, timeout=-1):
         '''This reads at most size characters from the child application. It
         includes a timeout. If the read does not complete within the timeout
         period then a TIMEOUT exception is raised. If the end of file is read
@@ -914,12 +914,8 @@ class spawn(object):
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Empty string style platform.')
 
-            cs = self._coerce_read_string(s)
-            self._log(cs, 'read')
-
-            if coerce_result:
-                s = cs
-
+            s = self._coerce_read_string(s)
+            self._log(s, 'read')
             return s
 
         raise ExceptionPexpect('Reached an unexpected state.')

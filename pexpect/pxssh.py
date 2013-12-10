@@ -180,7 +180,7 @@ class pxssh (spawn):
 
         result = ''
         if prompt is not None:
-            result = self._coerce_read_string(prompt)
+            result = prompt
 
         return result
 

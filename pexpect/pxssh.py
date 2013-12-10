@@ -21,7 +21,6 @@ PEXPECT LICENSE
 '''
 
 from pexpect import ExceptionPexpect, TIMEOUT, EOF, spawn
-import struct
 import time
 import os
 
@@ -170,9 +169,7 @@ class pxssh (spawn):
                 expired = time.time() - begin # updated total time expired
                 timeout = inter_char_timeout 
             except TIMEOUT:
-                # when the host has finished sending its response, the
-                # inter_char_timeout will drop us out of the loop quickly
-                expired = total_timeout
+                break
 
         return prompt
 

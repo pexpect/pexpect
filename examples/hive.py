@@ -88,7 +88,6 @@ import sys
 import os
 import re
 import optparse
-import traceback
 import types
 import time
 import getpass
@@ -453,27 +452,16 @@ def parse_host_connect_string (hcs):
     return d
 
 if __name__ == '__main__':
-    try:
-        start_time = time.time()
-        parser = optparse.OptionParser(formatter=optparse.TitledHelpFormatter(), usage=globals()['__doc__'], version='$Id: hive.py 533 2012-10-20 02:19:33Z noah $',conflict_handler="resolve")
-        parser.add_option ('-v', '--verbose', action='store_true', default=False, help='verbose output')
-        parser.add_option ('--samepass', action='store_true', default=False, help='Use same password for each login.')
-        parser.add_option ('--sameuser', action='store_true', default=False, help='Use same username for each login.')
-        (options, args) = parser.parse_args()
-        if len(args) < 1:
-            parser.error ('missing argument')
-        if options.verbose: print(time.asctime())
-        main()
-        if options.verbose: print(time.asctime())
-        if options.verbose: print('TOTAL TIME IN MINUTES:', end=' ')
-        if options.verbose: print((time.time() - start_time) / 60.0)
-        sys.exit(0)
-    except KeyboardInterrupt as e: # Ctrl-C
-        raise e
-    except SystemExit as e: # sys.exit()
-        raise e
-    except Exception as e:
-        print('ERROR, UNEXPECTED EXCEPTION')
-        print(str(e))
-        traceback.print_exc()
-        os._exit(1)
+    start_time = time.time()
+    parser = optparse.OptionParser(formatter=optparse.TitledHelpFormatter(), usage=globals()['__doc__'], version='$Id: hive.py 533 2012-10-20 02:19:33Z noah $',conflict_handler="resolve")
+    parser.add_option ('-v', '--verbose', action='store_true', default=False, help='verbose output')
+    parser.add_option ('--samepass', action='store_true', default=False, help='Use same password for each login.')
+    parser.add_option ('--sameuser', action='store_true', default=False, help='Use same username for each login.')
+    (options, args) = parser.parse_args()
+    if len(args) < 1:
+        parser.error ('missing argument')
+    if options.verbose: print(time.asctime())
+    main()
+    if options.verbose: print(time.asctime())
+    if options.verbose: print('TOTAL TIME IN MINUTES:', end=' ')
+    if options.verbose: print((time.time() - start_time) / 60.0)

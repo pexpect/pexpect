@@ -41,7 +41,6 @@ from __future__ import absolute_import
 
 import os, sys, time, getopt
 import signal, fcntl, termios, struct
-import traceback
 import pexpect
 
 global_pexpect_instance = None # Used by signal handler
@@ -112,13 +111,4 @@ def sigwinch_passthrough (sig, data):
     global_pexpect_instance.setwinsize(a[0],a[1])
 
 if __name__ == "__main__":
-    try:
-        main()
-    except SystemExit as e:
-        raise e
-    except Exception as e:
-        print("ERROR")
-        print(str(e))
-        traceback.print_exc()
-        os._exit(1)
-
+    main()

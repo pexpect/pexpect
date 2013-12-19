@@ -283,7 +283,14 @@ class spawn(object):
         def _chr(c):
             return bytes([c])
         linesep = os.linesep.encode('ascii')
-        write_to_stdout = sys.stdout.buffer.write
+
+        @staticmethod
+        def write_to_stdout(b):
+            try:
+                return sys.stdout.buffer.write(b)
+            except AttributeError:
+                # If stdout has been replaced, it may not have .buffer
+                return sys.stdout.write(b.decode('ascii', 'replace'))
     else:
         allowed_string_types = (basestring,)  # analysis:ignore
         _chr = staticmethod(chr)

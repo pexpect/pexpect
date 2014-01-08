@@ -113,7 +113,4 @@ def main():
         child.sendline('exit')
 
 if __name__ == '__main__':
-    try:
-        main()
-    except pexpect.ExceptionPexpect as e:
-        print(str(e))
+    main()

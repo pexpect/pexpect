@@ -78,7 +78,6 @@ import getopt
 import pickle
 import getpass
 import smtplib
-import traceback
 from pprint import pprint
 
 
@@ -297,13 +296,4 @@ def main():
     # p.logout()
 
 if __name__ == '__main__':
-    try:
-        main()
-        sys.exit(0)
-    except SystemExit as e:
-        raise e
-    except Exception as e:
-        print(str(e))
-        traceback.print_exc()
-        os._exit(1)
-
+    main()

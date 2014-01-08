@@ -46,7 +46,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import os, sys, re, getopt, getpass
-import traceback
 import pexpect
 
 
@@ -227,11 +226,4 @@ def main():
         child.expect(EOF)
 
 if __name__ == "__main__":
-
-    try:
-        main()
-    except Exception as e:
-        print(str(e))
-        traceback.print_exc()
-        os._exit(1)
-
+    main()

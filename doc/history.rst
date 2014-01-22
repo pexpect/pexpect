@@ -4,6 +4,18 @@ History
 Releases
 --------
 
+Version 3.1
+```````````
+
+* Fix an issue that prevented importing pexpect on Python 3 when ``sys.stdout``
+  was reassigned (:ghissue:`30`).
+* Improve prompt synchronisation in :mod:`~pexpect.pxssh` (:ghpull:`28`).
+* Fix pickling exception instances (:ghpull:`34`).
+* Fix handling exceptions from :func:`select.select` on Python 3 (:ghpull:`33`).
+
+The examples have also been cleaned up somewhat - this will continue in future
+releases.
+
 Version 3.0
 ```````````
 

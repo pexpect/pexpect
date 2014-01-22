@@ -36,15 +36,19 @@ Version 2.3
 
 * Fixed OSError exception when a pexpect object is cleaned up. Previously, you
   might have seen this exception::
+
       Exception exceptions.OSError: (10, 'No child processes')
       in <bound method spawn.__del__ of <pexpect.spawn instance at 0xd248c>> ignored
+
   You should not see that anymore. Thanks to Michael Surette.
 * Added support for buffering reads. This greatly improves speed when trying to
   match long output from a child process. When you create an instance of the spawn
   object you can then set a buffer size. For now you MUST do the following to turn
   on buffering -- it may be on by default in future version::
+
       child = pexpect.spawn ('my_command')
       child.maxread=1000 # Sets buffer to 1000 characters.
+
 * I made a subtle change to the way TIMEOUT and EOF exceptions behave.
   Previously you could either expect these states in which case pexpect
   will not raise an exception, or you could just let pexpect raise an
@@ -56,9 +60,11 @@ Version 2.3
 * The spawn object now provides iterators for a *file-like interface*.
   This makes Pexpect a more complete file-like object. You can now write
   code like this::
+
       child = pexpect.spawn ('ls -l')
       for line in child:
           print line
+
 * write and writelines() no longer return a value. Use send() if you need that
   functionality. I did this to make the Spawn object more closely match a
   file-like object.
@@ -75,11 +81,13 @@ Version 2.3
   Pexpect can be used to control streams such as those from serial port devices. Now,
   you just pass the integer file descriptor as the "command" when contsructing a
   spawn open. For example on a Linux box with a modem on ttyS1::
+
       fd = os.open("/dev/ttyS1", os.O_RDWR|os.O_NONBLOCK|os.O_NOCTTY)
       m = pexpect.spawn(fd) # Note integer fd is used instead of usual string.
       m.send("+++") # Escape sequence
       m.send("ATZ0\r") # Reset modem to profile 0
       rval = m.expect(["OK", "ERROR"])
+
 * ``read()`` was renamed to ``read_nonblocking()``. Added new ``read()`` method
   that matches file-like object interface. In general, you should not notice
   the difference except that ``read()`` no longer allows you to directly set the
@@ -98,7 +106,7 @@ Version 2.3
   child or wait for its status.
 * Add variables ``__version__`` and ``__revision__`` (from cvs) to the pexpect
   modules.  This is mainly helpful to me so that I can make sure that I'm testing
-with the right version instead of one already installed.
+  with the right version instead of one already installed.
 * ``log_open()`` and ``log_close(`` have been removed. Now use ``setlog()``.
   The ``setlog()`` method takes a file object. This is far more flexible than
   the previous log method. Each time data is written to the file object it will

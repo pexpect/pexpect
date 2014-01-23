@@ -215,7 +215,9 @@ class pxssh (spawn):
                 original_prompt=r"[#$]", login_timeout=10, port=None,
                 auto_prompt_reset=True, ssh_key=None, quiet=True,
                 sync_multiplier=1, check_local_ip=True):
-        '''This logs the user into the given server. It uses the
+        '''This logs the user into the given server.
+
+        It uses
         'original_prompt' to try to find the prompt right after login. When it
         finds the prompt it immediately tries to reset the prompt to something
         more easily matched. The default 'original_prompt' is very optimistic
@@ -223,7 +225,7 @@ class pxssh (spawn):
         prompt as exactly as possible to prevent false matches by server
         strings such as the "Message Of The Day". On many systems you can
         disable the MOTD on the remote server by creating a zero-length file
-        called "~/.hushlogin" on the remote server. If a prompt cannot be found
+        called :file:`~/.hushlogin` on the remote server. If a prompt cannot be found
         then this will not necessarily cause the login to fail. In the case of
         a timeout when looking for the prompt we assume that the original
         prompt was so weird that we could not match it, so we use a few tricks
@@ -234,9 +236,10 @@ class pxssh (spawn):
         In some situations it is not possible or desirable to reset the
         original prompt. In this case, pass ``auto_prompt_reset=False`` to
         inhibit setting the prompt to the UNIQUE_PROMPT. Remember that pxssh
-        uses a unique prompt in the prompt() method. If the original prompt is
-        not reset then this will disable the prompt() method unless you
-        manually set the PROMPT attribute. '''
+        uses a unique prompt in the :meth:`prompt` method. If the original prompt is
+        not reset then this will disable the :meth:`prompt` method unless you
+        manually set the :attr:`PROMPT` attribute.
+        '''
 
         ssh_options = ''
         if quiet:
@@ -321,9 +324,10 @@ class pxssh (spawn):
         return True
 
     def logout (self):
-        '''This sends exit to the remote shell. If there are stopped jobs then
-        this automatically sends exit twice. '''
+        '''Sends exit to the remote shell.
 
+        If there are stopped jobs then this automatically sends exit twice.
+        '''
         self.sendline("exit")
         index = self.expect([EOF, "(?i)there are stopped jobs"])
         if index==1:
@@ -332,16 +336,20 @@ class pxssh (spawn):
         self.close()
 
     def prompt(self, timeout=-1):
-        '''This matches the shell prompt. This is little more than a short-cut
-        to the expect() method. This returns True if the shell prompt was
-        matched. This returns False if a timeout was raised. Note that if you
-        called :meth:`login` with ``auto_prompt_reset=False`` then
-        before calling :meth:`prompt` you must set the :attr:`PROMPT` attribute
-        to a regex that it will use for matching the prompt.
+        '''Match the next shell prompt.
+
+        This is little more than a short-cut to the :meth:`~pexpect.spawn.expect`
+        method. Note that if you called :meth:`login` with
+        ``auto_prompt_reset=False``, then before calling :meth:`prompt` you must
+        set the :attr:`PROMPT` attribute to a regex that it will use for
+        matching the prompt.
 
         Calling :meth:`prompt` will erase the contents of the :attr:`before`
         attribute even if no prompt is ever matched. If timeout is not given or
         it is set to -1 then self.timeout is used.
+
+        :return: True if the shell prompt was matched, False if the timeout was
+                 reached.
         '''
 
         if timeout == -1:
@@ -352,7 +360,7 @@ class pxssh (spawn):
         return True
 
     def set_unique_prompt(self):
-        '''This sets the remote prompt to something more unique than # or $.
+        '''This sets the remote prompt to something more unique than ``#`` or ``$``.
         This makes it easier for the :meth:`prompt` method to match the shell prompt
         unambiguously. This method is called automatically by the :meth:`login`
         method, but you may want to call it manually if you somehow reset the
@@ -361,11 +369,11 @@ class pxssh (spawn):
         the remote host to set the prompt, so this assumes the remote host is
         ready to receive commands.
 
-        Alternatively, you may use your own prompt pattern. Just set the PROMPT
-        attribute to a regular expression that matches it. In this case you
-        should call login() with auto_prompt_reset=False; then set the PROMPT
-        attribute. After that the prompt() method will try to match your prompt
-        pattern.'''
+        Alternatively, you may use your own prompt pattern. In this case you
+        should call :meth:`login` with ``auto_prompt_reset=False``; then set the
+        :attr:`PROMPT` attribute to a regular expression. After that, the
+        :meth:`prompt` method will try to match your prompt pattern.
+        '''
 
         self.sendline("unset PROMPT_COMMAND")
         self.sendline(self.PROMPT_SET_SH) # sh-style

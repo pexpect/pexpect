@@ -85,7 +85,8 @@ class pxssh (spawn):
             s.login (hostname, username, password)
     '''
 
-    def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None, logfile=None, cwd=None, env=None):
+    def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
+                    logfile=None, cwd=None, env=None):
 
         spawn.__init__(self, None, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env)
 
@@ -119,8 +120,7 @@ class pxssh (spawn):
         #self.SSH_OPTS = "-x -o'RSAAuthentication=no' -o 'PubkeyAuthentication=no'"
         self.force_password = False
 
-    def levenshtein_distance(self, a,b):
-
+    def levenshtein_distance(self, a, b):
         '''This calculates the Levenshtein distance between a and b.
         '''
 
@@ -140,7 +140,6 @@ class pxssh (spawn):
         return current[n]
 
     def try_read_prompt(self, timeout_multiplier):
-
         '''This facilitates using communication timeouts to perform
         synchronization as quickly as possible, while supporting high latency
         connections with a tunable worst case performance. Fast connections
@@ -173,7 +172,6 @@ class pxssh (spawn):
         return prompt
 
     def sync_original_prompt (self, sync_multiplier=1.0):
-
         '''This attempts to find the prompt. Basically, press enter and record
         the response; press enter again and record the response; if the two
         responses are similar then assume we are at the original prompt.
@@ -213,8 +211,10 @@ class pxssh (spawn):
 
     ### TODO: This is getting messy and I'm pretty sure this isn't perfect.
     ### TODO: I need to draw a flow chart for this.
-    def login (self,server,username,password='',terminal_type='ansi',original_prompt=r"[#$]",login_timeout=10,port=None,auto_prompt_reset=True,ssh_key=None,quiet=True,sync_multiplier=1,check_local_ip=True):
-
+    def login (self, server, username, password='', terminal_type='ansi',
+                original_prompt=r"[#$]", login_timeout=10, port=None,
+                auto_prompt_reset=True, ssh_key=None, quiet=True,
+                sync_multiplier=1, check_local_ip=True):
         '''This logs the user into the given server. It uses the
         'original_prompt' to try to find the prompt right after login. When it
         finds the prompt it immediately tries to reset the prompt to something
@@ -251,7 +251,7 @@ class pxssh (spawn):
             try:
                 os.path.isfile(ssh_key)
             except:
-                raise ExceptionPxssh ('private ssh key does not exist')
+                raise ExceptionPxssh('private ssh key does not exist')
             ssh_options = ssh_options + ' -i %s' % (ssh_key)
         cmd = "ssh %s -l %s %s" % (ssh_options, username, server)
 
@@ -278,7 +278,7 @@ class pxssh (spawn):
         if i==0:
             # This is weird. This should not happen twice in a row.
             self.close()
-            raise ExceptionPxssh ('Weird error. Got "are you sure" prompt twice.')
+            raise ExceptionPxssh('Weird error. Got "are you sure" prompt twice.')
         elif i==1: # can occur if you have a public key pair set to authenticate.
             ### TODO: May NOT be OK if expect() got tricked and matched a false prompt.
             pass
@@ -288,13 +288,13 @@ class pxssh (spawn):
             # If we get the password prompt again then this means
             # we didn't get the password right the first time.
             self.close()
-            raise ExceptionPxssh ('password refused')
+            raise ExceptionPxssh('password refused')
         elif i==3: # permission denied -- password was bad.
             self.close()
-            raise ExceptionPxssh ('permission denied')
+            raise ExceptionPxssh('permission denied')
         elif i==4: # terminal type again? WTF?
             self.close()
-            raise ExceptionPxssh ('Weird error. Got "terminal type" prompt twice.')
+            raise ExceptionPxssh('Weird error. Got "terminal type" prompt twice.')
         elif i==5: # Timeout
             #This is tricky... I presume that we are at the command-line prompt.
             #It may be that the shell prompt was so weird that we couldn't match
@@ -305,23 +305,22 @@ class pxssh (spawn):
             pass
         elif i==6: # Connection closed by remote host
             self.close()
-            raise ExceptionPxssh ('connection closed')
+            raise ExceptionPxssh('connection closed')
         else: # Unexpected
             self.close()
-            raise ExceptionPxssh ('unexpected login response')
+            raise ExceptionPxssh('unexpected login response')
         if not self.sync_original_prompt(sync_multiplier):
             self.close()
-            raise ExceptionPxssh ('could not synchronize with original prompt')
+            raise ExceptionPxssh('could not synchronize with original prompt')
         # We appear to be in.
         # set shell prompt to something unique.
         if auto_prompt_reset:
             if not self.set_unique_prompt():
                 self.close()
-                raise ExceptionPxssh ('could not set shell prompt\n'+self.before)
+                raise ExceptionPxssh('could not set shell prompt\n'+self.before)
         return True
 
     def logout (self):
-
         '''This sends exit to the remote shell. If there are stopped jobs then
         this automatically sends exit twice. '''
 
@@ -333,7 +332,6 @@ class pxssh (spawn):
         self.close()
 
     def prompt(self, timeout=-1):
-
         '''This matches the shell prompt. This is little more than a short-cut
         to the expect() method. This returns True if the shell prompt was
         matched. This returns False if a timeout was raised. Note that if you
@@ -353,8 +351,7 @@ class pxssh (spawn):
             return False
         return True
 
-    def set_unique_prompt (self):
-
+    def set_unique_prompt(self):
         '''This sets the remote prompt to something more unique than # or $.
         This makes it easier for the :meth:`prompt` method to match the shell prompt
         unambiguously. This method is called automatically by the :meth:`login`
@@ -370,12 +367,12 @@ class pxssh (spawn):
         attribute. After that the prompt() method will try to match your prompt
         pattern.'''
 
-        self.sendline ("unset PROMPT_COMMAND")
-        self.sendline (self.PROMPT_SET_SH) # sh-style
+        self.sendline("unset PROMPT_COMMAND")
+        self.sendline(self.PROMPT_SET_SH) # sh-style
         i = self.expect ([TIMEOUT, self.PROMPT], timeout=10)
         if i == 0: # csh-style
-            self.sendline (self.PROMPT_SET_CSH)
-            i = self.expect ([TIMEOUT, self.PROMPT], timeout=10)
+            self.sendline(self.PROMPT_SET_CSH)
+            i = self.expect([TIMEOUT, self.PROMPT], timeout=10)
             if i == 0:
                 return False
         return True

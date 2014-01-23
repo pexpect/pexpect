@@ -118,7 +118,6 @@ class pxssh (spawn):
         # Unsetting SSH_ASKPASS on the remote side doesn't disable it! Annoying!
         #self.SSH_OPTS = "-x -o'RSAAuthentication=no' -o 'PubkeyAuthentication=no'"
         self.force_password = False
-        self.auto_prompt_reset = True
 
     def levenshtein_distance(self, a,b):
 
@@ -233,7 +232,7 @@ class pxssh (spawn):
         then login() raises an :class:`ExceptionPxssh` exception.
 
         In some situations it is not possible or desirable to reset the
-        original prompt. In this case, set :attr:`auto_prompt_reset` to False to
+        original prompt. In this case, pass ``auto_prompt_reset=False`` to
         inhibit setting the prompt to the UNIQUE_PROMPT. Remember that pxssh
         uses a unique prompt in the prompt() method. If the original prompt is
         not reset then this will disable the prompt() method unless you
@@ -333,12 +332,12 @@ class pxssh (spawn):
             self.expect(EOF)
         self.close()
 
-    def prompt (self, timeout=-1):
+    def prompt(self, timeout=-1):
 
         '''This matches the shell prompt. This is little more than a short-cut
         to the expect() method. This returns True if the shell prompt was
         matched. This returns False if a timeout was raised. Note that if you
-        called :meth:`login` with :attr:`auto_prompt_reset` set to False then
+        called :meth:`login` with ``auto_prompt_reset=False`` then
         before calling :meth:`prompt` you must set the :attr:`PROMPT` attribute
         to a regex that it will use for matching the prompt.
 

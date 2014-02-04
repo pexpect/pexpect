@@ -1687,7 +1687,11 @@ class spawn(object):
                 return select.select(iwtd, owtd, ewtd, timeout)
             except select.error:
                 err = sys.exc_info()[1]
-                if err.errno == errno.EINTR:
+                if hasattr(err, 'errno'):
+                    error_num = err.errno
+                else:
+                    error_num = err[0]
+                if error_num == errno.EINTR:
                     # if we loop back we have to subtract the
                     # amount of time we already waited.
                     if timeout is not None:

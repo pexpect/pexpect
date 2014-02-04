@@ -1983,7 +1983,7 @@ def which(filename):
     pathlist = p.split(os.pathsep)
     for path in pathlist:
         ff = os.path.join(path, filename)
-        if os.access(ff, os.X_OK):
+        if os.access(ff, os.X_OK) and not os.path.isdir(ff):
             return ff
     return None
 

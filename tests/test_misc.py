@@ -342,6 +342,9 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         p = pexpect.spawn(exe, env = {"PATH":path} )
         
         assert( p.command != temp_exe_dir, "Command search incorrectly matched directory" )
+        
+        os.rmdir( temp_exe_dir )
+        os.rmdir( temp_dir )
 
 if __name__ == '__main__':
     unittest.main()

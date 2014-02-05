@@ -65,6 +65,7 @@ PEXPECT LICENSE
 
 try:
     import os
+    import os.path
     import sys
     import time
     import select

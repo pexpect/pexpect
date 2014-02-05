@@ -1966,7 +1966,7 @@ class searcher_re(object):
         return best_index
 
 
-def which(filename, env):
+def which(filename, env = os.environ):
 
     '''This takes a given filename; tries to find it in the environment path;
     then checks if it is executable. This returns the full path to the filename

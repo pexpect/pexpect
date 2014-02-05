@@ -25,6 +25,8 @@ import os, sys
 import re
 import signal
 import time
+import tempfile
+import platform
 
 # the program cat(1) may display ^D\x08\x08 when \x04 (EOF, Ctrl-D) is sent
 _CAT_EOF = b'^D\x08\x08'
@@ -321,6 +323,25 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
             assert 'raise ' not in tb, tb
         else:
             assert False, "Should have raised an exception."
+
+    def test_command_search(self):
+        if platform.system() == "Linux":
+            exe = "ls"
+        elif platform.system() == "Windows":
+            exe = "cmd.exe"
+        else:
+            assert True, "Unknown platform"
+        
+        temp_dir     = tempfile.mkdtemp()
+        temp_exe_dir = os.path.join(temp_dir, exe )
+        
+        os.mkdir( temp_exe_dir )
+        
+        path  = temp_dir + os.pathsep + os.environ["PATH"]
+    
+        p = pexpect.spawn(exe, env = {"PATH":path} )
+        
+        assert( p.command != temp_exe_dir, "Command search incorrectly matched directory" )
 
 if __name__ == '__main__':
     unittest.main()

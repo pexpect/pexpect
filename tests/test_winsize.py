@@ -22,7 +22,6 @@ import pexpect
 import unittest
 import PexpectTestCase
 import time
-import signal
 
 class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
 
@@ -52,20 +51,6 @@ class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
         self.assertEqual(p1.getwinsize(), (24, 80))
 
         p1.close()
-
-    def test_sinch_error (self):
-        '''
-        This tests that the child process can set and get the windows size.
-        This makes use of an external script sigwinch_report.py.
-        '''
-        def noop(x, y):
-            pass
-        signal.signal(signal.SIGALRM, noop)
-    
-        p1 = pexpect.spawn('%s sigwinch_error.py' % self.PYTHONBIN)
-        p1.expect('READY', timeout=10)
-        signal.alarm(1)
-        p1.expect('END', timeout=10)
 
 #    def test_parent_resize (self):
 #        pid = os.getpid()

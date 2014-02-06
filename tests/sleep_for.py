@@ -22,10 +22,19 @@ PEXPECT LICENSE
 from  __future__ import print_function
 
 import time
+import sys
 
 def main():
+    """
+        This script sleeps for the number of seconds (float) specified by the
+        command line argument.
+    """
+    if len(sys.argv) < 2:
+        print("Usage: %s seconds_to_sleep" % (sys.argv[0],))
+        sys.exit(1)
+    timeout = float(sys.argv[1])
     print("READY")
-    time.sleep(2)
+    time.sleep(timeout)
     print("END")
 
 if __name__ == '__main__':

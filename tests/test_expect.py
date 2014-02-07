@@ -25,6 +25,7 @@ import subprocess
 import time
 import PexpectTestCase
 import sys
+import signal
 #import pdb
 
 # Many of these test cases blindly assume that sequential directory
@@ -489,6 +490,26 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.expect('abc')
         p.expect_exact('def')
         p.expect(pexpect.EOF)
+
+    def test_signal_handling(self):
+        '''
+            This tests the error handling of a signal interrupt (usually a
+            SIGWINCH generated when a window is resized), but in this test, we
+            are substituting an ALARM signal as this is much easier for testing
+            and is treated the same as a SIGWINCH.
+            
+            To ensure that the alarm fires during the expect call, we are
+            setting the signal to alarm after 1 second while the spawned process
+            sleeps for 2 seconds prior to sending the expected output.
+        '''
+        def noop(x, y):
+            pass
+        signal.signal(signal.SIGALRM, noop)
+    
+        p1 = pexpect.spawn('%s sleep_for.py 2' % self.PYTHONBIN)
+        p1.expect('READY', timeout=10)
+        signal.alarm(1)
+        p1.expect('END', timeout=10)
 
 if __name__ == '__main__':
     unittest.main()

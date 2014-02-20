@@ -121,20 +121,7 @@ decides to change behavior based on whether it's a TTY or a block file
 (see isatty()).
 
 I hope that this qualifies as helpful. Don't use a pipe to control
-another application...
-
-Pexpect may seem similar to :func:`os.popen` or ``commands`` module. The
-main difference is that Pexpect (like Expect) uses a pseudo-TTY to talk
-to the child application. Most applications do not work well through the
-system() call or through pipes. And probably all applications that ask a
-user to type in a password will fail. These applications bypass the
-stdin and read directly from the TTY device. Many applications do not
-explicitly flush their output buffers. This causes deadlocks if you try
-to control an interactive application using a pipe. What happens is that
-most UNIX applications use the stdio (``#include <stdio.h>``) for input
-and output. The stdio library behaves differently depending on where the
-output is going. There is no way to control this behavior from the
-client end.
+another application.
 
 **Q: Can I do screen scraping with this thing?**
 

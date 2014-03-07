@@ -26,7 +26,7 @@ class PxsshTestCase(SSHTestBase):
         ssh.expect('pong', timeout=10)
         assert ssh.prompt(timeout=10)
         ssh.logout()
-    
+
     def test_wrong_pw(self):
         ssh = pxssh.pxssh()
         try:
@@ -35,6 +35,13 @@ class PxsshTestCase(SSHTestBase):
             pass
         else:
             assert False, 'Password should have been refused'
+
+    def test_failed_set_unique_prompt(self):
+        ssh = pxssh.pxssh()
+        ssh.set_unique_prompt = lambda: False
+        with self.assertRaises(pxssh.ExceptionPxssh):
+            ssh.login('server', 'me', password='s3cret',
+                      auto_prompt_reset=True)
 
 if __name__ == '__main__':
     unittest.main()

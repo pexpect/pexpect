@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+
 import unittest
 
 from pexpect import pxssh
@@ -39,9 +40,14 @@ class PxsshTestCase(SSHTestBase):
     def test_failed_set_unique_prompt(self):
         ssh = pxssh.pxssh()
         ssh.set_unique_prompt = lambda: False
-        with self.assertRaises(pxssh.ExceptionPxssh):
+        try:
             ssh.login('server', 'me', password='s3cret',
                       auto_prompt_reset=True)
+        except pxssh.ExceptionPxssh:
+            pass
+        else:
+            assert False, 'should have raised exception, pxssh.ExceptionPxssh'
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -320,7 +320,9 @@ class pxssh (spawn):
         if auto_prompt_reset:
             if not self.set_unique_prompt():
                 self.close()
-                raise ExceptionPxssh('could not set shell prompt\n'+self.before)
+                raise ExceptionPxssh('could not set shell prompt '
+                                     '(recieved: %r, expected: %r).' % (
+                                         self.before, self.PROMPT,))
         return True
 
     def logout (self):

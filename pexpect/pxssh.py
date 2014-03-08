@@ -322,7 +322,7 @@ class pxssh (spawn):
                 self.close()
                 raise ExceptionPxssh('could not set shell prompt '
                                      '(recieved: %r, expected: %r).' % (
-                                         self.before, self.PROMPT_SET_SH,))
+                                         self.before, self.PROMPT,))
         return True
 
     def logout (self):

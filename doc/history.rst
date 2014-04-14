@@ -4,6 +4,18 @@ History
 Releases
 --------
 
+Version 3.2
+```````````
+
+* Fix exception handling from :func:`select.select` on Python 2 (:ghpull:`38`).
+  This was accidentally broken in the previous release when it was fixed for
+  Python 3.
+* Removed a workaround for ``TIOCSWINSZ`` on very old systems, which was causing
+  issues on some BSD systems (:ghpull:`40`).
+* Fixed an issue with exception handling in :mod:`~pexpect.pxssh` (:ghpull:`43`)
+
+The documentation for :mod:`~pexpect.pxssh` was improved.
+
 Version 3.1
 ```````````
 

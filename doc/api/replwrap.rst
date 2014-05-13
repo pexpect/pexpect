@@ -3,6 +3,8 @@ replwrap - Control read-eval-print-loops
 
 .. automodule:: pexpect.replwrap
 
+.. versionadded:: 3.3
+
 .. autoclass:: REPLWrapper
 
    .. automethod:: run_command

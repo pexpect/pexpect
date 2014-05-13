@@ -26,6 +26,10 @@ read the DEVELOPERS document in the root of the source code tree.
 
 Free, open source, and all that good stuff.
 
+You can install Pexpect using pip::
+
+    pip install pexpect
+
 `Docs on ReadTheDocs <http://pexpect.readthedocs.org/>`_
 
 PEXPECT LICENSE

@@ -1,8 +1,17 @@
 """Generic wrapper for read-eval-print-loops, a.k.a. interactive shells
 """
+import sys
+
 import pexpect
 
-PEXPECT_PROMPT = u'[PEXPECT_PROMPT>'
+PY3 = (sys.version_info[0] >= 3)
+
+if PY3:
+    def u(s): return s
+else:
+    def u(s): return s.decode('utf-8')
+
+PEXPECT_PROMPT = u('[PEXPECT_PROMPT>')
 
 class REPLWrapper(object):
     """Wrapper for a REPL.
@@ -53,8 +62,8 @@ class REPLWrapper(object):
 
 def python(command="python"):
     """Start a Python shell and return a :class:`REPLWrapper` object."""
-    return REPLWrapper(command, u">>> ", u"import sys; sys.ps1=%r" % PEXPECT_PROMPT)
+    return REPLWrapper(command, u(">>> "), u("import sys; sys.ps1=%r") % PEXPECT_PROMPT)
 
-def bash(command="bash", orig_prompt=u"$"):
+def bash(command="bash", orig_prompt=u("$")):
     """Start a bash shell and return a :class:`REPLWrapper` object."""
-    return REPLWrapper(command, orig_prompt, u"PS1=%r" % PEXPECT_PROMPT)
+    return REPLWrapper(command, orig_prompt, u("PS1=%r") % PEXPECT_PROMPT)

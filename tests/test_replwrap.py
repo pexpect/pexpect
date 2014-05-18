@@ -29,7 +29,7 @@ class REPLWrapTestCase(unittest.TestCase):
 
     def test_existing_spawn(self):
         child = pexpect.spawnu("python")
-        repl = replwrap.REPLWrapper(child, u">>> ",
+        repl = replwrap.REPLWrapper(child, replwrap.u(">>> "),
                             "import sys; sys.ps1=%r" % replwrap.PEXPECT_PROMPT)
 
         res = repl.run_command("print(7*6)")

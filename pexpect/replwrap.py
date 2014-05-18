@@ -38,13 +38,14 @@ class REPLWrapper(object):
         if prompt_change is None:
             self.prompt = orig_prompt
         else:
-            self.set_prompt(orig_prompt, prompt_change, new_prompt)
+            self.set_prompt(orig_prompt,
+                        prompt_change.format(new_prompt, continuation_prompt))
             self.prompt = new_prompt
         self.continuation_prompt = continuation_prompt
 
         self._expect_prompt()
 
-    def set_prompt(self, orig_prompt, prompt_change, new_prompt=PEXPECT_PROMPT):
+    def set_prompt(self, orig_prompt, prompt_change):
         self.child.expect_exact(orig_prompt)
         self.child.sendline(prompt_change)
 
@@ -84,10 +85,8 @@ class REPLWrapper(object):
 
 def python(command="python"):
     """Start a Python shell and return a :class:`REPLWrapper` object."""
-    return REPLWrapper(command, u(">>> "), u("import sys; sys.ps1=%r; sys.ps2=%r") % 
-                        (PEXPECT_PROMPT, PEXPECT_CONTINUATION_PROMPT))
+    return REPLWrapper(command, u(">>> "), u("import sys; sys.ps1={!r}; sys.ps2={!r}"))
 
 def bash(command="bash", orig_prompt=u("$")):
     """Start a bash shell and return a :class:`REPLWrapper` object."""
-    return REPLWrapper(command, orig_prompt, u("PS1=%r; PS2=%r") %
-                        (PEXPECT_PROMPT, PEXPECT_CONTINUATION_PROMPT))
+    return REPLWrapper(command, orig_prompt, u("PS1={!r}; PS2={!r}"))

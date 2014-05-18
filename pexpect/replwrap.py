@@ -23,7 +23,10 @@ class REPLWrapper(object):
       REPL process.
     :param str orig_prompt: The prompt to expect at first.
     :param str prompt_change: A command to change the prompt to something more
-      unique. If this is ``None``, the prompt will not be changed.
+      unique. If this is ``None``, the prompt will not be changed. This will
+      be formatted with the new and continuation prompts as positional
+      parameters, so you can use ``{}`` style formatting to insert them into
+      the command.
     :param str new_prompt: The more unique prompt to expect after the change.
     """
     def __init__(self, cmd_or_spawn, orig_prompt, prompt_change,
@@ -57,6 +60,9 @@ class REPLWrapper(object):
         """Send a command to the REPL, wait for and return output.
         
         :param str command: The command to send. Trailing newlines are not needed.
+          This should be a complete block of input that will trigger execution;
+          if a continuation prompt is found after sending input, :exc:`ValueError`
+          will be raised.
         :param int timeout: How long to wait for the next prompt. -1 means the
           default from the :class:`pexpect.spawn` object (default 30 seconds).
           None means to wait indefinitely.

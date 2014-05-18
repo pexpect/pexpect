@@ -16,7 +16,7 @@ replwrap - Control read-eval-print-loops
 Using the objects above, it is easy to wrap a REPL. For instance, to use a
 Python shell::
 
-    py = REPLWrapper("python", ">>> ", "import sys; sys.ps1=%r" % PEXPECT_PROMPT)
+    py = REPLWrapper("python", ">>> ", "import sys; sys.ps1={!r}; sys.ps2={!r}")
     py.run_command("4+7")
 
 Convenience functions are provided for Python and bash shells:

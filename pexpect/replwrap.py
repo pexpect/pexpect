@@ -91,8 +91,8 @@ class REPLWrapper(object):
 
 def python(command="python"):
     """Start a Python shell and return a :class:`REPLWrapper` object."""
-    return REPLWrapper(command, u(">>> "), u("import sys; sys.ps1={!r}; sys.ps2={!r}"))
+    return REPLWrapper(command, u(">>> "), u("import sys; sys.ps1={0!r}; sys.ps2={1!r}"))
 
 def bash(command="bash", orig_prompt=u("$")):
     """Start a bash shell and return a :class:`REPLWrapper` object."""
-    return REPLWrapper(command, orig_prompt, u("PS1={!r}; PS2={!r}"))
+    return REPLWrapper(command, orig_prompt, u("PS1={0!r}; PS2={1!r}"))

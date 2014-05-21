@@ -65,6 +65,7 @@ PEXPECT LICENSE
 
 try:
     import os
+    import os.path
     import sys
     import time
     import select
@@ -584,7 +585,7 @@ class spawn(object):
             self.args.insert(0, command)
             self.command = command
 
-        command_with_path = which(self.command)
+        command_with_path = which(self.command, self.env)
         if command_with_path is None:
             raise ExceptionPexpect('The command was not found or was not ' +
                     'executable: %s.' % self.command)
@@ -1959,7 +1960,7 @@ class searcher_re(object):
         return best_index
 
 
-def which(filename):
+def which(filename, env = os.environ):
 
     '''This takes a given filename; tries to find it in the environment path;
     then checks if it is executable. This returns the full path to the filename
@@ -1969,14 +1970,16 @@ def which(filename):
     if os.path.dirname(filename) != '':
         if os.access(filename, os.X_OK):
             return filename
-    if 'PATH' not in os.environ or os.environ['PATH'] == '':
+    if env == None:
+        env = os.environ
+    if 'PATH' not in env or env['PATH'] == '':
         p = os.defpath
     else:
-        p = os.environ['PATH']
+        p = env['PATH']
     pathlist = p.split(os.pathsep)
     for path in pathlist:
         ff = os.path.join(path, filename)
-        if os.access(ff, os.X_OK):
+        if os.access(ff, os.X_OK) and not os.path.isdir(ff):
             return ff
     return None
 

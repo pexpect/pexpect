@@ -919,12 +919,13 @@ class spawn(object):
                 # `poll_exit` interval for waitpid() which may cause EOF.
                 self.flag_eof = True
                 raise EOF('End of File (EOF). Very slow platform.')
-            elif elapsed > timeout:
-                raise TIMEOUT('Timeout exceeded.')
-            else:
-                # if poll_exit is less than the time remaining,
-                # use only time_remaining for next call to select(2)
-                poll_exit = min(timeout - elapsed, poll_exit)
+            elif timeout is not None:
+                if elapsed > timeout:
+                    raise TIMEOUT('Timeout exceeded.')
+                else:
+                    # if poll_exit is less than the time remaining,
+                    # use only time_remaining for next call to select(2)
+                    poll_exit = min(timeout - elapsed, poll_exit)
 
         if self.child_fd in r:
             try:

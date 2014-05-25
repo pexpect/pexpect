@@ -4,6 +4,13 @@ History
 Releases
 --------
 
+Version 3.3
+```````````
+
+* Fixes issue with ``close()`` method called from ``__del__`` calling
+  time.sleep() unnecessarily, causing false TIMEOUT before EOF exceptions
+  on some platforms (namely, OSX).
+
 Version 3.2
 ```````````
 

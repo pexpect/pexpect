@@ -851,7 +851,7 @@ class spawn(object):
             second_log.write(s)
             second_log.flush()
 
-    def read_nonblocking(self, size=1, timeout=-1):
+    def read_nonblocking(self, size=1, timeout=-1, poll_exit=0.15):
         '''This reads at most size characters from the child application. It
         includes a timeout. If the read does not complete within the timeout
         period then a TIMEOUT exception is raised. If the end of file is read
@@ -869,6 +869,11 @@ class spawn(object):
         available right away then one character will be returned immediately.
         It will not wait for 30 seconds for another 99 characters to come in.
 
+        Keyword argument poll_exit refers to the interval that select.select()
+        is interrupted to check if the child application has exited, which is
+        necessary to prevent very long blocking calls after the child process
+        has already existed on some systems (at least OSX and maybe Irix).
+
         This is a wrapper around os.read(). It uses select.select() to
         implement the timeout. '''
 
@@ -877,6 +882,8 @@ class spawn(object):
 
         if timeout == -1:
             timeout = self.timeout
+        elif timeout is not None:
+            poll_exit = min(poll_exit, timeout)
 
         # Note that some systems such as Solaris do not give an EOF when
         # the child dies. In fact, you can still try to read
@@ -898,17 +905,27 @@ class spawn(object):
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Slow platform.')
 
-        r, w, e = self.__select([self.child_fd], [], [], timeout)
-
-        if not r:
-            if not self.isalive():
-                # Some platforms, such as Irix, will claim that their
-                # processes are alive; timeout on the select; and
-                # then finally admit that they are not alive.
+        stime = time.time()
+        while True:
+            r, w, e = self.__select([self.child_fd], [], [], poll_exit)
+            elapsed = time.time() - stime
+            if r:
+                break
+            elif not self.isalive():
+                # Under Irix and OSX, even after all output from child_fd has
+                # been received, the parent process has not yet received a
+                # (pid, status) from waitpid(2) until at least one additional
+                # call to select(2) is issued. Therefor, we poll every
+                # `poll_exit` interval for waitpid() which may cause EOF.
                 self.flag_eof = True
                 raise EOF('End of File (EOF). Very slow platform.')
-            else:
-                raise TIMEOUT('Timeout exceeded.')
+            elif timeout is not None:
+                if elapsed > timeout:
+                    raise TIMEOUT('Timeout exceeded.')
+                else:
+                    # if poll_exit is less than the time remaining,
+                    # use only time_remaining for next call to select(2)
+                    poll_exit = min(timeout - elapsed, poll_exit)
 
         if self.child_fd in r:
             try:

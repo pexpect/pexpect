@@ -882,8 +882,8 @@ class spawn(object):
 
         if timeout == -1:
             timeout = self.timeout
-
-        poll_exit = min(poll_exit, timeout)
+        elif timeout is not None:
+            poll_exit = min(poll_exit, timeout)
 
         # Note that some systems such as Solaris do not give an EOF when
         # the child dies. In fact, you can still try to read

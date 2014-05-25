@@ -740,14 +740,13 @@ class spawn(object):
         if not self.closed:
             self.flush()
             os.close(self.child_fd)
-            # Give kernel time to update process status.
-            time.sleep(self.delayafterclose)
+            # Give kernel time to update process status before assertion
             if self.isalive():
-                if not self.terminate(force):
+                time.sleep(self.delayafterclose)
+                if self.isalive() and not self.terminate(force):
                     raise ExceptionPexpect('Could not terminate the child.')
             self.child_fd = -1
             self.closed = True
-            #self.pid = None
 
     def flush(self):
         '''This does nothing. It is here to support the interface for a

@@ -4,6 +4,13 @@ History
 Releases
 --------
 
+Version 3.3
+```````````
+
+* Fix a race codntion between waitpid(2) and select(2) on some operating systems
+  (OSX) where ``expect(EOF)`` might delay up to ``timeout`` even though all
+  output has already been received.
+
 Version 3.2
 ```````````
 

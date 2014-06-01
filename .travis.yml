@@ -7,8 +7,8 @@ python:
   - 3.3
   - pypy
 
-virtualenv:
-  system_site_packages: true
+#virtualenv:
+#  system_site_packages: true
 
 before_install:
   - sudo apt-get install python-yaml python3-yaml

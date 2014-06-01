@@ -95,4 +95,4 @@ def python(command="python"):
 
 def bash(command="bash", orig_prompt=u("$")):
     """Start a bash shell and return a :class:`REPLWrapper` object."""
-    return REPLWrapper(command, orig_prompt, u("PS1={0!r}; PS2={1!r}"))
+    return REPLWrapper(command, orig_prompt, u("PS1='{0}'; PS2='{1}'"))

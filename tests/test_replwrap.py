@@ -6,34 +6,34 @@ from pexpect import replwrap
 
 class REPLWrapTestCase(unittest.TestCase):
     def test_python(self):
-        py = replwrap.python(sys.executable)
-        res = py.run_command("5+6")
-        self.assertEqual(res.strip(), "11")
+        bash = replwrap.bash()
+        res = bash.run_command("time")
+        assert 'real' in res, res
 
     def test_multiline(self):
-        py = replwrap.python(sys.executable)
-        res = py.run_command("for a in range(3):\n  print(a)\n")
-        self.assertEqual(res.strip().splitlines(), ['0', '1', '2'])
+        bash = replwrap.bash()
+        res = bash.run_command("echo '1 2\n3 4'")
+        self.assertEqual(res.strip().splitlines(), ['1 2', '3 4'])
 
         # Should raise ValueError if input is incomplete
         try:
-            py.run_command("for a in range(3):")
+            bash.run_command("echo '5 6")
         except ValueError:
             pass
         else:
-            assert False, "Didn't raise ValueError for incorrect input"
+            assert False, "Didn't raise ValueError for incomplete input"
 
         # Check that the REPL was reset (SIGINT) after the incomplete input
-        res = py.run_command("for a in range(3):\n  print(a)\n")
-        self.assertEqual(res.strip().splitlines(), ['0', '1', '2'])
+        res = bash.run_command("echo '1 2\n3 4'")
+        self.assertEqual(res.strip().splitlines(), ['1 2', '3 4'])
 
     def test_existing_spawn(self):
-        child = pexpect.spawnu("python")
-        repl = replwrap.REPLWrapper(child, replwrap.u(">>> "),
-                            "import sys; sys.ps1={0!r}; sys.ps2={1!r}")
+        child = pexpect.spawnu("bash")
+        repl = replwrap.REPLWrapper(child, replwrap.u("$ "),
+                            "PS1='{0}'; PS2='{1}'")
 
-        res = repl.run_command("print(7*6)")
-        self.assertEqual(res.strip(), "42")
+        res = repl.run_command("echo $HOME")
+        assert res.startswith('/'), res
 
 if __name__ == '__main__':
     unittest.main()

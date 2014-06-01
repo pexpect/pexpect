@@ -255,15 +255,9 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         assert (b'tmp' in tmpdir), "'tmp' should be returned by 'pwd' command"
 
     def test_basic_which(self):
-        # should find at least 'ls' program, and it shouldn't
-        # be in our current directory
-        given = "ls"
+        # should find at least 'ls' program, and it should begin with '/'
         exercise = pexpect.which("ls")
-        # assert we got a full path
-        assert given != exercise, (given, exercise)
-        assert os.path.isdir(os.path.dirname(exercise)), exercise
-        # assert is not an empty string or Nonetype
-        assert exercise, exercise
+        assert exercise is not None and exercise.startswith('/')
 
     def test_absolute_which(self):
         # make up a path and insert first a non-executable,

@@ -6,6 +6,7 @@ API documentation
 
    pexpect
    fdpexpect
+   replwrap
    pxssh
    screen
    ANSI

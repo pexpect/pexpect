@@ -299,8 +299,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         save_path = os.environ['PATH']
         try:
             os.environ['PATH'] = bin_dir
-            os.mkdir(bin_dir2)
-            os.chmod(bin_dir2, 0o755)
+            os.mkdir(bin_dir2, 0o755)
             # it should not be found because it is not executable *file*,
             # but rather, has the executable bit set, as a good folder
             # should -- it shouldn't be returned because it fails isdir()

@@ -19,7 +19,9 @@ PEXPECT LICENSE
 
 '''
 
-import os, time, pexpect, sys
+import time
+import pexpect
+import sys
 
 def getProcessResults(cmd, timeLimit=20):
   '''

@@ -20,7 +20,6 @@ PEXPECT LICENSE
 '''
 import pexpect
 import unittest
-import time
 import PexpectTestCase
 
 class TestCaseConstructor(PexpectTestCase.PexpectTestCase):

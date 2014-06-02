@@ -1,4 +1,4 @@
-import os, sys
+import os
 
 filename = os.tmpnam()
 print 'filename:', filename

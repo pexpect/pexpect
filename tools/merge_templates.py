@@ -24,14 +24,9 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 '''
-import sys, os, re
+import os
+import re
 import pyed
-try:
-    import pexpect
-except:
-    # this happens if Pexpect was never installed to begin with.
-    sys.path.insert(0, '.')
-    import pexpect
 
 # extract the version number from the pexpect.py source.
 d = pyed.pyed()

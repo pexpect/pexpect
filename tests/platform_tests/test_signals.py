@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-import signal, os, time, errno, pty, sys
+import signal
+import os
+import time
+import pty
+import sys
 GLOBAL_SIGCHLD_RECEIVED = 0
 
 def signal_handler (signum, frame):

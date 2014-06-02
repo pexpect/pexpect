@@ -21,7 +21,8 @@ PEXPECT LICENSE
 import pexpect
 import unittest
 import signal
-import sys, os, time
+import sys
+import time
 import PexpectTestCase
 
 class IsAliveTestCase(PexpectTestCase.PexpectTestCase):

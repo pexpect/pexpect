@@ -4,6 +4,12 @@ History
 Releases
 --------
 
+Version 3.3
+```````````
+
+* Fixed issue where pexpect would attempt to execute a directory because
+  it has the 'execute' bit set (:ghissue:`37`).
+
 Version 3.2
 ```````````
 

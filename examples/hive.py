@@ -88,7 +88,6 @@ import sys
 import os
 import re
 import optparse
-import types
 import time
 import getpass
 import readline

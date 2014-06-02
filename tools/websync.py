@@ -26,9 +26,9 @@ PEXPECT LICENSE
 
 '''
 
-import pexpect, pyed
+import pexpect
 import getpass
-import sys, os
+import sys
 
 X = getpass.getpass('Password: ')
 pp_pattern=["(?i)password:", "(?i)enter passphrase for key '.*?':"]

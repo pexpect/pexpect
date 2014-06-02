@@ -24,9 +24,7 @@ import unittest
 import subprocess
 import time
 import PexpectTestCase
-import sys
 import signal
-#import pdb
 
 # Many of these test cases blindly assume that sequential directory
 # listings of the /bin directory will yield the same results.
@@ -274,7 +272,6 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         '''This tests that mixed list of regex strings, TIMEOUT, and EOF all
         return the correct index when matched.
         '''
-        #pdb.set_trace()
         p = pexpect.spawn('cat')
         self._expect_index(p)
 

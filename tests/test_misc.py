@@ -23,7 +23,6 @@ import unittest
 import PexpectTestCase
 import os
 import sys
-import string
 import tempfile
 import re
 import signal

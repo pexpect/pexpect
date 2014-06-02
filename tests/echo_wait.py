@@ -18,7 +18,9 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-import signal, time, struct, fcntl, termios, os, sys
+import time
+import termios
+import sys
 
 # a dumb PAM will print the password prompt first then set ECHO
 # False. What it should do it set ECHO False first then print the

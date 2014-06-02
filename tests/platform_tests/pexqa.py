@@ -1,17 +1,8 @@
-import os, sys
-import select
-import signal
-import traceback
+import os
 import time
-import re
-import struct
 from types import *
-import posix
 
 import pty
-import tty
-import termios
-import fcntl
 class s:
     def __init__(self, command, args=None, timeout=30):
 

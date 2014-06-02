@@ -304,9 +304,9 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         assert index == 5, "index="+str(index) # Expect EOF
 
     def test_expect (self):
-        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
+        the_old_way = subprocess.Popen(args=['ls', '-1', '/bin'],
                 stdout=subprocess.PIPE).communicate()[0].rstrip()
-        p = pexpect.spawn('ls -l /bin')
+        p = pexpect.spawn('ls -1 /bin')
         the_new_way = b''
         while 1:
             i = p.expect ([b'\n', pexpect.EOF])
@@ -321,9 +321,9 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         assert the_old_way == the_new_way, hex_diff(the_old_way, the_new_way)
 
     def test_expect_exact (self):
-        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
+        the_old_way = subprocess.Popen(args=['ls', '-1', '/bin'],
                 stdout=subprocess.PIPE).communicate()[0].rstrip()
-        p = pexpect.spawn('ls -l /bin')
+        p = pexpect.spawn('ls -1 /bin')
         the_new_way = b''
         while 1:
             i = p.expect_exact ([b'\n', pexpect.EOF])
@@ -341,9 +341,9 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self.assertEqual(p.after, b'.?')
 
     def test_expect_eof (self):
-        the_old_way = subprocess.Popen(args=['/bin/ls', '-l', '/bin'],
+        the_old_way = subprocess.Popen(args=['/bin/ls', '-1', '/bin'],
                 stdout=subprocess.PIPE).communicate()[0].rstrip()
-        p = pexpect.spawn('/bin/ls -l /bin')
+        p = pexpect.spawn('/bin/ls -1 /bin')
         p.expect(pexpect.EOF) # This basically tells it to read everything. Same as pexpect.run() function.
         the_new_way = p.before
         the_new_way = the_new_way.replace(b'\r\n', b'\n'
@@ -358,7 +358,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self.assertEqual(p.after, pexpect.TIMEOUT)
 
     def test_unexpected_eof (self):
-        p = pexpect.spawn('ls -l /bin')
+        p = pexpect.spawn('ls -1 /bin')
         try:
             p.expect('_Z_XY_XZ') # Probably never see this in ls output.
         except pexpect.EOF:
@@ -455,7 +455,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         # Here, one has an earlier start and a later end. When processing
         # one character at a time, the one that finishes first should win,
         # because we don't know about the other match when it wins.
-        # If maxread > 1, this behaviour is currently undefined, although in
+        # If maxread > 1, this behavior is currently undefined, although in
         # most cases the one that starts first will win.
         self.assertEqual(expect([b'1, 2, 3', b'2,']), 1)
 

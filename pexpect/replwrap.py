@@ -2,6 +2,7 @@
 """
 import signal
 import sys
+import re
 
 import pexpect
 
@@ -33,10 +34,12 @@ class REPLWrapper(object):
                  new_prompt=PEXPECT_PROMPT,
                  continuation_prompt=PEXPECT_CONTINUATION_PROMPT):
         if isinstance(cmd_or_spawn, str):
-            self.child = pexpect.spawnu(cmd_or_spawn)
+            self.child = pexpect.spawnu(cmd_or_spawn, echo=False)
         else:
             self.child = cmd_or_spawn
-        self.child.setecho(False)  # Don't repeat our input.
+        if self.child.echo:
+            self.child.setecho(False)  # Don't repeat our input.
+            self.child.waitnoecho()
         
         if prompt_change is None:
             self.prompt = orig_prompt
@@ -49,7 +52,7 @@ class REPLWrapper(object):
         self._expect_prompt()
 
     def set_prompt(self, orig_prompt, prompt_change):
-        self.child.expect_exact(orig_prompt)
+        self.child.expect(orig_prompt)
         self.child.sendline(prompt_change)
 
     def _expect_prompt(self, timeout=-1):
@@ -93,6 +96,6 @@ def python(command="python"):
     """Start a Python shell and return a :class:`REPLWrapper` object."""
     return REPLWrapper(command, u(">>> "), u("import sys; sys.ps1={0!r}; sys.ps2={1!r}"))
 
-def bash(command="bash", orig_prompt=u("$")):
+def bash(command="bash", orig_prompt=re.compile('[$#]')):
     """Start a bash shell and return a :class:`REPLWrapper` object."""
-    return REPLWrapper(command, orig_prompt, u("PS1='{0}'; PS2='{1}'"))
+    return REPLWrapper(command, orig_prompt, u("PS1='{0}' PS2='{1}'; export PS1 PS2"))

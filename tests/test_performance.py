@@ -21,6 +21,7 @@ PEXPECT LICENSE
 from __future__ import print_function
 
 import unittest, time, sys
+import platform
 import pexpect
 from . import PexpectTestCase
 
@@ -81,6 +82,8 @@ class PerformanceTestCase (PexpectTestCase.PexpectTestCase):
         self.assertEqual(e.expect([b'inquisition', '%d' % n]), 1)
 
     def test_100000(self):
+        if platform.python_implementation() == 'PyPy':
+            raise unittest.SkipTest("This test fails on PyPy because of REPL differences")
         print()
         start_time = time.time()
         self.plain_range (100000)

@@ -22,14 +22,20 @@ PEXPECT LICENSE
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import os
 import pexpect
 import unittest
 from . import PexpectTestCase
 
 class InteractTestCase (PexpectTestCase.PexpectTestCase):
+    def setUp(self):
+        super(InteractTestCase, self).setUp()
+        self.env = os.environ.copy()
+        # Ensure that Pexpect is importable by the subprocesses.
+        self.env['PYTHONPATH'] = self.project_dir + os.pathsep + os.environ.get('PYTHONPATH', '')
 
     def test_interact (self):
-        p = pexpect.spawn(str('%s interact.py' % (self.PYTHONBIN,)))
+        p = pexpect.spawn(str('%s interact.py' % (self.PYTHONBIN,)), env=self.env)
         p.expect('<in >')
         p.sendline (b'Hello')
         p.sendline (b'there')
@@ -44,7 +50,7 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         assert p.exitstatus == 0, (p.exitstatus, p.before)
 
     def test_interact_unicode (self):
-        p = pexpect.spawnu(str('%s interact_unicode.py' % (self.PYTHONBIN,)))
+        p = pexpect.spawnu(str('%s interact_unicode.py' % (self.PYTHONBIN,)), env=self.env)
         try:
             p.expect('<in >')
             p.sendline ('Hello')

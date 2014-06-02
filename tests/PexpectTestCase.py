@@ -29,7 +29,7 @@ class PexpectTestCase(unittest.TestCase):
         self.PYTHONBIN = sys.executable
         self.original_path = os.getcwd()
         tests_dir = os.path.dirname(__file__)
-        project_dir = os.path.dirname(tests_dir)
+        self.project_dir = project_dir = os.path.dirname(tests_dir)
         os.chdir(tests_dir)
         os.environ['COVERAGE_PROCESS_START'] = os.path.join(project_dir, '.coveragerc')
         os.environ['COVERAGE_FILE'] = os.path.join(project_dir, '.coverage')

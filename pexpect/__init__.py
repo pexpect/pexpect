@@ -1645,8 +1645,9 @@ class spawn(object):
                     data = self.__interact_read(self.child_fd)
                 except OSError as e:
                     # The subprocess may have closed before we get to reading it
-                    if e.errno != errno.EIO:
-                        raise
+                    if e.errno == errno.EIO:
+                        break # EOF on linux
+                    raise
                 if output_filter:
                     data = output_filter(data)
                 if self.logfile is not None:

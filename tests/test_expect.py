@@ -20,10 +20,10 @@ PEXPECT LICENSE
 '''
 import pexpect
 import unittest
-import os
 import subprocess
 import time
 from . import PexpectTestCase
+from .utils import no_coverage_env
 import signal
 
 # Many of these test cases blindly assume that sequential directory
@@ -72,12 +72,6 @@ class assert_raises_msg(object):
             raise AssertionError('%r was not in %r' % (self.msgpart, errstr))
 
         return True
-
-def no_coverage_env():
-    "Return a copy of os.environ that won't trigger coverage measurement."
-    env = os.environ.copy()
-    env.pop('COV_CORE_SOURCE', None)
-    return env
 
 class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 

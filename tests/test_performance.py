@@ -22,7 +22,7 @@ from __future__ import print_function
 
 import unittest, time, sys
 import pexpect
-import PexpectTestCase
+from . import PexpectTestCase
 
 # This isn't exactly a unit test, but it fits in nicely with the rest of the tests.
 

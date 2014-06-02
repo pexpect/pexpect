@@ -21,7 +21,7 @@ PEXPECT LICENSE
 
 from pexpect import screen
 import unittest
-import PexpectTestCase
+from . import PexpectTestCase
 
 fill1_target='XXXXXXXXXX\n' + \
 'XOOOOOOOOX\n' + \

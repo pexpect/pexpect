@@ -22,7 +22,7 @@ import pexpect
 import unittest
 import os
 import tempfile
-import PexpectTestCase
+from . import PexpectTestCase
 
 # the program cat(1) may display ^D\x08\x08 when \x04 (EOF, Ctrl-D) is sent
 _CAT_EOF = b'^D\x08\x08'

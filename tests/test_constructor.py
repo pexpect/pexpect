@@ -20,7 +20,7 @@ PEXPECT LICENSE
 '''
 import pexpect
 import unittest
-import PexpectTestCase
+from . import PexpectTestCase
 
 class TestCaseConstructor(PexpectTestCase.PexpectTestCase):
     def test_constructor (self):

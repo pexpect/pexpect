@@ -23,7 +23,7 @@ import unittest
 import signal
 import sys
 import time
-import PexpectTestCase
+from . import PexpectTestCase
 
 class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
 

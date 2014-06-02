@@ -21,7 +21,7 @@ PEXPECT LICENSE
 import pexpect
 import unittest
 import re
-import PexpectTestCase
+from . import PexpectTestCase
 
 testdata = 'BEGIN\nHello world\nEND'
 class TestCaseDotall(PexpectTestCase.PexpectTestCase):

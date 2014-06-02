@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 
 import pexpect
 import unittest
-import PexpectTestCase
+from . import PexpectTestCase
 
 class InteractTestCase (PexpectTestCase.PexpectTestCase):
 

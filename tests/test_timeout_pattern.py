@@ -21,7 +21,7 @@ PEXPECT LICENSE
 from __future__ import with_statement  # bring 'with' stmt to py25
 import pexpect
 import unittest
-import PexpectTestCase
+from . import PexpectTestCase
 import sys
 
 class Exp_TimeoutTestCase(PexpectTestCase.PexpectTestCase):

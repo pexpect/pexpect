@@ -23,7 +23,7 @@ import pexpect
 import unittest
 import subprocess
 import time
-import PexpectTestCase
+from . import PexpectTestCase
 import signal
 
 # Many of these test cases blindly assume that sequential directory

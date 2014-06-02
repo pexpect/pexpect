@@ -301,8 +301,8 @@ class spawn(object):
     encoding = None
 
     def __init__(self, command, args=[], timeout=30, maxread=2000,
-        searchwindowsize=None, logfile=None, cwd=None, env=None,
-        ignore_sighup=True):
+                 searchwindowsize=None, logfile=None, cwd=None, env=None,
+                 ignore_sighup=True, echo=True):
 
         '''This is the constructor. The command parameter may be a string that
         includes a command and any arguments to the command. For example::
@@ -415,7 +415,18 @@ class spawn(object):
         signalstatus will store the signal value and exitstatus will be None.
         If you need more detail you can also read the self.status member which
         stores the status returned by os.waitpid. You can interpret this using
-        os.WIFEXITED/os.WEXITSTATUS or os.WIFSIGNALED/os.TERMSIG. '''
+        os.WIFEXITED/os.WEXITSTATUS or os.WIFSIGNALED/os.TERMSIG.
+
+        The echo attribute may be set to False to disable echoing of input.
+        As a pseudo-terminal is a tty driver, by default, all input echo'd by
+        the "keyboard" (send() or sendline()) will be repeated to output.
+        Due to buffering, ordering of output from programs such as cat(1)
+        may not be determined, and will contain duplicated output.  For many
+        cases, it is not desirable to have echo enabled, and it may be turned
+        off using option echo=False, or later by using setecho(False) followed
+        by waitnoecho().  SVR4-derived systems such as Solaris, however, may
+        only disable echoing upon instantiation and not after.
+        '''
 
         self.STDIN_FILENO = pty.STDIN_FILENO
         self.STDOUT_FILENO = pty.STDOUT_FILENO
@@ -437,7 +448,8 @@ class spawn(object):
         self.status = None
         self.flag_eof = False
         self.pid = None
-        # the chile filedescriptor is initially closed
+        # the child file descriptor is initially -1, any os calls to child_fd
+        # prior to pty.fork will raise OSError: [Errno 9] Bad file number
         self.child_fd = -1
         self.timeout = timeout
         self.delimiter = EOF
@@ -466,6 +478,7 @@ class spawn(object):
         self.closed = True
         self.cwd = cwd
         self.env = env
+        self.echo = echo
         self.ignore_sighup = ignore_sighup
         # This flags if we are running on irix
         self.__irix_hack = (sys.platform.lower().find('irix') >= 0)
@@ -483,6 +496,22 @@ class spawn(object):
             self.name = '<pexpect factory incomplete>'
         else:
             self._spawn(command, args)
+
+        # inherit EOF and INTR definitions from controlling process.
+        try:
+            from termios import VEOF, VINTR
+            fd = sys.__stdin__.fileno()
+            self._INTR = ord(termios.tcgetattr(fd)[6][VINTR])
+            self._EOF = ord(termios.tcgetattr(fd)[6][VEOF])
+        except (ImportError, OSError, IOError):
+            # unless the controlling process is also not a terminal,
+            # such as cron(1). Fall-back to using CEOF and CINTR.
+            try:
+                from termios import CEOF, CINTR
+                (self._INTR, self._EOF) = (CINTR, CEOF)
+            except ImportError:
+                (self._INTR, self._EOF) = (3, 4)
+                #                         ^C, ^D
 
     @staticmethod
     def _coerce_expect_string(s):
@@ -606,26 +635,27 @@ class spawn(object):
             # Use internal __fork_pty
             self.pid, self.child_fd = self.__fork_pty()
 
-        if self.pid == 0:
-            # Child
+        # Some platforms must call setwinsize() on the child_fd from the child
+        # process. Others must call setwinsize() on the master_fd from the
+        # master process. We do both, allowing IOError for either. Same goes
+        # for setecho().
+
+        if self.pid == pty.CHILD:
+            self.child_fd = pty.STDIN_FILENO
             try:
-                # used by setwinsize()
-                self.child_fd = sys.stdout.fileno()
                 self.setwinsize(24, 80)
-            # which exception, shouldnt' we catch explicitly .. ?
-            except:
-                # Some platforms do not like setwinsize (Cygwin).
-                # This will cause problem when running applications that
-                # are very picky about window size.
-                # This is a serious limitation, but not a show stopper.
+            except IOError:
                 pass
+
+            if not self.echo:
+                try:
+                    self.setecho(self.echo)
+                except:
+                    pass
+
             # Do not allow child to inherit open file descriptors from parent.
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
-            for i in range(3, max_fd):
-                try:
-                    os.close(i)
-                except OSError:
-                    pass
+            os.closerange(3, max_fd)
 
             if self.ignore_sighup:
                 signal.signal(signal.SIGHUP, signal.SIG_IGN)
@@ -638,6 +668,10 @@ class spawn(object):
                 os.execvpe(self.command, self.args, self.env)
 
         # Parent
+        try:
+            self.setwinsize(24, 80)
+        except IOError:
+            pass
         self.terminated = False
         self.closed = False
 
@@ -660,10 +694,8 @@ class spawn(object):
             raise ExceptionPexpect("Could not open with os.openpty().")
 
         pid = os.fork()
-        if pid < 0:
-            raise ExceptionPexpect("Failed os.fork().")
-        elif pid == 0:
-            # Child.
+
+        if pid == pty.CHILD:
             os.close(parent_fd)
             self.__pty_make_controlling_tty(child_fd)
 
@@ -671,8 +703,6 @@ class spawn(object):
             os.dup2(child_fd, 1)
             os.dup2(child_fd, 2)
 
-            if child_fd > 2:
-                os.close(child_fd)
         else:
             # Parent.
             os.close(child_fd)
@@ -684,7 +714,10 @@ class spawn(object):
         more portable than the pty.fork() function. Specifically, this should
         work on Solaris. '''
 
-        child_name = os.ttyname(tty_fd)
+        try:
+            child_name = os.ttyname(tty_fd)
+        except OSError:
+            child_name = os.ttyname(pty.STDIN_FILENO)
 
         # Disconnect from controlling tty. Harmless if not already connected.
         try:
@@ -719,11 +752,12 @@ class spawn(object):
             os.close(fd)
 
         # Verify we now have a controlling tty.
-        fd = os.open("/dev/tty", os.O_WRONLY)
-        if fd < 0:
-            raise ExceptionPexpect("Could not open controlling tty, /dev/tty")
-        else:
+        try:
+            fd = os.open("/dev/tty", os.O_WRONLY)
             os.close(fd)
+        except OSError as err:
+            if err.args == (6, "No such device or address: '/dev/tty'"):
+                pass
 
     def fileno(self):
         '''This returns the file descriptor of the pty for the child.
@@ -794,9 +828,17 @@ class spawn(object):
     def getecho(self):
         '''This returns the terminal echo mode. This returns True if echo is
         on or False if echo is off. Child applications that are expecting you
-        to enter a password often set ECHO False. See waitnoecho(). '''
+        to enter a password often set ECHO False. See waitnoecho().
 
-        attr = termios.tcgetattr(self.child_fd)
+        Not supported platforms where ``isatty()`` returns False.  '''
+
+        try:
+            attr = termios.tcgetattr(self.child_fd)
+        except Exception as err:
+            if err.args == (22, 'Invalid argument'):
+                msg = 'getecho() may not be called on this platform'
+                raise IOError(err.args[0], '%s: %s.' % (err.args[1], msg))
+            raise
         if attr[3] & termios.ECHO:
             return True
         return False
@@ -829,18 +871,28 @@ class spawn(object):
             p.expect(['1234'])
             p.expect(['abcd'])
             p.expect(['wxyz'])
-        '''
 
-        self.child_fd
-        attr = termios.tcgetattr(self.child_fd)
+        Not supported platforms where ``isatty()`` returns False.  '''
+        try:
+            attr = termios.tcgetattr(self.child_fd)
+        except Exception as err:
+            if err.args == (22, 'Invalid argument'):
+                msg = 'setecho() may not be called on this platform'
+                raise IOError(err.args[0], '%s: %s.' % (err.args[1], msg))
+            raise
+
         if state:
             attr[3] = attr[3] | termios.ECHO
         else:
             attr[3] = attr[3] & ~termios.ECHO
-        # I tried TCSADRAIN and TCSAFLUSH, but
-        # these were inconsistent and blocked on some platforms.
-        # TCSADRAIN would probably be ideal if it worked.
-        termios.tcsetattr(self.child_fd, termios.TCSANOW, attr)
+
+        try:
+            termios.tcsetattr(self.child_fd, termios.TCSANOW, attr)
+        except IOError:
+            if err.args == (22, 'Invalid argument'):
+                msg = 'setecho() may not be called on this platform'
+                raise IOError(err.args[0], '%s: %s.' % (err.args[1], msg))
+            raise
 
     def _log(self, s, direction):
         if self.logfile is not None:
@@ -1075,40 +1127,14 @@ class spawn(object):
         It is the responsibility of the caller to ensure the eof is sent at the
         beginning of a line. '''
 
-        ### Hmmm... how do I send an EOF?
-        ###C  if ((m = write(pty, *buf, p - *buf)) < 0)
-        ###C      return (errno == EWOULDBLOCK) ? n : -1;
-        #fd = sys.stdin.fileno()
-        #old = termios.tcgetattr(fd) # remember current state
-        #attr = termios.tcgetattr(fd)
-        #attr[3] = attr[3] | termios.ICANON # ICANON must be set to see EOF
-        #try: # use try/finally to ensure state gets restored
-        #    termios.tcsetattr(fd, termios.TCSADRAIN, attr)
-        #    if hasattr(termios, 'CEOF'):
-        #        os.write(self.child_fd, '%c' % termios.CEOF)
-        #    else:
-        #        # Silly platform does not define CEOF so assume CTRL-D
-        #        os.write(self.child_fd, '%c' % 4)
-        #finally: # restore state
-        #    termios.tcsetattr(fd, termios.TCSADRAIN, old)
-        if hasattr(termios, 'VEOF'):
-            char = ord(termios.tcgetattr(self.child_fd)[6][termios.VEOF])
-        else:
-            # platform does not define VEOF so assume CTRL-D
-            char = 4
-        self.send(self._chr(char))
+        self.send(self._chr(self._EOF))
 
     def sendintr(self):
 
         '''This sends a SIGINT to the child. It does not require
         the SIGINT to be the first character on a line. '''
 
-        if hasattr(termios, 'VINTR'):
-            char = ord(termios.tcgetattr(self.child_fd)[6][termios.VINTR])
-        else:
-            # platform does not define VINTR so assume CTRL-C
-            char = 3
-        self.send(self._chr(char))
+        self.send(self._chr(self._INTR))
 
     def eof(self):
 
@@ -1556,7 +1582,9 @@ class spawn(object):
         a SIGWINCH signal to be sent to the child. This does not change the
         physical window size. It changes the size reported to TTY-aware
         applications like vi or curses -- applications that respond to the
-        SIGWINCH signal. '''
+        SIGWINCH signal.
+
+        Not supported platforms where ``isatty()`` returns False.  '''
 
         # Some very old platforms have a bug that causes the value for
         # termios.TIOCSWINSZ to be truncated. There was a hack here to work
@@ -1565,7 +1593,13 @@ class spawn(object):
         TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
         # Note, assume ws_xpixel and ws_ypixel are zero.
         s = struct.pack('HHHH', rows, cols, 0, 0)
-        fcntl.ioctl(self.fileno(), TIOCSWINSZ, s)
+        try:
+            fcntl.ioctl(self.fileno(), TIOCSWINSZ, s)
+        except IOError as err:
+            errmsg = 'setwinsize() may not be called on this platform'
+            if err.args == (22, 'Invalid argument'):
+                raise IOError(err.args[0], ('%s: %s.' % (err.args[1], errmsg)))
+            raise
 
     def interact(self, escape_character=chr(29),
             input_filter=None, output_filter=None):
@@ -1603,7 +1637,9 @@ class spawn(object):
             p = pexpect.spawn('/bin/bash')
             signal.signal(signal.SIGWINCH, sigwinch_passthrough)
             p.interact()
-        '''
+
+        Note that setwinsize() is not supported on platforms where ``isatty()``
+        returns False.  '''
 
         # Flush the buffer.
         self.write_to_stdout(self.buffer)

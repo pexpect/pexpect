@@ -33,6 +33,11 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
 
     def test_isatty (self):
         child = pexpect.spawn('cat')
+        val = child.isatty()
+        if not val and sys.platform.lower().startswith('sunos'):
+            if hasattr(unittest, 'SkipTest'):
+                raise unittest.SkipTest("Not supported on this platform.")
+            return 'skip'
         assert child.isatty(), "Not returning True. Should always be True."
 
     def test_read (self):

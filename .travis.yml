@@ -12,7 +12,6 @@ before_install:
   - sudo apt-get install python-yaml python3-yaml
 install:
   - export PYTHONIOENCODING=UTF8
-  - python setup.py install
   - pip install coveralls pytest-cov
 
 script:

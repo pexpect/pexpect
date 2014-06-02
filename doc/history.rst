@@ -7,11 +7,8 @@ Releases
 Version 3.3
 ```````````
 
-* Fixes issue with ``close()`` method called from ``__del__`` calling
-  time.sleep() unnecessarily, causing false TIMEOUT before EOF exceptions
-  on some platforms (namely, OSX).
 * Fixed issue where pexpect would attempt to execute a directory because
-  it has the 'execute' bit set.
+  it has the 'execute' bit set (:ghissue:`37`).
 
 Version 3.2
 ```````````

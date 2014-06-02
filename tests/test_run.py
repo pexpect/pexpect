@@ -23,7 +23,7 @@ import pexpect
 import unittest
 import subprocess
 import sys
-import PexpectTestCase
+from . import PexpectTestCase
 
 # TODO Many of these test cases blindly assume that sequential
 # TODO listing of the /bin directory will yield the same results.

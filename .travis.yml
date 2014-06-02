@@ -12,13 +12,10 @@ before_install:
   - sudo apt-get install python-yaml python3-yaml
 install:
   - export PYTHONIOENCODING=UTF8
-  - python setup.py install
-  - pip install coveralls --use-mirrors
+  - pip install coveralls pytest-cov
 
-before_script:
-  - source test.env
 script:
-  - coverage run tools/testall.py
+    - py.test --cov pexpect --cov-config .coveragerc
 
 after_success:
   - coverage combine

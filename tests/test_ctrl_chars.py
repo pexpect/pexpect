@@ -22,7 +22,7 @@ from __future__ import print_function
 
 import pexpect
 import unittest
-import PexpectTestCase
+from . import PexpectTestCase
 import time
 import sys
 

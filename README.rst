@@ -22,7 +22,7 @@ It should work on any platform that supports the standard Python pty module.
 The Pexpect interface was designed to be easy to use.
 
 If you want to work with the development version of the source code then please
-read the DEVELOPERS document in the root of the source code tree.
+read the DEVELOPERS.rst document in the root of the source code tree.
 
 Free, open source, and all that good stuff.
 

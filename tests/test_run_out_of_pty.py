@@ -20,7 +20,7 @@ PEXPECT LICENSE
 '''
 import pexpect
 import unittest
-import PexpectTestCase
+from . import PexpectTestCase
 
 class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     # This takes too long to run and isn't all that interesting of a test.

@@ -21,7 +21,7 @@ PEXPECT LICENSE
 import pexpect
 from pexpect import fdpexpect
 import unittest
-import PexpectTestCase
+from . import PexpectTestCase
 import os
 
 class ExpectTestCase(PexpectTestCase.PexpectTestCase):

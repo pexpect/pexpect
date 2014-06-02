@@ -2,7 +2,7 @@
 import unittest
 
 from pexpect import pxssh, psh
-from test_pxssh import SSHTestBase
+from .test_pxssh import SSHTestBase
 
 class PshTestBase(SSHTestBase):
     def test_psh(self):

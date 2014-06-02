@@ -78,6 +78,4 @@ clean: clean_docs
 clean_docs:
 	-rm -f `ls doc/*.html | sed -e 's/doc\/index\.template\.html//' | sed -e 's/doc\/examples\.html//'`
 
-test:
-	. ./test.env && ./tools/testall.py
 

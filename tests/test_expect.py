@@ -18,9 +18,9 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-from __future__ import with_statement  # bring 'with' stmt to py25
 import pexpect
 import unittest
+import os
 import subprocess
 import time
 from . import PexpectTestCase
@@ -73,6 +73,11 @@ class assert_raises_msg(object):
 
         return True
 
+def no_coverage_env():
+    "Return a copy of os.environ that won't trigger coverage measurement."
+    env = os.environ.copy()
+    env.pop('COV_CORE_SOURCE')
+    return env
 
 class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
@@ -383,14 +388,14 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
     def test_before_after(self):
         '''This tests expect() for some simple before/after things.
         '''
-        p = pexpect.spawn('%s list100.py' % self.PYTHONBIN)
+        p = pexpect.spawn('%s -Wi list100.py' % self.PYTHONBIN, env=no_coverage_env())
         self._before_after(p)
 
     def test_before_after_exact(self):
         '''This tests some simple before/after things, for
         expect_exact(). (Grahn broke it at one point.)
         '''
-        p = pexpect.spawn('%s list100.py' % self.PYTHONBIN)
+        p = pexpect.spawn('%s -Wi list100.py' % self.PYTHONBIN, env=no_coverage_env())
         # mangle the spawn so we test expect_exact() instead
         p.expect = p.expect_exact
         self._before_after(p)

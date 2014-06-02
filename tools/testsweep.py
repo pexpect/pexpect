@@ -20,7 +20,6 @@ PEXPECT LICENSE
 
 """
 import pexpect
-import sys
 import getpass
 
 def test_platform (platform_menu, platform_python_path):

@@ -13,6 +13,8 @@ Version 3.3
   ``getwinsize()``, ``setwinsize()`` or ``waitnoecho()``, because the master_fd
   side of the pty-pair does not appear as a terminal (``isatty()`` returns
   False) (:ghissue:`44`).
+* Fixed issue where pexpect would attempt to execute a directory because
+  it has the 'execute' bit set (:ghissue:`37`).
 
 Version 3.2
 ```````````

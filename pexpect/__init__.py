@@ -1999,15 +1999,15 @@ class searcher_re(object):
 
 
 def which(filename):
-
     '''This takes a given filename; tries to find it in the environment path;
     then checks if it is executable. This returns the full path to the filename
     if found and executable. Otherwise this returns None.'''
 
     # Special case where filename contains an explicit path.
-    if os.path.dirname(filename) != '':
-        if os.access(filename, os.X_OK):
-            return filename
+    if (os.path.dirname(filename) != '' and
+            os.access(filename, os.X_OK) and
+            os.path.isfile(os.path.realpath(filename))):
+        return filename
     if 'PATH' not in os.environ or os.environ['PATH'] == '':
         p = os.defpath
     else:
@@ -2015,7 +2015,8 @@ def which(filename):
     pathlist = p.split(os.pathsep)
     for path in pathlist:
         ff = os.path.join(path, filename)
-        if os.access(ff, os.X_OK):
+        if (os.access(ff, os.X_OK) and
+                os.path.isfile(os.path.realpath(ff))):
             return ff
     return None
 

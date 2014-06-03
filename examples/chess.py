@@ -27,7 +27,6 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import pexpect
-import string
 import ANSI
 
 REGEX_MOVE = '(?:[a-z]|\x1b\[C)(?:[0-9]|\x1b\[C)(?:[a-z]|\x1b\[C)(?:[0-9]|\x1b\[C)'
@@ -95,7 +94,7 @@ class Chess:
 
     def quit(self):
         self.child.sendline ('quit')
-import sys, os
+import sys
 print('Starting...')
 white = Chess()
 white.child.echo = 1

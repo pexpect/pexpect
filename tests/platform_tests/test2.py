@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-import signal, os, time, errno
+import signal
+import os
+import time
 
 def signal_handler (signum, frame):
 	print 'Signal handler called with signal:', signum

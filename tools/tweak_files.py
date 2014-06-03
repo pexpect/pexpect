@@ -20,7 +20,8 @@ PEXPECT LICENSE
 '''
 
 import pyed
-import sys, os, re
+import os
+import re
 
 # extract the version number from the pexpect.py source.
 d = pyed.pyed()

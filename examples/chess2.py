@@ -27,9 +27,9 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import pexpect
-import string
 import ANSI
-import sys, os, time
+import sys
+import time
 
 class Chess:
 

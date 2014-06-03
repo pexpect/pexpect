@@ -21,7 +21,8 @@ PEXPECT LICENSE
 import pexpect
 import unittest
 import PexpectTestCase
-import os, sys
+import os
+import sys
 import re
 import signal
 import time
@@ -35,9 +36,11 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat')
         val = child.isatty()
         if not val and sys.platform.lower().startswith('sunos'):
-            if hasattr(unittest, 'SkipTest'):
-                raise unittest.SkipTest("Not supported on this platform.")
-            return 'skip'
+            if sys.platform.lower().startswith('sunos'):
+                if hasattr(unittest, 'SkipTest'):
+                    raise unittest.SkipTest("Not supported on this platform.")
+                return 'skip'
+            raise
         assert child.isatty(), "Not returning True. Should always be True."
 
     def test_read (self):

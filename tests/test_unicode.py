@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import platform
 import tempfile
+import sys
 
 import pexpect
 import unittest
@@ -47,9 +48,11 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         try:
             self._expect_echo_toggle(p)
         except IOError:
-            if hasattr(unittest, 'SkipTest'):
-                raise unittest.SkipTest("Not supported on this platform.")
-            return 'skip'
+            if sys.platform.lower().startswith('sunos'):
+                if hasattr(unittest, 'SkipTest'):
+                    raise unittest.SkipTest("Not supported on this platform.")
+                return 'skip'
+            raise
 
     def test_expect_echo_exact (self):
         '''Like test_expect_echo(), but using expect_exact().
@@ -64,9 +67,11 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         try:
             self._expect_echo_toggle(p)
         except IOError:
-            if hasattr(unittest, 'SkipTest'):
-                raise unittest.SkipTest("Not supported on this platform.")
-            return 'skip'
+            if sys.platform.lower().startswith('sunos'):
+                if hasattr(unittest, 'SkipTest'):
+                    raise unittest.SkipTest("Not supported on this platform.")
+                return 'skip'
+            raise
 
     def _expect_echo (self, p):
         p.sendline('1234') # Should see this twice (once from tty echo and again from cat).

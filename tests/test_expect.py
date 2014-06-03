@@ -19,12 +19,14 @@ PEXPECT LICENSE
 
 '''
 from __future__ import with_statement  # bring 'with' stmt to py25
-import pexpect
 import unittest
 import subprocess
 import time
-import PexpectTestCase
 import signal
+import sys
+
+import pexpect
+import PexpectTestCase
 
 # Many of these test cases blindly assume that sequential directory
 # listings of the /bin directory will yield the same results.
@@ -192,9 +194,12 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         try:
             p1.waitnoecho(timeout=10)
         except IOError:
-            if hasattr(unittest, 'SkipTest'):
-                raise unittest.SkipTest("Not supported on this platform.")
-            return 'skip'
+            if sys.platform.lower().startswith('sunos'):
+                if hasattr(unittest, 'SkipTest'):
+                    raise unittest.SkipTest("Not supported on this platform.")
+                return 'skip'
+            raise
+
         end_time = time.time() - start
         assert end_time < 10 and end_time > 2, "waitnoecho did not set ECHO off in the expected window of time."
 
@@ -226,9 +231,10 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         try:
             self._expect_echo_toggle(p)
         except IOError:
-            if hasattr(unittest, 'SkipTest'):
-                raise unittest.SkipTest("Not supported on this platform.")
-            return 'skip'
+            if sys.platform.lower().startswith('sunos'):
+                if hasattr(unittest, 'SkipTest'):
+                    raise unittest.SkipTest("Not supported on this platform.")
+                return 'skip'
 
     def test_expect_echo_exact (self):
         '''Like test_expect_echo(), but using expect_exact().
@@ -243,9 +249,11 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         try:
             self._expect_echo_toggle(p)
         except IOError:
-            if hasattr(unittest, 'SkipTest'):
-                raise unittest.SkipTest("Not supported on this platform.")
-            return 'skip'
+            if sys.platform.lower().startswith('sunos'):
+                if hasattr(unittest, 'SkipTest'):
+                    raise unittest.SkipTest("Not supported on this platform.")
+                return 'skip'
+            raise
 
     def _expect_echo (self, p):
         p.sendline (b'1234') # Should see this twice (once from tty echo and again from cat).
@@ -486,7 +494,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         # Here, one has an earlier start and a later end. When processing
         # one character at a time, the one that finishes first should win,
         # because we don't know about the other match when it wins.
-        # If maxread > 1, this behavior is currently undefined, although in
+        # If maxread > 1, this behaviour is currently undefined, although in
         # most cases the one that starts first will win.
         self.assertEqual(expect([b'1, 2, 3', b'2,']), 1)
 

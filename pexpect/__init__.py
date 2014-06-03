@@ -759,7 +759,7 @@ class spawn(object):
             os.close(fd)
         except OSError as err:
             if err.args[0] == ENXIO:
-                # on Solaris, `/dev/tty' is raises OSError upon opening, though
+                # on Solaris, `/dev/tty' raises OSError upon opening, though
                 # it does exist: /dev/tty -> ../devices/pseudo/sy@0:tty
                 pass
 

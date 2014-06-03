@@ -628,8 +628,7 @@ class spawn(object):
         if self.use_native_pty_fork:
             try:
                 self.pid, self.child_fd = pty.fork()
-            except OSError:
-                err = sys.exc_info()[1]
+            except OSError as err:
                 raise ExceptionPexpect('pty.fork() failed: ' + str(err))
         else:
             # Use internal __fork_pty
@@ -644,14 +643,16 @@ class spawn(object):
             self.child_fd = pty.STDIN_FILENO
             try:
                 self.setwinsize(24, 80)
-            except IOError:
-                pass
+            except IOError as err:
+                if err.args[0] != errno.EINVAL:
+                    raise
 
             if not self.echo:
                 try:
                     self.setecho(self.echo)
-                except:
-                    pass
+                except IOError as err:
+                    if err.args[0] != errno.EINVAL:
+                        raise
 
             # Do not allow child to inherit open file descriptors from parent.
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
@@ -670,8 +671,9 @@ class spawn(object):
         # Parent
         try:
             self.setwinsize(24, 80)
-        except IOError:
-            pass
+        except IOError as err:
+            if err.args[0] != errno.EINVAL:
+                raise
         self.terminated = False
         self.closed = False
 
@@ -756,7 +758,9 @@ class spawn(object):
             fd = os.open("/dev/tty", os.O_WRONLY)
             os.close(fd)
         except OSError as err:
-            if err.args == (6, "No such device or address: '/dev/tty'"):
+            if err.args[0] == ENXIO:
+                # on Solaris, `/dev/tty' is raises OSError upon opening, though
+                # it does exist: /dev/tty -> ../devices/pseudo/sy@0:tty
                 pass
 
     def fileno(self):
@@ -791,7 +795,11 @@ class spawn(object):
 
     def isatty(self):
         '''This returns True if the file descriptor is open and connected to a
-        tty(-like) device, else False. '''
+        tty device, else False.
+
+        On SRV4-style platforms implementing streams, the child process
+        pseudo-terminal does not appear to be a terminal device to the
+        controling master process, such as Solaris, HP-UX, and AIX.'''
 
         return os.isatty(self.child_fd)
 
@@ -832,13 +840,15 @@ class spawn(object):
 
         Not supported platforms where ``isatty()`` returns False.  '''
 
+	errmsg = 'getecho() may not be called on this platform'
+
         try:
             attr = termios.tcgetattr(self.child_fd)
-        except Exception as err:
-            if err.args == (22, 'Invalid argument'):
-                msg = 'getecho() may not be called on this platform'
-                raise IOError(err.args[0], '%s: %s.' % (err.args[1], msg))
+        except termios.error as err:
+            if err.args[0] == errno.EINVAL:
+                raise IOError(err.args[0], '%s: %s.' % (err.args[1], errmsg))
             raise
+
         if attr[3] & termios.ECHO:
             return True
         return False
@@ -873,12 +883,14 @@ class spawn(object):
             p.expect(['wxyz'])
 
         Not supported platforms where ``isatty()`` returns False.  '''
+
+        errmsg = 'setecho() may not be called on this platform'
+
         try:
             attr = termios.tcgetattr(self.child_fd)
-        except Exception as err:
-            if err.args == (22, 'Invalid argument'):
-                msg = 'setecho() may not be called on this platform'
-                raise IOError(err.args[0], '%s: %s.' % (err.args[1], msg))
+        except termios.error as err:
+            if err.args[0] == errno.EINVAL:
+                raise IOError(err.args[0], '%s: %s.' % (err.args[1], errmsg))
             raise
 
         if state:
@@ -888,10 +900,9 @@ class spawn(object):
 
         try:
             termios.tcsetattr(self.child_fd, termios.TCSANOW, attr)
-        except IOError:
-            if err.args == (22, 'Invalid argument'):
-                msg = 'setecho() may not be called on this platform'
-                raise IOError(err.args[0], '%s: %s.' % (err.args[1], msg))
+        except IOError as err:
+            if err.args[0] == errno.EINVAL:
+                raise IOError(err.args[0], '%s: %s.' % (err.args[1], errmsg))
             raise
 
     def _log(self, s, direction):
@@ -1582,9 +1593,7 @@ class spawn(object):
         a SIGWINCH signal to be sent to the child. This does not change the
         physical window size. It changes the size reported to TTY-aware
         applications like vi or curses -- applications that respond to the
-        SIGWINCH signal.
-
-        Not supported platforms where ``isatty()`` returns False.  '''
+        SIGWINCH signal. '''
 
         # Some very old platforms have a bug that causes the value for
         # termios.TIOCSWINSZ to be truncated. There was a hack here to work
@@ -1593,13 +1602,7 @@ class spawn(object):
         TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
         # Note, assume ws_xpixel and ws_ypixel are zero.
         s = struct.pack('HHHH', rows, cols, 0, 0)
-        try:
-            fcntl.ioctl(self.fileno(), TIOCSWINSZ, s)
-        except IOError as err:
-            errmsg = 'setwinsize() may not be called on this platform'
-            if err.args == (22, 'Invalid argument'):
-                raise IOError(err.args[0], ('%s: %s.' % (err.args[1], errmsg)))
-            raise
+        fcntl.ioctl(self.fileno(), TIOCSWINSZ, s)
 
     def interact(self, escape_character=chr(29),
             input_filter=None, output_filter=None):

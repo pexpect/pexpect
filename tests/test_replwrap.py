@@ -1,3 +1,4 @@
+import re
 import unittest
 
 import pexpect
@@ -24,12 +25,12 @@ class REPLWrapTestCase(unittest.TestCase):
 
         # Check that the REPL was reset (SIGINT) after the incomplete input
         res = bash.run_command("echo '1 2\n3 4'")
-        self.assertEqual(res.strip().splitlines(), ['1 2', '3 4'])
+        self.assertEqual(res.strip().splitlines()[:2], ['1 2', '3 4'])
 
     def test_existing_spawn(self):
-        child = pexpect.spawnu("bash")
-        repl = replwrap.REPLWrapper(child, replwrap.u("$ "),
-                            "PS1='{0}'; PS2='{1}'")
+        child = pexpect.spawnu("bash", echo=False, timeout=5)
+        repl = replwrap.REPLWrapper(child, re.compile('[$#]'),
+                                    "PS1='{0}' PS2='{1}' PROMPT_COMMAND=''")
 
         res = repl.run_command("echo $HOME")
         assert res.startswith('/'), res

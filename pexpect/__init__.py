@@ -970,9 +970,10 @@ class spawn(object):
         if size == 0:
             return self.string_type()
         # delimiter default is EOF
-        index = self.expect([b'\r\n', self.delimiter])
+        line_ending = b'\r\n' if self.string_type == bytes else '\r\n'
+        index = self.expect([line_ending, self.delimiter])
         if index == 0:
-            return self.before + b'\r\n'
+            return self.before + line_ending
         else:
             return self.before
 

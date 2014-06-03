@@ -503,7 +503,7 @@ class spawn(object):
             fd = sys.__stdin__.fileno()
             self._INTR = ord(termios.tcgetattr(fd)[6][VINTR])
             self._EOF = ord(termios.tcgetattr(fd)[6][VEOF])
-        except (ImportError, OSError, IOError):
+        except (ImportError, OSError, IOError, termios.error):
             # unless the controlling process is also not a terminal,
             # such as cron(1). Fall-back to using CEOF and CINTR.
             try:

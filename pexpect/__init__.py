@@ -838,9 +838,9 @@ class spawn(object):
         on or False if echo is off. Child applications that are expecting you
         to enter a password often set ECHO False. See waitnoecho().
 
-        Not supported platforms where ``isatty()`` returns False.  '''
+        Not supported on platforms where ``isatty()`` returns False.  '''
 
-	errmsg = 'getecho() may not be called on this platform'
+        errmsg = 'getecho() may not be called on this platform'
 
         try:
             attr = termios.tcgetattr(self.child_fd)
@@ -882,7 +882,7 @@ class spawn(object):
             p.expect(['abcd'])
             p.expect(['wxyz'])
 
-        Not supported platforms where ``isatty()`` returns False.  '''
+        Not supported on platforms where ``isatty()`` returns False.  '''
 
         errmsg = 'setecho() may not be called on this platform'
 

@@ -1640,9 +1640,7 @@ class spawn(object):
             p = pexpect.spawn('/bin/bash')
             signal.signal(signal.SIGWINCH, sigwinch_passthrough)
             p.interact()
-
-        Note that setwinsize() is not supported on platforms where ``isatty()``
-        returns False.  '''
+        '''
 
         # Flush the buffer.
         self.write_to_stdout(self.buffer)

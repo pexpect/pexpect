@@ -7,6 +7,12 @@ Releases
 Version 3.3
 ```````````
 
+* Fix various issues related to SunOS (SmartOS).  A new keyword argument has
+  been included, ``echo=True`` by default, for the ``spawn()`` constructor.
+  On SRV4 systems, the master process may not use ``setecho()``, ``getecho()``,
+  ``getwinsize()``, ``setwinsize()`` or ``waitnoecho()``, because the master_fd
+  side of the pty-pair does not appear as a terminal (``isatty()`` returns
+  False) (:ghissue:`44`).
 * Fixed issue where pexpect would attempt to execute a directory because
   it has the 'execute' bit set (:ghissue:`37`).
 
@@ -109,7 +115,7 @@ Version 2.3
 * Thanks to a suggestion and sample code from Chad J. Schroeder I added the ability
   for Pexpect to operate on a file descriptor that is already open. This means that
   Pexpect can be used to control streams such as those from serial port devices. Now,
-  you just pass the integer file descriptor as the "command" when contsructing a
+  you just pass the integer file descriptor as the "command" when constructing a
   spawn open. For example on a Linux box with a modem on ttyS1::
 
       fd = os.open("/dev/ttyS1", os.O_RDWR|os.O_NONBLOCK|os.O_NOCTTY)

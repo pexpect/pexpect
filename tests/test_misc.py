@@ -35,6 +35,13 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
 
     def test_isatty (self):
         child = pexpect.spawn('cat')
+        val = child.isatty()
+        if not val and sys.platform.lower().startswith('sunos'):
+            if sys.platform.lower().startswith('sunos'):
+                if hasattr(unittest, 'SkipTest'):
+                    raise unittest.SkipTest("Not supported on this platform.")
+                return 'skip'
+            raise
         assert child.isatty(), "Not returning True. Should always be True."
 
     def test_read (self):
@@ -96,8 +103,8 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         # of `cat', and their related terminal and line-buffer handling
         assert (page == b'abc\r\nabc\r\n123\r\n123\r\n' or
                 page == b'abc\r\n123\r\nabc\r\n123\r\n' or
-                page == b'abc\r\n123abc\r\n\r\n123\r\n') , \
-               "iterator did not work. page=%r"(page,)
+                page == b'abc\r\n123abc\r\n\r\n123\r\n'
+                ), "iterator did not work. page=%r" % (page,)
 
     def test_readlines(self):
         '''Note that on some slow or heavily loaded systems that the lines

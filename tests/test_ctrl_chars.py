@@ -23,9 +23,7 @@ from __future__ import print_function
 import pexpect
 import unittest
 import PexpectTestCase
-import time
 import sys
-import re
 
 if sys.version_info[0] >= 3:
     def byte(i):
@@ -33,11 +31,6 @@ if sys.version_info[0] >= 3:
 else:
     byte = chr
 
-def num_eol(num):
-    pattern = r'({0})(\s+)'.format(num)
-    if sys.version_info[0] >= 3:
-        pattern = bytes(pattern, 'ascii')
-    return re.compile(pattern)
 
 class TestCtrlChars(PexpectTestCase.PexpectTestCase):
 
@@ -48,24 +41,24 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         child.expect('READY', timeout=5)
         for i in range(1,256):
             child.send(byte(i))
-            child.expect(num_eol(i))
+            child.expect(str(i) + '*')
 
         # This needs to be last, as getch.py exits on \x00
         child.send(byte(0))
-        child.expect(num_eol(0))
+        child.expect(str(0) + '*')
         child.expect(pexpect.EOF)
 
     def test_sendintr (self):
         child = pexpect.spawn('python getch.py')
         child.expect('READY', timeout=5)
         child.sendintr()
-        child.expect(num_eol(child._INTR))
+        child.expect(str(child._INTR) + '*')
 
     def test_sendeof(self):
         child = pexpect.spawn('python getch.py')
         child.expect('READY', timeout=5)
         child.sendeof()
-        child.expect(num_eol(child._EOF))
+        child.expect(str(child._EOF) + '*')
 
     def test_bad_sendcontrol_chars (self):
         '''This tests that sendcontrol will return 0 for an unknown char. '''
@@ -86,30 +79,30 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
             assert child.sendcontrol(ctrl) == 1
             val = ord(ctrl) - ord('a') + 1
             try:
-                child.expect(num_eol(val), timeout=2)
+                child.expect(str(val) + '*', timeout=2)
             except:
                 print(ctrl)
                 raise
 
         # escape character
         assert child.sendcontrol('[') == 1
-        child.expect (num_eol(27))
+        child.expect (str(27) + '*')
         assert child.sendcontrol('\\') == 1
-        child.expect (num_eol(28))
+        child.expect (str(28) + '*')
         # telnet escape character
         assert child.sendcontrol(']') == 1
-        child.expect (num_eol(29))
+        child.expect (str(29) + '*')
         assert child.sendcontrol('^') == 1
-        child.expect (num_eol(30))
+        child.expect (str(30) + '*')
         # irc protocol uses this to underline ...
         assert child.sendcontrol('_') == 1
-        child.expect (num_eol(31))
+        child.expect (str(31) + '*')
         # the real "backspace is delete"
         assert child.sendcontrol('?') == 1
-        child.expect (num_eol(127))
+        child.expect (str(127) + '*')
         # NUL, same as ctrl + ' '
         assert child.sendcontrol('@') == 1
-        child.expect (num_eol(0))
+        child.expect (str(0) + '*')
         # 0 is sentinel value to getch.py
         child.expect (pexpect.EOF)
         assert child.isalive() == False

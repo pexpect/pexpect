@@ -7,8 +7,13 @@ Releases
 Version 3.3
 ```````````
 
+* Added a mechanism to wrap REPLs, or shells, in an object which can conveniently
+  be used to send commands and wait for the output (:mod:`pexpect.replwrap`).
 * Fixed issue where pexpect would attempt to execute a directory because
   it has the 'execute' bit set (:ghissue:`37`).
+* Removed the ``pexpect.psh`` module. This was never documented, and we found
+  no evidence that people use it. The new :mod:`pexpect.replwrap` module
+  provides a more flexible alternative.
 
 Version 3.2
 ```````````

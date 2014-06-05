@@ -599,7 +599,7 @@ class spawn(object):
         if self.use_native_pty_fork:
             try:
                 self.pid, self.child_fd = pty.fork()
-            except OSError:
+            except OSError:  # pragma: no cover
                 err = sys.exc_info()[1]
                 raise ExceptionPexpect('pty.fork() failed: ' + str(err))
         else:
@@ -660,7 +660,7 @@ class spawn(object):
             raise ExceptionPexpect("Could not open with os.openpty().")
 
         pid = os.fork()
-        if pid < 0:
+        if pid < 0:  # pragma: no cover
             raise ExceptionPexpect("Failed os.fork().")
         elif pid == 0:
             # Child.
@@ -924,7 +924,7 @@ class spawn(object):
             self._log(s, 'read')
             return s
 
-        raise ExceptionPexpect('Reached an unexpected state.')
+        raise ExceptionPexpect('Reached an unexpected state.')  # pragma: no cover
 
     def read(self, size=-1):
         '''This reads at most "size" bytes from the file (less if the read hits
@@ -1179,7 +1179,7 @@ class spawn(object):
             self.exitstatus = None
             self.signalstatus = os.WTERMSIG(status)
             self.terminated = True
-        elif os.WIFSTOPPED(status):
+        elif os.WIFSTOPPED(status):  # pragma: no cover
             # You can't call wait() on a child process in the stopped state.
             raise ExceptionPexpect('Called wait() on a stopped child ' +
                     'process. This is not supported. Is some other ' +
@@ -1227,7 +1227,7 @@ class spawn(object):
             try:
                 ### os.WNOHANG) # Solaris!
                 pid, status = os.waitpid(self.pid, waitpid_options)
-            except OSError as e:
+            except OSError as e:  # pragma: no cover
                 # This should never happen...
                 if e.errno == errno.ECHILD:
                     raise ExceptionPexpect('isalive() encountered condition ' +
@@ -1693,7 +1693,7 @@ class spawn(object):
 ##############################################################################
 # The following methods are no longer supported or allowed.
 
-    def setmaxread(self, maxread):
+    def setmaxread(self, maxread): # pragma: no cover
 
         '''This method is no longer supported or allowed. I don't like getters
         and setters without a good reason. '''
@@ -1702,7 +1702,7 @@ class spawn(object):
                 'or allowed. Just assign a value to the ' +
                 'maxread member variable.')
 
-    def setlog(self, fileobject):
+    def setlog(self, fileobject): # pragma: no cover
 
         '''This method is no longer supported or allowed.
         '''

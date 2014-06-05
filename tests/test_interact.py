@@ -43,6 +43,8 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         p.expect (b'<out>Hello')
         p.expect (b'<out>there')
         p.expect (b'<out>Mr. Python')
+        p.sendcontrol(']')
+        p.expect_exact('Escaped interact')
         assert p.isalive()
         p.sendeof ()
         p.expect (pexpect.EOF)

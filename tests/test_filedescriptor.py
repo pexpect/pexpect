@@ -56,29 +56,17 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         fd = os.open ('TESTDATA.txt', os.O_RDONLY)
         s = fdpexpect.fdspawn (fd)
         assert not s.isatty()
-        #os.close(fd)
         s.close()
 
-###    def test_close_does_not_close_fd (self):
-###        '''Calling close() on a fdpexpect.fdspawn object should not
-###                close the underlying file descriptor.
-###        '''
-###        fd = os.open ('TESTDATA.txt', os.O_RDONLY)
-###        s = fdpexpect.fdspawn (fd)
-###        try:
-###            s.close()
-###            self.fail('Expected an Exception.')
-###        except pexpect.ExceptionPexpect, e:
-###            pass
+    def test_fileobj(self):
+        f = open('TESTDATA.txt', 'r')
+        s = fdpexpect.fdspawn(f)  # Should get the fileno from the file handle
+        s.expect('2')
+        s.close()
+        assert not s.isalive()
+        s.close()  # Smoketest - should be able to call this again
 
 if __name__ == '__main__':
     unittest.main()
 
 suite = unittest.makeSuite(ExpectTestCase, 'test')
-
-#fout = open('delete_me_1','wb')
-#fout.write(the_old_way)
-#fout.close
-#fout = open('delete_me_2', 'wb')
-#fout.write(the_new_way)
-#fout.close

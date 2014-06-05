@@ -129,6 +129,17 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
             s.process (c)
         assert str(s) == tetris_target
 
+    def test_lines(self):
+        s = ANSI.ANSI(5, 5)
+        s.write('a'*6 + '\n')
+        s.write('ab\bcd\n')
+        s.write('ab\rcd\n')
+        assert str(s) == ('aaaaa\n'
+                          'a    \n'
+                          'acd  \n'
+                          'cd   \n'
+                          '     ')
+
 if __name__ == '__main__':
     unittest.main()
 

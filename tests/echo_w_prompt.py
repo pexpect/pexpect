@@ -7,5 +7,9 @@ except NameError:
     raw_input = input
 
 while True:
-    a = raw_input('<in >')
+    try:
+        a = raw_input('<in >')
+    except EOFError:
+        print('<eof>')
+        break
     print('<out>', a, sep='')

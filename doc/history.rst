@@ -14,6 +14,9 @@ Version 3.3
 * Removed the ``pexpect.psh`` module. This was never documented, and we found
   no evidence that people use it. The new :mod:`pexpect.replwrap` module
   provides a more flexible alternative.
+* Fixed issue where EOF was not correctly detected in ``interact()``, causing
+  a repeating loop of output on Linux, and blocking before EOF on BSD and
+  Solaris (:ghissue:`49`).
 
 Version 3.2
 ```````````

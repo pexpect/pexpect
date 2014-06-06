@@ -13,9 +13,12 @@ from utils import no_coverage_env
 import pexpect
 import sys
 
+
 def main():
-    p = pexpect.spawnu(sys.executable + ' echo_w_prompt.py', env=no_coverage_env())
+    p = pexpect.spawnu(sys.executable + ' echo_w_prompt.py',
+                       env=no_coverage_env())
     p.interact()
+    print("Escaped interact")
 
 if __name__ == '__main__':
     main()

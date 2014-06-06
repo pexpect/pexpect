@@ -912,12 +912,14 @@ class spawn(object):
         if self.child_fd in r:
             try:
                 s = os.read(self.child_fd, size)
-            except OSError:
-                # Linux does this
-                self.flag_eof = True
-                raise EOF('End Of File (EOF). Exception style platform.')
+            except OSError as err:
+                if err.args[0] == errno.EIO:
+                    # Linux-style EOF
+                    self.flag_eof = True
+                    raise EOF('End Of File (EOF). Exception style platform.')
+                raise
             if s == b'':
-                # BSD style
+                # BSD-style EOF
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Empty string style platform.')
 
@@ -1073,23 +1075,6 @@ class spawn(object):
         called at the beginning of a line. This method does not send a newline.
         It is the responsibility of the caller to ensure the eof is sent at the
         beginning of a line. '''
-
-        ### Hmmm... how do I send an EOF?
-        ###C  if ((m = write(pty, *buf, p - *buf)) < 0)
-        ###C      return (errno == EWOULDBLOCK) ? n : -1;
-        #fd = sys.stdin.fileno()
-        #old = termios.tcgetattr(fd) # remember current state
-        #attr = termios.tcgetattr(fd)
-        #attr[3] = attr[3] | termios.ICANON # ICANON must be set to see EOF
-        #try: # use try/finally to ensure state gets restored
-        #    termios.tcsetattr(fd, termios.TCSADRAIN, attr)
-        #    if hasattr(termios, 'CEOF'):
-        #        os.write(self.child_fd, '%c' % termios.CEOF)
-        #    else:
-        #        # Silly platform does not define CEOF so assume CTRL-D
-        #        os.write(self.child_fd, '%c' % 4)
-        #finally: # restore state
-        #    termios.tcsetattr(fd, termios.TCSADRAIN, old)
         if hasattr(termios, 'VEOF'):
             char = ord(termios.tcgetattr(self.child_fd)[6][termios.VEOF])
         else:
@@ -1642,10 +1627,14 @@ class spawn(object):
             if self.child_fd in r:
                 try:
                     data = self.__interact_read(self.child_fd)
-                except OSError as e:
-                    # The subprocess may have closed before we get to reading it
-                    if e.errno != errno.EIO:
-                        raise
+                except OSError as err:
+                    if err.args[0] == errno.EIO:
+                        # Linux-style EOF
+                        break
+                    raise
+                if data == b'':
+                    # BSD-style EOF
+                    break
                 if output_filter:
                     data = output_filter(data)
                 if self.logfile is not None:

@@ -731,11 +731,11 @@ class spawn(object):
             try:
                 child_name = os.ttyname(tty_fd)
                 break
-            except OSError, err:
-                 tries += 1
-                 if tries > _max_tries:
-                     raise
-                 time.sleep(_poll)
+            except OSError:
+                tries += 1
+                if tries > _max_tries:
+                    raise
+                time.sleep(_poll)
 
         # Disconnect from controlling tty. Harmless if not already connected.
         try:

@@ -914,7 +914,7 @@ class spawn(object):
         if self.child_fd in r:
             try:
                 s = os.read(self.child_fd, size)
-            except OSError, err:
+            except OSError as err:
                 if err.args[0] == errno.EIO:
                     # Linux-style EOF
                     self.flag_eof = True
@@ -1629,7 +1629,7 @@ class spawn(object):
             if self.child_fd in r:
                 try:
                     data = self.__interact_read(self.child_fd)
-                except OSError, err:
+                except OSError as err:
                     if err.args[0] == errno.EIO:
                         # Linux-style EOF
                         break

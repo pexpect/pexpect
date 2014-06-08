@@ -31,23 +31,16 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
         '''This tests that calling wait on a finished process works as expected.
         '''
         p = pexpect.spawn('sleep 3')
-        if not p.isalive():
-            self.fail ('Child process is not alive. It should be.')
-        time.sleep(1)
+        assert p.isalive()
         p.wait()
-        if p.isalive():
-            self.fail ('Child process is not dead. It should be.')
+        assert not p.isalive()
+
         p = pexpect.spawn('sleep 3')
-        if not p.isalive():
-            self.fail ('Child process is not alive. It should be.')
+        assert p.isalive()
         p.kill(9)
         time.sleep(1)
-        try:
+        with self.assertRaises(pexpect.ExceptionPexpect):
             p.wait()
-        except pexpect.ExceptionPexpect:
-            pass
-        else:
-            self.fail ('Should have raised ExceptionPython because you can\'t call wait on a dead process.')
 
     def test_signal_wait(self):
         '''Test calling wait with a process terminated by a signal.'''
@@ -55,64 +48,64 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
             return 'SKIP'
         p = pexpect.spawn(sys.executable, ['alarm_die.py'])
         p.wait()
-        assert p.exitstatus is None, p.exitstatus
+        assert p.exitstatus is None
         self.assertEqual(p.signalstatus, signal.SIGALRM)
 
     def test_expect_isalive_dead_after_normal_termination (self):
-        p = pexpect.spawn('ls')
+        p = pexpect.spawn('ls', timeout=15)
         p.expect(pexpect.EOF)
-        time.sleep(1) # allow kernel status time to catch up with state.
-        if p.isalive():
-            self.fail ('Child process is not dead. It should be.')
+        assert not p.isalive()
 
-    def test_expect_isalive_dead_after_SIGINT (self):
+    def test_expect_isalive_dead_after_SIGHUP(self):
+        p = pexpect.spawn('cat', timeout=5, ignore_sighup=False)
+        assert p.isalive()
+        force = False
+        if sys.platform.lower().startswith('sunos'):
+            # On Solaris (SmartOs), and only when executed from cron(1), SIGKILL
+            # is required to end the sub-process. This is done using force=True
+            force = True
+        assert p.terminate(force) == True
+        p.expect(pexpect.EOF)
+        assert not p.isalive()
+
+    def test_expect_isalive_dead_after_SIGINT(self):
         p = pexpect.spawn('cat', timeout=5)
-        if not p.isalive():
-            self.fail ('Child process is not alive. It should be.')
-        p.terminate()
-        # Solaris is kind of slow.
-        # Without this delay then p.expect(...) will not see
-        # that the process is dead and it will timeout.
-        time.sleep(1)
+        assert p.isalive()
+        force = False
+        if sys.platform.lower().startswith('sunos'):
+            # On Solaris (SmartOs), and only when executed from cron(1), SIGKILL
+            # is required to end the sub-process. This is done using force=True
+            force = True
+        assert p.terminate(force) == True
         p.expect(pexpect.EOF)
-        if p.isalive():
-            self.fail ('Child process is not dead. It should be.')
+        assert not p.isalive()
 
-    def test_expect_isalive_dead_after_SIGKILL (self):
-        p = pexpect.spawn('cat', timeout=3)
-        if not p.isalive():
-            self.fail ('Child process is not alive. It should be.')
+    def test_expect_isalive_dead_after_SIGKILL(self):
+        p = pexpect.spawn('cat', timeout=5)
+        assert p.isalive()
         p.kill(9)
-        # Solaris is kind of slow.
-        # Without this delay then p.expect(...) will not see
-        # that the process is dead and it will timeout.
-        time.sleep(1)
         p.expect(pexpect.EOF)
-        if p.isalive():
-            self.fail ('Child process is not dead. It should be.')
+        assert not p.isalive()
 
     def test_forced_terminate(self):
         p = pexpect.spawn(sys.executable, ['needs_kill.py'])
         p.expect('READY')
-        res = p.terminate(force=True)
-        assert res, res
+        assert p.terminate(force=True) == True
+        p.expect(pexpect.EOF)
+        assert not p.isalive()
 
 ### Some platforms allow this. Some reset status after call to waitpid.
+### probably not necessary, isalive() returns early when terminate is False.
     def test_expect_isalive_consistent_multiple_calls (self):
         '''This tests that multiple calls to isalive() return same value.
         '''
-
         p = pexpect.spawn('cat')
-        if not p.isalive():
-            self.fail ('Child process is not alive. It should be.')
-        if not p.isalive():
-            self.fail ('Second call. Child process is not alive. It should be.')
+        assert p.isalive()
+        assert p.isalive()
         p.kill(9)
         p.expect(pexpect.EOF)
-        if p.isalive():
-            self.fail ('Child process is not dead. It should be.')
-        if p.isalive():
-            self.fail ('Second call. Child process is not dead. It should be.')
+        assert not p.isalive()
+        assert not p.isalive()
 
 if __name__ == '__main__':
     unittest.main()

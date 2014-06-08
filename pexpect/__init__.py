@@ -303,7 +303,7 @@ class spawn(object):
 
     def __init__(self, command, args=[], timeout=30, maxread=2000,
         searchwindowsize=None, logfile=None, cwd=None, env=None,
-        ignore_sighup=True):
+        ignore_sighup=True, echo=True):
 
         '''This is the constructor. The command parameter may be a string that
         includes a command and any arguments to the command. For example::
@@ -416,7 +416,16 @@ class spawn(object):
         signalstatus will store the signal value and exitstatus will be None.
         If you need more detail you can also read the self.status member which
         stores the status returned by os.waitpid. You can interpret this using
-        os.WIFEXITED/os.WEXITSTATUS or os.WIFSIGNALED/os.TERMSIG. '''
+        os.WIFEXITED/os.WEXITSTATUS or os.WIFSIGNALED/os.TERMSIG.
+
+        The echo attribute may be set to False to disable echoing of input.
+        As a pseudo-terminal, all input echoed by the "keyboard" (send()
+        or sendline()) will be repeated to output.  For many cases, it is
+        not desirable to have echo enabled, and it may be later disabled
+        using setecho(False) followed by waitnoecho().  However, for some
+        platforms such as Solaris, this is not possible, and should be
+        disabled immediately on spawn.
+        '''
 
         self.STDIN_FILENO = pty.STDIN_FILENO
         self.STDOUT_FILENO = pty.STDOUT_FILENO
@@ -438,7 +447,7 @@ class spawn(object):
         self.status = None
         self.flag_eof = False
         self.pid = None
-        # the chile filedescriptor is initially closed
+        # the child file descriptor is initially closed
         self.child_fd = -1
         self.timeout = timeout
         self.delimiter = EOF
@@ -467,16 +476,30 @@ class spawn(object):
         self.closed = True
         self.cwd = cwd
         self.env = env
+        self.echo = echo
         self.ignore_sighup = ignore_sighup
+        _platform = sys.platform.lower()
         # This flags if we are running on irix
-        self.__irix_hack = (sys.platform.lower().find('irix') >= 0)
+        self.__irix_hack = _platform.startswith('irix')
         # Solaris uses internal __fork_pty(). All others use pty.fork().
-        if ((sys.platform.lower().find('solaris') >= 0)
-            or (sys.platform.lower().find('sunos5') >= 0)):
-            self.use_native_pty_fork = False
-        else:
-            self.use_native_pty_fork = True
-
+        self.use_native_pty_fork = not (
+                _platform.startswith('solaris') or
+                _platform.startswith('sunos'))
+        # inherit EOF and INTR definitions from controlling process.
+        try:
+            from termios import VEOF, VINTR
+            fd = sys.__stdin__.fileno()
+            self._INTR = ord(termios.tcgetattr(fd)[6][VINTR])
+            self._EOF = ord(termios.tcgetattr(fd)[6][VEOF])
+        except (ImportError, OSError, IOError, termios.error):
+            # unless the controlling process is also not a terminal,
+            # such as cron(1). Fall-back to using CEOF and CINTR.
+            try:
+                from termios import CEOF, CINTR
+                (self._INTR, self._EOF) = (CINTR, CEOF)
+            except ImportError:
+                #                         ^C, ^D
+                (self._INTR, self._EOF) = (3, 4)
         # Support subclasses that do not use command or args.
         if command is None:
             self.command = None
@@ -607,26 +630,32 @@ class spawn(object):
             # Use internal __fork_pty
             self.pid, self.child_fd = self.__fork_pty()
 
-        if self.pid == 0:
+        # Some platforms must call setwinsize() and setecho() from the
+        # child process, and others from the master process. We do both,
+        # allowing IOError for either.
+
+        if self.pid == pty.CHILD:
             # Child
+            self.child_fd = self.STDIN_FILENO
+
+            # set default window size of 24 rows by 80 columns
             try:
-                # used by setwinsize()
-                self.child_fd = sys.stdout.fileno()
                 self.setwinsize(24, 80)
-            # which exception, shouldnt' we catch explicitly .. ?
-            except:
-                # Some platforms do not like setwinsize (Cygwin).
-                # This will cause problem when running applications that
-                # are very picky about window size.
-                # This is a serious limitation, but not a show stopper.
-                pass
+            except IOError as err:
+                if err.args[0] not in (errno.EINVAL, errno.ENOTTY):
+                    raise
+
+            # disable echo if spawn argument echo was unset
+            if not self.echo:
+                try:
+                    self.setecho(self.echo)
+                except (IOError, termios.error) as err:
+                    if err.args[0] not in (errno.EINVAL, errno.ENOTTY):
+                        raise
+
             # Do not allow child to inherit open file descriptors from parent.
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
-            for i in range(3, max_fd):
-                try:
-                    os.close(i)
-                except OSError:
-                    pass
+            os.closerange(3, max_fd)
 
             if self.ignore_sighup:
                 signal.signal(signal.SIGHUP, signal.SIG_IGN)
@@ -639,6 +668,13 @@ class spawn(object):
                 os.execvpe(self.command, self.args, self.env)
 
         # Parent
+        try:
+            self.setwinsize(24, 80)
+        except IOError as err:
+            if err.args[0] not in (errno.EINVAL, errno.ENOTTY):
+                raise
+
+
         self.terminated = False
         self.closed = False
 
@@ -661,19 +697,15 @@ class spawn(object):
             raise ExceptionPexpect("Could not open with os.openpty().")
 
         pid = os.fork()
-        if pid < 0:  # pragma: no cover
-            raise ExceptionPexpect("Failed os.fork().")
-        elif pid == 0:
+        if pid == pty.CHILD:
             # Child.
             os.close(parent_fd)
             self.__pty_make_controlling_tty(child_fd)
 
-            os.dup2(child_fd, 0)
-            os.dup2(child_fd, 1)
-            os.dup2(child_fd, 2)
+            os.dup2(child_fd, self.STDIN_FILENO)
+            os.dup2(child_fd, self.STDOUT_FILENO)
+            os.dup2(child_fd, self.STDERR_FILENO)
 
-            if child_fd > 2:
-                os.close(child_fd)
         else:
             # Parent.
             os.close(child_fd)
@@ -685,15 +717,29 @@ class spawn(object):
         more portable than the pty.fork() function. Specifically, this should
         work on Solaris. '''
 
-        child_name = os.ttyname(tty_fd)
+        # os.ttyname() fails for the child process under a rare timing
+        # condition (about 1 in 10 on SmartOs in a VMWare machine). May
+        # raise OSError as errno ENOTTY -- ptsname(3C) should be used,
+        # on this system, but python does not expose it, it would require
+        # ctypes + libc. which is also not available, filed patch as
+        # http://bugs.python.org/issue20664
+        child_name, tries = None, 0
+        _poll, _max_tries= 0.1, 10
+        while child_name is None:
+            try:
+                child_name = os.ttyname(tty_fd)
+                break
+            except OSError, err:
+                 tries += 1
+                 if tries > _max_tries:
+                     raise
+                 time.sleep(_poll)
 
         # Disconnect from controlling tty. Harmless if not already connected.
         try:
             fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
-            if fd >= 0:
-                os.close(fd)
-        # which exception, shouldnt' we catch explicitly .. ?
-        except:
+            os.close(fd)
+        except OSError:
             # Already disconnected. This happens if running inside cron.
             pass
 
@@ -703,10 +749,8 @@ class spawn(object):
         # by attempting to open it again.
         try:
             fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
-            if fd >= 0:
-                os.close(fd)
-        # which exception, shouldnt' we catch explicitly .. ?
-        except:
+            os.close(fd)
+        except OSError:
             # Good! We are disconnected from a controlling tty.
             pass
 
@@ -718,11 +762,15 @@ class spawn(object):
             os.close(fd)
 
         # Verify we now have a controlling tty.
-        fd = os.open("/dev/tty", os.O_WRONLY)
-        if fd < 0:
-            raise ExceptionPexpect("Could not open controlling tty, /dev/tty")
-        else:
+        try:
+            fd = os.open("/dev/tty", os.O_WRONLY)
             os.close(fd)
+        except OSError as err:
+            if err.args[0] == ENXIO:
+                # on Solaris, `/dev/tty' raises OSError upon opening, though
+                # it does exist: /dev/tty -> ../devices/pseudo/sy@0:tty
+                pass
+
 
     def fileno(self):
         '''This returns the file descriptor of the pty for the child.
@@ -756,7 +804,11 @@ class spawn(object):
 
     def isatty(self):
         '''This returns True if the file descriptor is open and connected to a
-        tty(-like) device, else False. '''
+        tty(-like) device, else False.
+
+        On SRV4-style platforms implementing streams, the child pty does not
+        appear as a terminal device.  This means methods such as setecho(),
+        setwinsize(), getwinsize() may raise an IOError. '''
 
         return os.isatty(self.child_fd)
 
@@ -793,12 +845,20 @@ class spawn(object):
     def getecho(self):
         '''This returns the terminal echo mode. This returns True if echo is
         on or False if echo is off. Child applications that are expecting you
-        to enter a password often set ECHO False. See waitnoecho(). '''
+        to enter a password often set ECHO False. See waitnoecho().
 
-        attr = termios.tcgetattr(self.child_fd)
-        if attr[3] & termios.ECHO:
-            return True
-        return False
+        Not supported on platforms where ``isatty()`` returns False.  '''
+
+        try:
+            attr = termios.tcgetattr(self.child_fd)
+        except termios.error as err:
+            errmsg = 'getecho() may not be called on this platform'
+            if err.args[0] == errno.EINVAL:
+                raise IOError(err.args[0], '%s: %s.' % (err.args[1], errmsg))
+            raise
+
+        self.echo = bool(attr[3] & termios.ECHO)
+        return self.echo
 
     def setecho(self, state):
         '''This sets the terminal echo mode on or off. Note that anything the
@@ -828,18 +888,35 @@ class spawn(object):
             p.expect(['1234'])
             p.expect(['abcd'])
             p.expect(['wxyz'])
+
+
+        Not supported on platforms where ``isatty()`` returns False.
         '''
 
-        self.child_fd
-        attr = termios.tcgetattr(self.child_fd)
+        errmsg = 'setecho() may not be called on this platform'
+
+        try:
+            attr = termios.tcgetattr(self.child_fd)
+        except termios.error as err:
+            if err.args[0] == errno.EINVAL:
+                raise IOError(err.args[0], '%s: %s.' % (err.args[1], errmsg))
+            raise
+
         if state:
             attr[3] = attr[3] | termios.ECHO
         else:
             attr[3] = attr[3] & ~termios.ECHO
-        # I tried TCSADRAIN and TCSAFLUSH, but
-        # these were inconsistent and blocked on some platforms.
-        # TCSADRAIN would probably be ideal if it worked.
-        termios.tcsetattr(self.child_fd, termios.TCSANOW, attr)
+
+        try:
+            # I tried TCSADRAIN and TCSAFLUSH, but these were inconsistent and
+            # blocked on some platforms. TCSADRAIN would probably be ideal.
+            termios.tcsetattr(self.child_fd, termios.TCSANOW, attr)
+        except IOError as err:
+            if err.args[0] == errno.EINVAL:
+                raise IOError(err.args[0], '%s: %s.' % (err.args[1], errmsg))
+            raise
+
+        self.echo = state
 
     def _log(self, s, direction):
         if self.logfile is not None:
@@ -1075,24 +1152,15 @@ class spawn(object):
         called at the beginning of a line. This method does not send a newline.
         It is the responsibility of the caller to ensure the eof is sent at the
         beginning of a line. '''
-        if hasattr(termios, 'VEOF'):
-            char = ord(termios.tcgetattr(self.child_fd)[6][termios.VEOF])
-        else:
-            # platform does not define VEOF so assume CTRL-D
-            char = 4
-        self.send(self._chr(char))
+
+        self.send(self._chr(self._EOF))
 
     def sendintr(self):
 
         '''This sends a SIGINT to the child. It does not require
         the SIGINT to be the first character on a line. '''
 
-        if hasattr(termios, 'VINTR'):
-            char = ord(termios.tcgetattr(self.child_fd)[6][termios.VINTR])
-        else:
-            # platform does not define VINTR so assume CTRL-C
-            char = 3
-        self.send(self._chr(char))
+        self.send(self._chr(self._INTR))
 
     def eof(self):
 
@@ -1185,7 +1253,7 @@ class spawn(object):
 
         if self.flag_eof:
             # This is for Linux, which requires the blocking form
-            # of waitpid to # get status of a defunct process.
+            # of waitpid to get the status of a defunct process.
             # This is super-lame. The flag_eof would have been set
             # in read_nonblocking(), so this should be safe.
             waitpid_options = 0

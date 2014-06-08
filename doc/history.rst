@@ -16,6 +16,9 @@ Version 3.3
   provides a more flexible alternative.
 * Fixed ``TypeError: got <type 'str'> ('\r\n') as pattern`` in ``readline()``
   method of ``spawnu`` (:ghissue:`67`).
+* Fixed issue where EOF was not correctly detected in ``interact()``, causing
+  a repeating loop of output on Linux, and blocking before EOF on BSD and
+  Solaris (:ghissue:`49`).
 
 Version 3.2
 ```````````

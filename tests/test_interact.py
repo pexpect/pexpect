@@ -27,49 +27,67 @@ import pexpect
 import unittest
 from . import PexpectTestCase
 
+
 class InteractTestCase (PexpectTestCase.PexpectTestCase):
     def setUp(self):
         super(InteractTestCase, self).setUp()
-        self.env = os.environ.copy()
-        # Ensure that Pexpect is importable by the subprocesses.
-        self.env['PYTHONPATH'] = self.project_dir + os.pathsep + os.environ.get('PYTHONPATH', '')
+        self.save_pythonpath = os.getenv('PYTHONPATH')
 
-    def test_interact (self):
-        p = pexpect.spawn(str('%s interact.py' % (self.PYTHONBIN,)), env=self.env)
+        # Ensure 'import pexpect' works in subprocess interact*.py
+        if not self.save_pythonpath:
+            os.putenv('PYTHONPATH', self.project_dir)
+        else:
+            os.putenv('PYTHONPATH', os.pathsep.join((self.project_dir,
+                                                     self.save_pythonpath)))
+
+        self.interact_py = ' '.join((self.PYTHONBIN,
+                                     'interact.py',))
+        self.interact_ucs_py = ' '.join((self.PYTHONBIN,
+                                         'interact_unicode.py',))
+
+    def tearDown(self):
+        os.putenv('PYTHONPATH', self.save_pythonpath or '')
+
+    def test_interact_escape(self):
+        " Ensure `escape_character' value exits interactive mode. "
+        p = pexpect.spawn(self.interact_py, timeout=5)
         p.expect('<in >')
-        p.sendline (b'Hello')
-        p.sendline (b'there')
-        p.sendline (b'Mr. Python')
-        p.expect (b'<out>Hello')
-        p.expect (b'<out>there')
-        p.expect (b'<out>Mr. Python')
-        p.sendcontrol(']')
+        p.sendcontrol(']')  # chr(29), the default `escape_character'
+                            # value of pexpect.interact().
         p.expect_exact('Escaped interact')
-        assert p.isalive()
-        p.sendeof ()
-        p.expect (pexpect.EOF)
+        p.expect(pexpect.EOF)
         assert not p.isalive()
-        assert p.exitstatus == 0, (p.exitstatus, p.before)
+        assert p.exitstatus == 0
 
-    def test_interact_unicode (self):
-        p = pexpect.spawnu(str('%s interact_unicode.py' % (self.PYTHONBIN,)), env=self.env)
-        try:
-            p.expect('<in >')
-            p.sendline ('Hello')
-            p.sendline ('theré')
-            p.sendline ('Mr. Pyþon')
-            p.expect ('<out>Hello')
-            p.expect ('<out>theré')
-            p.expect ('<out>Mr. Pyþon')
-            assert p.isalive()
-            p.sendeof ()
-            p.expect (pexpect.EOF)
-            assert not p.isalive()
-            assert p.exitstatus == 0, (p.exitstatus, p.before)
-        except:
-            print(p.before)
-            raise
+    def test_interact_spawn_eof(self):
+        " Ensure subprocess receives EOF and exit. "
+        p = pexpect.spawn(self.interact_py, timeout=5)
+        p.expect('<in >')
+        p.sendline(b'alpha')
+        p.sendline(b'beta')
+        p.expect(b'<out>alpha')
+        p.expect(b'<out>beta')
+        p.sendeof()
+        p.expect_exact('<eof>')
+        p.expect_exact('Escaped interact')
+        p.expect(pexpect.EOF)
+        assert not p.isalive()
+        assert p.exitstatus == 0
 
+    def test_interact_spawnu_eof(self):
+        " Ensure subprocess receives unicode, EOF, and exit. "
+        p = pexpect.spawnu(self.interact_ucs_py, timeout=5)
+        p.expect('<in >')
+        p.sendline(u'ɑlpha')
+        p.sendline(u'Βeta')
+        p.expect(u'<out>ɑlpha')
+        p.expect(u'<out>Βeta')
+        p.sendeof()
+        p.expect_exact('<eof>')
+        p.expect_exact('Escaped interact')
+        p.expect(pexpect.EOF)
+        assert not p.isalive()
+        assert p.exitstatus == 0
 
 if __name__ == '__main__':
     unittest.main()

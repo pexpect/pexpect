@@ -143,7 +143,6 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         p = pexpect.spawnu('echo', [ 'bar' ])
         bar = p.readline()
 
-
 if __name__ == '__main__':
     unittest.main()
 

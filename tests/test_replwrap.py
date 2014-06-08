@@ -10,7 +10,7 @@ from pexpect import replwrap
 class REPLWrapTestCase(unittest.TestCase):
     def setUp(self):
         super(REPLWrapTestCase, self).setUp()
-        self.save_ps1 = os.getenv('PS1', '\$')
+        self.save_ps1 = os.getenv('PS1', r'\$')
         self.save_ps2 = os.getenv('PS2', '>')
         os.putenv('PS1', 'r\$')
         os.putenv('PS2', '>')

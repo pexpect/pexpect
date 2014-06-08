@@ -134,6 +134,14 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         p.sendeof()
         p.expect('▁▂▃▄▅▆▇█')
 
+    def test_readline_spawnu(self):
+        # Test using readline() with spawnu objects. This fails with a
+        # TypeError on older versions of pexpect because bytes are used for
+        # line endings rather than strings.
+        p = pexpect.spawn('echo', [ 'foo' ])
+        foo = p.readline()
+        p = pexpect.spawnu('echo', [ 'bar' ])
+        bar = p.readline()
 
 if __name__ == '__main__':
     unittest.main()

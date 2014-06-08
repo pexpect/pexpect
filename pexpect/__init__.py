@@ -284,6 +284,7 @@ class spawn(object):
         def _chr(c):
             return bytes([c])
         linesep = os.linesep.encode('ascii')
+        crlf = '\r\n'.encode('ascii')
 
         @staticmethod
         def write_to_stdout(b):
@@ -296,6 +297,7 @@ class spawn(object):
         allowed_string_types = (basestring,)  # analysis:ignore
         _chr = staticmethod(chr)
         linesep = os.linesep
+        crlf = '\r\n'
         write_to_stdout = sys.stdout.write
 
     encoding = None
@@ -970,10 +972,9 @@ class spawn(object):
         if size == 0:
             return self.string_type()
         # delimiter default is EOF
-        line_ending = b'\r\n' if self.string_type == bytes else '\r\n'
-        index = self.expect([line_ending, self.delimiter])
+        index = self.expect([self.crlf, self.delimiter])
         if index == 0:
-            return self.before + line_ending
+            return self.before + self.crlf
         else:
             return self.before
 
@@ -1731,11 +1732,13 @@ class spawnu(spawn):
         allowed_string_types = (str, )
         _chr = staticmethod(chr)
         linesep = os.linesep
+        crlf = '\r\n'
     else:
         string_type = unicode
         allowed_string_types = (unicode, )
         _chr = staticmethod(unichr)
         linesep = os.linesep.decode('ascii')
+        crlf = '\r\n'.decode('ascii')
     # This can handle unicode in both Python 2 and 3
     write_to_stdout = sys.stdout.write
 

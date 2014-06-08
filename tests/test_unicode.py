@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import platform
 import tempfile
 import sys
+import time
 
 import pexpect
 import unittest

@@ -18,21 +18,20 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-import pexpect
 import unittest
 import subprocess
 import time
+import signal
+import sys
+
+import pexpect
 from . import PexpectTestCase
 from .utils import no_coverage_env
-import signal
 
 # Many of these test cases blindly assume that sequential directory
 # listings of the /bin directory will yield the same results.
 # This may not be true, but seems adequate for testing now.
 # I should fix this at some point.
-
-# query: For some reason an extra newline occures under OS X evey
-# once in a while. Excessive uses of .replace resolve these
 
 FILTER=''.join([(len(repr(chr(x)))==3) and chr(x) or '.' for x in range(256)])
 def hex_dump(src, length=16):
@@ -51,32 +50,10 @@ def hex_diff(left, right):
         return '\n' + '\n'.join(diff,)
 
 
-class assert_raises_msg(object):
-    def __init__(self, errtype, msgpart):
-        self.errtype = errtype
-        self.msgpart = msgpart
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, etype, value, traceback):
-        if value is None:
-            raise AssertionError('Expected %s, but no exception was raised' \
-                                    % self.errtype)
-        if not isinstance(value, self.errtype):
-            raise AssertionError('Expected %s, but %s was raised' \
-                                    % (self.errtype, etype))
-
-        errstr = str(value)
-        if self.msgpart not in errstr:
-            raise AssertionError('%r was not in %r' % (self.msgpart, errstr))
-
-        return True
-
 class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_expect_basic (self):
-        p = pexpect.spawn('cat')
+        p = pexpect.spawn('cat', echo=False, timeout=5)
         p.sendline (b'Hello')
         p.sendline (b'there')
         p.sendline (b'Mr. Python')
@@ -87,7 +64,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.expect (pexpect.EOF)
 
     def test_expect_exact_basic (self):
-        p = pexpect.spawn('cat')
+        p = pexpect.spawn('cat', echo=False, timeout=5)
         p.sendline (b'Hello')
         p.sendline (b'there')
         p.sendline (b'Mr. Python')
@@ -101,7 +78,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         '''This test that the ignorecase flag will match patterns
         even if case is different using the regex (?i) directive.
         '''
-        p = pexpect.spawn('cat')
+        p = pexpect.spawn('cat', echo=False, timeout=5)
         p.sendline (b'HELLO')
         p.sendline (b'there')
         p.expect (b'(?i)hello')
@@ -113,7 +90,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         '''This test that the ignorecase flag will match patterns
         even if case is different using the ignorecase flag.
         '''
-        p = pexpect.spawn('cat')
+        p = pexpect.spawn('cat', echo=False, timeout=5)
         p.ignorecase = True
         p.sendline (b'HELLO')
         p.sendline (b'there')
@@ -129,22 +106,17 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         (one of the) the leftmost matches in the input? -- grahn)
         ... agreed! -jquast, the buffer ptr isn't forwarded on match, see first two test cases
         '''
-        p = pexpect.spawn('cat')
+        p = pexpect.spawn('cat', echo=False, timeout=5)
         self._expect_order(p)
 
     def test_expect_order_exact (self):
         '''Like test_expect_order(), but using expect_exact().
         '''
-        p = pexpect.spawn('cat')
+        p = pexpect.spawn('cat', echo=False, timeout=5)
         p.expect = p.expect_exact
         self._expect_order(p)
 
     def _expect_order (self, p):
-        # Disable echo so that the output we see is in an entirely predictable
-        # order
-        p.setecho(False)
-        p.waitnoecho()
-
         p.sendline (b'1234')
         p.sendline (b'abcd')
         p.sendline (b'wxyz')
@@ -187,7 +159,44 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
             pexpect.EOF])
         assert index == 3, (index, p.before, p.after)
 
-    def test_waitnoecho (self):
+    def test_expect_setecho_off(self):
+        '''This tests that echo may be toggled off.
+        '''
+        p = pexpect.spawn('cat', echo=True, timeout=5)
+        try:
+            self._expect_echo_toggle(p)
+        except IOError:
+            if sys.platform.lower().startswith('sunos'):
+                if hasattr(unittest, 'SkipTest'):
+                    raise unittest.SkipTest("Not supported on this platform.")
+                return 'skip'
+
+    def test_expect_setecho_off_exact(self):
+        p = pexpect.spawn('cat', echo=True, timeout=5)
+        p.expect = p.expect_exact
+        try:
+            self._expect_echo_toggle(p)
+        except IOError:
+            if sys.platform.lower().startswith('sunos'):
+                if hasattr(unittest, 'SkipTest'):
+                    raise unittest.SkipTest("Not supported on this platform.")
+                return 'skip'
+            raise
+
+    def test_waitnoecho(self):
+        " Tests setecho(False) followed by waitnoecho() "
+        p = pexpect.spawn('cat', echo=False, timeout=5)
+        try:
+            p.setecho(False)
+            p.waitnoecho()
+        except IOError:
+            if sys.platform.lower().startswith('sunos'):
+                if hasattr(unittest, 'SkipTest'):
+                    raise unittest.SkipTest("Not supported on this platform.")
+                return 'skip'
+            raise
+
+    def test_waitnoecho_order(self):
 
         ''' This tests that we can wait on a child process to set echo mode.
         For example, this tests that we could wait for SSH to set ECHO False
@@ -196,7 +205,16 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
         p1 = pexpect.spawn('%s echo_wait.py' % self.PYTHONBIN)
         start = time.time()
-        p1.waitnoecho(timeout=10)
+        try:
+            p1.waitnoecho(timeout=10)
+        except IOError:
+            if sys.platform.lower().startswith('sunos'):
+                if hasattr(unittest, 'SkipTest'):
+                    raise unittest.SkipTest("Not supported on this platform.")
+                return 'skip'
+            raise
+
+
         end_time = time.time() - start
         assert end_time < 10 and end_time > 2, "waitnoecho did not set ECHO off in the expected window of time."
 
@@ -216,15 +234,15 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         assert end_time < 10, "waitnoecho did not set ECHO off in the expected window of time."
 
     def test_expect_echo (self):
-        '''This tests that echo can be turned on and off.
+        '''This tests that echo is on by default.
         '''
-        p = pexpect.spawn('cat', timeout=10)
+        p = pexpect.spawn('cat', echo=True, timeout=5)
         self._expect_echo(p)
 
     def test_expect_echo_exact (self):
         '''Like test_expect_echo(), but using expect_exact().
         '''
-        p = pexpect.spawn('cat', timeout=10)
+        p = pexpect.spawn('cat', echo=True, timeout=5)
         p.expect = p.expect_exact
         self._expect_echo(p)
 
@@ -243,7 +261,24 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
             b'wxyz',
             pexpect.EOF])
         assert index == 0, "index="+str(index)
+
+    def _expect_echo_toggle(self, p):
+        p.sendline (b'1234') # Should see this twice (once from tty echo and again from cat).
+        index = p.expect ([
+            b'1234',
+            b'abcd',
+            b'wxyz',
+            pexpect.EOF,
+            pexpect.TIMEOUT])
+        assert index == 0, "index="+str(index)+"\n"+p.before
+        index = p.expect ([
+            b'1234',
+            b'abcd',
+            b'wxyz',
+            pexpect.EOF])
+        assert index == 0, "index="+str(index)
         p.setecho(0) # Turn off tty echo
+        p.waitnoecho()
         p.sendline (b'abcd') # Now, should only see this once.
         p.sendline (b'wxyz') # Should also be only once.
         index = p.expect ([
@@ -271,32 +306,32 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         '''This tests that mixed list of regex strings, TIMEOUT, and EOF all
         return the correct index when matched.
         '''
-        p = pexpect.spawn('cat')
+        p = pexpect.spawn('cat', echo=False, timeout=5)
         self._expect_index(p)
 
     def test_expect_index_exact (self):
         '''Like test_expect_index(), but using expect_exact().
         '''
-        p = pexpect.spawn('cat')
+        p = pexpect.spawn('cat', echo=False, timeout=5)
         p.expect = p.expect_exact
         self._expect_index(p)
 
     def _expect_index (self, p):
-        p.setecho(0)
         p.sendline (b'1234')
         index = p.expect ([b'abcd',b'wxyz',b'1234',pexpect.EOF])
         assert index == 2, "index="+str(index)
         p.sendline (b'abcd')
         index = p.expect ([pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF])
-        assert index == 1, "index="+str(index)
+        assert index == 1, "index="+str(index)+str(p)
         p.sendline (b'wxyz')
-        index = p.expect ([b'54321',pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF], timeout=5)
+        index = p.expect ([b'54321',pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF])
         assert index == 3, "index="+str(index) # Expect 'wxyz'
         p.sendline (b'$*!@?')
-        index = p.expect ([b'54321',pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF], timeout=5)
+        index = p.expect ([b'54321',pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF],
+                          timeout=1)
         assert index == 1, "index="+str(index) # Expect TIMEOUT
         p.sendeof ()
-        index = p.expect ([b'54321',pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF], timeout=5)
+        index = p.expect ([b'54321',pexpect.TIMEOUT,b'abcd',b'wxyz',b'1234',pexpect.EOF])
         assert index == 5, "index="+str(index) # Expect EOF
 
     def test_expect (self):
@@ -471,14 +506,13 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_bad_arg(self):
         p = pexpect.spawn('cat')
-        with assert_raises_msg(TypeError, 'must be one of'):
+        with self.assertRaisesRegexp(TypeError, '.*must be one of'):
             p.expect(1)
-        with assert_raises_msg(TypeError, 'must be one of'):
+        with self.assertRaisesRegexp(TypeError, '.*must be one of'):
             p.expect([1, b'2'])
-
-        with assert_raises_msg(TypeError, 'must be one of'):
+        with self.assertRaisesRegexp(TypeError, '.*must be one of'):
             p.expect_exact(1)
-        with assert_raises_msg(TypeError, 'must be one of'):
+        with self.assertRaisesRegexp(TypeError, '.*must be one of'):
             p.expect_exact([1, b'2'])
 
     def test_timeout_none(self):
@@ -493,7 +527,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
             SIGWINCH generated when a window is resized), but in this test, we
             are substituting an ALARM signal as this is much easier for testing
             and is treated the same as a SIGWINCH.
-            
+
             To ensure that the alarm fires during the expect call, we are
             setting the signal to alarm after 1 second while the spawned process
             sleeps for 2 seconds prior to sending the expected output.
@@ -501,21 +535,13 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         def noop(x, y):
             pass
         signal.signal(signal.SIGALRM, noop)
-    
-        p1 = pexpect.spawn('%s sleep_for.py 2' % self.PYTHONBIN)
-        p1.expect('READY', timeout=10)
+
+        p1 = pexpect.spawn('%s sleep_for.py 2' % self.PYTHONBIN, timeout=5)
+        p1.expect('READY')
         signal.alarm(1)
-        p1.expect('END', timeout=10)
+        p1.expect('END')
 
 if __name__ == '__main__':
     unittest.main()
 
 suite = unittest.makeSuite(ExpectTestCase,'test')
-
-#fout = open('delete_me_1','wb')
-#fout.write(the_old_way)
-#fout.close
-#fout = open('delete_me_2', 'wb')
-#fout.write(the_new_way)
-#fout.close
-

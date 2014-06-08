@@ -33,7 +33,7 @@ def main():
             val = ord(stdin.read(1))
         except KeyboardInterrupt:
             val = 3
-        sys.stdout.write('%d\r\n' % (val,))
+        sys.stdout.write('%d<STOP>\r\n' % (val,))
         if val == 0:
             # StopIteration equivalent is ctrl+' ' (\x00, NUL)
             break

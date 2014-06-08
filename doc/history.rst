@@ -19,6 +19,12 @@ Version 3.3
 * Fixed issue where EOF was not correctly detected in ``interact()``, causing
   a repeating loop of output on Linux, and blocking before EOF on BSD and
   Solaris (:ghissue:`49`).
+* Several Solaris (SmartOS) bugfixes, preventing IOError exceptions, especially
+  when used with cron(1) (:ghissue:`44`).
+* Added new keyword argument ``echo=True`` for ``spawn()``.  On SRV4-like
+  systems, the method ``isatty()`` will always return *False*: the child pty
+  does not appear as a terminal.  Therefore, ``setecho()``, ``getwinsize()``,
+  ``setwinsize()``, and ``waitnoecho()`` are not supported on those platforms.
 
 Version 3.2
 ```````````
@@ -115,11 +121,11 @@ Version 2.3
   consistently on different platforms. Solaris is the most difficult to support.
 * You can now put ``TIMEOUT`` in a list of expected patterns. This is just like
   putting ``EOF`` in the pattern list. Expecting for a ``TIMEOUT`` may not be
-  used as often as ``EOF``, but this makes Pexpect more consitent.
+  used as often as ``EOF``, but this makes Pexpect more consistent.
 * Thanks to a suggestion and sample code from Chad J. Schroeder I added the ability
   for Pexpect to operate on a file descriptor that is already open. This means that
   Pexpect can be used to control streams such as those from serial port devices. Now,
-  you just pass the integer file descriptor as the "command" when contsructing a
+  you just pass the integer file descriptor as the "command" when constructing a
   spawn open. For example on a Linux box with a modem on ttyS1::
 
       fd = os.open("/dev/ttyS1", os.O_RDWR|os.O_NONBLOCK|os.O_NOCTTY)

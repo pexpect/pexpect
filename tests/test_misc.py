@@ -49,6 +49,13 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         remaining = child.read().replace(_CAT_EOF, b'')
         self.assertEqual(remaining, b'abc\r\n')
 
+    def test_readline_bin_echo(self):
+        # given,
+        child = pexpect.spawn('echo', ['input', ])
+
+        # exercise,
+        assert child.readline() == b'input' + child.crlf
+
     def test_readline (self):
         '''See the note in test_readlines() for an explaination as to why
         I allow line3 and line4 to return multiple patterns.

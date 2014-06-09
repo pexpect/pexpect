@@ -134,6 +134,15 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         p.sendeof()
         p.expect('▁▂▃▄▅▆▇█')
 
+    def test_readline_bin_echo(self):
+        # Test using readline() with spawnu objects. pexpect 3.2 had threw
+        # a TypeError when concatenating a bytestring to a unicode type.
+
+        # given,
+        child = pexpect.spawnu('echo', ['input', ])
+
+        # exercise,
+        assert child.readline() == 'input' + child.crlf
 
 if __name__ == '__main__':
     unittest.main()

@@ -1958,9 +1958,15 @@ class searcher_re(object):
         return best_index
 
 
-def is_exe(fname):
+def is_executable_file(path):
+    """Checks that path is an executable regular file (or a symlink to a file).
+    
+    This is roughly ``os.path isfile(path) and os.access(path, os.X_OK)``, but
+    on some platforms :func:`os.access` gives us the wrong answer, so this
+    checks permission bits directly.
+    """
     # follow symlinks,
-    fpath = os.path.realpath(fname)
+    fpath = os.path.realpath(path)
 
     # return False for non-files (directories, fifo, etc.)
     if not os.path.isfile(fpath):
@@ -1992,6 +1998,7 @@ def is_exe(fname):
             mode & stat.S_IRUSR and mode & stat.S_IXUSR):
         return True
 
+    return False
 
 def which(filename):
     '''This takes a given filename; tries to find it in the environment path;
@@ -1999,7 +2006,7 @@ def which(filename):
     if found and executable. Otherwise this returns None.'''
 
     # Special case where filename contains an explicit path.
-    if os.path.dirname(filename) != '' and is_exe(filename):
+    if os.path.dirname(filename) != '' and is_executable_file(filename):
         return filename
     if 'PATH' not in os.environ or os.environ['PATH'] == '':
         p = os.defpath
@@ -2008,7 +2015,7 @@ def which(filename):
     pathlist = p.split(os.pathsep)
     for path in pathlist:
         ff = os.path.join(path, filename)
-        if is_exe(ff):
+        if is_executable_file(ff):
             return ff
     return None
 

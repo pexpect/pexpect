@@ -1,10 +1,25 @@
 import platform
 import unittest
+import re
+import os
 
 import pexpect
 from pexpect import replwrap
 
+
 class REPLWrapTestCase(unittest.TestCase):
+    def setUp(self):
+        super(REPLWrapTestCase, self).setUp()
+        self.save_ps1 = os.getenv('PS1', r'\$')
+        self.save_ps2 = os.getenv('PS2', '>')
+        os.putenv('PS1', r'\$')
+        os.putenv('PS2', '>')
+
+    def tearDown(self):
+        super(REPLWrapTestCase, self).tearDown()
+        os.putenv('PS1', self.save_ps1)
+        os.putenv('PS2', self.save_ps2)
+
     def test_bash(self):
         bash = replwrap.bash()
         res = bash.run_command("time")
@@ -28,9 +43,10 @@ class REPLWrapTestCase(unittest.TestCase):
         self.assertEqual(res.strip().splitlines(), ['1 2', '3 4'])
 
     def test_existing_spawn(self):
-        child = pexpect.spawnu("bash")
-        repl = replwrap.REPLWrapper(child, replwrap.u("$ "),
-                            "PS1='{0}'; PS2='{1}'")
+        child = pexpect.spawnu("bash", timeout=5)
+        repl = replwrap.REPLWrapper(child, re.compile('[$#]'),
+                                    "PS1='{0}' PS2='{1}' "
+                                    "PROMPT_COMMAND=''")
 
         res = repl.run_command("echo $HOME")
         assert res.startswith('/'), res
@@ -50,7 +66,7 @@ class REPLWrapTestCase(unittest.TestCase):
         if platform.python_implementation() == 'PyPy':
             raise unittest.SkipTest("This test fails on PyPy because of REPL differences")
 
-        child = pexpect.spawnu('python')
+        child = pexpect.spawnu('python', timeout=5)
         # prompt_change=None should mean no prompt change
         py = replwrap.REPLWrapper(child, replwrap.u(">>> "), prompt_change=None,
                                   continuation_prompt=replwrap.u("... "))

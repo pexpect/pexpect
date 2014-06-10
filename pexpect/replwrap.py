@@ -2,6 +2,7 @@
 """
 import signal
 import sys
+import re
 
 import pexpect
 
@@ -17,7 +18,7 @@ PEXPECT_CONTINUATION_PROMPT = u('[PEXPECT_PROMPT+')
 
 class REPLWrapper(object):
     """Wrapper for a REPL.
-    
+
     :param cmd_or_spawn: This can either be an instance of :class:`pexpect.spawn`
       in which a REPL has already been started, or a str command to start a new
       REPL process.
@@ -37,7 +38,8 @@ class REPLWrapper(object):
         else:
             self.child = cmd_or_spawn
         self.child.setecho(False)  # Don't repeat our input.
-        
+        self.child.waitnoecho()
+
         if prompt_change is None:
             self.prompt = orig_prompt
         else:
@@ -49,16 +51,16 @@ class REPLWrapper(object):
         self._expect_prompt()
 
     def set_prompt(self, orig_prompt, prompt_change):
-        self.child.expect_exact(orig_prompt)
+        self.child.expect(orig_prompt)
         self.child.sendline(prompt_change)
 
     def _expect_prompt(self, timeout=-1):
         return self.child.expect_exact([self.prompt, self.continuation_prompt],
                                        timeout=timeout)
-    
+
     def run_command(self, command, timeout=-1):
         """Send a command to the REPL, wait for and return output.
-        
+
         :param str command: The command to send. Trailing newlines are not needed.
           This should be a complete block of input that will trigger execution;
           if a continuation prompt is found after sending input, :exc:`ValueError`
@@ -93,6 +95,6 @@ def python(command="python"):
     """Start a Python shell and return a :class:`REPLWrapper` object."""
     return REPLWrapper(command, u(">>> "), u("import sys; sys.ps1={0!r}; sys.ps2={1!r}"))
 
-def bash(command="bash", orig_prompt=u("$")):
+def bash(command="bash", orig_prompt=re.compile('[$#]')):
     """Start a bash shell and return a :class:`REPLWrapper` object."""
-    return REPLWrapper(command, orig_prompt, u("PS1='{0}'; PS2='{1}'"))
+    return REPLWrapper(command, orig_prompt, u("PS1='{0}' PS2='{1}' PROMPT_COMMAND=''"))

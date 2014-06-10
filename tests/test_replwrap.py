@@ -12,7 +12,7 @@ class REPLWrapTestCase(unittest.TestCase):
         super(REPLWrapTestCase, self).setUp()
         self.save_ps1 = os.getenv('PS1', r'\$')
         self.save_ps2 = os.getenv('PS2', '>')
-        os.putenv('PS1', 'r\$')
+        os.putenv('PS1', r'\$')
         os.putenv('PS2', '>')
 
     def tearDown(self):
@@ -21,8 +21,6 @@ class REPLWrapTestCase(unittest.TestCase):
         os.putenv('PS2', self.save_ps2)
 
     def test_bash(self):
-        os.putenv('PS1', r'\$')
-        os.putenv('PS2', r'>')
         bash = replwrap.bash()
         res = bash.run_command("time")
         assert 'real' in res, res

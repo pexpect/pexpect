@@ -25,32 +25,30 @@ from __future__ import unicode_literals
 import os
 import pexpect
 import unittest
+import sys
 from . import PexpectTestCase
 
 
 class InteractTestCase (PexpectTestCase.PexpectTestCase):
     def setUp(self):
         super(InteractTestCase, self).setUp()
-        self.save_pythonpath = os.getenv('PYTHONPATH')
+        self.env = env = os.environ.copy()
 
         # Ensure 'import pexpect' works in subprocess interact*.py
-        if not self.save_pythonpath:
-            os.putenv('PYTHONPATH', self.project_dir)
+        if 'PYTHONPATH' in env:
+            env['PYTHONPATH'] = os.pathsep.join((self.project_dir,
+                                                    env['PYTHONPATH']))
         else:
-            os.putenv('PYTHONPATH', os.pathsep.join((self.project_dir,
-                                                     self.save_pythonpath)))
+            env['PYTHONPATH'] = self.project_dir
 
-        self.interact_py = ' '.join((self.PYTHONBIN,
+        self.interact_py = ' '.join((sys.executable,
                                      'interact.py',))
-        self.interact_ucs_py = ' '.join((self.PYTHONBIN,
+        self.interact_ucs_py = ' '.join((sys.executable,
                                          'interact_unicode.py',))
-
-    def tearDown(self):
-        os.putenv('PYTHONPATH', self.save_pythonpath or '')
 
     def test_interact_escape(self):
         " Ensure `escape_character' value exits interactive mode. "
-        p = pexpect.spawn(self.interact_py, timeout=5)
+        p = pexpect.spawn(self.interact_py, timeout=5, env=self.env)
         p.expect('<in >')
         p.sendcontrol(']')  # chr(29), the default `escape_character'
                             # value of pexpect.interact().
@@ -61,7 +59,7 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_interact_spawn_eof(self):
         " Ensure subprocess receives EOF and exit. "
-        p = pexpect.spawn(self.interact_py, timeout=5)
+        p = pexpect.spawn(self.interact_py, timeout=5, env=self.env)
         p.expect('<in >')
         p.sendline(b'alpha')
         p.sendline(b'beta')
@@ -76,7 +74,7 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_interact_spawnu_eof(self):
         " Ensure subprocess receives unicode, EOF, and exit. "
-        p = pexpect.spawnu(self.interact_ucs_py, timeout=5)
+        p = pexpect.spawnu(self.interact_ucs_py, timeout=5, env=self.env)
         p.expect('<in >')
         p.sendline('ɑlpha')
         p.sendline('Βeta')

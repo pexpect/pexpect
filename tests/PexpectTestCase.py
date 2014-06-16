@@ -20,6 +20,7 @@ PEXPECT LICENSE
 '''
 from __future__ import print_function
 
+import contextlib
 import unittest
 import sys
 import os
@@ -40,3 +41,26 @@ class PexpectTestCase(unittest.TestCase):
     def tearDown(self):
         os.chdir (self.original_path)
 
+    if sys.version_info < (2,7):
+        # We want to use these methods, which are new/improved in 2.7, but
+        # we are still supporting 2.6 for the moment. This section can be
+        # removed when we drop Python 2.6 support.
+        @contextlib.contextmanager
+        def assertRaises(self, excClass):
+            try:
+                yield
+            except Exception as e:
+                assert isinstance(e, excClass)
+            else:
+                raise AssertionError("%s was not raised" % excClass)
+
+        @contextlib.contextmanager
+        def assertRaisesRegexp(self, excClass, pattern):
+            import re
+            try:
+                yield
+            except Exception as e:
+                assert isinstance(e, excClass)
+                assert re.match(pattern, str(e))
+            else:
+                raise AssertionError("%s was not raised" % excClass)

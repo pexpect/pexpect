@@ -220,7 +220,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
             pexpect.spawn(1)
 
         with self.assertRaises(TypeError):
-            # should use pexpect.spawn('ls', ['-ls'])
+            # should use pexpect.spawn('ls', ['-la'])
             pexpect.spawn('ls', '-la')
 
         with self.assertRaises(ValueError):

@@ -727,7 +727,7 @@ class spawn(object):
         try:
             fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
             os.close(fd)
-        except OSError, err:
+        except OSError as err:
             if err.errno != errno.ENXIO:
                 raise
 
@@ -739,7 +739,7 @@ class spawn(object):
             fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
             os.close(fd)
             raise ExceptionPexpect("OSError of errno.ENXIO should be raised.")
-        except OSError, err:
+        except OSError as err:
             if err.errno != errno.ENXIO:
                 raise
 

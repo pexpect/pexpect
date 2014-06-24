@@ -21,7 +21,7 @@ Version 3.3
   Solaris (:ghissue:`49`).
 * Several Solaris (SmartOS) bugfixes, preventing IOError exceptions, especially
   when used with cron(1) (:ghissue:`44`).
-* Added new keyword argument ``echo=True`` for ``spawn()``.  On SRV4-like
+* Added new keyword argument ``echo=True`` for ``spawn()``.  On SVR4-like
   systems, the method ``isatty()`` will always return *False*: the child pty
   does not appear as a terminal.  Therefore, ``setecho()``, ``getwinsize()``,
   ``setwinsize()``, and ``waitnoecho()`` are not supported on those platforms.

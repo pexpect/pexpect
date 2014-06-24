@@ -54,7 +54,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('python getch.py', echo=False, timeout=5)
         child.expect('READY')
         child.sendintr()
-        child.expect('3<STOP>')
+        child.expect(str(child._VINTR) + '<STOP>')
 
         child.send(byte(0))
         child.expect('0<STOP>')

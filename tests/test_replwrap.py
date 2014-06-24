@@ -43,7 +43,7 @@ class REPLWrapTestCase(unittest.TestCase):
         self.assertEqual(res.strip().splitlines(), ['1 2', '3 4'])
 
     def test_existing_spawn(self):
-        child = pexpect.spawnu("bash", timeout=5)
+        child = pexpect.spawnu("bash", timeout=5, echo=False)
         repl = replwrap.REPLWrapper(child, re.compile('[$#]'),
                                     "PS1='{0}' PS2='{1}' "
                                     "PROMPT_COMMAND=''")
@@ -66,7 +66,7 @@ class REPLWrapTestCase(unittest.TestCase):
         if platform.python_implementation() == 'PyPy':
             raise unittest.SkipTest("This test fails on PyPy because of REPL differences")
 
-        child = pexpect.spawnu('python', timeout=5)
+        child = pexpect.spawnu('python', echo=False, timeout=5)
         # prompt_change=None should mean no prompt change
         py = replwrap.REPLWrapper(child, replwrap.u(">>> "), prompt_change=None,
                                   continuation_prompt=replwrap.u("... "))

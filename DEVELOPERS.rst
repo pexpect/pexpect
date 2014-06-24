@@ -1,6 +1,6 @@
 To run the tests, use `py.test <http://pytest.org/latest/>`_::
 
-    py.test
+    py.test tests
 
 The tests are all located in the tests/ directory. To add a new unit
 test all you have to do is create the file in the tests/ directory with a

@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 import platform
 import tempfile
+import sys
+import time
 
 import pexpect
 import unittest
@@ -34,18 +36,39 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         p.sendeof()
         p.expect_exact (pexpect.EOF)
 
-    def test_expect_echo (self):
-        '''This tests that echo can be turned on and off.
+    def test_expect_setecho_toggle(self):
+        '''This tests that echo may be toggled off.
         '''
-        p = pexpect.spawnu('cat', timeout=10)
-        self._expect_echo(p)
+        p = pexpect.spawnu('cat', timeout=5)
+        try:
+            self._expect_echo_toggle_off(p)
+        except IOError:
+            if sys.platform.lower().startswith('sunos'):
+                if hasattr(unittest, 'SkipTest'):
+                    raise unittest.SkipTest("Not supported on this platform.")
+                return 'skip'
+            raise
+        self._expect_echo_toggle_on(p)
 
     def test_expect_echo_exact (self):
         '''Like test_expect_echo(), but using expect_exact().
         '''
-        p = pexpect.spawnu('cat', timeout=10)
+        p = pexpect.spawnu('cat', timeout=5)
         p.expect = p.expect_exact
         self._expect_echo(p)
+
+    def test_expect_setecho_toggle_exact(self):
+        p = pexpect.spawnu('cat', timeout=5)
+        p.expect = p.expect_exact
+        try:
+            self._expect_echo_toggle_off(p)
+        except IOError:
+            if sys.platform.lower().startswith('sunos'):
+                if hasattr(unittest, 'SkipTest'):
+                    raise unittest.SkipTest("Not supported on this platform.")
+                return 'skip'
+            raise
+        self._expect_echo_toggle_on(p)
 
     def _expect_echo (self, p):
         p.sendline('1234') # Should see this twice (once from tty echo and again from cat).
@@ -53,14 +76,20 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         assert index == 0, (index, p.before)
         index = p.expect (['1234', 'abcdé', 'wxyz', pexpect.EOF])
         assert index == 0, index
+
+    def _expect_echo_toggle_off(self, p):
         p.setecho(0) # Turn off tty echo
+        p.waitnoecho()
         p.sendline('abcdé') # Now, should only see this once.
         p.sendline('wxyz') # Should also be only once.
         index = p.expect ([pexpect.EOF,pexpect.TIMEOUT, 'abcdé', 'wxyz', '1234'])
         assert index == 2, index
         index = p.expect ([pexpect.EOF, 'abcdé', 'wxyz', '7890'])
         assert index == 2, index
+
+    def _expect_echo_toggle_on(self, p):
         p.setecho(1) # Turn on tty echo
+        time.sleep(0.2) # there is no waitecho() !
         p.sendline('7890') # Should see this twice.
         index = p.expect ([pexpect.EOF, 'abcdé', 'wxyz', '7890'])
         assert index == 3, index

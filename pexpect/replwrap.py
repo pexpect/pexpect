@@ -34,11 +34,14 @@ class REPLWrapper(object):
                  new_prompt=PEXPECT_PROMPT,
                  continuation_prompt=PEXPECT_CONTINUATION_PROMPT):
         if isinstance(cmd_or_spawn, str):
-            self.child = pexpect.spawnu(cmd_or_spawn)
+            self.child = pexpect.spawnu(cmd_or_spawn, echo=False)
         else:
             self.child = cmd_or_spawn
-        self.child.setecho(False)  # Don't repeat our input.
-        self.child.waitnoecho()
+        if self.child.echo:
+            # Existing spawn instance has echo enabled, disable it
+            # to prevent our input from being repeated to output.
+            self.child.setecho(False)
+            self.child.waitnoecho()
 
         if prompt_change is None:
             self.prompt = orig_prompt

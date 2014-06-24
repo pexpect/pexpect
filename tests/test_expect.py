@@ -170,6 +170,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
                 if hasattr(unittest, 'SkipTest'):
                     raise unittest.SkipTest("Not supported on this platform.")
                 return 'skip'
+            raise
 
     def test_expect_setecho_off_exact(self):
         p = pexpect.spawn('cat', echo=True, timeout=5)

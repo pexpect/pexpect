@@ -285,6 +285,7 @@ class spawn(object):
         def _chr(c):
             return bytes([c])
         linesep = os.linesep.encode('ascii')
+        crlf = '\r\n'.encode('ascii')
 
         @staticmethod
         def write_to_stdout(b):
@@ -297,6 +298,7 @@ class spawn(object):
         allowed_string_types = (basestring,)  # analysis:ignore
         _chr = staticmethod(chr)
         linesep = os.linesep
+        crlf = '\r\n'
         write_to_stdout = sys.stdout.write
 
     encoding = None
@@ -729,11 +731,11 @@ class spawn(object):
             try:
                 child_name = os.ttyname(tty_fd)
                 break
-            except OSError, err:
-                 tries += 1
-                 if tries > _max_tries:
-                     raise
-                 time.sleep(_poll)
+            except OSError:
+                tries += 1
+                if tries > _max_tries:
+                    raise
+                time.sleep(_poll)
 
         # Disconnect from controlling tty. Harmless if not already connected.
         try:
@@ -1050,9 +1052,9 @@ class spawn(object):
         if size == 0:
             return self.string_type()
         # delimiter default is EOF
-        index = self.expect([b'\r\n', self.delimiter])
+        index = self.expect([self.crlf, self.delimiter])
         if index == 0:
-            return self.before + b'\r\n'
+            return self.before + self.crlf
         else:
             return self.before
 
@@ -1788,11 +1790,13 @@ class spawnu(spawn):
         allowed_string_types = (str, )
         _chr = staticmethod(chr)
         linesep = os.linesep
+        crlf = '\r\n'
     else:
         string_type = unicode
         allowed_string_types = (unicode, )
         _chr = staticmethod(unichr)
         linesep = os.linesep.decode('ascii')
+        crlf = '\r\n'.decode('ascii')
     # This can handle unicode in both Python 2 and 3
     write_to_stdout = sys.stdout.write
 
@@ -2015,9 +2019,15 @@ class searcher_re(object):
         return best_index
 
 
-def is_exe(fname):
+def is_executable_file(path):
+    """Checks that path is an executable regular file (or a symlink to a file).
+    
+    This is roughly ``os.path isfile(path) and os.access(path, os.X_OK)``, but
+    on some platforms :func:`os.access` gives us the wrong answer, so this
+    checks permission bits directly.
+    """
     # follow symlinks,
-    fpath = os.path.realpath(fname)
+    fpath = os.path.realpath(path)
 
     # return False for non-files (directories, fifo, etc.)
     if not os.path.isfile(fpath):
@@ -2049,6 +2059,7 @@ def is_exe(fname):
             mode & stat.S_IRUSR and mode & stat.S_IXUSR):
         return True
 
+    return False
 
 def which(filename):
     '''This takes a given filename; tries to find it in the environment path;
@@ -2056,7 +2067,7 @@ def which(filename):
     if found and executable. Otherwise this returns None.'''
 
     # Special case where filename contains an explicit path.
-    if os.path.dirname(filename) != '' and is_exe(filename):
+    if os.path.dirname(filename) != '' and is_executable_file(filename):
         return filename
     if 'PATH' not in os.environ or os.environ['PATH'] == '':
         p = os.defpath
@@ -2065,7 +2076,7 @@ def which(filename):
     pathlist = p.split(os.pathsep)
     for path in pathlist:
         ff = os.path.join(path, filename)
-        if is_exe(ff):
+        if is_executable_file(ff):
             return ff
     return None
 

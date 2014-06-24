@@ -719,59 +719,37 @@ class spawn(object):
         more portable than the pty.fork() function. Specifically, this should
         work on Solaris. '''
 
-        # os.ttyname() fails for the child process under a rare timing
-        # condition (about 1 in 10 on SmartOs in a VMWare machine). May
-        # raise OSError as errno ENOTTY -- ptsname(3C) should be used,
-        # on this system, but python does not expose it, it would require
-        # ctypes + libc. which is also not available, filed patch as
-        # http://bugs.python.org/issue20664
-        child_name, tries = None, 0
-        _poll, _max_tries= 0.1, 10
-        while child_name is None:
-            try:
-                child_name = os.ttyname(tty_fd)
-                break
-            except OSError:
-                tries += 1
-                if tries > _max_tries:
-                    raise
-                time.sleep(_poll)
+        child_name = os.ttyname(tty_fd)
 
-        # Disconnect from controlling tty. Harmless if not already connected.
+        # Disconnect from controlling tty, if any.  Raises OSError of ENXIO
+        # if there was no controlling tty to begin with, such as when
+        # executed by a cron(1) job.
         try:
             fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
             os.close(fd)
-        except OSError:
-            # Already disconnected. This happens if running inside cron.
-            pass
+        except OSError, err:
+            if err.errno != errno.ENXIO:
+                raise
 
         os.setsid()
 
-        # Verify we are disconnected from controlling tty
-        # by attempting to open it again.
+        # Verify we are disconnected from controlling tty by attempting to open
+        # it again.  We expect that OSError of ENXIO should always be raised.
         try:
             fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
             os.close(fd)
-        except OSError:
-            # Good! We are disconnected from a controlling tty.
-            pass
+            raise ExceptionPexpect("OSError of errno.ENXIO should be raised.")
+        except OSError, err:
+            if err.errno != errno.ENXIO:
+                raise
 
         # Verify we can open child pty.
         fd = os.open(child_name, os.O_RDWR)
-        if fd < 0:
-            raise ExceptionPexpect("Could not open child pty, " + child_name)
-        else:
-            os.close(fd)
+        os.close(fd)
 
         # Verify we now have a controlling tty.
-        try:
-            fd = os.open("/dev/tty", os.O_WRONLY)
-            os.close(fd)
-        except OSError as err:
-            if err.args[0] == ENXIO:
-                # on Solaris, `/dev/tty' raises OSError upon opening, though
-                # it does exist: /dev/tty -> ../devices/pseudo/sy@0:tty
-                pass
+        fd = os.open("/dev/tty", os.O_WRONLY)
+        os.close(fd)
 
 
     def fileno(self):
@@ -2141,4 +2119,4 @@ def split_command_line(command_line):
         arg_list.append(arg)
     return arg_list
 
-# vi:set sr et ts=4 sw=4 ft=python :
+# vim: set shiftround expandtab tabstop=4 shiftwidth=4 ft=python autoindent :

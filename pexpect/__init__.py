@@ -786,9 +786,10 @@ class spawn(object):
         '''This returns True if the file descriptor is open and connected to a
         tty(-like) device, else False.
 
-        On SRV4-style platforms implementing streams, the child pty does not
-        appear as a terminal device.  This means methods such as setecho(),
-        setwinsize(), getwinsize() may raise an IOError. '''
+        On SVR4-style platforms implementing streams, such as SunOS and HP-UX,
+        the child pty may not appear as a terminal device.  This means
+        methods such as setecho(), setwinsize(), getwinsize() may raise an
+        IOError. '''
 
         return os.isatty(self.child_fd)
 

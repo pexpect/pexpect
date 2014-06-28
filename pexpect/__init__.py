@@ -1385,7 +1385,7 @@ class spawn(object):
                 self._pattern_type_err(p)
         return compiled_pattern_list
 
-    def expect(self, pattern, timeout=-1, searchwindowsize=-1):
+    def expect(self, pattern, timeout=-1, searchwindowsize=-1, async=False):
 
         '''This seeks through the stream until a pattern is matched. The
         pattern is overloaded and may take several types. The pattern can be a
@@ -1464,9 +1464,9 @@ class spawn(object):
 
         compiled_pattern_list = self.compile_pattern_list(pattern)
         return self.expect_list(compiled_pattern_list,
-                timeout, searchwindowsize)
+                timeout, searchwindowsize, async)
 
-    def expect_list(self, pattern_list, timeout=-1, searchwindowsize=-1):
+    def expect_list(self, pattern_list, timeout=-1, searchwindowsize=-1, async=False):
 
         '''This takes a list of compiled regular expressions and returns the
         index into the pattern_list that matched the child output. The list may
@@ -1479,7 +1479,11 @@ class spawn(object):
         self.searchwindowsize value is used. '''
 
         exp = Expecter(self, searcher_re(pattern_list), searchwindowsize)
-        return exp.expect_loop(timeout)
+        if async:
+            from .async import expect_async
+            return expect_async(exp)
+        else:
+            return exp.expect_loop(timeout)
 
     def expect_exact(self, pattern_list, timeout=-1, searchwindowsize=-1):
 

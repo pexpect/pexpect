@@ -1,16 +1,11 @@
 import asyncio
 
-from pexpect import EOF, searcher_re
-from pexpect.expect import Expecter
+from pexpect import EOF
 
 @asyncio.coroutine
-def expect_async(spawn, pattern):
-    searcher = searcher_re(spawn.compile_pattern_list(pattern))
-
-    def protocol_factory():
-        return PatternWaiter(Expecter(spawn, searcher))
+def expect_async(expecter):
     transport, pw = yield from asyncio.get_event_loop()\
-                        .connect_read_pipe(protocol_factory, spawn)
+        .connect_read_pipe(lambda: PatternWaiter(expecter), expecter.spawn)
     
     return (yield from pw.fut)
 

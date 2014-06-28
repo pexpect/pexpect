@@ -1,22 +1,22 @@
 import asyncio
 
 from pexpect import EOF, searcher_re
+from pexpect.expect import Expecter
 
 @asyncio.coroutine
 def expect_async(spawn, pattern):
     searcher = searcher_re(spawn.compile_pattern_list(pattern))
 
     def protocol_factory():
-        return PatternWaiter(spawn, searcher)    
+        return PatternWaiter(Expecter(spawn, searcher))
     transport, pw = yield from asyncio.get_event_loop()\
                         .connect_read_pipe(protocol_factory, spawn)
     
     return (yield from pw.fut)
 
 class PatternWaiter(asyncio.Protocol):
-    def __init__(self, spawn, searcher):
-        self.spawn = spawn
-        self.searcher = searcher
+    def __init__(self, expecter):
+        self.expecter = expecter
         self.fut = asyncio.Future()
     
     def found(self, result):
@@ -28,45 +28,23 @@ class PatternWaiter(asyncio.Protocol):
             self.fut.set_exception(exc)
     
     def data_received(self, data):
-        spawn = self.spawn
+        spawn = self.expecter.spawn
         s = spawn._coerce_read_string(data)
         spawn._log(s, 'read')
-        
-        searcher = self.searcher
+
         try:
-            incoming = spawn.buffer + s
-            freshlen = len(s)
-            index = searcher.search(incoming, freshlen)
-            if index >= 0:
-                spawn.buffer = incoming[searcher.end:]
-                spawn.before = incoming[: searcher.start]
-                spawn.after = incoming[searcher.start: searcher.end]
-                spawn.match = searcher.match
-                spawn.match_index = index
+            index = self.expecter.new_data(data)
+            if index is not None:
                 # Found a match
                 self.found(index)
         except Exception as e:
-            spawn.before = incoming
-            spawn.after = None
-            spawn.match = None
-            spawn.match_index = None
+            self.expecter.errored()
             self.error(e)
     
-        spawn.buffer = incoming
-    
     def eof_received(self):
-        spawn = self.spawn
-        spawn.before = spawn.buffer
-        spawn.buffer = spawn.string_type()
-        spawn.after = EOF
-        index = self.searcher.eof_index
-        if index >= 0:
-            spawn.match = EOF
-            spawn.match_index = index
-            self.found(index)
+        try:
+            index = self.expecter.eof()
+        except EOF as e:
+            self.error(e)
         else:
-            spawn.match = None
-            spawn.match_index = None
-            self.error(EOF(str(spawn)))
-
-    
+            self.found(index)

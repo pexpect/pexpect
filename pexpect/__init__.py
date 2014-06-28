@@ -88,6 +88,8 @@ except ImportError:  # pragma: no cover
 A critical module was not found. Probably this operating system does not
 support it. Pexpect is intended for UNIX-like operating systems.''')
 
+from .expect import Expecter
+
 __version__ = '3.3'
 __revision__ = ''
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'spawnu', 'run', 'runu',
@@ -113,7 +115,8 @@ class ExceptionPexpect(Exception):
         is not included. '''
 
         tblist = traceback.extract_tb(sys.exc_info()[2])
-        tblist = [item for item in tblist if 'pexpect/__init__' not in item[0]]
+        tblist = [item for item in tblist if ('pexpect/__init__' not in item[0])
+                                           and ('pexpect/expect' not in item[0])]
         tblist = traceback.format_list(tblist)
         return ''.join(tblist)
 
@@ -1475,8 +1478,8 @@ class spawn(object):
         the self.timeout value is used. If searchwindowsize==-1 then the
         self.searchwindowsize value is used. '''
 
-        return self.expect_loop(searcher_re(pattern_list),
-                timeout, searchwindowsize)
+        exp = Expecter(self, searcher_re(pattern_list), searchwindowsize)
+        return exp.expect_loop(timeout)
 
     def expect_exact(self, pattern_list, timeout=-1, searchwindowsize=-1):
 
@@ -1508,83 +1511,20 @@ class spawn(object):
         except TypeError:
             self._pattern_type_err(pattern_list)
         pattern_list = [prepare_pattern(p) for p in pattern_list]
+        exp = Expecter(self, searcher_string(pattern_list), searchwindowsize)
+        return exp.expect_loop(timeout)
         return self.expect_loop(searcher_string(pattern_list),
                 timeout, searchwindowsize)
 
     def expect_loop(self, searcher, timeout=-1, searchwindowsize=-1):
-
         '''This is the common loop used inside expect. The 'searcher' should be
         an instance of searcher_re or searcher_string, which describes how and
         what to search for in the input.
 
         See expect() for other arguments, return value and exceptions. '''
 
-        self.searcher = searcher
-
-        if timeout == -1:
-            timeout = self.timeout
-        if timeout is not None:
-            end_time = time.time() + timeout
-        if searchwindowsize == -1:
-            searchwindowsize = self.searchwindowsize
-
-        try:
-            incoming = self.buffer
-            freshlen = len(incoming)
-            while True:
-                # Keep reading until exception or return.
-                index = searcher.search(incoming, freshlen, searchwindowsize)
-                if index >= 0:
-                    self.buffer = incoming[searcher.end:]
-                    self.before = incoming[: searcher.start]
-                    self.after = incoming[searcher.start: searcher.end]
-                    self.match = searcher.match
-                    self.match_index = index
-                    return self.match_index
-                # No match at this point
-                if (timeout is not None) and (timeout < 0):
-                    raise TIMEOUT('Timeout exceeded in expect_any().')
-                # Still have time left, so read more data
-                c = self.read_nonblocking(self.maxread, timeout)
-                freshlen = len(c)
-                time.sleep(0.0001)
-                incoming = incoming + c
-                if timeout is not None:
-                    timeout = end_time - time.time()
-        except EOF:
-            err = sys.exc_info()[1]
-            self.buffer = self.string_type()
-            self.before = incoming
-            self.after = EOF
-            index = searcher.eof_index
-            if index >= 0:
-                self.match = EOF
-                self.match_index = index
-                return self.match_index
-            else:
-                self.match = None
-                self.match_index = None
-                raise EOF(str(err) + '\n' + str(self))
-        except TIMEOUT:
-            err = sys.exc_info()[1]
-            self.buffer = incoming
-            self.before = incoming
-            self.after = TIMEOUT
-            index = searcher.timeout_index
-            if index >= 0:
-                self.match = TIMEOUT
-                self.match_index = index
-                return self.match_index
-            else:
-                self.match = None
-                self.match_index = None
-                raise TIMEOUT(str(err) + '\n' + str(self))
-        except:
-            self.before = incoming
-            self.after = None
-            self.match = None
-            self.match_index = None
-            raise
+        exp = Expecter(self, searcher, searchwindowsize)
+        return exp.expect_loop(timeout)
 
     def getwinsize(self):
 

@@ -25,6 +25,10 @@ class REPLWrapTestCase(unittest.TestCase):
         res = bash.run_command("time")
         assert 'real' in res, res
 
+        # PAGER should be set to cat, otherwise man hangs
+        res = bash.run_command('man sleep', timeout=2)
+        assert 'SLEEP' in res, res
+
     def test_multiline(self):
         bash = replwrap.bash()
         res = bash.run_command("echo '1 2\n3 4'")

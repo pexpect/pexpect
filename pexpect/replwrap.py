@@ -29,10 +29,13 @@ class REPLWrapper(object):
       parameters, so you can use ``{}`` style formatting to insert them into
       the command.
     :param str new_prompt: The more unique prompt to expect after the change.
+    :param str extra_init_cmd: Commands to do extra initialisation, such as
+      disabling pagers.
     """
     def __init__(self, cmd_or_spawn, orig_prompt, prompt_change,
                  new_prompt=PEXPECT_PROMPT,
-                 continuation_prompt=PEXPECT_CONTINUATION_PROMPT):
+                 continuation_prompt=PEXPECT_CONTINUATION_PROMPT,
+                 extra_init_cmd=None):
         if isinstance(cmd_or_spawn, str):
             self.child = pexpect.spawnu(cmd_or_spawn, echo=False)
         else:
@@ -52,6 +55,9 @@ class REPLWrapper(object):
         self.continuation_prompt = continuation_prompt
 
         self._expect_prompt()
+
+        if extra_init_cmd is not None:
+            self.run_command(extra_init_cmd)
 
     def set_prompt(self, orig_prompt, prompt_change):
         self.child.expect(orig_prompt)
@@ -100,4 +106,5 @@ def python(command="python"):
 
 def bash(command="bash", orig_prompt=re.compile('[$#]')):
     """Start a bash shell and return a :class:`REPLWrapper` object."""
-    return REPLWrapper(command, orig_prompt, u("PS1='{0}' PS2='{1}' PROMPT_COMMAND=''"))
+    return REPLWrapper(command, orig_prompt, u("PS1='{0}' PS2='{1}' PROMPT_COMMAND=''"),
+                       extra_init_cmd="export PAGER=cat")

@@ -1076,7 +1076,20 @@ class spawn(object):
     def send(self, s):
         '''Sends string ``s`` to the child process, returning the number of
         bytes written. If a logfile is specified, a copy is written to that
-        log. '''
+        log.
+
+        The default terminal input mode is canonical processing unless set
+        otherwise by the child process, which may not receive more than
+        PC_MAX_CANON bytes per line::
+            >>> from os import fpathconf
+            >>> print(fpathconf(cat.child_fd, 'PC_MAX_CANON'))
+            1024
+
+        On such a system, only 1024 bytes may be received per line.  Any
+        subsequent bytes received will be discarded, and a BEL will be printed
+        to output.  stty(1) can be used to either disable printing of BEL
+        (``stty -imaxbel``) or disable canonical input processing all together
+        (``stty -icanon``). '''
 
         time.sleep(self.delaybeforesend)
 

@@ -314,6 +314,29 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         else:
             assert False, "Should have raised an exception."
 
+    def test_under_max_canon(self):
+        " BEL is not sent by terminal driver at PC_MAX_CANON - 1. "
+        p = pexpect.spawn('cat', echo=False)
+        p.sendline('_' * (os.fpathconf(p.child_fd, 'PC_MAX_CANON') - 1))
+        with self.assertRaises(pexpect.TIMEOUT):
+            p.expect('\a', timeout=1)
+
+    def test_at_max_canon(self):
+        " BEL is sent by terminal driver when PC_MAX_CANON is reached. "
+        p = pexpect.spawn('cat', echo=False)
+        p.sendline('_' * (os.fpathconf(p.child_fd, 'PC_MAX_CANON')))
+        p.expect('\a', timeout=3)
+
+    def test_max_no_icanon(self):
+        " MAX_CANON may be exceed if canonical mode is disabled for input. "
+        # disable canonical mode processing of input using stty(1).
+        p = pexpect.spawn('bash', echo=False)
+        p.sendline('stty -icanon')
+        p.sendline('cat')
+        p.sendline('_' * (os.fpathconf(p.child_fd, 'PC_MAX_CANON') + 1))
+        with self.assertRaises(pexpect.TIMEOUT):
+            p.expect('\a', timeout=1)
+
 if __name__ == '__main__':
     unittest.main()
 

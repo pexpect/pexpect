@@ -362,9 +362,11 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
 
     def test_at_max_canon(self):
         " BEL is sent by terminal driver when PC_MAX_CANON is reached. "
-        p = pexpect.spawn('cat', echo=False)
+        p = pexpect.spawn('bash', echo=False)
         max_sendline = max((os.fpathconf(p.child_fd, 'PC_MAX_CANON'),
                             os.fpathconf(p.child_fd, 'PC_MAX_INPUT'),))
+        p.sendline('stty icanon')
+        p.sendline('cat')
         p.sendline('_' * (max_sendline + 1))
         p.expect('\a', timeout=3)
 

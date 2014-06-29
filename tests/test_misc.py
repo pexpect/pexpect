@@ -18,21 +18,33 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
-import pexpect
 import unittest
-from . import PexpectTestCase
 import sys
 import re
 import signal
 import time
+import tempfile
 import os
+
+import pexpect
+from . import PexpectTestCase
 
 # the program cat(1) may display ^D\x08\x08 when \x04 (EOF, Ctrl-D) is sent
 _CAT_EOF = b'^D\x08\x08'
 
+
+if (sys.version_info[0] >= 3):
+    def _u(s):
+        return s.decode('utf-8')
+else:
+    def _u(s):
+        return s
+
+
 class TestCaseMisc(PexpectTestCase.PexpectTestCase):
 
-    def test_isatty (self):
+    def test_isatty(self):
+        " Test isatty() is True after spawning process on most platforms. "
         child = pexpect.spawn('cat')
         if not child.isatty() and sys.platform.lower().startswith('sunos'):
             if hasattr(unittest, 'SkipTest'):
@@ -40,9 +52,10 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
             return 'skip'
         assert child.isatty()
 
-    def test_read (self):
+    def test_read(self):
+        " Test spawn.read by calls of various size. "
         child = pexpect.spawn('cat')
-        child.sendline ("abc")
+        child.sendline("abc")
         child.sendeof()
         self.assertEqual(child.read(0), b'')
         self.assertEqual(child.read(1), b'a')
@@ -53,120 +66,89 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         self.assertEqual(remaining, b'abc\r\n')
 
     def test_readline_bin_echo(self):
+        " Test spawn('echo'). "
         # given,
-        child = pexpect.spawn('echo', ['input', ])
+        child = pexpect.spawn('echo', ['alpha', 'beta'])
 
         # exercise,
-        assert child.readline() == b'input' + child.crlf
+        assert child.readline() == b'alpha beta' + child.crlf
 
-    def test_readline (self):
-        '''See the note in test_readlines() for an explaination as to why
-        I allow line3 and line4 to return multiple patterns.
-        Basically, this is done to handle a valid condition on slow systems.
-        '''
-        child = pexpect.spawn('cat')
-        child.sendline ("abc")
-        time.sleep(0.5)
-        child.sendline ("123")
-        time.sleep(0.5)
+    def test_readline(self):
+        " Test spawn.readline(). "
+        # when argument 0 is sent, nothing is returned.
+        # Otherwise the argument value is meaningless.
+        child = pexpect.spawn('cat', echo=False)
+        child.sendline("alpha")
+        child.sendline("beta")
+        child.sendline("gamma")
+        child.sendline("delta")
         child.sendeof()
-        line1 = child.readline(0)
-        line2 = child.readline()
-        line3 = child.readline(2)
-        line4 = child.readline(1)
-        line5 = child.readline()
-        time.sleep(1) # time for child to "complete" ;/
-        assert not child.isalive(), child.isalive()
-        assert child.exitstatus == 0, child.exitstatus
-        self.assertEqual(line1, b'')
-        self.assertEqual(line2, b'abc\r\n')
-        assert (line3 == b'abc\r\n' or line3 == b'123\r\n'), line3
-        assert (line4 == b'123\r\n' or line4 == b'abc\r\n'), line4
-        self.assertEqual(line5, b'123\r\n')
+        assert child.readline(0) == b''
+        assert child.readline().rstrip() == b'alpha'
+        assert child.readline(1).rstrip() == b'beta'
+        assert child.readline(2).rstrip() == b'gamma'
+        assert child.readline().rstrip() == b'delta'
+        child.expect(pexpect.EOF)
+        assert not child.isalive()
+        assert child.exitstatus == 0
 
-    def test_iter (self):
-        '''See the note in test_readlines() for an explaination as to why
-        I allow line3 and line4 to return multiple patterns.
-        Basically, this is done to handle a valid condition on slow systems.
-        '''
-        child = pexpect.spawn('cat')
-        child.sendline ("abc")
-        time.sleep(0.5)
-        child.sendline ("123")
-        time.sleep(0.5)
+    def test_iter(self):
+        " iterating over lines of spawn.__iter__(). "
+        child = pexpect.spawn('cat', echo=False)
+        child.sendline("abc")
+        child.sendline("123")
         child.sendeof()
-        # Don't use ''.join() because we want to test the ITERATOR.
+        # Don't use ''.join() because we want to test __iter__().
         page = b''
         for line in child:
             page += line
         page = page.replace(_CAT_EOF, b'')
-        # This is just a really bad test all together, we should write our
-        # own 'cat' utility that only writes to stdout after EOF is recv,
-        # this must take into consideration all possible platform impl.'s
-        # of `cat', and their related terminal and line-buffer handling
-        assert (page == b'abc\r\nabc\r\n123\r\n123\r\n' or
-                page == b'abc\r\n123\r\nabc\r\n123\r\n' or
-                page == b'abc\r\n123abc\r\n\r\n123\r\n') , \
-               "iterator did not work. page=%r" % (page,)
+        assert page == b'abc\r\n123\r\n'
 
     def test_readlines(self):
-        '''Note that on some slow or heavily loaded systems that the lines
-        coming back from 'cat' may come even after the EOF.
-        We except to see two copies of the lines we send 'cat'.
-        The first line is the TTY echo, the second line is from 'cat'.
-        Usually 'cat' will respond with 'abc' before we have a chance to
-        send the second line, '123'. If this does not happen then the
-        lines may appear out of order. This is technically not an error.
-        That's just the nature of asynchronous communication.
-        This is why the assert will allow either of the two possible
-        patterns to be returned by lineslined(). The (lame) alternative is
-        to put a long sleep between the two sendline() calls, but then
-        I have to make assumptions about how fast 'cat' can reply.
-        '''
-        child = pexpect.spawn('cat')
-        child.sendline ("abc")
-        time.sleep(0.5)
-        child.sendline ("123")
-        time.sleep(0.5)
+        " reading all lines of spawn.readlines(). "
+        child = pexpect.spawn('cat', echo=False)
+        child.sendline("abc")
+        child.sendline("123")
         child.sendeof()
         page = b''.join(child.readlines()).replace(_CAT_EOF, b'')
-        assert (page == b'abc\r\nabc\r\n123\r\n123\r\n' or
-                page == b'abc\r\n123\r\nabc\r\n123\r\n'), (
-               "readlines() did not work. page=%r" % (page,))
+        assert page == b'abc\r\n123\r\n'
+        child.expect(pexpect.EOF)
+        assert not child.isalive()
+        assert child.exitstatus == 0
 
-        time.sleep(1) # time for child to "complete" ;/
-        assert not child.isalive(), child.isalive()
-        assert child.exitstatus == 0, child.exitstatus
-
-    def test_write (self):
-        child = pexpect.spawn('cat')
+    def test_write(self):
+        " write a character and return it in return. "
+        child = pexpect.spawn('cat', echo=False)
         child.write('a')
         child.write('\r')
         self.assertEqual(child.readline(), b'a\r\n')
 
-    def test_writelines (self):
+    def test_writelines(self):
+        " spawn.writelines() "
         child = pexpect.spawn('cat')
-        child.writelines(['abc','123','xyz','\r'])
+        # notice that much like file.writelines, we do not delimit by newline
+        # -- it is equivalent to calling write(''.join([args,]))
+        child.writelines(['abc', '123', 'xyz', '\r'])
         child.sendeof()
         line = child.readline()
-        assert line == b'abc123xyz\r\n', (
-            "writelines() did not work. line=%r" % (line,))
+        assert line == b'abc123xyz\r\n'
 
     def test_eof(self):
+        " call to expect() after EOF is received raises pexpect.EOF "
         child = pexpect.spawn('cat')
         child.sendeof()
-        try:
-            child.expect ('the unexpected')
-        except:
-            pass
-        assert child.eof(), "child.eof() did not return True"
+        with self.assertRaises(pexpect.EOF):
+            child.expect('the unexpected')
 
     def test_terminate(self):
+        " test force terminate always succeeds (SIGKILL). "
         child = pexpect.spawn('cat')
         child.terminate(force=1)
-        assert child.terminated, "child.terminated is not True"
+        assert child.terminated
 
     def test_sighup(self):
+        " validate argument `ignore_sighup=True` and `ignore_sighup=False`. "
         # If a parent process sets an Ignore handler for SIGHUP (as on Fedora's
         # build machines), this test breaks. We temporarily restore the default
         # handler, so the child process will quit. However, we can't simply
@@ -179,16 +161,17 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         else:
             restore_sig_ign = False
 
+        getch = sys.executable + ' getch.py'
         try:
-            child = pexpect.spawn(sys.executable + ' getch.py', ignore_sighup=True)
+            child = pexpect.spawn(getch, ignore_sighup=True)
             child.expect('READY')
             child.kill(signal.SIGHUP)
             for _ in range(10):
                 if not child.isalive():
-                    raise AssertionError('Child should not have exited.')
+                    self.fail('Child process should not have exited.')
                 time.sleep(0.1)
 
-            child = pexpect.spawn(sys.executable + ' getch.py', ignore_sighup=False)
+            child = pexpect.spawn(getch, ignore_sighup=False)
             child.expect('READY')
             child.kill(signal.SIGHUP)
             for _ in range(10):
@@ -196,144 +179,204 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
                     break
                 time.sleep(0.1)
             else:
-                raise AssertionError('Child should have exited.')
+                self.fail('Child process should have exited.')
 
         finally:
             if restore_sig_ign:
                 signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
     def test_bad_child_pid(self):
+        " assert bad condition error in isalive(). "
+        expect_errmsg = re.escape("isalive() encountered condition where ")
         child = pexpect.spawn('cat')
         child.terminate(force=1)
-        child.terminated = 0 # Force invalid state to test code
+        # Force an invalid state to test isalive
+        child.terminated = 0
         try:
-            child.isalive()
-        except pexpect.ExceptionPexpect:
-            pass
-        else:
-            self.fail ("child.isalive() should have raised a pexpect.ExceptionPexpect")
-        child.terminated = 1 # Force back to valid state so __del__ won't complain
+            with self.assertRaisesRegexp(pexpect.ExceptionPexpect,
+                                         ".*" + expect_errmsg):
+                child.isalive()
+        finally:
+            # Force valid state for child for __del__
+            child.terminated = 1
 
-    def test_bad_arguments (self):
-        '''This tests that we get a graceful error when passing bad arguments.'''
-        with self.assertRaises(pexpect.ExceptionPexpect):
+    def test_bad_arguments_suggest_fdpsawn(self):
+        " assert custom exception for spawn(int). "
+        expect_errmsg = "maybe you want to use fdpexpect.fdspawn"
+        with self.assertRaisesRegexp(pexpect.ExceptionPexpect,
+                                     ".*" + expect_errmsg):
             pexpect.spawn(1)
 
+    def test_bad_arguments_second_arg_is_list(self):
+        " Second argument to spawn, if used, must be only a list."
         with self.assertRaises(TypeError):
-            # should use pexpect.spawn('ls', ['-la'])
             pexpect.spawn('ls', '-la')
 
+        with self.assertRaises(TypeError):
+            # not even a tuple,
+            pexpect.spawn('ls', ('-la',))
+
+    def test_read_after_close_raises_value_error(self):
+        " Calling read_nonblocking after close raises ValueError. "
+        # as read_nonblocking underlies all other calls to read,
+        # ValueError should be thrown for all forms of read.
         with self.assertRaises(ValueError):
-            p = pexpect.spawn('cat', timeout=5)
+            p = pexpect.spawn('cat')
             p.close()
-            p.read_nonblocking(size=1, timeout=3)
+            p.read_nonblocking()
+
+        with self.assertRaises(ValueError):
+            p = pexpect.spawn('cat')
+            p.close()
+            p.read()
+
+        with self.assertRaises(ValueError):
+            p = pexpect.spawn('cat')
+            p.close()
+            p.readline()
+
+        with self.assertRaises(ValueError):
+            p = pexpect.spawn('cat')
+            p.close()
+            p.readlines()
 
     def test_isalive(self):
+        " check isalive() before and after EOF. (True, False) "
         child = pexpect.spawn('cat')
-        assert child.isalive(), child.isalive()
+        assert child.isalive() is True
         child.sendeof()
         child.expect(pexpect.EOF)
-        assert not child.isalive(), child.isalive()
+        assert child.isalive() is False
 
     def test_bad_type_in_expect(self):
+        " expect() does not accept dictionary arguments. "
         child = pexpect.spawn('cat')
-        try:
-            child.expect({}) # We don't support dicts yet. Should give TypeError
-        except TypeError:
-            pass
-        else:
-            self.fail ("child.expect({}) should have raised a TypeError")
+        with self.assertRaises(TypeError):
+            child.expect({})
 
     def test_env(self):
-        default = pexpect.run('env')
-        userenv = pexpect.run('env', env={'foo':'pexpect'})
-        assert default!=userenv, "'default' and 'userenv' should be different"
-        assert b'foo' in userenv and b'pexpect' in userenv, "'foo' and 'pexpect' should be in 'userenv'"
+        " check keyword argument `env=' of pexpect.run() "
+        default_env_output = pexpect.run('env')
+        custom_env_output = pexpect.run('env', env={'_key': '_value'})
+        assert custom_env_output != default_env_output
+        assert b'_key=_value' in custom_env_output
 
-    def test_cwd (self): # This assumes 'pwd' and '/tmp' exist on this platform.
+    def test_cwd(self):
+        " check keyword argument `cwd=' of pexpect.run() "
+        tmp_dir = os.path.realpath(tempfile.gettempdir())
         default = pexpect.run('pwd')
-        tmpdir =  pexpect.run('pwd', cwd='/tmp')
-        assert default!=tmpdir, "'default' and 'tmpdir' should be different"
-        assert (b'tmp' in tmpdir), "'tmp' should be returned by 'pwd' command"
+        pwd_tmp = pexpect.run('pwd', cwd=tmp_dir).rstrip()
+        assert default != pwd_tmp
+        assert tmp_dir == _u(pwd_tmp)
 
-    def test_searcher_re (self):
-        # This should be done programatically, if we copied and pasted output,
-        # there wouldnt be a whole lot to test, really, other than our ability
-        # to copy and paste correctly :-)
-        ss = pexpect.searcher_re ([
-            re.compile('this'), re.compile('that'),
-            re.compile('and'), re.compile('the'),
-            re.compile('other') ])
-        out = ('searcher_re:\n    0: re.compile("this")\n    '
-               '1: re.compile("that")\n    2: re.compile("and")\n    '
-               '3: re.compile("the")\n    4: re.compile("other")')
-        assert ss.__str__() == out, (ss.__str__(), out)
-        ss = pexpect.searcher_re ([
-            pexpect.TIMEOUT, re.compile('this'),
-            re.compile('that'), re.compile('and'),
-            pexpect.EOF,re.compile('other')
-            ])
-        out = ('searcher_re:\n    0: TIMEOUT\n    1: re.compile("this")\n    '
-               '2: re.compile("that")\n    3: re.compile("and")\n    '
-               '4: EOF\n    5: re.compile("other")')
-        assert ss.__str__() == out, (ss.__str__(), out)
+    def _test_searcher_as(self, searcher, plus=None):
+        # given,
+        given_words = ['alpha', 'beta', 'gamma', 'delta', ]
+        given_search = given_words
+        if searcher == pexpect.searcher_re:
+            given_search = [re.compile(word) for word in given_words]
+        if plus is not None:
+            given_search = given_search + [plus]
+        search_string = searcher(given_search)
+        basic_fmt = '\n    {0}: {1}'
+        fmt = basic_fmt
+        if searcher is pexpect.searcher_re:
+            fmt = '\n    {0}: re.compile({1})'
+        expected_output = '{0}:'.format(searcher.__name__)
+        idx = 0
+        for word in given_words:
+            expected_output += fmt.format(idx, '"{0}"'.format(word))
+            idx += 1
+        if plus is not None:
+            if plus == pexpect.EOF:
+                expected_output += basic_fmt.format(idx, 'EOF')
+            elif plus == pexpect.TIMEOUT:
+                expected_output += basic_fmt.format(idx, 'TIMEOUT')
 
-    def test_searcher_string (self):
-        ss = pexpect.searcher_string ([
-            'this', 'that', 'and', 'the', 'other' ])
-        out = ('searcher_string:\n    0: "this"\n    1: "that"\n    '
-               '2: "and"\n    3: "the"\n    4: "other"')
-        assert ss.__str__() == out, (ss.__str__(), out)
-        ss = pexpect.searcher_string ([
-            'this', pexpect.EOF, 'that', 'and',
-            'the', 'other', pexpect.TIMEOUT ])
-        out = ('searcher_string:\n    0: "this"\n    1: EOF\n    '
-               '2: "that"\n    3: "and"\n    4: "the"\n    '
-               '5: "other"\n    6: TIMEOUT')
-        assert ss.__str__() == out, (ss.__str__(), out)
+        # exercise,
+        assert search_string.__str__() == expected_output
+
+    def test_searcher_as_string(self):
+        " check searcher_string(..).__str__() "
+        self._test_searcher_as(pexpect.searcher_string)
+
+    def test_searcher_as_string_with_EOF(self):
+        " check searcher_string(..).__str__() that includes EOF "
+        self._test_searcher_as(pexpect.searcher_string, plus=pexpect.EOF)
+
+    def test_searcher_as_string_with_TIMEOUT(self):
+        " check searcher_string(..).__str__() that includes TIMEOUT "
+        self._test_searcher_as(pexpect.searcher_string, plus=pexpect.TIMEOUT)
+
+    def test_searcher_re_as_string(self):
+        " check searcher_re(..).__str__() "
+        self._test_searcher_as(pexpect.searcher_re)
+
+    def test_searcher_re_as_string_with_EOF(self):
+        " check searcher_re(..).__str__() that includes EOF "
+        self._test_searcher_as(pexpect.searcher_re, plus=pexpect.EOF)
+
+    def test_searcher_re_as_string_with_TIMEOUT(self):
+        " check searcher_re(..).__str__() that includes TIMEOUT "
+        self._test_searcher_as(pexpect.searcher_re, plus=pexpect.TIMEOUT)
 
     def test_nonnative_pty_fork(self):
+        " test forced self.__fork_pty() and __pty_make_controlling_tty "
+        # given,
         class spawn_ourptyfork(pexpect.spawn):
             def _spawn(self, command, args=[]):
                 self.use_native_pty_fork = False
                 pexpect.spawn._spawn(self, command, args)
 
-        p = spawn_ourptyfork('cat')
+        # exercise,
+        p = spawn_ourptyfork('cat', echo=False)
+        # verify,
         p.sendline('abc')
         p.expect('abc')
         p.sendeof()
+        p.expect(pexpect.EOF)
+        assert not p.isalive()
 
     def test_exception_tb(self):
+        " test get_trace() filters away pexpect/__init__.py calls. "
         p = pexpect.spawn('sleep 1')
         try:
             p.expect('BLAH')
         except pexpect.ExceptionPexpect as e:
             # get_trace should filter out frames in pexpect's own code
             tb = e.get_trace()
-            assert 'raise ' not in tb, tb
+            # exercise,
+            assert 'raise ' not in tb
+            assert 'pexpect/__init__.py' not in tb
         else:
             assert False, "Should have raised an exception."
 
     def test_under_max_canon(self):
         " BEL is not sent by terminal driver at PC_MAX_CANON - 1. "
         p = pexpect.spawn('cat', echo=False)
-        p.sendline('_' * (os.fpathconf(p.child_fd, 'PC_MAX_CANON') - 1))
+        max_sendline = max((os.fpathconf(p.child_fd, 'PC_MAX_CANON'),
+                            os.fpathconf(p.child_fd, 'PC_MAX_INPUT'),))
+        p.sendline('_' * (max_sendline - 1))
         with self.assertRaises(pexpect.TIMEOUT):
             p.expect('\a', timeout=1)
 
     def test_at_max_canon(self):
         " BEL is sent by terminal driver when PC_MAX_CANON is reached. "
         p = pexpect.spawn('cat', echo=False)
-        p.sendline('_' * (os.fpathconf(p.child_fd, 'PC_MAX_CANON')))
+        max_sendline = max((os.fpathconf(p.child_fd, 'PC_MAX_CANON'),
+                            os.fpathconf(p.child_fd, 'PC_MAX_INPUT'),))
+        p.sendline('_' * (max_sendline + 1))
         p.expect('\a', timeout=3)
 
     def test_max_no_icanon(self):
         " MAX_CANON may be exceed if canonical mode is disabled for input. "
         # disable canonical mode processing of input using stty(1).
         p = pexpect.spawn('bash', echo=False)
+        max_sendline = max((os.fpathconf(p.child_fd, 'PC_MAX_CANON'),
+                            os.fpathconf(p.child_fd, 'PC_MAX_INPUT'),))
         p.sendline('stty -icanon')
         p.sendline('cat')
-        p.sendline('_' * (os.fpathconf(p.child_fd, 'PC_MAX_CANON') + 1))
+        p.sendline('_' * (max_sendline + 1))
         with self.assertRaises(pexpect.TIMEOUT):
             p.expect('\a', timeout=1)
 

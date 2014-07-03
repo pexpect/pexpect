@@ -271,11 +271,12 @@ class ANSI (term):
 
         # Create a state for 'q' and 'm' which allows an infinite number of ignored numbers
         self.state.add_transition_any ('SEMICOLON_X', DoLog, 'INIT')
-        self.state.add_transition_list (string.digits, 'SEMICOLON_X', None, 'NUMBER_X')
+        self.state.add_transition_list (string.digits, 'SEMICOLON_X', DoStartNumber, 'NUMBER_X')
+        self.state.add_transition_list (string.digits, 'NUMBER_X', DoBuildNumber, 'NUMBER_X')
         self.state.add_transition_any ('NUMBER_X', DoLog, 'INIT')
         self.state.add_transition ('m', 'NUMBER_X', None, 'INIT')
         self.state.add_transition ('q', 'NUMBER_X', None, 'INIT')
-        self.state.add_transition (';', 'NUMBER_2', None, 'SEMICOLON_X')
+        self.state.add_transition (';', 'NUMBER_X', None, 'SEMICOLON_X')
 
     def process (self, c):
         """Process a single byte. Called by :meth:`write`."""

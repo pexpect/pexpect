@@ -140,6 +140,13 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
                           'cd   \n'
                           '     ')
 
+    def test_number_x(self):
+        """Test the FSM state used to handle more than 2 numeric parameters."""
+        s = ANSI.ANSI(1, 20)
+        s.write('\x1b[0;1;32;45mtest')
+        assert str(s) == ('test                ')
+        assert(s.state.memory == [s, '0', '1', '32', '45'])
+
 if __name__ == '__main__':
     unittest.main()
 

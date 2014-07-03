@@ -1481,7 +1481,9 @@ class spawn(object):
         exp = Expecter(self, searcher_re(pattern_list), searchwindowsize)
         if async:
             from .async import expect_async
-            return expect_async(exp)
+            if timeout == -1:
+                timeout = self.timeout
+            return expect_async(exp, timeout)
         else:
             return exp.expect_loop(timeout)
 

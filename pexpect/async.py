@@ -1,13 +1,17 @@
 import asyncio
+import errno
 
-from pexpect import EOF
+from pexpect import EOF, TIMEOUT
 
 @asyncio.coroutine
-def expect_async(expecter):
+def expect_async(expecter, timeout=None):
     transport, pw = yield from asyncio.get_event_loop()\
         .connect_read_pipe(lambda: PatternWaiter(expecter), expecter.spawn)
     
-    return (yield from pw.fut)
+    try:
+        return (yield from asyncio.wait_for(pw.fut, timeout))
+    except asyncio.TimeoutError as e:
+        return expecter.timeout(e)
 
 class PatternWaiter(asyncio.Protocol):
     def __init__(self, expecter):

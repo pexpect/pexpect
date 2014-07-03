@@ -43,3 +43,10 @@ class PatternWaiter(asyncio.Protocol):
             self.error(e)
         else:
             self.found(index)
+    
+    def connection_lost(self, exc):
+        if isinstance(exc, OSError) and exc.errno == errno.EIO:
+            # We may get here without eof_received being called, e.g on Linux
+            self.eof_received()
+        elif exc is not None:
+            self.error(exc)

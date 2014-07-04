@@ -1466,7 +1466,8 @@ class spawn(object):
         return self.expect_list(compiled_pattern_list,
                 timeout, searchwindowsize, async)
 
-    def expect_list(self, pattern_list, timeout=-1, searchwindowsize=-1, async=False):
+    def expect_list(self, pattern_list, timeout=-1, searchwindowsize=-1,
+                    async=False):
 
         '''This takes a list of compiled regular expressions and returns the
         index into the pattern_list that matched the child output. The list may
@@ -1477,17 +1478,18 @@ class spawn(object):
         the expect() method.  This is called by expect(). If timeout==-1 then
         the self.timeout value is used. If searchwindowsize==-1 then the
         self.searchwindowsize value is used. '''
+        if timeout == -1:
+            timeout = self.timeout
 
         exp = Expecter(self, searcher_re(pattern_list), searchwindowsize)
         if async:
             from .async import expect_async
-            if timeout == -1:
-                timeout = self.timeout
             return expect_async(exp, timeout)
         else:
             return exp.expect_loop(timeout)
 
-    def expect_exact(self, pattern_list, timeout=-1, searchwindowsize=-1):
+    def expect_exact(self, pattern_list, timeout=-1, searchwindowsize=-1,
+                     async=False):
 
         '''This is similar to expect(), but uses plain string matching instead
         of compiled regular expressions in 'pattern_list'. The 'pattern_list'
@@ -1500,6 +1502,8 @@ class spawn(object):
 
         This method is also useful when you don't want to have to worry about
         escaping regular expression characters that you want to match.'''
+        if timeout == -1:
+            timeout = self.timeout
 
         if (isinstance(pattern_list, self.allowed_string_types) or
                 pattern_list in (TIMEOUT, EOF)):
@@ -1517,10 +1521,13 @@ class spawn(object):
         except TypeError:
             self._pattern_type_err(pattern_list)
         pattern_list = [prepare_pattern(p) for p in pattern_list]
+
         exp = Expecter(self, searcher_string(pattern_list), searchwindowsize)
-        return exp.expect_loop(timeout)
-        return self.expect_loop(searcher_string(pattern_list),
-                timeout, searchwindowsize)
+        if async:
+            from .async import expect_async
+            return expect_async(exp, timeout)
+        else:
+            return exp.expect_loop(timeout)
 
     def expect_loop(self, searcher, timeout=-1, searchwindowsize=-1):
         '''This is the common loop used inside expect. The 'searcher' should be

@@ -77,8 +77,6 @@ class Expecter(object):
         spawn = self.spawn
         from . import EOF, TIMEOUT
 
-        if timeout == -1:
-            timeout = self.spawn.timeout
         if timeout is not None:
             end_time = time.time() + timeout
 

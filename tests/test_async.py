@@ -3,14 +3,17 @@ try:
 except ImportError:
     asyncio = None
 
-import pexpect
+import sys
 import unittest
+
+import pexpect
+from .PexpectTestCase import PexpectTestCase
 
 def run(coro):
     return asyncio.get_event_loop().run_until_complete(coro)
 
 @unittest.skipIf(asyncio is None, "Requires asyncio")
-class AsyncTests(unittest.TestCase):
+class AsyncTests(PexpectTestCase):
     def test_simple_expect(self):
         p = pexpect.spawn('cat')
         p.sendline('Hello asyncio')
@@ -40,3 +43,9 @@ class AsyncTests(unittest.TestCase):
         coro = p.expect('Blah', async=True)
         with self.assertRaises(pexpect.EOF):
             run(coro)
+    
+    def test_expect_exact(self):
+        p = pexpect.spawn('%s list100.py' % sys.executable)
+        assert run(p.expect_exact(b'5', async=True)) == 0
+        assert run(p.expect_exact(['wpeok', b'11'], async=True)) == 1
+        assert run(p.expect_exact([b'foo', pexpect.EOF], async=True)) == 1

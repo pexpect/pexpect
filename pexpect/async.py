@@ -1,16 +1,24 @@
 import asyncio
 import errno
 
-from pexpect import EOF, TIMEOUT
+from pexpect import EOF
 
 @asyncio.coroutine
 def expect_async(expecter, timeout=None):
+    # First process data that was previously read - if it maches, we don't need
+    # async stuff.    
+    idx = expecter.new_data(expecter.spawn.buffer)
+    expecter.spawn.buffer = expecter.spawn.string_type()
+    if idx:
+        return idx
+
     transport, pw = yield from asyncio.get_event_loop()\
         .connect_read_pipe(lambda: PatternWaiter(expecter), expecter.spawn)
-    
+
     try:
         return (yield from asyncio.wait_for(pw.fut, timeout))
     except asyncio.TimeoutError as e:
+        transport.pause_reading()
         return expecter.timeout(e)
 
 class PatternWaiter(asyncio.Protocol):
@@ -30,6 +38,10 @@ class PatternWaiter(asyncio.Protocol):
         spawn = self.expecter.spawn
         s = spawn._coerce_read_string(data)
         spawn._log(s, 'read')
+
+        if self.fut.done():
+            spawn.buffer += data
+            return
 
         try:
             index = self.expecter.new_data(data)

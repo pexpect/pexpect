@@ -1460,6 +1460,17 @@ class spawn(object):
                 print p.before
 
         If you are trying to optimize for speed then see expect_list().
+        
+        On Python 3.4, or Python 3.3 with asyncio installed, passing
+        ``async=True``  will make this return an :mod:`asyncio` coroutine,
+        which you can yield from to get the same result that this method would
+        normally give directly. So, inside a coroutine, you can replace this code::
+        
+            index = p.expect(patterns)
+        
+        With this non-blocking form::
+        
+            index = yield from p.expect(patterns, async=True)
         '''
 
         compiled_pattern_list = self.compile_pattern_list(pattern)
@@ -1468,7 +1479,6 @@ class spawn(object):
 
     def expect_list(self, pattern_list, timeout=-1, searchwindowsize=-1,
                     async=False):
-
         '''This takes a list of compiled regular expressions and returns the
         index into the pattern_list that matched the child output. The list may
         also contain EOF or TIMEOUT(which are not compiled regular
@@ -1477,7 +1487,11 @@ class spawn(object):
         may help if you are trying to optimize for speed, otherwise just use
         the expect() method.  This is called by expect(). If timeout==-1 then
         the self.timeout value is used. If searchwindowsize==-1 then the
-        self.searchwindowsize value is used. '''
+        self.searchwindowsize value is used.
+
+        Like :meth:`expect`, passing ``async=True`` will make this return an
+        asyncio coroutine.
+        '''
         if timeout == -1:
             timeout = self.timeout
 
@@ -1501,7 +1515,11 @@ class spawn(object):
         search to just the end of the input buffer.
 
         This method is also useful when you don't want to have to worry about
-        escaping regular expression characters that you want to match.'''
+        escaping regular expression characters that you want to match.
+        
+        Like :meth:`expect`, passing ``async=True`` will make this return an
+        asyncio coroutine.
+        '''
         if timeout == -1:
             timeout = self.timeout
 

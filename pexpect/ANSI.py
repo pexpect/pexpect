@@ -227,7 +227,7 @@ class ANSI (term):
         self.state.add_transition ('J', 'ELB', DoEraseDown, 'INIT')
         self.state.add_transition ('K', 'ELB', DoEraseEndOfLine, 'INIT')
         self.state.add_transition ('r', 'ELB', DoEnableScroll, 'INIT')
-        self.state.add_transition ('m', 'ELB', None, 'INIT')
+        self.state.add_transition ('m', 'ELB', self.do_sgr, 'INIT')
         self.state.add_transition ('?', 'ELB', None, 'MODECRAP')
         self.state.add_transition_list (string.digits, 'ELB', DoStartNumber, 'NUMBER_1')
         self.state.add_transition_list (string.digits, 'NUMBER_1', DoBuildNumber, 'NUMBER_1')
@@ -241,16 +241,16 @@ class ANSI (term):
         ### It gets worse... the 'm' code can have infinite number of
         ### number;number;number before it. I've never seen more than two,
         ### but the specs say it's allowed. crap!
-        self.state.add_transition ('m', 'NUMBER_1', None, 'INIT')
+        self.state.add_transition ('m', 'NUMBER_1', self.do_sgr, 'INIT')
         ### LED control. Same implementation problem as 'm' code.
-        self.state.add_transition ('q', 'NUMBER_1', None, 'INIT')
+        self.state.add_transition ('q', 'NUMBER_1', self.do_decsca, 'INIT')
 
         # \E[?47h switch to alternate screen
         # \E[?47l restores to normal screen from alternate screen.
         self.state.add_transition_list (string.digits, 'MODECRAP', DoStartNumber, 'MODECRAP_NUM')
         self.state.add_transition_list (string.digits, 'MODECRAP_NUM', DoBuildNumber, 'MODECRAP_NUM')
-        self.state.add_transition ('l', 'MODECRAP_NUM', None, 'INIT')
-        self.state.add_transition ('h', 'MODECRAP_NUM', None, 'INIT')
+        self.state.add_transition ('l', 'MODECRAP_NUM', self.do_modecrap, 'INIT')
+        self.state.add_transition ('h', 'MODECRAP_NUM', self.do_modecrap, 'INIT')
 
 #RM   Reset Mode                Esc [ Ps l                   none
         self.state.add_transition (';', 'NUMBER_1', None, 'SEMICOLON')
@@ -264,9 +264,9 @@ class ANSI (term):
         ### It gets worse... the 'm' code can have infinite number of
         ### number;number;number before it. I've never seen more than two,
         ### but the specs say it's allowed. crap!
-        self.state.add_transition ('m', 'NUMBER_2', None, 'INIT')
+        self.state.add_transition ('m', 'NUMBER_2', self.do_sgr, 'INIT')
         ### LED control. Same problem as 'm' code.
-        self.state.add_transition ('q', 'NUMBER_2', None, 'INIT')
+        self.state.add_transition ('q', 'NUMBER_2', self.do_decsca, 'INIT')
         self.state.add_transition (';', 'NUMBER_2', None, 'SEMICOLON_X')
 
         # Create a state for 'q' and 'm' which allows an infinite number of ignored numbers
@@ -274,8 +274,8 @@ class ANSI (term):
         self.state.add_transition_list (string.digits, 'SEMICOLON_X', DoStartNumber, 'NUMBER_X')
         self.state.add_transition_list (string.digits, 'NUMBER_X', DoBuildNumber, 'NUMBER_X')
         self.state.add_transition_any ('NUMBER_X', DoLog, 'INIT')
-        self.state.add_transition ('m', 'NUMBER_X', None, 'INIT')
-        self.state.add_transition ('q', 'NUMBER_X', None, 'INIT')
+        self.state.add_transition ('m', 'NUMBER_X', self.do_sgr, 'INIT')
+        self.state.add_transition ('q', 'NUMBER_X', self.do_decsca, 'INIT')
         self.state.add_transition (';', 'NUMBER_X', None, 'SEMICOLON_X')
 
     def process (self, c):
@@ -330,3 +330,20 @@ class ANSI (term):
                 self.scroll_up ()
                 self.cursor_home (self.cur_r, 1)
                 self.erase_line()
+
+    def do_sgr (self, fsm):
+        '''Select Graphic Rendition, e.g. color. '''
+        screen = fsm.memory[0]
+        fsm.memory = [screen]
+
+    def do_decsca (self, fsm):
+        '''Select character protection attribute. '''
+        screen = fsm.memory[0]
+        fsm.memory = [screen]
+
+    def do_modecrap (self, fsm):
+        '''Handler for \x1b[?<number>h and \x1b[?<number>l. If anyone
+        wanted to actually use these, they'd need to add more states to the
+        FSM rather than just improve or override this method. '''
+        screen = fsm.memory[0]
+        fsm.memory = [screen]

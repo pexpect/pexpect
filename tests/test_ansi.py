@@ -142,10 +142,25 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_number_x(self):
         """Test the FSM state used to handle more than 2 numeric parameters."""
-        s = ANSI.ANSI(1, 20)
+        class TestANSI(ANSI.ANSI):
+            captured_memory = None
+            def do_sgr(self, fsm):
+                assert self.captured_memory is None
+                self.captured_memory = fsm.memory
+
+        s = TestANSI(1, 20)
         s.write('\x1b[0;1;32;45mtest')
         assert str(s) == ('test                ')
-        assert(s.state.memory == [s, '0', '1', '32', '45'])
+        assert s.captured_memory is not None
+        assert(s.captured_memory == [s, '0', '1', '32', '45'])
+
+    def test_fsm_memory(self):
+        """Test the FSM stack/memory does not have numbers left on it
+        after some sequences with numbers are passed in."""
+        s = ANSI.ANSI(1, 20)
+        s.write('\x1b[0;1;2;3m\x1b[4;5;6;7q\x1b[?8h\x1b[?9ltest')
+        assert str(s) == ('test                ')
+        assert(s.state.memory == [s])
 
 if __name__ == '__main__':
     unittest.main()

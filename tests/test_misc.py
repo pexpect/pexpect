@@ -383,8 +383,8 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         " BEL is not sent by terminal driver at maximum bytes - 1. "
         # given,
         child = pexpect.spawn('bash', echo=True, timeout=3)
-        child.sendline(u'stty icanon imaxbel')
-        child.sendline(u'cat')
+        child.sendline('stty icanon imaxbel')
+        child.sendline('cat')
         send_bytes = self.max_input - 1
 
         # exercise,
@@ -409,8 +409,8 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         " a single BEL is sent when maximum bytes (exactly) is reached. "
         # given,
         child = pexpect.spawn('bash', echo=True, timeout=3)
-        child.sendline(u'stty icanon imaxbel')
-        child.sendline(u'cat')
+        child.sendline('stty icanon imaxbel')
+        child.sendline('cat')
         send_bytes = self.max_input
 
         # exercise,
@@ -450,8 +450,8 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
 
         # given,
         child = pexpect.spawn('bash', echo=True, timeout=3)
-        child.sendline(u'stty -icanon imaxbel')
-        child.sendline(u'cat')
+        child.sendline('stty -icanon imaxbel')
+        child.sendline('cat')
         send_bytes = self.max_input + 11
 
         # exercise,

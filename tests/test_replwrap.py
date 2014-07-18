@@ -26,7 +26,7 @@ class REPLWrapTestCase(unittest.TestCase):
         assert 'real' in res, res
 
         # PAGER should be set to cat, otherwise man hangs
-        res = bash.run_command('man sleep', timeout=2)
+        res = bash.run_command('man sleep', timeout=5)
         assert 'SLEEP' in res, res
 
     def test_multiline(self):

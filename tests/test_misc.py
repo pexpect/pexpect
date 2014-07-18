@@ -415,7 +415,11 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
 
         # exercise,
         child.send('_' * send_bytes)
-        child.sendline()  # also rings bel
+        child.sendline()  # also rings bel; not received
+
+        # we must now backspace to send carriage return
+        child.sendcontrol('h')
+        child.sendline()
 
         # verify, all input is *not* received
         with self.assertRaises(pexpect.TIMEOUT):
@@ -426,10 +430,6 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
 
         # and BEL is found immediately after,
         child.expect_exact('\a')
- 
-        # we must now backspace to send carriage return
-        child.sendcontrol('h')
-        child.sendline()
 
         # and again, verify only (maximum - 1) is received by cat(1).
         child.expect_exact('_' * (send_bytes - 1))

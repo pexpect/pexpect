@@ -392,7 +392,14 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         child.sendline()
 
         # verify, all input is received
-        child.expect_exact('_' * send_bytes)
+        try:
+            child.expect_exact('_' * send_bytes)
+        except pexpect.TIMEOUT:
+            # only for travis, how many '_' *did* we find ??
+            print('X'*100)
+            print(child.buffer)
+            print('X'*100)
+            raise False
 
         # BEL is not found,
         with self.assertRaises(pexpect.TIMEOUT):

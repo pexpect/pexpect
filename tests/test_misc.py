@@ -428,11 +428,10 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         child.sendline('stty icanon imaxbel erase ^H')
         child.sendline('cat')
         send_bytes = self.max_input
-        print(self.max_input)
 
         # exercise,
         child.send('_' * send_bytes)
-        child.sendline()
+        child.sendline()  # rings BEL
 
         # SunOs actually receives all of PC_MAX_CANON, presumably for
         # the possibility of a multibyte sequence, but sendline() will
@@ -440,15 +439,13 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         # output when echo is enabled.
         if sys.platform.lower().startswith('sunos'):
             child.expect_exact('_' * send_bytes)
+
         else:
            # On other systems (OSX, Linux) all input is *not* received,
            with self.assertRaises(pexpect.TIMEOUT, timeout=1):
                child.expect_exact('_' * send_bytes)
 
-           # verify, one BEL ring for one too many '_'
-           child.expect_exact('\a')
-
-        # verify, 2nd BEL ring for CR (on solaris *only* CR rings bell).
+        # verify, BEL ring for CR
         child.expect_exact('\a')
 
         # verify, no more additional BELs expected

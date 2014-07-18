@@ -389,6 +389,7 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
 
         # exercise,
         child.send('_' * send_bytes)
+        child.sendline()
 
         # verify, all input is received
         child.expect_exact('_' * send_bytes)
@@ -398,7 +399,6 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
             child.expect_exact('\a')
 
         # cleanup,
-        child.sendline()  # stop input line
         child.sendeof()   # exit cat(1)
         child.sendeof()   # exit bash(1)
         child.expect(pexpect.EOF)
@@ -415,6 +415,7 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
 
         # exercise,
         child.send('_' * send_bytes)
+        child.sendline()  # also rings bel
 
         # verify, all input is *not* received
         with self.assertRaises(pexpect.TIMEOUT):
@@ -426,10 +427,6 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         # and BEL is found immediately after,
         child.expect_exact('\a')
  
-        # (and not any more than a single BEL)
-        with self.assertRaises(pexpect.TIMEOUT):
-            child.expect_exact('\a')
-
         # we must now backspace to send carriage return
         child.sendcontrol('h')
         child.sendline()
@@ -455,6 +452,7 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
 
         # exercise,
         child.send('_' * send_bytes)
+        child.sendline()
 
         # verify, all input is received on output (echo)
         child.expect_exact('_' * send_bytes)
@@ -464,7 +462,6 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
             child.expect_exact('\a')
 
         # verify cat(1) also received all input,
-        child.sendline()
         child.expect_exact('_' * send_bytes)
  
         # cleanup,

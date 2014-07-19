@@ -352,7 +352,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
             assert False, "Should have raised an exception."
 
 
-if os.environ.get('TRAVIS', None) is not None:
+if os.environ.get('TRAVIS', None) != 'true':
     # Travis-CI demonstrates unexpected behavior.
 
     class TestCaseCanon(PexpectTestCase.PexpectTestCase):
@@ -393,27 +393,33 @@ if os.environ.get('TRAVIS', None) is not None:
                self.max_input = os.fpathconf(0, 'PC_MAX_CANON')
 
         def test_under_max_canon(self):
-            " BEL is not sent by terminal driver at maximum bytes - 1. "
+            " BEL is not sent by terminal driver at maximum bytes - 2. "
             # given,
             child = pexpect.spawn('bash', echo=True, timeout=5)
             child.sendline('stty icanon imaxbel')
-            child.sendline('cat')
-            send_bytes = self.max_input - 1
+            child.sendline('echo BEGIN; cat')
+
+            # some systems BEL on (maximum - 1), not able to receive CR,
+            # even though all characters up until then were received, they
+            # simply cannot be transmitted, as CR is part of the transmission.
+            send_bytes = self.max_input - 2
 
             # exercise,
-            child.send('_' * send_bytes)
-            child.sendline()
+            child.sendline('_' * send_bytes)
 
             # fast forward beyond 'cat' command, as ^G can be found as part of
             # set-xterm-title sequence of $PROMPT_COMMAND or $PS1.
-            child.expect_exact('cat')
+            child.expect_exact('BEGIN')
 
-            # verify, all input is received
+            # verify, all input is found in echo output,
             child.expect_exact('_' * send_bytes)
 
             # BEL is not found,
             with self.assertRaises(pexpect.TIMEOUT, timeout=1):
                 child.expect_exact('\a')
+
+            # and cat(1) output matches and received all bytes.
+            child.expect_exact('_' * send_bytes)
 
             # cleanup,
             child.sendeof()   # exit cat(1)
@@ -425,14 +431,14 @@ if os.environ.get('TRAVIS', None) is not None:
         def test_at_max_icanon(self):
             " a single BEL is sent when maximum bytes (exactly) is reached. "
             # given,
-            child = pexpect.spawn('bash', echo=False, timeout=2)
+            # echo=True required to ring BEL on Linux
+            child = pexpect.spawn('bash', echo=True, timeout=2)
             child.sendline('stty icanon imaxbel erase ^H')
             child.sendline('cat')
             send_bytes = self.max_input
 
             # exercise,
-            child.send('_' * send_bytes)
-            child.sendline()  # rings BEL
+            child.sendline('_' * send_bytes)
             child.expect_exact('\a')
 
             # verify, no more additional BELs expected
@@ -456,24 +462,30 @@ if os.environ.get('TRAVIS', None) is not None:
         def test_max_no_icanon(self):
             " may exceed maximum input bytes if canonical mode is disabled. "
             # given,
-            child = pexpect.spawn('bash', echo=False, timeout=5)
+            child = pexpect.spawn('bash', echo=True, timeout=5)
             child.sendline('stty -icanon imaxbel')
-            child.sendline('cat')
+            child.sendline('echo BEGIN; cat')
             send_bytes = self.max_input + 11
 
             # exercise,
-            child.send('_' * send_bytes)
-            child.sendline()
+            child.sendline('_' * send_bytes)
+
+            # fast forward beyond 'cat' command, as ^G can be found as part of
+            # set-xterm-title sequence of $PROMPT_COMMAND or $PS1.
+            child.expect_exact('BEGIN')
 
             # BEL is *not* found,
             with self.assertRaises(pexpect.TIMEOUT):
                 child.expect_exact('\a', timeout=1)
 
-            # verify cat(1) also received all input,
+            # verify, all input is found in echo output,
+            child.expect_exact('_' * send_bytes)
+
+            # cat(1) also received all input,
             child.expect_exact('_' * send_bytes)
 
             # cleanup,
-            child.sendcontrol('c')  # exit cat(1)
+            child.sendcontrol('c')  # exit cat(1) (eof wont work in -icanon)
             child.sendline('true')  # ensure exit status of 0 for,
             child.sendline('exit')  # exit bash(1)
             child.expect(pexpect.EOF)

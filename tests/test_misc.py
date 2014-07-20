@@ -428,11 +428,10 @@ if os.environ.get('TRAVIS', None) != 'true':
             assert not child.isalive()
             assert child.exitstatus == 0
 
-        def test_at_max_icanon(self):
-            " a single BEL is sent when maximum bytes (exactly) is reached. "
+        def test_beyond_max_icanon(self):
+            " a single BEL is sent when maximum bytes is reached. "
             # given,
-            # echo=True required to ring BEL on Linux
-            child = pexpect.spawn('bash', echo=True, timeout=2)
+            child = pexpect.spawn('bash', echo=True, timeout=5)
             child.sendline('stty icanon imaxbel erase ^H')
             child.sendline('cat')
             send_bytes = self.max_input
@@ -440,10 +439,6 @@ if os.environ.get('TRAVIS', None) != 'true':
             # exercise,
             child.sendline('_' * send_bytes)
             child.expect_exact('\a')
-
-            # verify, no more additional BELs expected
-            with self.assertRaises(pexpect.TIMEOUT, timeout=1):
-                child.expect_exact('\a')
 
             # exercise, we must now backspace to send CR.
             child.sendcontrol('h')

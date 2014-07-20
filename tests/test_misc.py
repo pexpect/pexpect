@@ -375,13 +375,17 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
 
     def setUp(self):
         super(TestCaseCanon, self).setUp()
-        
-        # all systems use PC_MAX_CANON ..
-        self.max_input = os.fpathconf(1, 'PC_MAX_CANON')
 
-        # except for linux, which uses 4096,
         if sys.platform.lower().startswith('linux'):
+           # linux is 4096, N_TTY_BUF_SIZE.
            self.max_input = 4096
+        elif sys.platform.lower().startswith('sunos'):
+           # SunOS allows PC_MAX_CANON + 1; see
+           # https://bitbucket.org/illumos/illumos-gate/src/d07a59219ab7fd2a7f39eb47c46cf083c88e932f/usr/src/uts/common/io/ldterm.c?at=default#cl-1888
+           self.max_input = os.fpathconf(1, 'PC_MAX_CANON') + 1
+        else:
+           # All others (probably) limit exactly at PC_MAX_CANON
+           self.max_input = os.fpathconf(1, 'PC_MAX_CANON')
 
     @unittest.skipIf(os.environ.get('TRAVIS', None) is not None,
                      "Travis-CI demonstrates unexpected behavior.")
@@ -397,11 +401,15 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         child.send('_' * send_bytes)
         child.sendline()
 
+        # fast forward beyond 'cat' command, as ^G can be found as part of
+        # set-xterm-title sequence of $PROMPT_COMMAND or $PS1.
+        child.expect_exact('cat')
+
         # verify, all input is received
         child.expect_exact('_' * send_bytes)
 
         # BEL is not found,
-        with self.assertRaises(pexpect.TIMEOUT):
+        with self.assertRaises(pexpect.TIMEOUT, timeout=1):
             child.expect_exact('\a')
 
         # cleanup,
@@ -417,29 +425,41 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         " a single BEL is sent when maximum bytes (exactly) is reached. "
         # given,
         child = pexpect.spawn('bash', echo=True, timeout=5)
-        child.sendline('stty icanon imaxbel')
+        child.sendline('stty icanon imaxbel erase ^H')
         child.sendline('cat')
         send_bytes = self.max_input
+        print(self.max_input)
 
         # exercise,
         child.send('_' * send_bytes)
-        child.sendline()  # also rings bel; not received
+        child.sendline()
 
-        # we must now backspace to send carriage return
+        # SunOs actually receives all of PC_MAX_CANON, presumably for
+        # the possibility of a multibyte sequence, but sendline() will
+        # emit a bell. So all of "send_bytes" is, in fact, received on
+        # output when echo is enabled.
+        if sys.platform.lower().startswith('sunos'):
+            child.expect_exact('_' * send_bytes)
+        else:
+           # On other systems (OSX, Linux) all input is *not* received,
+           with self.assertRaises(pexpect.TIMEOUT, timeout=1):
+               child.expect_exact('_' * send_bytes)
+
+           # verify, one BEL ring for one too many '_'
+           child.expect_exact('\a')
+
+        # verify, 2nd BEL ring for CR (on solaris *only* CR rings bell).
+        child.expect_exact('\a')
+
+        # verify, no more additional BELs expected
+        with self.assertRaises(pexpect.TIMEOUT, timeout=1):
+            child.expect_exact('\a')
+
+        # exercise, we must now backspace to send CR.
         child.sendcontrol('h')
         child.sendline()
 
-        # verify, all input is *not* received
-        with self.assertRaises(pexpect.TIMEOUT):
-            child.expect_exact('_' * send_bytes)
-
-        # however, the length of (maximum - 1) is.
-        child.expect_exact('_' * (send_bytes - 1))
-
-        # and BEL is found immediately after,
-        child.expect_exact('\a')
-
-        # and again, verify only (maximum - 1) is received by cat(1).
+        # verify the length of (maximum - 1) received by cat(1).
         child.expect_exact('_' * (send_bytes - 1))
 
         # cleanup,
@@ -468,11 +488,11 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
 
         # BEL is *not* found,
         with self.assertRaises(pexpect.TIMEOUT):
-            child.expect_exact('\a')
+            child.expect_exact('\a', timeout=1)
 
         # verify cat(1) also received all input,
         child.expect_exact('_' * send_bytes)
- 
+
         # cleanup,
         child.sendcontrol('c')  # exit cat(1)
         child.sendline('true')  # ensure exit status of 0 for,

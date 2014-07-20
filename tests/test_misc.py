@@ -382,10 +382,10 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         elif sys.platform.lower().startswith('sunos'):
            # SunOS allows PC_MAX_CANON + 1; see
            # https://bitbucket.org/illumos/illumos-gate/src/d07a59219ab7fd2a7f39eb47c46cf083c88e932f/usr/src/uts/common/io/ldterm.c?at=default#cl-1888
-           self.max_input = os.fpathconf(1, 'PC_MAX_CANON') + 1
+           self.max_input = os.fpathconf(0, 'PC_MAX_CANON') + 1
         else:
            # All others (probably) limit exactly at PC_MAX_CANON
-           self.max_input = os.fpathconf(1, 'PC_MAX_CANON')
+           self.max_input = os.fpathconf(0, 'PC_MAX_CANON')
 
     @unittest.skipIf(os.environ.get('TRAVIS', None) is not None,
                      "Travis-CI demonstrates unexpected behavior.")
@@ -424,7 +424,7 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
     def test_at_max_icanon(self):
         " a single BEL is sent when maximum bytes (exactly) is reached. "
         # given,
-        child = pexpect.spawn('bash', echo=True, timeout=5)
+        child = pexpect.spawn('bash', echo=False, timeout=2, maxread=4000)
         child.sendline('stty icanon imaxbel erase ^H')
         child.sendline('cat')
         send_bytes = self.max_input
@@ -432,20 +432,6 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         # exercise,
         child.send('_' * send_bytes)
         child.sendline()  # rings BEL
-
-        # SunOs actually receives all of PC_MAX_CANON, presumably for
-        # the possibility of a multibyte sequence, but sendline() will
-        # emit a bell. So all of "send_bytes" is, in fact, received on
-        # output when echo is enabled.
-        if sys.platform.lower().startswith('sunos'):
-            child.expect_exact('_' * send_bytes)
-
-        else:
-           # On other systems (OSX, Linux) all input is *not* received,
-           with self.assertRaises(pexpect.TIMEOUT, timeout=1):
-               child.expect_exact('_' * send_bytes)
-
-        # verify, BEL ring for CR
         child.expect_exact('\a')
 
         # verify, no more additional BELs expected
@@ -462,7 +448,7 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         # cleanup,
         child.sendeof()         # exit cat(1)
         child.sendeof()         # exit bash(1)
-        child.expect(pexpect.EOF)
+        child.expect_exact(pexpect.EOF)
         assert not child.isalive()
         assert child.exitstatus == 0
 
@@ -471,7 +457,7 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
     def test_max_no_icanon(self):
         " may be exceed maximum input bytes if canonical mode is disabled. "
         # given,
-        child = pexpect.spawn('bash', echo=True, timeout=5)
+        child = pexpect.spawn('bash', echo=False, timeout=5)
         child.sendline('stty -icanon imaxbel')
         child.sendline('cat')
         send_bytes = self.max_input + 11
@@ -479,9 +465,6 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         # exercise,
         child.send('_' * send_bytes)
         child.sendline()
-
-        # verify, all input is received on output (echo)
-        child.expect_exact('_' * send_bytes)
 
         # BEL is *not* found,
         with self.assertRaises(pexpect.TIMEOUT):

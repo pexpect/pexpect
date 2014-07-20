@@ -351,39 +351,155 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         else:
             assert False, "Should have raised an exception."
 
+class TestCaseCanon(PexpectTestCase.PexpectTestCase):
+    " Test expected Canonical mode behavior (limited input line length)."
+    #
+    # All systems use the value of MAX_CANON which can be found using
+    # fpathconf(3) value PC_MAX_CANON -- with the exception of Linux.
+    #
+    # Linux, though defining a value of 255, actually honors the value
+    # of 4096 from linux kernel include file tty.h definition N_TTY_BUF_SIZE.
+    #
+    # Linux also does not honor IMAXBEL. termios(3) states, "Linux does not
+    # implement this bit, and acts as if it is always set." Although these
+    # tests ensure it is enabled, this is a non-op for Linux.
+    #
+    # These tests only ensure the correctness of the behavior described by
+    # the sendline() docstring. pexpect is not particularly involved in these
+    # scenarios, though if we wish to expose some kind of interface to
+    # tty.setraw, for example, these tests may be re-purposed as such.
+    #
+    # Lastly, these tests are skipped on Travis-CI. It produces unexpected
+    # behavior, seeminly differences in build machines and/or python
+    # interpreters without any deterministic results.
+
+    def setUp(self):
+        super(TestCaseCanon, self).setUp()
+
+        if sys.platform.lower().startswith('linux'):
+           # linux is 4096, N_TTY_BUF_SIZE.
+           self.max_input = 4096
+        elif sys.platform.lower().startswith('sunos'):
+           # SunOS allows PC_MAX_CANON + 1; see
+           # https://bitbucket.org/illumos/illumos-gate/src/d07a59219ab7fd2a7f39eb47c46cf083c88e932f/usr/src/uts/common/io/ldterm.c?at=default#cl-1888
+           self.max_input = os.fpathconf(1, 'PC_MAX_CANON') + 1
+        else:
+           # All others (probably) limit exactly at PC_MAX_CANON
+           self.max_input = os.fpathconf(1, 'PC_MAX_CANON')
+
+    @unittest.skipIf(os.environ.get('TRAVIS', None) is not None,
+                     "Travis-CI demonstrates unexpected behavior.")
     def test_under_max_canon(self):
-        " BEL is not sent by terminal driver at PC_MAX_CANON - 1. "
-        p = pexpect.spawn('cat', echo=False)
-        max_sendline = max((os.fpathconf(p.child_fd, 'PC_MAX_CANON'),
-                            os.fpathconf(p.child_fd, 'PC_MAX_INPUT'),))
-        p.sendline('_' * (max_sendline - 1))
-        with self.assertRaises(pexpect.TIMEOUT):
-            p.expect('\a', timeout=1)
+        " BEL is not sent by terminal driver at maximum bytes - 1. "
+        # given,
+        child = pexpect.spawn('bash', echo=True, timeout=5)
+        child.sendline('stty icanon imaxbel')
+        child.sendline('cat')
+        send_bytes = self.max_input - 1
 
-    def test_at_max_canon(self):
-        " BEL is sent by terminal driver when PC_MAX_CANON is reached. "
-        p = pexpect.spawn('bash', echo=False)
-        max_sendline = max((os.fpathconf(p.child_fd, 'PC_MAX_CANON'),
-                            os.fpathconf(p.child_fd, 'PC_MAX_INPUT'),))
-        p.sendline('stty icanon')
-        p.sendline('cat')
-        p.sendline('_' * (max_sendline + 1))
-        p.expect('\a', timeout=3)
+        # exercise,
+        child.send('_' * send_bytes)
+        child.sendline()
 
+        # fast forward beyond 'cat' command, as ^G can be found as part of
+        # set-xterm-title sequence of $PROMPT_COMMAND or $PS1.
+        child.expect_exact('cat')
+
+        # verify, all input is received
+        child.expect_exact('_' * send_bytes)
+
+        # BEL is not found,
+        with self.assertRaises(pexpect.TIMEOUT, timeout=1):
+            child.expect_exact('\a')
+
+        # cleanup,
+        child.sendeof()   # exit cat(1)
+        child.sendeof()   # exit bash(1)
+        child.expect(pexpect.EOF)
+        assert not child.isalive()
+        assert child.exitstatus == 0
+
+    @unittest.skipIf(os.environ.get('TRAVIS', None) is not None,
+                     "Travis-CI demonstrates unexpected behavior.")
+    def test_at_max_icanon(self):
+        " a single BEL is sent when maximum bytes (exactly) is reached. "
+        # given,
+        child = pexpect.spawn('bash', echo=True, timeout=5)
+        child.sendline('stty icanon imaxbel erase ^H')
+        child.sendline('cat')
+        send_bytes = self.max_input
+
+        # exercise,
+        child.send('_' * send_bytes)
+        child.sendline()  # rings BEL
+
+        # SunOs actually receives all of PC_MAX_CANON, presumably for
+        # the possibility of a multibyte sequence, but sendline() will
+        # emit a bell. So all of "send_bytes" is, in fact, received on
+        # output when echo is enabled.
+        if sys.platform.lower().startswith('sunos'):
+            child.expect_exact('_' * send_bytes)
+
+        else:
+           # On other systems (OSX, Linux) all input is *not* received,
+           with self.assertRaises(pexpect.TIMEOUT, timeout=1):
+               child.expect_exact('_' * send_bytes)
+
+        # verify, BEL ring for CR
+        child.expect_exact('\a')
+
+        # verify, no more additional BELs expected
+        with self.assertRaises(pexpect.TIMEOUT, timeout=1):
+            child.expect_exact('\a')
+
+        # exercise, we must now backspace to send CR.
+        child.sendcontrol('h')
+        child.sendline()
+
+        # verify the length of (maximum - 1) received by cat(1).
+        child.expect_exact('_' * (send_bytes - 1))
+
+        # cleanup,
+        child.sendeof()         # exit cat(1)
+        child.sendeof()         # exit bash(1)
+        child.expect(pexpect.EOF)
+        assert not child.isalive()
+        assert child.exitstatus == 0
+
+    @unittest.skipIf(os.environ.get('TRAVIS', None) is not None,
+                     "Travis-CI demonstrates unexpected behavior.")
     def test_max_no_icanon(self):
-        " MAX_CANON may be exceed if canonical mode is disabled for input. "
-        # disable canonical mode processing of input using stty(1).
-        p = pexpect.spawn('bash', echo=False)
-        max_sendline = max((os.fpathconf(p.child_fd, 'PC_MAX_CANON'),
-                            os.fpathconf(p.child_fd, 'PC_MAX_INPUT'),))
-        p.sendline('stty -icanon')
-        p.sendline('cat')
-        p.sendline('_' * (max_sendline + 1))
+        " may be exceed maximum input bytes if canonical mode is disabled. "
+        # given,
+        child = pexpect.spawn('bash', echo=True, timeout=5)
+        child.sendline('stty -icanon imaxbel')
+        child.sendline('cat')
+        send_bytes = self.max_input + 11
+
+        # exercise,
+        child.send('_' * send_bytes)
+        child.sendline()
+
+        # verify, all input is received on output (echo)
+        child.expect_exact('_' * send_bytes)
+
+        # BEL is *not* found,
         with self.assertRaises(pexpect.TIMEOUT):
-            p.expect('\a', timeout=1)
+            child.expect_exact('\a', timeout=1)
+
+        # verify cat(1) also received all input,
+        child.expect_exact('_' * send_bytes)
+
+        # cleanup,
+        child.sendcontrol('c')  # exit cat(1)
+        child.sendline('true')  # ensure exit status of 0 for,
+        child.sendline('exit')  # exit bash(1)
+        child.expect(pexpect.EOF)
+        assert not child.isalive()
+        assert child.exitstatus == 0
+
 
 if __name__ == '__main__':
     unittest.main()
 
 suite = unittest.makeSuite(TestCaseMisc,'test')
-

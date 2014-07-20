@@ -1079,17 +1079,34 @@ class spawn(object):
         log.
 
         The default terminal input mode is canonical processing unless set
-        otherwise by the child process, which may not receive more than
-        PC_MAX_CANON bytes per line::
-            >>> from os import fpathconf
-            >>> print(fpathconf(cat.child_fd, 'PC_MAX_CANON'))
-            1024
+        otherwise by the child process. This allows backspace and other line
+        processing to be performed prior to transmitting to the receiving
+        program.  As this is buffered, there is a limited size of such buffer.
 
-        On such a system, only 1024 bytes may be received per line.  Any
-        subsequent bytes received will be discarded, and a BEL will be printed
-        to output.  stty(1) can be used to either disable printing of BEL
-        (``stty -imaxbel``) or disable canonical input processing all together
-        (``stty -icanon``). '''
+        On Linux systems, this is 4096 (defined by N_TTY_BUF_SIZE).  All
+        other systems honor the POSIX.1 definition PC_MAX_CANON -- 1024
+        on OSX, 256 on OpenSolaris, 255 on FreeBSD.
+
+        This value may be discovered using fpathconf(3)::
+
+            >>> from os import fpathconf
+            >>> print(fpathconf(0, 'PC_MAX_CANON'))
+            256
+
+        On such a system, only 256 bytes may be received per line.  Any
+        subsequent bytes received will be discarded.  BEL (``'\a'``) is then
+        sent to output if IMAXBEL (termios.h) bit is set by the terminal
+        driver.  This is usually enabled by default. Linux does not implement
+        this bit, and acts as if it is always set.
+
+        Canonical input processing may be disabled all together by executing
+        a shell, then executing stty(1) before executing the final program::
+
+           >>> bash = pexpect.spawn('/bin/bash', echo=False)
+           >>> bash.sendline('stty -icanon')
+           >>> bash.sendline('base64')
+           >>> bash.sendline('x' * 5000)
+        '''
 
         time.sleep(self.delaybeforesend)
 
@@ -1103,7 +1120,9 @@ class spawn(object):
 
     def sendline(self, s=''):
         '''Wraps send(), sending string ``s`` to child process, with os.linesep
-        automatically appended. Returns number of bytes written. '''
+        automatically appended. Returns number of bytes written. Only a limited
+        number of bytes may be sent in the default terminal mode, see docstring
+        of method ``send``. '''
 
         n = self.send(s)
         n = n + self.send(self.linesep)

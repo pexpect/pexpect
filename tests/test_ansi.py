@@ -152,7 +152,7 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
         s.write('\x1b[0;1;32;45mtest')
         assert str(s) == ('test                ')
         assert s.captured_memory is not None
-        assert(s.captured_memory == [s, '0', '1', '32', '45'])
+        assert s.captured_memory == [s, '0', '1', '32', '45']
 
     def test_fsm_memory(self):
         """Test the FSM stack/memory does not have numbers left on it
@@ -160,7 +160,7 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
         s = ANSI.ANSI(1, 20)
         s.write('\x1b[0;1;2;3m\x1b[4;5;6;7q\x1b[?8h\x1b[?9ltest')
         assert str(s) == ('test                ')
-        assert(s.state.memory == [s])
+        assert s.state.memory == [s]
 
 if __name__ == '__main__':
     unittest.main()

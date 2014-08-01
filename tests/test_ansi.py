@@ -24,8 +24,6 @@ from . import PexpectTestCase
 import sys
 
 PY3 = (sys.version_info[0] >= 3)
-if PY3:
-    unicode = str
 
 write_target = 'I\'ve got a ferret sticking up my nose.                           \n' +\
 '(He\'s got a ferret sticking up his nose.)                        \n' +\
@@ -166,8 +164,11 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
         s.write(b'\xe2\x8c\x9b')
         s.write(b'\xe2\x8c')
         s.write(b'\xa8')
-        assert unicode(s) == u'\u231b\u2328        \n          '
-        assert bytes(s) == b'\xe2\x8c\x9b\xe2\x8c\xa8        \n          '
+        if PY3:
+            assert str(s) == u'\u231b\u2328        \n          '
+        else:
+            assert unicode(s) == u'\u231b\u2328        \n          '
+            assert str(s) == b'\xe2\x8c\x9b\xe2\x8c\xa8        \n          '
         assert s.dump() == u'\u231b\u2328                  '
         assert s.pretty() == u'+----------+\n|\u231b\u2328        |\n|          |\n+----------+\n'
         assert s.get_abs(1, 1) == u'\u231b'
@@ -177,8 +178,11 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
         """Test passing in of a unicode string."""
         s = ANSI.ANSI(2, 10, encoding="utf-8")
         s.write(u'\u231b\u2328')
-        assert unicode(s) == u'\u231b\u2328        \n          '
-        assert bytes(s) == b'\xe2\x8c\x9b\xe2\x8c\xa8        \n          '
+        if PY3:
+            assert str(s) == u'\u231b\u2328        \n          '
+        else:
+            assert unicode(s) == u'\u231b\u2328        \n          '
+            assert str(s) == b'\xe2\x8c\x9b\xe2\x8c\xa8        \n          '
         assert s.dump() == u'\u231b\u2328                  '
         assert s.pretty() == u'+----------+\n|\u231b\u2328        |\n|          |\n+----------+\n'
         assert s.get_abs(1, 1) == u'\u231b'
@@ -191,8 +195,11 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
         s.write(b'\xff') # a non-ASCII character
         # In unicode, the non-ASCII character is replaced with
         # REPLACEMENT CHARACTER.
-        assert unicode(s) == u'\ufffd         \n          '
-        assert bytes(s) == b'?         \n          '
+        if PY3:
+            assert str(s) == u'\ufffd         \n          '
+        else:
+            assert unicode(s) == u'\ufffd         \n          '
+            assert str(s) == b'?         \n          '
         assert s.dump() == u'\ufffd                   '
         assert s.pretty() == u'+----------+\n|\ufffd         |\n|          |\n+----------+\n'
         assert s.get_abs(1, 1) == u'\ufffd'

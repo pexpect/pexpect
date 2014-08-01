@@ -26,8 +26,6 @@ import unittest
 from . import PexpectTestCase
 
 PY3 = (sys.version_info[0] >= 3)
-if PY3:
-    unicode = str
 
 fill1_target='XXXXXXXXXX\n' + \
 'XOOOOOOOOX\n' + \
@@ -223,17 +221,14 @@ class screenTestCase (PexpectTestCase.PexpectTestCase):
         # With the default encoding set to ASCII, we should still be
         # able to feed in unicode strings and get them back out:
         s = self.make_screen_with_box_unicode('ascii','strict')
-        assert unicode(s) == unicode_box_unicode_result
+        if PY3:
+            assert str(s) == unicode_box_unicode_result
+        else:
+            assert unicode(s) == unicode_box_unicode_result
         assert s.pretty() == unicode_box_pretty_result
 
         # But we shouldn't be able to get an ASCII representation of
         # the screen when errors=='strict':
-        try:
-            bytes(s)
-            self.fail ('Expected an encoding exception.')
-        except UnicodeEncodeError:
-            pass
-
         if PY3:
             assert str(s) == unicode_box_unicode_result
         else:
@@ -247,7 +242,6 @@ class screenTestCase (PexpectTestCase.PexpectTestCase):
         # get an ASCII representation where the non-ASCII characters
         # have been replaced:
         s = self.make_screen_with_box_unicode('ascii')
-        assert bytes(s) == unicode_box_ascii_bytes_result
         if PY3:
             assert str(s) == unicode_box_unicode_result
         else:
@@ -256,22 +250,20 @@ class screenTestCase (PexpectTestCase.PexpectTestCase):
     def test_unicode_cp437 (self):
         # Verify decoding from and re-encoding to CP437.
         s = self.make_screen_with_box_cp437('cp437','strict')
-        assert unicode(s) == unicode_box_unicode_result
-        assert bytes(s) == unicode_box_cp437_bytes_result
         if PY3:
             assert str(s) == unicode_box_unicode_result
         else:
+            assert unicode(s) == unicode_box_unicode_result
             assert str(s) == unicode_box_cp437_bytes_result
         assert s.pretty() == unicode_box_pretty_result
 
     def test_unicode_utf8 (self):
         # Verify decoding from and re-encoding to UTF-8.
         s = self.make_screen_with_box_utf8('utf-8','strict')
-        assert unicode(s) == unicode_box_unicode_result
-        assert bytes(s) == unicode_box_utf8_bytes_result
         if PY3:
             assert str(s) == unicode_box_unicode_result
         else:
+            assert unicode(s) == unicode_box_unicode_result
             assert str(s) == unicode_box_utf8_bytes_result
         assert s.pretty() == unicode_box_pretty_result
 

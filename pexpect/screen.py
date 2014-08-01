@@ -71,7 +71,7 @@ class screen:
     input characters, when passed 'bytes' (which in Python 2 is equivalent to
     'str'), convert them from the encoding specified in the 'encoding'
     parameter to the constructor. Methods that return screen contents return
-    unicode strings, with the exception of __str__() under Python 2 and __bytes__(). '''
+    unicode strings, with the exception of __str__() under Python 2 '''
     def __init__ (self, r=24,c=80,encoding='latin-1',encoding_errors='replace'):
         '''This initializes a blank screen of the given dimensions.'''
 
@@ -109,39 +109,34 @@ class screen:
         else:
             return unicode(s)
 
-    if PY3:
-        def __str__(self):
-            '''This returns a printable representation of the screen. The end of
-            each screen line is terminated by a newline. '''
-            return self.__unicode__()
-    else:
-        def __str__(self):
-            '''This returns a printable representation of the screen. The end of
-            each screen line is terminated by a newline. '''
-            return self.__bytes__()
-
-    def __unicode__ (self):
-        '''This returns a printable representation of the screen. The end of
-        each screen line is terminated by a newline. '''
+    def _unicode (self):
+        '''This returns a printable representation of the screen in unicode
+        form (which, under Python 3.x, is the same as 'str'). The end of each
+        screen line is terminated by a newline.'''
 
         return u'\n'.join ([ u''.join(c) for c in self.w ])
 
-    def __bytes__ (self):
-        '''This returns a printable representation of the screen. The end of
-        each screen line is terminated by a newline. '''
+    if PY3:
+        __str__ = _unicode
+    else:
+        __unicode__ = _unicode
 
-        return self._encode(self.__unicode__())
+        def __str__(self):
+            '''This returns a printable representation of the screen. The end of
+            each screen line is terminated by a newline. '''
+            return self._encode(self._unicode())
 
     def dump (self):
         '''This returns a copy of the screen as a string. This is similar to
-        __unicode__ except that lines are not terminated with line feeds. '''
+        __str__/__unicode__ except that lines are not terminated with line
+        feeds.'''
 
         return u''.join ([ u''.join(c) for c in self.w ])
 
     def pretty (self):
         '''This returns a copy of the screen as a string with an ASCII text box
-        around the screen border. This is similar to __unicode__ except that it
-        adds a box. '''
+        around the screen border. This is similar to __str__/__unicode__ except
+        that it adds a box.'''
 
         top_bot = u'+' + u'-'*self.cols + u'+\n'
         return top_bot + u'\n'.join([u'|'+line+u'|' for line in unicode(self).split(u'\n')]) + u'\n' + top_bot

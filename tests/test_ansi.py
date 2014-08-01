@@ -157,7 +157,7 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
         characters, where the encoding of each character consists of
         multiple bytes, the characters are correctly decoded.
         Incremental decoding is also tested."""
-        s = ANSI.ANSI(2, 10, codec='utf-8')
+        s = ANSI.ANSI(2, 10, encoding='utf-8')
         # This is the UTF-8 encoding of the UCS character "HOURGLASS"
         # followed by the UTF-8 encoding of the UCS character
         # "KEYBOARD".  These characters can't be encoded in cp437 or
@@ -175,7 +175,7 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_unicode(self):
         """Test passing in of a unicode string."""
-        s = ANSI.ANSI(2, 10, codec="utf-8")
+        s = ANSI.ANSI(2, 10, encoding="utf-8")
         s.write(u'\u231b\u2328')
         assert unicode(s) == u'\u231b\u2328        \n          '
         assert bytes(s) == b'\xe2\x8c\x9b\xe2\x8c\xa8        \n          '
@@ -187,7 +187,7 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
     def test_decode_error(self):
         """Test that default handling of decode errors replaces the
         invalid characters."""
-        s = ANSI.ANSI(2, 10, codec="ascii")
+        s = ANSI.ANSI(2, 10, encoding="ascii")
         s.write(b'\xff') # a non-ASCII character
         # In unicode, the non-ASCII character is replaced with
         # REPLACEMENT CHARACTER.

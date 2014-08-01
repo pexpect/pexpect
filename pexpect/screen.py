@@ -69,22 +69,22 @@ class screen:
 
     Characters are represented internally using unicode. Methods that accept
     input characters, when passed 'bytes' (which in Python 2 is equivalent to
-    'str'), convert them from the encoding specified in the 'codec' parameter
-    to the constructor. Methods that return screen contents return unicode
-    strings, with the exception of __str__() under Python 2 and __bytes__(). '''
-    def __init__ (self, r=24,c=80,codec='latin-1',codec_errors='replace'):
+    'str'), convert them from the encoding specified in the 'encoding'
+    parameter to the constructor. Methods that return screen contents return
+    unicode strings, with the exception of __str__() under Python 2 and __bytes__(). '''
+    def __init__ (self, r=24,c=80,encoding='latin-1',encoding_errors='replace'):
         '''This initializes a blank screen of the given dimensions.'''
 
         self.rows = r
         self.cols = c
-        if codec is not None:
-            self.decoder = codecs.getincrementaldecoder(codec)(codec_errors)
-            self.encoder = codecs.getencoder(codec)
-            self.codec_errors = codec_errors
+        if encoding is not None:
+            self.decoder = codecs.getincrementaldecoder(encoding)(encoding_errors)
+            self.encoder = codecs.getencoder(encoding)
+            self.encoding_errors = encoding_errors
         else:
             self.decoder = None
             self.encoder = None
-            self.codec_errors = None
+            self.encoding_errors = None
         self.cur_r = 1
         self.cur_c = 1
         self.cur_saved_r = 1
@@ -105,7 +105,7 @@ class screen:
         '''This converts from the internal coding system (unicode) to
         the external one (as passed to the constructor). '''
         if self.encoder is not None:
-            return self.encoder(s,self.codec_errors)[0]
+            return self.encoder(s,self.encoding_errors)[0]
         else:
             return unicode(s)
 

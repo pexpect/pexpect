@@ -44,7 +44,7 @@ CAN = 24   # Cancel escape sequence.
 SUB = 26   # Same as CAN.
 ESC = 27   # Introduce a control sequence.
 DEL = 127  # Fill character; ignored on input.
-SPACE = chr(32) # Space or blank character.
+SPACE = u' ' # Space or blank character.
 
 PY3 = (sys.version_info[0] >= 3)
 if PY3:
@@ -141,14 +141,14 @@ class screen:
         top_bot = u'+' + u'-'*self.cols + u'+\n'
         return top_bot + u'\n'.join([u'|'+line+u'|' for line in unicode(self).split(u'\n')]) + u'\n' + top_bot
 
-    def fill (self, ch=unicode(SPACE)):
+    def fill (self, ch=SPACE):
 
         if isinstance(ch, bytes):
             ch = self._decode(ch)
 
         self.fill_region (1,1,self.rows,self.cols, ch)
 
-    def fill_region (self, rs,cs, re,ce, ch=unicode(SPACE)):
+    def fill_region (self, rs,cs, re,ce, ch=SPACE):
 
         if isinstance(ch, bytes):
             ch = self._decode(ch)

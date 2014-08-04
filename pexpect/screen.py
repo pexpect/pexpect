@@ -110,8 +110,8 @@ class screen:
             return unicode(s)
 
     def _unicode (self):
-        '''This returns a printable representation of the screen in unicode
-        form (which, under Python 3.x, is the same as 'str'). The end of each
+        '''This returns a printable representation of the screen as a unicode
+        string (which, under Python 3.x, is the same as 'str'). The end of each
         screen line is terminated by a newline.'''
 
         return u'\n'.join ([ u''.join(c) for c in self.w ])
@@ -134,9 +134,9 @@ class screen:
         return u''.join ([ u''.join(c) for c in self.w ])
 
     def pretty (self):
-        '''This returns a copy of the screen as a string with an ASCII text box
-        around the screen border. This is similar to __str__/__unicode__ except
-        that it adds a box.'''
+        '''This returns a copy of the screen as a unicode string with an ASCII
+        text box around the screen border. This is similar to
+        __str__/__unicode__ except that it adds a box.'''
 
         top_bot = u'+' + u'-'*self.cols + u'+\n'
         return top_bot + u'\n'.join([u'|'+line+u'|' for line in unicode(self).split(u'\n')]) + u'\n' + top_bot

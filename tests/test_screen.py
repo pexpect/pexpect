@@ -209,7 +209,7 @@ class screenTestCase (PexpectTestCase.PexpectTestCase):
     def make_screen_with_box_utf8(self, *args, **kwargs):
         '''Creates a screen containing a box drawn using double-line
         line drawing characters. The characters are fed in as
-        CP437. '''
+        UTF-8. '''
         s = screen.screen (2,2,*args,**kwargs)
         s.put_abs (1,1,b'\xe2\x95\x94')
         s.put_abs (1,2,b'\xe2\x95\x97')
@@ -229,9 +229,7 @@ class screenTestCase (PexpectTestCase.PexpectTestCase):
 
         # But we shouldn't be able to get an ASCII representation of
         # the screen when errors=='strict':
-        if PY3:
-            assert str(s) == unicode_box_unicode_result
-        else:
+        if not PY3:
             try:
                 str(s)
                 self.fail ('Expected an encoding exception.')

@@ -23,7 +23,9 @@ PEXPECT LICENSE
 
 '''
 
+import codecs
 import copy
+import sys
 
 NUL = 0    # Fill character; ignored on input.
 ENQ = 5    # Transmit answerback message.
@@ -42,7 +44,11 @@ CAN = 24   # Cancel escape sequence.
 SUB = 26   # Same as CAN.
 ESC = 27   # Introduce a control sequence.
 DEL = 127  # Fill character; ignored on input.
-SPACE = chr(32) # Space or blank character.
+SPACE = u' ' # Space or blank character.
+
+PY3 = (sys.version_info[0] >= 3)
+if PY3:
+    unicode = str
 
 def constrain (n, min, max):
 
@@ -59,13 +65,26 @@ class screen:
     rectangluar array. This maintains a virtual cursor position and handles
     scrolling as characters are added. This supports most of the methods needed
     by an ANSI text screen. Row and column indexes are 1-based (not zero-based,
-    like arrays). '''
+    like arrays).
 
-    def __init__ (self, r=24,c=80):
+    Characters are represented internally using unicode. Methods that accept
+    input characters, when passed 'bytes' (which in Python 2 is equivalent to
+    'str'), convert them from the encoding specified in the 'encoding'
+    parameter to the constructor. Methods that return screen contents return
+    unicode strings, with the exception of __str__() under Python 2 '''
+    def __init__ (self, r=24,c=80,encoding='latin-1',encoding_errors='replace'):
         '''This initializes a blank screen of the given dimensions.'''
 
         self.rows = r
         self.cols = c
+        if encoding is not None:
+            self.decoder = codecs.getincrementaldecoder(encoding)(encoding_errors)
+            self.encoder = codecs.getencoder(encoding)
+            self.encoding_errors = encoding_errors
+        else:
+            self.decoder = None
+            self.encoder = None
+            self.encoding_errors = None
         self.cur_r = 1
         self.cur_c = 1
         self.cur_saved_r = 1
@@ -74,31 +93,65 @@ class screen:
         self.scroll_row_end = self.rows
         self.w = [ [SPACE] * self.cols for c in range(self.rows)]
 
-    def __str__ (self):
-        '''This returns a printable representation of the screen. The end of
-        each screen line is terminated by a newline. '''
+    def _decode (self, s):
+        '''This converts from the external coding system (as passed to
+        the constructor) to the internal one (unicode). '''
+        if self.decoder is not None:
+            return self.decoder.decode(s)
+        else:
+            return unicode(s)
 
-        return '\n'.join ([ ''.join(c) for c in self.w ])
+    def _encode (self, s):
+        '''This converts from the internal coding system (unicode) to
+        the external one (as passed to the constructor). '''
+        if self.encoder is not None:
+            return self.encoder(s,self.encoding_errors)[0]
+        else:
+            return unicode(s)
+
+    def _unicode (self):
+        '''This returns a printable representation of the screen as a unicode
+        string (which, under Python 3.x, is the same as 'str'). The end of each
+        screen line is terminated by a newline.'''
+
+        return u'\n'.join ([ u''.join(c) for c in self.w ])
+
+    if PY3:
+        __str__ = _unicode
+    else:
+        __unicode__ = _unicode
+
+        def __str__(self):
+            '''This returns a printable representation of the screen. The end of
+            each screen line is terminated by a newline. '''
+            return self._encode(self._unicode())
 
     def dump (self):
         '''This returns a copy of the screen as a string. This is similar to
-        __str__ except that lines are not terminated with line feeds. '''
+        __str__/__unicode__ except that lines are not terminated with line
+        feeds.'''
 
-        return ''.join ([ ''.join(c) for c in self.w ])
+        return u''.join ([ u''.join(c) for c in self.w ])
 
     def pretty (self):
-        '''This returns a copy of the screen as a string with an ASCII text box
-        around the screen border. This is similar to __str__ except that it
-        adds a box. '''
+        '''This returns a copy of the screen as a unicode string with an ASCII
+        text box around the screen border. This is similar to
+        __str__/__unicode__ except that it adds a box.'''
 
-        top_bot = '+' + '-'*self.cols + '+\n'
-        return top_bot + '\n'.join(['|'+line+'|' for line in str(self).split('\n')]) + '\n' + top_bot
+        top_bot = u'+' + u'-'*self.cols + u'+\n'
+        return top_bot + u'\n'.join([u'|'+line+u'|' for line in unicode(self).split(u'\n')]) + u'\n' + top_bot
 
     def fill (self, ch=SPACE):
+
+        if isinstance(ch, bytes):
+            ch = self._decode(ch)
 
         self.fill_region (1,1,self.rows,self.cols, ch)
 
     def fill_region (self, rs,cs, re,ce, ch=SPACE):
+
+        if isinstance(ch, bytes):
+            ch = self._decode(ch)
 
         rs = constrain (rs, 1, self.rows)
         re = constrain (re, 1, self.rows)
@@ -147,12 +200,18 @@ class screen:
 
         r = constrain (r, 1, self.rows)
         c = constrain (c, 1, self.cols)
-        ch = str(ch)[0]
+        if isinstance(ch, bytes):
+            ch = self._decode(ch)[0]
+        else:
+            ch = ch[0]
         self.w[r-1][c-1] = ch
 
     def put (self, ch):
         '''This puts a characters at the current cursor position.
         '''
+
+        if isinstance(ch, bytes):
+            ch = self._decode(ch)
 
         self.put_abs (self.cur_r, self.cur_c, ch)
 
@@ -162,6 +221,9 @@ class screen:
         The last character of the line is lost.
         '''
 
+        if isinstance(ch, bytes):
+            ch = self._decode(ch)
+
         r = constrain (r, 1, self.rows)
         c = constrain (c, 1, self.cols)
         for ci in range (self.cols, c, -1):
@@ -169,6 +231,9 @@ class screen:
         self.put_abs (r,c,ch)
 
     def insert (self, ch):
+
+        if isinstance(ch, bytes):
+            ch = self._decode(ch)
 
         self.insert_abs (self.cur_r, self.cur_c, ch)
 
@@ -196,7 +261,7 @@ class screen:
             cs, ce = ce, cs
         sc = []
         for r in range (rs, re+1):
-            line = ''
+            line = u''
             for c in range (cs, ce + 1):
                 ch = self.get_abs (r,c)
                 line = line + ch

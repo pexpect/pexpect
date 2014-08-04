@@ -21,6 +21,9 @@ PEXPECT LICENSE
 from pexpect import ANSI
 import unittest
 from . import PexpectTestCase
+import sys
+
+PY3 = (sys.version_info[0] >= 3)
 
 write_target = 'I\'ve got a ferret sticking up my nose.                           \n' +\
 '(He\'s got a ferret sticking up his nose.)                        \n' +\
@@ -161,6 +164,62 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
         s.write('\x1b[0;1;2;3m\x1b[4;5;6;7q\x1b[?8h\x1b[?9ltest')
         assert str(s) == ('test                ')
         assert s.state.memory == [s]
+
+    def test_utf8_bytes(self):
+        """Test that when bytes are passed in containing UTF-8 encoded
+        characters, where the encoding of each character consists of
+        multiple bytes, the characters are correctly decoded.
+        Incremental decoding is also tested."""
+        s = ANSI.ANSI(2, 10, encoding='utf-8')
+        # This is the UTF-8 encoding of the UCS character "HOURGLASS"
+        # followed by the UTF-8 encoding of the UCS character
+        # "KEYBOARD".  These characters can't be encoded in cp437 or
+        # latin-1.  The "KEYBOARD" character is split into two
+        # separate writes.
+        s.write(b'\xe2\x8c\x9b')
+        s.write(b'\xe2\x8c')
+        s.write(b'\xa8')
+        if PY3:
+            assert str(s) == u'\u231b\u2328        \n          '
+        else:
+            assert unicode(s) == u'\u231b\u2328        \n          '
+            assert str(s) == b'\xe2\x8c\x9b\xe2\x8c\xa8        \n          '
+        assert s.dump() == u'\u231b\u2328                  '
+        assert s.pretty() == u'+----------+\n|\u231b\u2328        |\n|          |\n+----------+\n'
+        assert s.get_abs(1, 1) == u'\u231b'
+        assert s.get_region(1, 1, 1, 5) == [u'\u231b\u2328   ']
+
+    def test_unicode(self):
+        """Test passing in of a unicode string."""
+        s = ANSI.ANSI(2, 10, encoding="utf-8")
+        s.write(u'\u231b\u2328')
+        if PY3:
+            assert str(s) == u'\u231b\u2328        \n          '
+        else:
+            assert unicode(s) == u'\u231b\u2328        \n          '
+            assert str(s) == b'\xe2\x8c\x9b\xe2\x8c\xa8        \n          '
+        assert s.dump() == u'\u231b\u2328                  '
+        assert s.pretty() == u'+----------+\n|\u231b\u2328        |\n|          |\n+----------+\n'
+        assert s.get_abs(1, 1) == u'\u231b'
+        assert s.get_region(1, 1, 1, 5) == [u'\u231b\u2328   ']
+
+    def test_decode_error(self):
+        """Test that default handling of decode errors replaces the
+        invalid characters."""
+        s = ANSI.ANSI(2, 10, encoding="ascii")
+        s.write(b'\xff') # a non-ASCII character
+        # In unicode, the non-ASCII character is replaced with
+        # REPLACEMENT CHARACTER.
+        if PY3:
+            assert str(s) == u'\ufffd         \n          '
+        else:
+            assert unicode(s) == u'\ufffd         \n          '
+            assert str(s) == b'?         \n          '
+        assert s.dump() == u'\ufffd                   '
+        assert s.pretty() == u'+----------+\n|\ufffd         |\n|          |\n+----------+\n'
+        assert s.get_abs(1, 1) == u'\ufffd'
+        assert s.get_region(1, 1, 1, 5) == [u'\ufffd    ']
+
 
 if __name__ == '__main__':
     unittest.main()

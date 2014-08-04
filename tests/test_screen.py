@@ -19,9 +19,13 @@ PEXPECT LICENSE
 
 '''
 
+import sys
+
 from pexpect import screen
 import unittest
 from . import PexpectTestCase
+
+PY3 = (sys.version_info[0] >= 3)
 
 fill1_target='XXXXXXXXXX\n' + \
 'XOOOOOOOOX\n' + \
@@ -75,6 +79,17 @@ insert_target = 'ZXZZZZZZXZ\n' +\
 '9.........\n' +\
 'ZZ/2.4.6ZZ'
 get_region_target = ['......', '.\\/...', './\\...', '......']
+
+unicode_box_unicode_result = u'\u2554\u2557\n\u255A\u255D'
+unicode_box_pretty_result = u'''\
++--+
+|\u2554\u2557|
+|\u255A\u255D|
++--+
+'''
+unicode_box_ascii_bytes_result = b'??\n??'
+unicode_box_cp437_bytes_result = b'\xc9\xbb\n\xc8\xbc'
+unicode_box_utf8_bytes_result = b'\xe2\x95\x94\xe2\x95\x97\n\xe2\x95\x9a\xe2\x95\x9d'
 
 class screenTestCase (PexpectTestCase.PexpectTestCase):
     def make_screen_with_put (self):
@@ -168,6 +183,88 @@ class screenTestCase (PexpectTestCase.PexpectTestCase):
         s.insert_abs (10,9,'Z')
         s.insert_abs (10,9,'Z')
         assert str(s) == insert_target
+
+    def make_screen_with_box_unicode(self, *args, **kwargs):
+        '''Creates a screen containing a box drawn using double-line
+        line drawing characters. The characters are fed in as
+        unicode. '''
+        s = screen.screen (2,2,*args,**kwargs)
+        s.put_abs (1,1,u'\u2554')
+        s.put_abs (1,2,u'\u2557')
+        s.put_abs (2,1,u'\u255A')
+        s.put_abs (2,2,u'\u255D')
+        return s
+
+    def make_screen_with_box_cp437(self, *args, **kwargs):
+        '''Creates a screen containing a box drawn using double-line
+        line drawing characters. The characters are fed in as
+        CP437. '''
+        s = screen.screen (2,2,*args,**kwargs)
+        s.put_abs (1,1,b'\xc9')
+        s.put_abs (1,2,b'\xbb')
+        s.put_abs (2,1,b'\xc8')
+        s.put_abs (2,2,b'\xbc')
+        return s
+
+    def make_screen_with_box_utf8(self, *args, **kwargs):
+        '''Creates a screen containing a box drawn using double-line
+        line drawing characters. The characters are fed in as
+        UTF-8. '''
+        s = screen.screen (2,2,*args,**kwargs)
+        s.put_abs (1,1,b'\xe2\x95\x94')
+        s.put_abs (1,2,b'\xe2\x95\x97')
+        s.put_abs (2,1,b'\xe2\x95\x9a')
+        s.put_abs (2,2,b'\xe2\x95\x9d')
+        return s
+
+    def test_unicode_ascii (self):
+        # With the default encoding set to ASCII, we should still be
+        # able to feed in unicode strings and get them back out:
+        s = self.make_screen_with_box_unicode('ascii','strict')
+        if PY3:
+            assert str(s) == unicode_box_unicode_result
+        else:
+            assert unicode(s) == unicode_box_unicode_result
+        assert s.pretty() == unicode_box_pretty_result
+
+        # But we shouldn't be able to get an ASCII representation of
+        # the screen when errors=='strict':
+        if not PY3:
+            try:
+                str(s)
+                self.fail ('Expected an encoding exception.')
+            except UnicodeEncodeError:
+                pass
+
+        # If we use the default non-scrict mode, we should be able to
+        # get an ASCII representation where the non-ASCII characters
+        # have been replaced:
+        s = self.make_screen_with_box_unicode('ascii')
+        if PY3:
+            assert str(s) == unicode_box_unicode_result
+        else:
+            assert str(s) == unicode_box_ascii_bytes_result
+
+    def test_unicode_cp437 (self):
+        # Verify decoding from and re-encoding to CP437.
+        s = self.make_screen_with_box_cp437('cp437','strict')
+        if PY3:
+            assert str(s) == unicode_box_unicode_result
+        else:
+            assert unicode(s) == unicode_box_unicode_result
+            assert str(s) == unicode_box_cp437_bytes_result
+        assert s.pretty() == unicode_box_pretty_result
+
+    def test_unicode_utf8 (self):
+        # Verify decoding from and re-encoding to UTF-8.
+        s = self.make_screen_with_box_utf8('utf-8','strict')
+        if PY3:
+            assert str(s) == unicode_box_unicode_result
+        else:
+            assert unicode(s) == unicode_box_unicode_result
+            assert str(s) == unicode_box_utf8_bytes_result
+        assert s.pretty() == unicode_box_pretty_result
+
  #   def test_write (self):
  #       s = screen.screen (6,65)
  #       s.fill('.')

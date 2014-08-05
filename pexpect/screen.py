@@ -71,45 +71,39 @@ class screen:
     input characters, when passed 'bytes' (which in Python 2 is equivalent to
     'str'), convert them from the encoding specified in the 'encoding'
     parameter to the constructor. Methods that return screen contents return
-    unicode strings, with the exception of __str__() under Python 2 '''
-    def __init__ (self, r=24,c=80,encoding='latin-1',encoding_errors='replace'):
+    unicode strings, with the exception of __str__() under Python 2. Passing
+    ``encoding=None`` limits the API to only accept unicode input, so passing
+    bytes in will raise :exc:`TypeError`.
+    '''
+    def __init__(self, r=24, c=80, encoding='latin-1', encoding_errors='replace'):
         '''This initializes a blank screen of the given dimensions.'''
 
         self.rows = r
         self.cols = c
+        self.encoding = encoding
+        self.encoding_errors = encoding_errors
         if encoding is not None:
-            self.decoder = codecs.getincrementaldecoder(encoding)(encoding_errors)
-            self.encoder = codecs.getencoder(encoding)
-            self.encoding_errors = encoding_errors
+            self.decoder = codecs.getincrementaldecoder(encoding)(encoding_errors)            
         else:
             self.decoder = None
-            self.encoder = None
-            self.encoding_errors = None
         self.cur_r = 1
         self.cur_c = 1
         self.cur_saved_r = 1
         self.cur_saved_c = 1
         self.scroll_row_start = 1
         self.scroll_row_end = self.rows
-        self.w = [ [SPACE] * self.cols for c in range(self.rows)]
+        self.w = [ [SPACE] * self.cols for _ in range(self.rows)]
 
-    def _decode (self, s):
+    def _decode(self, s):
         '''This converts from the external coding system (as passed to
         the constructor) to the internal one (unicode). '''
         if self.decoder is not None:
             return self.decoder.decode(s)
         else:
-            return unicode(s)
+            raise TypeError("This screen was constructed with encoding=None, "
+                            "so it does not handle bytes.")
 
-    def _encode (self, s):
-        '''This converts from the internal coding system (unicode) to
-        the external one (as passed to the constructor). '''
-        if self.encoder is not None:
-            return self.encoder(s,self.encoding_errors)[0]
-        else:
-            return unicode(s)
-
-    def _unicode (self):
+    def _unicode(self):
         '''This returns a printable representation of the screen as a unicode
         string (which, under Python 3.x, is the same as 'str'). The end of each
         screen line is terminated by a newline.'''
@@ -124,10 +118,11 @@ class screen:
         def __str__(self):
             '''This returns a printable representation of the screen. The end of
             each screen line is terminated by a newline. '''
-            return self._encode(self._unicode())
+            encoding = self.encoding or 'ascii'
+            return self._unicode().encode(encoding, 'replace')
 
     def dump (self):
-        '''This returns a copy of the screen as a string. This is similar to
+        '''This returns a copy of the screen as a unicode string. This is similar to
         __str__/__unicode__ except that lines are not terminated with line
         feeds.'''
 

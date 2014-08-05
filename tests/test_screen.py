@@ -220,30 +220,29 @@ class screenTestCase (PexpectTestCase.PexpectTestCase):
     def test_unicode_ascii (self):
         # With the default encoding set to ASCII, we should still be
         # able to feed in unicode strings and get them back out:
-        s = self.make_screen_with_box_unicode('ascii','strict')
-        if PY3:
-            assert str(s) == unicode_box_unicode_result
-        else:
-            assert unicode(s) == unicode_box_unicode_result
-        assert s.pretty() == unicode_box_pretty_result
-
-        # But we shouldn't be able to get an ASCII representation of
-        # the screen when errors=='strict':
-        if not PY3:
-            try:
-                str(s)
-                self.fail ('Expected an encoding exception.')
-            except UnicodeEncodeError:
-                pass
-
-        # If we use the default non-scrict mode, we should be able to
-        # get an ASCII representation where the non-ASCII characters
-        # have been replaced:
         s = self.make_screen_with_box_unicode('ascii')
         if PY3:
             assert str(s) == unicode_box_unicode_result
         else:
-            assert str(s) == unicode_box_ascii_bytes_result
+            assert unicode(s) == unicode_box_unicode_result
+            # And we should still get something for Python 2 str(), though
+            # it might not be very useful
+            str(s)
+
+        assert s.pretty() == unicode_box_pretty_result
+
+    def test_decoding_errors(self):
+        # With strict error handling, it should reject bytes it can't decode
+        with self.assertRaises(UnicodeDecodeError):
+            self.make_screen_with_box_cp437('ascii', 'strict')
+
+        # replace should turn them into unicode replacement characters, U+FFFD
+        s = self.make_screen_with_box_cp437('ascii', 'replace')
+        expected = u'\ufffd\ufffd\n\ufffd\ufffd'
+        if PY3:
+            assert str(s) == expected
+        else:
+            assert unicode(s) == expected
 
     def test_unicode_cp437 (self):
         # Verify decoding from and re-encoding to CP437.
@@ -265,20 +264,20 @@ class screenTestCase (PexpectTestCase.PexpectTestCase):
             assert str(s) == unicode_box_utf8_bytes_result
         assert s.pretty() == unicode_box_pretty_result
 
- #   def test_write (self):
- #       s = screen.screen (6,65)
- #       s.fill('.')
- #       s.cursor_home()
- #       for c in write_text:
- #           s.write (c)
- #       print str(s)
- #       assert str(s) == write_target
- #   def test_tetris (self):
- #       s = screen.screen (24,80)
- #       tetris_text = open ('tetris.data').read()
- #       for c in tetris_text:
- #           s.write (c)
- #       assert str(s) == tetris_target
+    def test_no_bytes(self):
+        s = screen.screen(2, 2, encoding=None)
+        s.put_abs(1, 1, u'A')
+        s.put_abs(2, 2, u'D')
+
+        with self.assertRaises(TypeError):
+            s.put_abs(1, 2, b'B')
+
+        if PY3:
+            assert str(s) == u'A \n D'
+        else:
+            assert unicode(s) == u'A \n D'
+            # This will still work if it's limited to ascii
+            assert str(s) == b'A \n D'
 
 if __name__ == '__main__':
     unittest.main()

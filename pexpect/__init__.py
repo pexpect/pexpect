@@ -365,12 +365,17 @@ class spawn(object):
         Example log input and output to a file::
 
             child = pexpect.spawn('some_command')
-            fout = file('mylog.txt','w')
+            fout = open('mylog.txt','wb')
             child.logfile = fout
 
         Example log to stdout::
 
+            # In Python 2:
             child = pexpect.spawn('some_command')
+            child.logfile = sys.stdout
+
+            # In Python 3, spawnu should be used to give str to stdout:
+            child = pexpect.spawnu('some_command')
             child.logfile = sys.stdout
 
         The logfile_read and logfile_send members can be used to separately log
@@ -380,10 +385,13 @@ class spawn(object):
 
             child = pexpect.spawn('some_command')
             child.logfile_read = sys.stdout
+        
+        Remember to use spawnu instead of spawn for the above code if you are
+        using Python 3.
 
         To separately log output sent to the child use logfile_send::
 
-            self.logfile_send = fout
+            child.logfile_send = fout
 
         If ``ignore_sighup`` is True, the child process will ignore SIGHUP
         signals. For now, the default is True, to preserve the behaviour of

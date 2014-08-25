@@ -186,39 +186,39 @@ class TestCaseWhich(PexpectTestCase.PexpectTestCase):
             if not bin_echo or not bin_which:
                 pytest.skip('needs `echo` and `which` binaries')
             shutil.copy(bin_echo, bin_path)
-
+            isroot = os.getuid() == 0
             for should_match, mode in (
-                (False, 0o000),   # ----------, no
-                (False, 0o001),   # ---------x, no
-                (False, 0o010),   # ------x---, no
-                (True,  0o100),   # ---x------, yes
-                (False, 0o002),   # --------w-, no
-                (False, 0o020),   # -----w----, no
-                (False, 0o200),   # --w-------, no
-                (False, 0o003),   # --------wx, no
-                (False, 0o030),   # -----wx---, no
-                (True,  0o300),   # --wx------, yes
-                (False, 0o004),   # -------r--, no
-                (False, 0o040),   # ----r-----, no
-                (False, 0o400),   # -r--------, no
-                (False, 0o005),   # -------r-x, no
-                (False, 0o050),   # ----r-x---, no
-                (True,  0o500),   # -r-x------, yes
-                (False, 0o006),   # -------rw-, no
-                (False, 0o060),   # ----rw----, no
-                (False, 0o600),   # -rw-------, no
-                (False, 0o007),   # -------rwx, no
-                (False, 0o070),   # ----rwx---, no
-                (True,  0o700),   # -rwx------, yes
-                (False, 0o4001),  # ---S-----x, no
-                (False, 0o4010),  # ---S--x---, no
-                (True,  0o4100),  # ---s------, yes
-                (False, 0o4003),  # ---S----wx, no
-                (False, 0o4030),  # ---S-wx---, no
-                (True,  0o4300),  # --ws------, yes
-                (False, 0o2001),  # ------S--x, no
-                (False, 0o2010),  # ------s---, no
-                (True,  0o2100),  # ---x--S---, yes
+                (False,  0o000),   # ----------, no
+                (isroot, 0o001),   # ---------x, no
+                (isroot, 0o010),   # ------x---, no
+                (True,   0o100),   # ---x------, yes
+                (False,  0o002),   # --------w-, no
+                (False,  0o020),   # -----w----, no
+                (False,  0o200),   # --w-------, no
+                (isroot, 0o003),   # --------wx, no
+                (isroot, 0o030),   # -----wx---, no
+                (True,   0o300),   # --wx------, yes
+                (False,  0o004),   # -------r--, no
+                (False,  0o040),   # ----r-----, no
+                (False,  0o400),   # -r--------, no
+                (isroot, 0o005),   # -------r-x, no
+                (isroot, 0o050),   # ----r-x---, no
+                (True,   0o500),   # -r-x------, yes
+                (False,  0o006),   # -------rw-, no
+                (False,  0o060),   # ----rw----, no
+                (False,  0o600),   # -rw-------, no
+                (isroot, 0o007),   # -------rwx, no
+                (isroot, 0o070),   # ----rwx---, no
+                (True,   0o700),   # -rwx------, yes
+                (isroot, 0o4001),  # ---S-----x, no
+                (isroot, 0o4010),  # ---S--x---, no
+                (True,   0o4100),  # ---s------, yes
+                (isroot, 0o4003),  # ---S----wx, no
+                (isroot, 0o4030),  # ---S-wx---, no
+                (True,   0o4300),  # --ws------, yes
+                (isroot, 0o2001),  # ------S--x, no
+                (isroot, 0o2010),  # ------s---, no
+                (True,   0o2100),  # ---x--S---, yes
 
             ):
                 mode_str = '{0:0>4o}'.format(mode)

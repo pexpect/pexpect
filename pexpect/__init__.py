@@ -2007,46 +2007,30 @@ class searcher_re(object):
 
 
 def is_executable_file(path):
-    """Checks that path is an executable regular file (or a symlink to a file).
-    
-    This is roughly ``os.path isfile(path) and os.access(path, os.X_OK)``, but
-    on some platforms :func:`os.access` gives us the wrong answer, so this
-    checks permission bits directly.
+    """Checks that path is an executable regular file, or a symlink to one.
+
+    This is roughly ``os.path isfile(path) and os.access(path, os.X_OK)``,
+    except for root users, which are permitted to execute a file only if
+    any of the execute bits are set.
     """
     # follow symlinks,
     fpath = os.path.realpath(path)
 
-    # return False for non-files (directories, fifo, etc.)
     if not os.path.isfile(fpath):
+        # non-files (directories, fifo, etc.)
         return False
 
-    # On Solaris, etc., "If the process has appropriate privileges, an
-    # implementation may indicate success for X_OK even if none of the
-    # execute file permission bits are set."
-    #
-    # For this reason, it is necessary to explicitly check st_mode
-
-    # get file mode using os.stat, and check if `other',
-    # that is anybody, may read and execute.
     mode = os.stat(fpath).st_mode
-    if mode & stat.S_IROTH and mode & stat.S_IXOTH:
-        return True
 
-    # get current user's group ids, and check if `group',
-    # when matching ours, may read and execute.
-    user_gids = os.getgroups() + [os.getgid()]
-    if (os.stat(fpath).st_gid in user_gids and
-            mode & stat.S_IRGRP and mode & stat.S_IXGRP):
-        return True
+    if os.getuid() == 0:
+        # when root, any permission bit of any section
+        # is fine, even if we do not own the file.
+        return bool(mode & (stat.S_IXUSR |
+                            stat.S_IXGRP |
+                            stat.S_IXOTH))
 
-    # finally, if file owner matches our effective userid,
-    # check if `user', may read and execute.
-    user_gids = os.getgroups() + [os.getgid()]
-    if (os.stat(fpath).st_uid == os.geteuid() and
-            mode & stat.S_IRUSR and mode & stat.S_IXUSR):
-        return True
+    return os.access(fpath, os.X_OK)
 
-    return False
 
 def which(filename):
     '''This takes a given filename; tries to find it in the environment path;

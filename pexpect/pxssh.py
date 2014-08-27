@@ -214,7 +214,7 @@ class pxssh (spawn):
     def login (self, server, username, password='', terminal_type='ansi',
                 original_prompt=r"[#$]", login_timeout=10, port=None,
                 auto_prompt_reset=True, ssh_key=None, quiet=True,
-                sync_multiplier=1, check_local_ip=True):
+                sync_multiplier=1, check_local_ip=True, ssh_options=''):
         '''This logs the user into the given server.
 
         It uses
@@ -241,7 +241,6 @@ class pxssh (spawn):
         manually set the :attr:`PROMPT` attribute.
         '''
 
-        ssh_options = ''
         if quiet:
             ssh_options = ssh_options + ' -q'
         if not check_local_ip:

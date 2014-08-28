@@ -4,6 +4,13 @@ History
 Releases
 --------
 
+Version 3.4
+```````````
+* Fix regression that prevented executable, but unreadable files from
+  being found when not specified by absolute path -- such as
+  /usr/bin/sudo (:ghissue:`104`).
+
+
 Version 3.3
 ```````````
 

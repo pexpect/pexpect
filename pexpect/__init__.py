@@ -385,7 +385,7 @@ class spawn(object):
 
             child = pexpect.spawn('some_command')
             child.logfile_read = sys.stdout
-        
+
         Remember to use spawnu instead of spawn for the above code if you are
         using Python 3.
 
@@ -1536,6 +1536,8 @@ class spawn(object):
                     self.match = searcher.match
                     self.match_index = index
                     return self.match_index
+                elif self.after == EOF:
+                    raise EOF("EOF: no matches after previously caught EOF.")
                 # No match at this point
                 if (timeout is not None) and (timeout < 0):
                     raise TIMEOUT('Timeout exceeded in expect_any().')
@@ -1552,6 +1554,15 @@ class spawn(object):
             self.before = incoming
             self.after = EOF
             index = searcher.eof_index
+            # before raising EOF, ensure the file descriptor(s) of the
+            # child have been closed.  Otherwise, it is up to python's
+            # garbage collector to call our __del__ method which does
+            # the same, but it is not deterministic.  If our object is
+            # never freed, we run the risk of a later fork() raising
+            # our own ExceptionPexpect exception with message,
+            #   "pty.fork() failed: out of pty devices."
+            self.close()
+
             if index >= 0:
                 self.match = EOF
                 self.match_index = index

@@ -4,6 +4,11 @@ History
 Releases
 --------
 
+Version 3.4
+```````````
+* Fixed leak of file descriptors when spawning very many child processes
+  (:ghissue:`103`).
+
 Version 3.3
 ```````````
 

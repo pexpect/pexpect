@@ -18,11 +18,13 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
+import multiprocessing
 import unittest
 import subprocess
 import time
 import signal
 import sys
+import os
 
 import pexpect
 from . import PexpectTestCase
@@ -542,7 +544,40 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         signal.alarm(1)
         p1.expect('END')
 
+    def test_stdin_closed(self):
+        '''
+        Ensure pexpect continues to operate even when stdin is closed
+        '''
+        class Closed_stdin_proc(multiprocessing.Process):
+            def run(self):
+                sys.__stdin__.close()
+                cat = pexpect.spawn('cat')
+                cat.sendeof()
+                cat.expect(pexpect.EOF)
+
+        proc = Closed_stdin_proc()
+        proc.start()
+        proc.join()
+        assert proc.exitcode == 0
+
+    def test_stdin_stdout_closed(self):
+        '''
+        Ensure pexpect continues to operate even when stdin and stdout is closed
+        '''
+        class Closed_stdin_stdout_proc(multiprocessing.Process):
+            def run(self):
+                sys.__stdin__.close()
+                sys.__stdout__.close()
+                cat = pexpect.spawn('cat')
+                cat.sendeof()
+                cat.expect(pexpect.EOF)
+
+        proc = Closed_stdin_stdout_proc()
+        proc.start()
+        proc.join()
+        assert proc.exitcode == 0
+
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(ExpectTestCase,'test')
+suite = unittest.makeSuite(ExpectTestCase, 'test')

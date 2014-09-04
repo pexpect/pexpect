@@ -498,12 +498,17 @@ class spawn(object):
         # inherit EOF and INTR definitions from controlling process.
         try:
             from termios import VEOF, VINTR
-            fd = sys.__stdin__.fileno()
+            try:
+                fd = sys.__stdin__.fileno()
+            except ValueError:
+                # ValueError: I/O operation on closed file
+                fd = sys.__stdout__.fileno()
             self._INTR = ord(termios.tcgetattr(fd)[6][VINTR])
             self._EOF = ord(termios.tcgetattr(fd)[6][VEOF])
-        except (ImportError, OSError, IOError, termios.error):
+        except (ImportError, OSError, IOError, ValueError, termios.error):
             # unless the controlling process is also not a terminal,
-            # such as cron(1). Fall-back to using CEOF and CINTR.
+            # such as cron(1), or when stdin and stdout are both closed.
+            # Fall-back to using CEOF and CINTR. There
             try:
                 from termios import CEOF, CINTR
                 (self._INTR, self._EOF) = (CINTR, CEOF)

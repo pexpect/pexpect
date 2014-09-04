@@ -4,6 +4,11 @@ History
 Releases
 --------
 
+Version 3.4
+```````````
+* Fixed regression when executing pexpect with some prior releases of
+  the multiprocessing module where stdin has been closed (:ghissue:`86`).
+
 Version 3.3
 ```````````
 

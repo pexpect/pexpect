@@ -34,9 +34,11 @@ You can install Pexpect using pip::
 
 PEXPECT LICENSE
 
+.. code-block:: text
+
     http://opensource.org/licenses/isc-license.txt
 
-    Copyright (c) 2012, Noah Spurrier <noah@noah.org>
+    Copyright (c) 2012-2014, Noah Spurrier <noah@noah.org>
 
     PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY
     PURPOSE WITH OR WITHOUT FEE IS HEREBY GRANTED, PROVIDED THAT THE ABOVE

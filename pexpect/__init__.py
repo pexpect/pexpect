@@ -713,23 +713,24 @@ class spawn(object):
                 os._exit(os.EX_OSERR)
 
         # Parent
+
+        # [issue #119] 2. After forking, the parent closes the writing end
+        # of the pipe and reads from the reading end.
+        os.close(write_end)
+        data = os.read(read_end, 4096)
+        os.close(read_end)
+
+        # [issue #119] 6. The parent reads eof (a zero-length read) if the
+        # child successfully performed exec, since close-on-exec made
+        # successful exec close the writing end of the pipe. Or, if exec
+        # failed, the parent reads the error code and can proceed
+        # accordingly. Either way, the parent blocks until the child calls
+        # exec.
+        if len(data) != 0:
+            raise OSError(data.decode('utf-8'))
+
         try:
             self.setwinsize(24, 80)
-
-            # [issue #119] 2. After forking, the parent closes the writing end
-            # of the pipe and reads from the reading end.
-            os.close(write_end)
-            data = os.read(read_end, 4096)
-            os.close(read_end)
-
-            # [issue #119] 6. The parent reads eof (a zero-length read) if the
-            # child successfully performed exec, since close-on-exec made
-            # successful exec close the writing end of the pipe. Or, if exec
-            # failed, the parent reads the error code and can proceed
-            # accordingly. Either way, the parent blocks until the child calls
-            # exec.
-            if len(data) != 0:
-                raise OSError(data.decode('utf-8'))
 
         except IOError as err:
             if err.args[0] not in (errno.EINVAL, errno.ENOTTY):

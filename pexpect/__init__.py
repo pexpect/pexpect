@@ -692,13 +692,8 @@ class spawn(object):
             # Do not allow child to inherit open file descriptors from parent,
             # with the exception of the write_end of the pipe
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
-            for fd in range(3, max_fd):
-                if fd == write_end:
-                    continue
-                try:
-                    os.close(fd)
-                except OSError:
-                    pass
+            os.closerange(3, write_end)
+            os.closerange(write_end+1, max_fd)
 
             if self.ignore_sighup:
                 signal.signal(signal.SIGHUP, signal.SIG_IGN)

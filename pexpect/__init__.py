@@ -713,7 +713,7 @@ class spawn(object):
             except OSError as err:
                 # [issue #119] 5. If exec fails, the child writes the error
                 # code back to the parent using the pipe, then exits.
-                os.write(write_end, str(err))
+                os.write(write_end, str(err).encode('utf-8'))
                 os.close(write_end)
                 os._exit(os.EX_OSERR)
 
@@ -734,7 +734,7 @@ class spawn(object):
             # accordingly. Either way, the parent blocks until the child calls
             # exec.
             if len(data) != 0:
-                raise OSError(data)
+                raise OSError(data.decode('utf-8'))
 
         except IOError as err:
             if err.args[0] not in (errno.EINVAL, errno.ENOTTY):

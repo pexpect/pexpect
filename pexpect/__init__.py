@@ -431,6 +431,10 @@ class spawn(object):
         stores the status returned by os.waitpid. You can interpret this using
         os.WIFEXITED/os.WEXITSTATUS or os.WIFSIGNALED/os.TERMSIG.
 
+        If the child's call to exec fails with an OSError exception, it will
+        be passed back to the parent and raised as an OSError exception in the
+        call to spawn.
+
         The echo attribute may be set to False to disable echoing of input.
         As a pseudo-terminal, all input echoed by the "keyboard" (send()
         or sendline()) will be repeated to output.  For many cases, it is
@@ -638,6 +642,15 @@ class spawn(object):
         assert self.pid is None, 'The pid member must be None.'
         assert self.command is not None, 'The command member must not be None.'
 
+        # [issue #119] To prevent the case where exec fails and the user is
+        # stuck interacting with a python child process instead of whatever
+        # was expected, we implement the solution from
+        # http://stackoverflow.com/a/3703179 to pass the exception to the
+        # parent process
+
+        # [issue #119] 1. Before forking, open a pipe in the parent process.
+        read_end, write_end = os.pipe()
+
         if self.use_native_pty_fork:
             try:
                 self.pid, self.child_fd = pty.fork()
@@ -671,23 +684,58 @@ class spawn(object):
                     if err.args[0] not in (errno.EINVAL, errno.ENOTTY):
                         raise
 
-            # Do not allow child to inherit open file descriptors from parent.
+            # [issue #119] 3. The child closes the reading end and sets the
+            # close-on-exec flag for the writing end.
+            os.close(read_end)
+            fcntl.fcntl(write_end, fcntl.F_SETFD, fcntl.FD_CLOEXEC)
+
+            # Do not allow child to inherit open file descriptors from parent,
+            # with the exception of the write_end of the pipe
             max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
-            os.closerange(3, max_fd)
+            for fd in range(3, max_fd):
+                if fd == write_end:
+                    continue
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
 
             if self.ignore_sighup:
                 signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
             if self.cwd is not None:
                 os.chdir(self.cwd)
-            if self.env is None:
-                os.execv(self.command, self.args)
-            else:
-                os.execvpe(self.command, self.args, self.env)
+            try:
+                if self.env is None:
+                    os.execv(self.command, self.args)
+                else:
+                    os.execvpe(self.command, self.args, self.env)
+            except OSError as err:
+                # [issue #119] 5. If exec fails, the child writes the error
+                # code back to the parent using the pipe, then exits.
+                os.write(write_end, str(err))
+                os.close(write_end)
+                os._exit(os.EX_OSERR)
 
         # Parent
         try:
             self.setwinsize(24, 80)
+
+            # [issue #119] 2. After forking, the parent closes the writing end
+            # of the pipe and reads from the reading end.
+            os.close(write_end)
+            data = os.read(read_end, 4096)
+            os.close(read_end)
+
+            # [issue #119] 6. The parent reads eof (a zero-length read) if the
+            # child successfully performed exec, since close-on-exec made
+            # successful exec close the writing end of the pipe. Or, if exec
+            # failed, the parent reads the error code and can proceed
+            # accordingly. Either way, the parent blocks until the child calls
+            # exec.
+            if len(data) != 0:
+                raise OSError(data)
+
         except IOError as err:
             if err.args[0] not in (errno.EINVAL, errno.ENOTTY):
                 raise

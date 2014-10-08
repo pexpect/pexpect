@@ -69,13 +69,10 @@ try:
     import time
     import select
     import re
-    import struct
-    import resource
     import types
     import pty
     import tty
     import termios
-    import fcntl
     import errno
     import traceback
     import signal
@@ -87,6 +84,11 @@ except ImportError:  # pragma: no cover
 
 A critical module was not found. Probably this operating system does not
 support it. Pexpect is intended for UNIX-like operating systems.''')
+
+try:
+    import ptyprocess
+except ImportError:
+    raise  # For now. Work out what to do for Windows support here.
 
 from .expect import Expecter
 
@@ -318,6 +320,7 @@ class spawn(object):
         crlf = '\r\n'
         write_to_stdout = sys.stdout.write
 
+    ptyprocess_class = ptyprocess.PtyProcess
     encoding = None
 
     def __init__(self, command, args=[], timeout=30, maxread=2000,
@@ -654,135 +657,18 @@ class spawn(object):
         assert self.pid is None, 'The pid member must be None.'
         assert self.command is not None, 'The command member must not be None.'
 
-        if self.use_native_pty_fork:
-            try:
-                self.pid, self.child_fd = pty.fork()
-            except OSError:  # pragma: no cover
-                err = sys.exc_info()[1]
-                raise ExceptionPexpect('pty.fork() failed: ' + str(err))
-        else:
-            # Use internal __fork_pty
-            self.pid, self.child_fd = self.__fork_pty()
+        kwargs = {'echo': self.echo}
+        if self.ignore_sighup:
+            kwargs['before_exec'] = [lambda: signal.signal(signal.SIGHUP, signal.SIG_IGN)]
+        self.ptyproc = self.ptyprocess_class.spawn(self.args, env=self.env,
+                                                   cwd=self.cwd, **kwargs)
 
-        # Some platforms must call setwinsize() and setecho() from the
-        # child process, and others from the master process. We do both,
-        # allowing IOError for either.
-
-        if self.pid == pty.CHILD:
-            # Child
-            self.child_fd = self.STDIN_FILENO
-
-            # set default window size of 24 rows by 80 columns
-            try:
-                self.setwinsize(24, 80)
-            except IOError as err:
-                if err.args[0] not in (errno.EINVAL, errno.ENOTTY):
-                    raise
-
-            # disable echo if spawn argument echo was unset
-            if not self.echo:
-                try:
-                    self.setecho(self.echo)
-                except (IOError, termios.error) as err:
-                    if err.args[0] not in (errno.EINVAL, errno.ENOTTY):
-                        raise
-
-            # Do not allow child to inherit open file descriptors from parent.
-            max_fd = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
-            os.closerange(3, max_fd)
-
-            if self.ignore_sighup:
-                signal.signal(signal.SIGHUP, signal.SIG_IGN)
-
-            if self.cwd is not None:
-                os.chdir(self.cwd)
-            if self.env is None:
-                os.execv(self.command, self.args)
-            else:
-                os.execvpe(self.command, self.args, self.env)
-
-        # Parent
-        try:
-            self.setwinsize(24, 80)
-        except IOError as err:
-            if err.args[0] not in (errno.EINVAL, errno.ENOTTY):
-                raise
+        self.pid = self.ptyproc.pid
+        self.child_fd = self.ptyproc.fd
 
 
         self.terminated = False
         self.closed = False
-
-    def __fork_pty(self):
-        '''This implements a substitute for the forkpty system call. This
-        should be more portable than the pty.fork() function. Specifically,
-        this should work on Solaris.
-
-        Modified 10.06.05 by Geoff Marshall: Implemented __fork_pty() method to
-        resolve the issue with Python's pty.fork() not supporting Solaris,
-        particularly ssh. Based on patch to posixmodule.c authored by Noah
-        Spurrier::
-
-            http://mail.python.org/pipermail/python-dev/2003-May/035281.html
-
-        '''
-
-        parent_fd, child_fd = os.openpty()
-        if parent_fd < 0 or child_fd < 0:
-            raise ExceptionPexpect("Could not open with os.openpty().")
-
-        pid = os.fork()
-        if pid == pty.CHILD:
-            # Child.
-            os.close(parent_fd)
-            self.__pty_make_controlling_tty(child_fd)
-
-            os.dup2(child_fd, self.STDIN_FILENO)
-            os.dup2(child_fd, self.STDOUT_FILENO)
-            os.dup2(child_fd, self.STDERR_FILENO)
-
-        else:
-            # Parent.
-            os.close(child_fd)
-
-        return pid, parent_fd
-
-    def __pty_make_controlling_tty(self, tty_fd):
-        '''This makes the pseudo-terminal the controlling tty. This should be
-        more portable than the pty.fork() function. Specifically, this should
-        work on Solaris. '''
-
-        child_name = os.ttyname(tty_fd)
-
-        # Disconnect from controlling tty, if any.  Raises OSError of ENXIO
-        # if there was no controlling tty to begin with, such as when
-        # executed by a cron(1) job.
-        try:
-            fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
-            os.close(fd)
-        except OSError as err:
-            if err.errno != errno.ENXIO:
-                raise
-
-        os.setsid()
-
-        # Verify we are disconnected from controlling tty by attempting to open
-        # it again.  We expect that OSError of ENXIO should always be raised.
-        try:
-            fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
-            os.close(fd)
-            raise ExceptionPexpect("OSError of errno.ENXIO should be raised.")
-        except OSError as err:
-            if err.errno != errno.ENXIO:
-                raise
-
-        # Verify we can open child pty.
-        fd = os.open(child_name, os.O_RDWR)
-        os.close(fd)
-
-        # Verify we now have a controlling tty.
-        fd = os.open("/dev/tty", os.O_WRONLY)
-        os.close(fd)
-
 
     def fileno(self):
         '''This returns the file descriptor of the pty for the child.
@@ -861,17 +747,7 @@ class spawn(object):
         to enter a password often set ECHO False. See waitnoecho().
 
         Not supported on platforms where ``isatty()`` returns False.  '''
-
-        try:
-            attr = termios.tcgetattr(self.child_fd)
-        except termios.error as err:
-            errmsg = 'getecho() may not be called on this platform'
-            if err.args[0] == errno.EINVAL:
-                raise IOError(err.args[0], '%s: %s.' % (err.args[1], errmsg))
-            raise
-
-        self.echo = bool(attr[3] & termios.ECHO)
-        return self.echo
+        return self.ptyproc.getecho()
 
     def setecho(self, state):
         '''This sets the terminal echo mode on or off. Note that anything the
@@ -905,29 +781,7 @@ class spawn(object):
 
         Not supported on platforms where ``isatty()`` returns False.
         '''
-
-        errmsg = 'setecho() may not be called on this platform'
-
-        try:
-            attr = termios.tcgetattr(self.child_fd)
-        except termios.error as err:
-            if err.args[0] == errno.EINVAL:
-                raise IOError(err.args[0], '%s: %s.' % (err.args[1], errmsg))
-            raise
-
-        if state:
-            attr[3] = attr[3] | termios.ECHO
-        else:
-            attr[3] = attr[3] & ~termios.ECHO
-
-        try:
-            # I tried TCSADRAIN and TCSAFLUSH, but these were inconsistent and
-            # blocked on some platforms. TCSADRAIN would probably be ideal.
-            termios.tcsetattr(self.child_fd, termios.TCSANOW, attr)
-        except IOError as err:
-            if err.args[0] == errno.EINVAL:
-                raise IOError(err.args[0], '%s: %s.' % (err.args[1], errmsg))
-            raise
+        return self.ptyproc.setecho(state)
 
         self.echo = state
 
@@ -1574,31 +1428,18 @@ class spawn(object):
         return exp.expect_loop(timeout)
 
     def getwinsize(self):
-
         '''This returns the terminal window size of the child tty. The return
         value is a tuple of (rows, cols). '''
-
-        TIOCGWINSZ = getattr(termios, 'TIOCGWINSZ', 1074295912)
-        s = struct.pack('HHHH', 0, 0, 0, 0)
-        x = fcntl.ioctl(self.child_fd, TIOCGWINSZ, s)
-        return struct.unpack('HHHH', x)[0:2]
+        return self.ptyproc.getwinsize()
 
     def setwinsize(self, rows, cols):
-
         '''This sets the terminal window size of the child tty. This will cause
         a SIGWINCH signal to be sent to the child. This does not change the
         physical window size. It changes the size reported to TTY-aware
         applications like vi or curses -- applications that respond to the
         SIGWINCH signal. '''
+        return self.ptyproc.setwinsize(rows, cols)
 
-        # Some very old platforms have a bug that causes the value for
-        # termios.TIOCSWINSZ to be truncated. There was a hack here to work
-        # around this, but it caused problems with newer platforms so has been
-        # removed. For details see https://github.com/pexpect/pexpect/issues/39
-        TIOCSWINSZ = getattr(termios, 'TIOCSWINSZ', -2146929561)
-        # Note, assume ws_xpixel and ws_ypixel are zero.
-        s = struct.pack('HHHH', rows, cols, 0, 0)
-        fcntl.ioctl(self.fileno(), TIOCSWINSZ, s)
 
     def interact(self, escape_character=chr(29),
             input_filter=None, output_filter=None):
@@ -1778,6 +1619,7 @@ class spawnu(spawn):
         crlf = '\r\n'.decode('ascii')
     # This can handle unicode in both Python 2 and 3
     write_to_stdout = sys.stdout.write
+    ptyprocess_class = ptyprocess.PtyProcessUnicode
 
     def __init__(self, *args, **kwargs):
         self.encoding = kwargs.pop('encoding', 'utf-8')

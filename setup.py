@@ -52,4 +52,5 @@ setup (name='pexpect',
         'Topic :: System :: Software Distribution',
         'Topic :: Terminals',
     ],
+    install_requires=['ptyprocess'],
 )

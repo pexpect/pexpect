@@ -63,6 +63,19 @@ class fdspawn (spawn):
     def __del__ (self):
         return
 
+    # This is a property on our parent class, and this is the easiest way to
+    # override it.
+    # TODO: Redesign inheritance in a more sane way.
+    _flag_eof = False
+
+    @property
+    def flag_eof(self):
+        return self._flag_eof
+
+    @flag_eof.setter
+    def flag_eof(self, value):
+        self._flag_eof = value
+
     def close (self):
         """Close the file descriptor.
 

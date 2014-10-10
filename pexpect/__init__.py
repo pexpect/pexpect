@@ -85,10 +85,20 @@ except ImportError:  # pragma: no cover
 A critical module was not found. Probably this operating system does not
 support it. Pexpect is intended for UNIX-like operating systems.''')
 
+from contextlib import contextmanager
+
 try:
     import ptyprocess
 except ImportError:
     raise  # For now. Work out what to do for Windows support here.
+
+@contextmanager
+def _wrap_ptyprocess_err():
+    """Turn ptyprocess errors into our own ExceptionPexpect errors"""
+    try:
+        yield
+    except ptyprocess.PtyProcessError as e:
+        raise ExceptionPexpect(*e.args)
 
 from .expect import Expecter
 
@@ -475,7 +485,6 @@ class spawn(object):
         self.signalstatus = None
         # status returned by os.waitpid
         self.status = None
-        self.flag_eof = False
         self.pid = None
         # the child file descriptor is initially closed
         self.child_fd = -1
@@ -558,23 +567,6 @@ class spawn(object):
     @staticmethod
     def _coerce_read_string(s):
         return s
-
-    def __del__(self):
-        '''This makes sure that no system resources are left open. Python only
-        garbage collects Python objects. OS file descriptors are not Python
-        objects, so they must be handled explicitly. If the child file
-        descriptor was opened outside of this class (passed to the constructor)
-        then this does not close it. '''
-
-        if not self.closed:
-            # It is possible for __del__ methods to execute during the
-            # teardown of the Python VM itself. Thus self.close() may
-            # trigger an exception because os.close may be None.
-            try:
-                self.close()
-            # which exception, shouldnt' we catch explicitly .. ?
-            except:
-                pass
 
     def __str__(self):
         '''This returns a human-readable string that represents the state of
@@ -682,17 +674,10 @@ class spawn(object):
         the child is terminated (SIGKILL is sent if the child ignores SIGHUP
         and SIGINT). '''
 
-        if not self.closed:
-            self.flush()
-            os.close(self.child_fd)
-            # Give kernel time to update process status.
-            time.sleep(self.delayafterclose)
-            if self.isalive():
-                if not self.terminate(force):
-                    raise ExceptionPexpect('Could not terminate the child.')
-            self.child_fd = -1
-            self.closed = True
-            #self.pid = None
+        self.flush()
+        self.ptyproc.close()
+        self.isalive()  # Update exit status from ptyproc
+        self.child_fd = -1
 
     def flush(self):
         '''This does nothing. It is here to support the interface for a
@@ -1029,6 +1014,14 @@ class spawn(object):
 
         self.send(self._chr(self._INTR))
 
+    @property
+    def flag_eof(self):
+        return self.ptyproc.flag_eof
+
+    @flag_eof.setter
+    def flag_eof(self, value):
+        self.ptyproc.flag_eof = value
+
     def eof(self):
 
         '''This returns True if the EOF exception was ever raised.
@@ -1078,113 +1071,40 @@ class spawn(object):
                 return False
 
     def wait(self):
-
         '''This waits until the child exits. This is a blocking call. This will
         not read any data from the child, so this will block forever if the
         child has unread output and has terminated. In other words, the child
         may have printed output then called exit(), but, the child is
         technically still alive until its output is read by the parent. '''
 
-        if self.isalive():
-            pid, status = os.waitpid(self.pid, 0)
-        else:
-            raise ExceptionPexpect('Cannot wait for dead child process.')
-        self.exitstatus = os.WEXITSTATUS(status)
-        if os.WIFEXITED(status):
-            self.status = status
-            self.exitstatus = os.WEXITSTATUS(status)
-            self.signalstatus = None
-            self.terminated = True
-        elif os.WIFSIGNALED(status):
-            self.status = status
-            self.exitstatus = None
-            self.signalstatus = os.WTERMSIG(status)
-            self.terminated = True
-        elif os.WIFSTOPPED(status):  # pragma: no cover
-            # You can't call wait() on a child process in the stopped state.
-            raise ExceptionPexpect('Called wait() on a stopped child ' +
-                    'process. This is not supported. Is some other ' +
-                    'process attempting job control with our child pid?')
-        return self.exitstatus
+        ptyproc = self.ptyproc
+        with _wrap_ptyprocess_err():
+            exitstatus = ptyproc.wait()
+        self.status = ptyproc.status
+        self.exitstatus = ptyproc.exitstatus
+        self.signalstatus = ptyproc.signalstatus
+        self.terminated = True
+        
+        return exitstatus
 
     def isalive(self):
-
         '''This tests if the child process is running or not. This is
         non-blocking. If the child was terminated then this will read the
         exitstatus or signalstatus of the child. This returns True if the child
         process appears to be running or False if not. It can take literally
         SECONDS for Solaris to return the right status. '''
 
-        if self.terminated:
-            return False
+        ptyproc = self.ptyproc
+        with _wrap_ptyprocess_err():
+            alive = ptyproc.isalive()
 
-        if self.flag_eof:
-            # This is for Linux, which requires the blocking form
-            # of waitpid to get the status of a defunct process.
-            # This is super-lame. The flag_eof would have been set
-            # in read_nonblocking(), so this should be safe.
-            waitpid_options = 0
-        else:
-            waitpid_options = os.WNOHANG
-
-        try:
-            pid, status = os.waitpid(self.pid, waitpid_options)
-        except OSError:
-            err = sys.exc_info()[1]
-            # No child processes
-            if err.errno == errno.ECHILD:
-                raise ExceptionPexpect('isalive() encountered condition ' +
-                        'where "terminated" is 0, but there was no child ' +
-                        'process. Did someone else call waitpid() ' +
-                        'on our process?')
-            else:
-                raise err
-
-        # I have to do this twice for Solaris.
-        # I can't even believe that I figured this out...
-        # If waitpid() returns 0 it means that no child process
-        # wishes to report, and the value of status is undefined.
-        if pid == 0:
-            try:
-                ### os.WNOHANG) # Solaris!
-                pid, status = os.waitpid(self.pid, waitpid_options)
-            except OSError as e:  # pragma: no cover
-                # This should never happen...
-                if e.errno == errno.ECHILD:
-                    raise ExceptionPexpect('isalive() encountered condition ' +
-                            'that should never happen. There was no child ' +
-                            'process. Did someone else call waitpid() ' +
-                            'on our process?')
-                else:
-                    raise
-
-            # If pid is still 0 after two calls to waitpid() then the process
-            # really is alive. This seems to work on all platforms, except for
-            # Irix which seems to require a blocking call on waitpid or select,
-            # so I let read_nonblocking take care of this situation
-            # (unfortunately, this requires waiting through the timeout).
-            if pid == 0:
-                return True
-
-        if pid == 0:
-            return True
-
-        if os.WIFEXITED(status):
-            self.status = status
-            self.exitstatus = os.WEXITSTATUS(status)
-            self.signalstatus = None
+        if not alive:
+            self.status = ptyproc.status
+            self.exitstatus = ptyproc.exitstatus
+            self.signalstatus = ptyproc.signalstatus
             self.terminated = True
-        elif os.WIFSIGNALED(status):
-            self.status = status
-            self.exitstatus = None
-            self.signalstatus = os.WTERMSIG(status)
-            self.terminated = True
-        elif os.WIFSTOPPED(status):
-            raise ExceptionPexpect('isalive() encountered condition ' +
-                    'where child process is stopped. This is not ' +
-                    'supported. Is some other process attempting ' +
-                    'job control with our child pid?')
-        return False
+
+        return alive
 
     def kill(self, sig):
 

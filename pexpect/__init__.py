@@ -727,7 +727,9 @@ class spawn(object):
         # accordingly. Either way, the parent blocks until the child calls
         # exec.
         if len(data) != 0:
-            raise OSError(data.decode('utf-8'))
+            exception = OSError(data.decode('utf-8'))
+            exception.errno = errno.ENOEXEC
+            raise exception
 
         try:
             self.setwinsize(24, 80)

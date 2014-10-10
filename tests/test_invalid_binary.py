@@ -24,6 +24,7 @@ from . import PexpectTestCase
 import os
 import stat
 import tempfile
+import errno
 
 class InvalidBinaryChars(PexpectTestCase.PexpectTestCase):
 
@@ -51,9 +52,14 @@ class InvalidBinaryChars(PexpectTestCase.PexpectTestCase):
             os.unlink(fullpath)
             os.rmdir(dirpath)
             raise AssertionError("OSError was not raised")
-        except OSError:
-            # This is what should happen
-            pass
+        except OSError as err:
+            if errno.ENOEXEC == err.errno:
+                # This is what should happen
+                pass
+            else:
+                os.unlink(fullpath)
+                os.rmdir(dirpath)
+                raise AssertionError("Wrong OSError raised")
 
         os.unlink(fullpath)
         os.rmdir(dirpath)

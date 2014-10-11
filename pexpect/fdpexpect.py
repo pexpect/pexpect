@@ -21,25 +21,21 @@ PEXPECT LICENSE
 
 '''
 
-from pexpect import spawn, ExceptionPexpect
+from .spawnbase import SpawnBase
+from .exceptions import ExceptionPexpect
 import os
 
 __all__ = ['fdspawn']
 
-class fdspawn (spawn):
-
+class fdspawn(SpawnBase):
     '''This is like pexpect.spawn but allows you to supply your own open file
     descriptor. For example, you could use it to read through a file looking
     for patterns, or to control a modem or serial device. '''
 
-    def __init__ (self, fd, args=[], timeout=30, maxread=2000, searchwindowsize=None, logfile=None):
-
+    def __init__ (self, fd, args=None, timeout=30, maxread=2000, searchwindowsize=None, logfile=None):
         '''This takes a file descriptor (an int) or an object that support the
         fileno() method (returning an int). All Python file-like objects
         support fileno(). '''
-
-        ### TODO: Add better handling of trying to use fdspawn in place of spawn
-        ### TODO: (overload to allow fdspawn to also handle commands as spawn does.
 
         if type(fd) != type(0) and hasattr(fd, 'fileno'):
             fd = fd.fileno()
@@ -54,27 +50,11 @@ class fdspawn (spawn):
 
         self.args = None
         self.command = None
-        spawn.__init__(self, None, args, timeout, maxread, searchwindowsize, logfile)
+        SpawnBase.__init__(self, timeout, maxread, searchwindowsize, logfile)
         self.child_fd = fd
         self.own_fd = False
         self.closed = False
         self.name = '<file descriptor %d>' % fd
-
-    def __del__ (self):
-        return
-
-    # This is a property on our parent class, and this is the easiest way to
-    # override it.
-    # TODO: Redesign inheritance in a more sane way.
-    _flag_eof = False
-
-    @property
-    def flag_eof(self):
-        return self._flag_eof
-
-    @flag_eof.setter
-    def flag_eof(self, value):
-        self._flag_eof = value
 
     def close (self):
         """Close the file descriptor.
@@ -104,7 +84,3 @@ class fdspawn (spawn):
 
     def terminate (self, force=False):  # pragma: no cover
         raise ExceptionPexpect('This method is not valid for file descriptors.')
-
-    def kill (self, sig):  # pragma: no cover
-        """No-op - no process to kill."""
-        return

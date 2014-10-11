@@ -474,6 +474,10 @@ class spawn(SpawnBase):
         n = n + self.send(self.linesep)
         return n
 
+    def _log_control(self, byte):
+        """Write control characters to the appropriate log files"""
+        self._log(byte, 'send')
+
     def sendcontrol(self, char):
         '''Helper method that wraps send() with mnemonic access for sending control
         character to the child (such as Ctrl-C or Ctrl-D).  For example, to send
@@ -483,7 +487,9 @@ class spawn(SpawnBase):
 
         See also, sendintr() and sendeof().
         '''
-        return self.ptyproc.sendcontrol(char)
+        n, byte = self.ptyproc.sendcontrol(char)
+        self._log_control(byte)
+        return n
 
     def sendeof(self):
         '''This sends an EOF to the child. This sends a character which causes
@@ -495,13 +501,15 @@ class spawn(SpawnBase):
         It is the responsibility of the caller to ensure the eof is sent at the
         beginning of a line. '''
 
-        self.ptyproc.sendeof()
+        n, byte = self.ptyproc.sendeof()
+        self._log_control(byte)
 
     def sendintr(self):
         '''This sends a SIGINT to the child. It does not require
         the SIGINT to be the first character on a line. '''
 
-        self.ptyproc.sendintr()
+        n, byte = self.ptyproc.sendintr()
+        self._log_control(byte)
 
     @property
     def flag_eof(self):
@@ -760,3 +768,7 @@ class spawnu(SpawnBaseUnicode, spawn):
 
     def _send(self, s):
         return os.write(self.child_fd, s.encode(self.encoding, self.errors))
+
+    def _log_control(self, byte):
+        s = byte.decode(self.encoding, 'replace')
+        self._log(s, 'send')

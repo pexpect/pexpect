@@ -8,13 +8,12 @@ import tty
 import termios
 import errno
 import signal
-import codecs
 from contextlib import contextmanager
 
 import ptyprocess
 
 from .exceptions import ExceptionPexpect, EOF, TIMEOUT
-from .spawnbase import SpawnBase
+from .spawnbase import SpawnBase, SpawnBaseUnicode
 from .utils import which, split_command_line
 
 @contextmanager
@@ -30,29 +29,6 @@ PY3 = (sys.version_info[0] >= 3)
 class spawn(SpawnBase):
     '''This is the main class interface for Pexpect. Use this class to start
     and control child applications. '''
-    string_type = bytes
-    if PY3:
-        allowed_string_types = (bytes, str)
-        @staticmethod
-        def _chr(c):
-            return bytes([c])
-        linesep = os.linesep.encode('ascii')
-        crlf = '\r\n'.encode('ascii')
-
-        @staticmethod
-        def write_to_stdout(b):
-            try:
-                return sys.stdout.buffer.write(b)
-            except AttributeError:
-                # If stdout has been replaced, it may not have .buffer
-                return sys.stdout.write(b.decode('ascii', 'replace'))
-    else:
-        allowed_string_types = (basestring,)  # analysis:ignore
-        _chr = staticmethod(chr)
-        linesep = os.linesep
-        crlf = '\r\n'
-        write_to_stdout = sys.stdout.write
-
     ptyprocess_class = ptyprocess.PtyProcess
 
     def __init__(self, command, args=[], timeout=30, maxread=2000,
@@ -812,7 +788,7 @@ class spawn(SpawnBase):
                     raise
 
 
-class spawnu(spawn):
+class spawnu(SpawnBaseUnicode, spawn):
     """Works like spawn, but accepts and returns unicode strings.
 
     Extra parameters:
@@ -822,38 +798,7 @@ class spawnu(spawn):
                    (the default), 'ignore', or 'replace', as described
                    for :meth:`~bytes.decode` and :meth:`~str.encode`.
     """
-    if PY3:
-        string_type = str
-        allowed_string_types = (str, )
-        _chr = staticmethod(chr)
-        linesep = os.linesep
-        crlf = '\r\n'
-    else:
-        string_type = unicode
-        allowed_string_types = (unicode, )
-        _chr = staticmethod(unichr)
-        linesep = os.linesep.decode('ascii')
-        crlf = '\r\n'.decode('ascii')
-    # This can handle unicode in both Python 2 and 3
-    write_to_stdout = sys.stdout.write
     ptyprocess_class = ptyprocess.PtyProcessUnicode
-
-    def __init__(self, *args, **kwargs):
-        self.encoding = kwargs.pop('encoding', 'utf-8')
-        self.errors = kwargs.pop('errors', 'strict')
-        self._decoder = codecs.getincrementaldecoder(self.encoding)(errors=self.errors)
-        super(spawnu, self).__init__(*args, **kwargs)
-
-    @staticmethod
-    def _coerce_expect_string(s):
-        return s
-
-    @staticmethod
-    def _coerce_send_string(s):
-        return s
-
-    def _coerce_read_string(self, s):
-        return self._decoder.decode(s, final=False)
 
     def _send(self, s):
         return os.write(self.child_fd, s.encode(self.encoding, self.errors))

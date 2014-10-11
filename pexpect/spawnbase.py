@@ -1,3 +1,4 @@
+import codecs
 import os
 import sys
 import re
@@ -8,7 +9,9 @@ from .expect import Expecter, searcher_string, searcher_re
 PY3 = (sys.version_info[0] >= 3)
 
 class SpawnBase(object):
-    """A base class providing the backwards-compatible spawn API for Pexpect."""
+    """A base class providing the backwards-compatible spawn API for Pexpect.
+
+    This should not be instantiated directly: use :class:`pexpect.spawn` or :class:`pexpect.fdpexpect.fdspawn`."""
     string_type = bytes
     if PY3:
         allowed_string_types = (bytes, str)
@@ -447,3 +450,36 @@ class SpawnBase(object):
     def kill(self):   # pragma: no cover
         """Overridden by subclasses with a process to send signals"""
         pass
+
+class SpawnBaseUnicode(SpawnBase):
+    if PY3:
+        string_type = str
+        allowed_string_types = (str, )
+        _chr = staticmethod(chr)
+        linesep = os.linesep
+        crlf = '\r\n'
+    else:
+        string_type = unicode
+        allowed_string_types = (unicode, )
+        _chr = staticmethod(unichr)
+        linesep = os.linesep.decode('ascii')
+        crlf = '\r\n'.decode('ascii')
+    # This can handle unicode in both Python 2 and 3
+    write_to_stdout = sys.stdout.write
+
+    def __init__(self, *args, **kwargs):
+        self.encoding = kwargs.pop('encoding', 'utf-8')
+        self.errors = kwargs.pop('errors', 'strict')
+        self._decoder = codecs.getincrementaldecoder(self.encoding)(errors=self.errors)
+        super(SpawnBaseUnicode, self).__init__(*args, **kwargs)
+
+    @staticmethod
+    def _coerce_expect_string(s):
+        return s
+
+    @staticmethod
+    def _coerce_send_string(s):
+        return s
+
+    def _coerce_read_string(self, s):
+        return self._decoder.decode(s, final=False)

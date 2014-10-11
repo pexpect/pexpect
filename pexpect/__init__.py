@@ -198,18 +198,29 @@ def run(command, timeout=-1, withexitstatus=False, events=None,
         run("mencoder dvd://1 -o video.avi -oac copy -ovc copy",
             events={TIMEOUT:print_ticks}, timeout=5)
 
-    The 'events' argument should be a dictionary of patterns and responses.
-    Whenever one of the patterns is seen in the command out run() will send the
-    associated response string. Note that you should put newlines in your
-    string if Enter is necessary. The responses may also contain callback
-    functions. Any callback is function that takes a dictionary as an argument.
+    The 'events' argument should be either a dictionary or a tuple list that
+    contains patterns and responses. Whenever one of the patterns is seen
+    in the command output, run() will send the associated response string.
+    So, run() in the above example can be also written as:
+    
+        run("mencoder dvd://1 -o video.avi -oac copy -ovc copy",
+            events=[(TIMEOUT,print_ticks)], timeout=5)
+
+    Use a tuple list for events if the command output requires a delicate
+    control over what pattern should be matched, since the tuple list is passed
+    to pexpect() as its pattern list, with the order of patterns preserved.
+
+    Note that you should put newlines in your string if Enter is necessary.
+
+    Like the example above, the responses may also contain callback functions.
+    Any callback is a function that takes a dictionary as an argument.
     The dictionary contains all the locals from the run() function, so you can
     access the child spawn object or any other variable defined in run()
     (event_count, child, and extra_args are the most useful). A callback may
-    return True to stop the current run process otherwise run() continues until
-    the next event. A callback may also return a string which will be sent to
-    the child. 'extra_args' is not used by directly run(). It provides a way to
-    pass data to a callback function through run() through the locals
+    return True to stop the current run process.  Otherwise run() continues
+    until the next event. A callback may also return a string which will be
+    sent to the child. 'extra_args' is not used by directly run(). It provides
+    a way to pass data to a callback function through run() through the locals
     dictionary passed to a callback.
     '''
     return _run(command, timeout=timeout, withexitstatus=withexitstatus,
@@ -235,7 +246,10 @@ def _run(command, timeout, withexitstatus, events, extra_args, logfile, cwd,
     else:
         child = _spawn(command, timeout=timeout, maxread=2000, logfile=logfile,
                 cwd=cwd, env=env, **kwargs)
-    if events is not None:
+    if isinstance(events, list):
+        patterns= [x for x,y in events]
+        responses = [y for x,y in events]
+    elif isinstance(events, dict):
         patterns = list(events.keys())
         responses = list(events.values())
     else:

@@ -141,15 +141,6 @@ class EOF(ExceptionPexpect):
 class TIMEOUT(ExceptionPexpect):
     '''Raised when a read time exceeds the timeout. '''
 
-##class TIMEOUT_PATTERN(TIMEOUT):
-##    '''Raised when the pattern match time exceeds the timeout.
-##    This is different than a read TIMEOUT because the child process may
-##    give output, thus never give a TIMEOUT, but the output
-##    may never match a pattern.
-##    '''
-##class MAXBUFFER(ExceptionPexpect):
-##    '''Raised when a buffer fills before matching an expected pattern.'''
-
 
 def run(command, timeout=-1, withexitstatus=False, events=None,
         extra_args=None, logfile=None, cwd=None, env=None):

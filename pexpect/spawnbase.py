@@ -15,9 +15,6 @@ class SpawnBase(object):
     string_type = bytes
     if PY3:
         allowed_string_types = (bytes, str)
-        @staticmethod
-        def _chr(c):
-            return bytes([c])
         linesep = os.linesep.encode('ascii')
         crlf = '\r\n'.encode('ascii')
 
@@ -30,7 +27,6 @@ class SpawnBase(object):
                 return sys.stdout.write(b.decode('ascii', 'replace'))
     else:
         allowed_string_types = (basestring,)  # analysis:ignore
-        _chr = staticmethod(chr)
         linesep = os.linesep
         crlf = '\r\n'
         write_to_stdout = sys.stdout.write
@@ -455,13 +451,11 @@ class SpawnBaseUnicode(SpawnBase):
     if PY3:
         string_type = str
         allowed_string_types = (str, )
-        _chr = staticmethod(chr)
         linesep = os.linesep
         crlf = '\r\n'
     else:
         string_type = unicode
         allowed_string_types = (unicode, )
-        _chr = staticmethod(unichr)
         linesep = os.linesep.decode('ascii')
         crlf = '\r\n'.decode('ascii')
     # This can handle unicode in both Python 2 and 3

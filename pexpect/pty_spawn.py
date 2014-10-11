@@ -11,6 +11,7 @@ import signal
 from contextlib import contextmanager
 
 import ptyprocess
+from ptyprocess.ptyprocess import use_native_pty_fork
 
 from .exceptions import ExceptionPexpect, EOF, TIMEOUT
 from .spawnbase import SpawnBase, SpawnBaseUnicode
@@ -31,10 +32,12 @@ class spawn(SpawnBase):
     and control child applications. '''
     ptyprocess_class = ptyprocess.PtyProcess
 
-    def __init__(self, command, args=[], timeout=30, maxread=2000,
-        searchwindowsize=None, logfile=None, cwd=None, env=None,
-        ignore_sighup=True, echo=True):
+    # This is purely informational now - changing it has no effect
+    use_native_pty_fork = use_native_pty_fork
 
+    def __init__(self, command, args=[], timeout=30, maxread=2000,
+                 searchwindowsize=None, logfile=None, cwd=None, env=None,
+                 ignore_sighup=True, echo=True):
         '''This is the constructor. The command parameter may be a string that
         includes a command and any arguments to the command. For example::
 
@@ -164,8 +167,8 @@ class spawn(SpawnBase):
         platforms such as Solaris, this is not possible, and should be
         disabled immediately on spawn.
         '''
-
-        super(spawn, self).__init__(timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile)
+        super(spawn, self).__init__(timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize,
+                                    logfile=logfile)
         self.STDIN_FILENO = pty.STDIN_FILENO
         self.STDOUT_FILENO = pty.STDOUT_FILENO
         self.STDERR_FILENO = pty.STDERR_FILENO
@@ -173,34 +176,7 @@ class spawn(SpawnBase):
         self.env = env
         self.echo = echo
         self.ignore_sighup = ignore_sighup
-        _platform = sys.platform.lower()
-        # This flags if we are running on irix
-        self.__irix_hack = _platform.startswith('irix')
-        # Solaris uses internal __fork_pty(). All others use pty.fork().
-        self.use_native_pty_fork = not (
-                _platform.startswith('solaris') or
-                _platform.startswith('sunos'))
-        # inherit EOF and INTR definitions from controlling process.
-        try:
-            from termios import VEOF, VINTR
-            try:
-                fd = sys.__stdin__.fileno()
-            except ValueError:
-                # ValueError: I/O operation on closed file
-                fd = sys.__stdout__.fileno()
-            self._INTR = ord(termios.tcgetattr(fd)[6][VINTR])
-            self._EOF = ord(termios.tcgetattr(fd)[6][VEOF])
-        except (ImportError, OSError, IOError, ValueError, termios.error):
-            # unless the controlling process is also not a terminal,
-            # such as cron(1), or when stdin and stdout are both closed.
-            # Fall-back to using CEOF and CINTR. There
-            try:
-                from termios import CEOF, CINTR
-                (self._INTR, self._EOF) = (CINTR, CEOF)
-            except ImportError:
-                #                         ^C, ^D
-                (self._INTR, self._EOF) = (3, 4)
-        # Support subclasses that do not use command or args.
+        self.__irix_hack = sys.platform.lower().startswith('irix')
         if command is None:
             self.command = None
             self.args = None
@@ -499,7 +475,6 @@ class spawn(SpawnBase):
         return n
 
     def sendcontrol(self, char):
-
         '''Helper method that wraps send() with mnemonic access for sending control
         character to the child (such as Ctrl-C or Ctrl-D).  For example, to send
         Ctrl-G (ASCII 7, bell, '\a')::
@@ -508,25 +483,9 @@ class spawn(SpawnBase):
 
         See also, sendintr() and sendeof().
         '''
-
-        char = char.lower()
-        a = ord(char)
-        if a >= 97 and a <= 122:
-            a = a - ord('a') + 1
-            return self.send(self._chr(a))
-        d = {'@': 0, '`': 0,
-            '[': 27, '{': 27,
-            '\\': 28, '|': 28,
-            ']': 29, '}': 29,
-            '^': 30, '~': 30,
-            '_': 31,
-            '?': 127}
-        if char not in d:
-            return 0
-        return self.send(self._chr(d[char]))
+        return self.ptyproc.sendcontrol(char)
 
     def sendeof(self):
-
         '''This sends an EOF to the child. This sends a character which causes
         the pending parent output buffer to be sent to the waiting child
         program without waiting for end-of-line. If it is the first character
@@ -536,14 +495,13 @@ class spawn(SpawnBase):
         It is the responsibility of the caller to ensure the eof is sent at the
         beginning of a line. '''
 
-        self.send(self._chr(self._EOF))
+        self.ptyproc.sendeof()
 
     def sendintr(self):
-
         '''This sends a SIGINT to the child. It does not require
         the SIGINT to be the first character on a line. '''
 
-        self.send(self._chr(self._INTR))
+        self.ptyproc.sendintr()
 
     @property
     def flag_eof(self):

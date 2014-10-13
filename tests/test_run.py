@@ -64,6 +64,14 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
                                                     withexitstatus=1)
         assert exitstatus != 0
 
+    def test_run_tuple_list (self):
+        events = [('abc\r\n.*[$#]','echo "def"\n'),
+                  ('def\r\n.*[$#]','exit\n'),
+                  ('[$#] ','echo "abc"\n')]
+        (data, exitstatus) = pexpect.run('bash', withexitstatus=1,
+                                          events=events, timeout=10)
+        assert exitstatus == 0
+
 class RunUnicodeFuncTestCase(RunFuncTestCase):
     runfunc = staticmethod(pexpect.runu)
     cr = b'\r'.decode('ascii')

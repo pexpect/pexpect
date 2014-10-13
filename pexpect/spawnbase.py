@@ -443,10 +443,6 @@ class SpawnBase(object):
         """Overridden in subclass using tty"""
         return False
 
-    def kill(self):   # pragma: no cover
-        """Overridden by subclasses with a process to send signals"""
-        pass
-
 class SpawnBaseUnicode(SpawnBase):
     if PY3:
         string_type = str

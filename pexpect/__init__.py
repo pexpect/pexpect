@@ -1371,7 +1371,7 @@ class spawn(object):
              cpl = self.compile_pattern_list(my_pattern)
              while some_condition:
                 ...
-                i = self.expect_list(clp, timeout)
+                i = self.expect_list(cpl, timeout)
                 ...
         '''
 

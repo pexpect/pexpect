@@ -28,11 +28,11 @@ class TestCaseConstructor(PexpectTestCase.PexpectTestCase):
         the same results for different styles of invoking __init__().
         This assumes that the root directory / is static during the test.
         '''
-        p1 = pexpect.spawn('/bin/ls -l /bin')
-        p2 = pexpect.spawn('/bin/ls' ,['-l', '/bin'])
-        p1.expect (pexpect.EOF)
-        p2.expect (pexpect.EOF)
-        assert (p1.before == p2.before)
+        p1 = pexpect.spawn('uname -m -n -p -r -s -v')
+        p2 = pexpect.spawn('uname', ['-m', '-n', '-p', '-r', '-s', '-v'])
+        p1.expect(pexpect.EOF)
+        p2.expect(pexpect.EOF)
+        assert p1.before == p2.before
 
     def test_named_parameters (self):
         '''This tests that named parameters work.

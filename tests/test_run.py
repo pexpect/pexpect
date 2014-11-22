@@ -74,9 +74,9 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
     def test_run_tuple_list (self):
         events = [
             # second match on 'abc', echo 'def'
-            ('abc\r\n.*$', 'echo "def"\n'),
+            ('abc\r\n.*GO:', 'echo "def"\n'),
             # final match on 'def': exit
-            ('def\r\n.*$', 'exit\n'),
+            ('def\r\n.*GO:', 'exit\n'),
             # first match on 'GO:' prompt, echo 'abc'
             ('GO:', 'echo "abc"\n')
         ]

@@ -45,9 +45,11 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
         fd, self.rcfile = tempfile.mkstemp()
         os.write(fd, b'PS1=GO: \n')
         os.close(fd)
+        super(RunFuncTestCase, self).setUp()
 
     def tearDown(self):
         os.unlink(self.rcfile)
+        super(RunFuncTestCase, self).tearDown()
 
     def test_run_exit (self):
         (data, exitstatus) = self.runfunc('python exit1.py', withexitstatus=1)

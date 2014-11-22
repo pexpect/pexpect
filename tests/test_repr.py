@@ -12,7 +12,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         # exercise,
         value = p.__str__()
         # verify
-        assert isinstance(value, basestring)
+        assert isinstance(value, str)
 
     def test_str_spawn(self):
         """ Exercise spawn.__str__() """
@@ -21,5 +21,5 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         # exercise,
         value = p.__str__()
         # verify
-        assert isinstance(value, basestring)
+        assert isinstance(value, str)
 

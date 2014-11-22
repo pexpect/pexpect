@@ -22,13 +22,10 @@ PEXPECT LICENSE
 import pexpect
 import unittest
 import subprocess
+import tempfile
 import sys
+import os
 from . import PexpectTestCase
-
-# TODO Many of these test cases blindly assume that sequential
-# TODO listing of the /bin directory will yield the same results.
-# TODO This may not always be true, but seems adequate for testing for now.
-# TODO I should fix this at some point.
 
 unicode_type = str if pexpect.PY3 else unicode
 
@@ -44,14 +41,24 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
     empty = b''
     prep_subprocess_out = staticmethod(lambda x: x)
 
+    def setUp(self):
+        fd, self.rcfile = tempfile.mkstemp()
+        os.write(fd, b'PS1=GO: \n')
+        os.close(fd)
+        super(RunFuncTestCase, self).setUp()
+
+    def tearDown(self):
+        os.unlink(self.rcfile)
+        super(RunFuncTestCase, self).tearDown()
+
     def test_run_exit (self):
         (data, exitstatus) = self.runfunc('python exit1.py', withexitstatus=1)
         assert exitstatus == 1, "Exit status of 'python exit1.py' should be 1."
 
     def test_run (self):
-        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
+        the_old_way = subprocess.Popen(args=['uname', '-m', '-n'],
                 stdout=subprocess.PIPE).communicate()[0].rstrip()
-        (the_new_way, exitstatus) = self.runfunc('ls -l /bin', withexitstatus=1)
+        (the_new_way, exitstatus) = self.runfunc('uname -m -n', withexitstatus=1)
         the_new_way = the_new_way.replace(self.cr, self.empty).rstrip()
         self.assertEqual(self.prep_subprocess_out(the_old_way), the_new_way)
         self.assertEqual(exitstatus, 0)
@@ -65,11 +72,20 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
         assert exitstatus != 0
 
     def test_run_tuple_list (self):
-        events = [('abc\r\n.*[$#]','echo "def"\n'),
-                  ('def\r\n.*[$#]','exit\n'),
-                  ('[$#] ','echo "abc"\n')]
-        (data, exitstatus) = pexpect.run('bash', withexitstatus=1,
-                                          events=events, timeout=10)
+        events = [
+            # second match on 'abc', echo 'def'
+            ('abc\r\n.*GO:', 'echo "def"\n'),
+            # final match on 'def': exit
+            ('def\r\n.*GO:', 'exit\n'),
+            # first match on 'GO:' prompt, echo 'abc'
+            ('GO:', 'echo "abc"\n')
+        ]
+
+        (data, exitstatus) = pexpect.run(
+            'bash --rcfile {0}'.format(self.rcfile),
+            withexitstatus=True,
+            events=events,
+            timeout=10)
         assert exitstatus == 0
 
 class RunUnicodeFuncTestCase(RunFuncTestCase):

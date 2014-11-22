@@ -584,9 +584,9 @@ class spawn(object):
         s.append('args: %r' % (self.args,))
         s.append('searcher: %r' % (self.searcher,))
         s.append('buffer (last 100 chars): %r' % (
-            self.buffer and (self.buffer)[-100:] or self.buffer,))
+            self.buffer[-100:] if self.buffer else self.buffer,))
         s.append('before (last 100 chars): %r' % (
-            self.before and (self.before)[-100:] or self.before,))
+            self.before[-100:] if self.before else self.before,))
         s.append('after: %r' % (self.after,))
         s.append('match: %r' % (self.match,))
         s.append('match_index: ' + str(self.match_index))

@@ -27,11 +27,6 @@ import sys
 import os
 from . import PexpectTestCase
 
-# TODO Many of these test cases blindly assume that sequential
-# TODO listing of the /bin directory will yield the same results.
-# TODO This may not always be true, but seems adequate for testing for now.
-# TODO I should fix this at some point.
-
 unicode_type = str if pexpect.PY3 else unicode
 
 def timeout_callback (d):
@@ -59,9 +54,9 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
         assert exitstatus == 1, "Exit status of 'python exit1.py' should be 1."
 
     def test_run (self):
-        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
+        the_old_way = subprocess.Popen(args=['uname', '-m', '-n'],
                 stdout=subprocess.PIPE).communicate()[0].rstrip()
-        (the_new_way, exitstatus) = self.runfunc('ls -l /bin', withexitstatus=1)
+        (the_new_way, exitstatus) = self.runfunc('uname -m -n', withexitstatus=1)
         the_new_way = the_new_way.replace(self.cr, self.empty).rstrip()
         self.assertEqual(self.prep_subprocess_out(the_old_way), the_new_way)
         self.assertEqual(exitstatus, 0)

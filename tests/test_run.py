@@ -22,7 +22,9 @@ PEXPECT LICENSE
 import pexpect
 import unittest
 import subprocess
+import tempfile
 import sys
+import os
 from . import PexpectTestCase
 
 # TODO Many of these test cases blindly assume that sequential
@@ -43,6 +45,14 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
     cr = b'\r'
     empty = b''
     prep_subprocess_out = staticmethod(lambda x: x)
+
+    def setUp(self):
+        fd, self.rcfile = tempfile.mkstemp()
+        os.write(fd, 'PS1=GO: \n')
+        os.close(fd)
+
+    def tearDown(self):
+        os.unlink(self.rcfile)
 
     def test_run_exit (self):
         (data, exitstatus) = self.runfunc('python exit1.py', withexitstatus=1)
@@ -65,11 +75,20 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
         assert exitstatus != 0
 
     def test_run_tuple_list (self):
-        events = [('abc\r\n.*[$#]','echo "def"\n'),
-                  ('def\r\n.*[$#]','exit\n'),
-                  ('[$#] ','echo "abc"\n')]
-        (data, exitstatus) = pexpect.run('bash', withexitstatus=1,
-                                          events=events, timeout=10)
+        events = [
+            # second match on 'abc', echo 'def'
+            ('abc\r\n.*$', 'echo "def"\n'),
+            # final match on 'def': exit
+            ('def\r\n.*$', 'exit\n'),
+            # first match on 'GO:' prompt, echo 'abc'
+            ('GO:', 'echo "abc"\n')
+        ]
+
+        (data, exitstatus) = pexpect.run(
+            'bash --rcfile {0}'.format(self.rcfile),
+            withexitstatus=True,
+            events=events,
+            timeout=10)
         assert exitstatus == 0
 
 class RunUnicodeFuncTestCase(RunFuncTestCase):

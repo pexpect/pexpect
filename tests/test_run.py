@@ -48,7 +48,7 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
 
     def setUp(self):
         fd, self.rcfile = tempfile.mkstemp()
-        os.write(fd, 'PS1=GO: \n')
+        os.write(fd, b'PS1=GO: \n')
         os.close(fd)
 
     def tearDown(self):

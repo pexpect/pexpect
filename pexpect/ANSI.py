@@ -186,18 +186,18 @@ class term (screen.screen):
     provides a common base class for other terminals
     such as an ANSI terminal. '''
 
-    def __init__ (self, r=24, c=80):
+    def __init__ (self, r=24, c=80, *args, **kwargs):
 
-        screen.screen.__init__(self, r,c)
+        screen.screen.__init__(self, r,c,*args,**kwargs)
 
 class ANSI (term):
     '''This class implements an ANSI (VT100) terminal.
     It is a stream filter that recognizes ANSI terminal
     escape sequences and maintains the state of a screen object. '''
 
-    def __init__ (self, r=24,c=80):
+    def __init__ (self, r=24,c=80,*args,**kwargs):
 
-        term.__init__(self,r,c)
+        term.__init__(self,r,c,*args,**kwargs)
 
         #self.screen = screen (24,80)
         self.state = FSM.FSM ('INIT',[self])
@@ -279,7 +279,9 @@ class ANSI (term):
         self.state.add_transition (';', 'NUMBER_X', None, 'SEMICOLON_X')
 
     def process (self, c):
-        """Process a single byte. Called by :meth:`write`."""
+        """Process a single character. Called by :meth:`write`."""
+        if isinstance(c, bytes):
+            c = self._decode(c)
         self.state.process(c)
 
     def process_list (self, l):
@@ -290,6 +292,8 @@ class ANSI (term):
         """Process text, writing it to the virtual screen while handling
         ANSI escape codes.
         """
+        if isinstance(s, bytes):
+            s = self._decode(s)
         for c in s:
             self.process(c)
 
@@ -301,22 +305,20 @@ class ANSI (term):
         position is moved forward with wrap-around, but no scrolling is done if
         the cursor hits the lower-right corner of the screen. '''
 
+        if isinstance(ch, bytes):
+            ch = self._decode(ch)
+
         #\r and \n both produce a call to cr() and lf(), respectively.
         ch = ch[0]
 
-        if ch == '\r':
+        if ch == u'\r':
             self.cr()
             return
-        if ch == '\n':
+        if ch == u'\n':
             self.crlf()
             return
         if ch == chr(screen.BS):
             self.cursor_back()
-            return
-        if ch not in string.printable:
-            fout = open ('log', 'a')
-            fout.write ('Nonprint: ' + str(ord(ch)) + '\n')
-            fout.close()
             return
         self.put_abs(self.cur_r, self.cur_c, ch)
         old_r = self.cur_r

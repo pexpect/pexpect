@@ -36,6 +36,7 @@ PEXPECT LICENSE
 
     http://opensource.org/licenses/isc-license.txt
 
+    Copyright (c) 2013-2014, Pexpect development team
     Copyright (c) 2012, Noah Spurrier <noah@noah.org>
 
     PERMISSION TO USE, COPY, MODIFY, AND/OR DISTRIBUTE THIS SOFTWARE FOR ANY

@@ -4,12 +4,22 @@ History
 Releases
 --------
 
+Version 4.0
+```````````
+
+* Integration with :mod:`asyncio`: passing ``async=True`` to :meth:`~.expect`,
+  :meth:`~.expect_exact` or :meth:`~.expect_list` will make them return a
+  coroutine. You can get the result using ``yield from``, or wrap it in an
+  :class:`asyncio.Task`. This allows the event loop to do other things while
+  waiting for output that matches a pattern.
+
 Version 3.4
 ```````````
 * Fix regression that prevented executable, but unreadable files from
   being found when not specified by absolute path -- such as
   /usr/bin/sudo (:ghissue:`104`).
-
+* Fixed regression when executing pexpect with some prior releases of
+  the multiprocessing module where stdin has been closed (:ghissue:`86`).
 
 Version 3.3
 ```````````

@@ -1,5 +1,6 @@
 """Generic wrapper for read-eval-print-loops, a.k.a. interactive shells
 """
+import os.path
 import signal
 import sys
 import re
@@ -104,7 +105,9 @@ def python(command="python"):
     """Start a Python shell and return a :class:`REPLWrapper` object."""
     return REPLWrapper(command, u(">>> "), u("import sys; sys.ps1={0!r}; sys.ps2={1!r}"))
 
-def bash(command="bash", orig_prompt=re.compile('[$#]')):
+def bash(command="bash"):
     """Start a bash shell and return a :class:`REPLWrapper` object."""
-    return REPLWrapper(command, orig_prompt, u("PS1='{0}' PS2='{1}' PROMPT_COMMAND=''"),
+    bashrc = os.path.join(os.path.dirname(__file__), 'bashrc.sh')
+    child = pexpect.spawnu(command, ['--rcfile', bashrc])
+    return REPLWrapper(child, u'\$', u("PS1='{0}' PS2='{1}' PROMPT_COMMAND=''"),
                        extra_init_cmd="export PAGER=cat")

@@ -3,6 +3,7 @@ import pexpect
 
 from . import PexpectTestCase
 
+
 class TestCaseMisc(PexpectTestCase.PexpectTestCase):
 
     def test_str_spawnu(self):
@@ -10,7 +11,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         # given,
         p = pexpect.spawnu('cat')
         # exercise,
-        value = p.__str__()
+        value = str(p)
         # verify
         assert isinstance(value, str)
 
@@ -19,7 +20,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         # given,
         p = pexpect.spawn('cat')
         # exercise,
-        value = p.__str__()
+        value = str(p)
         # verify
         assert isinstance(value, str)
 

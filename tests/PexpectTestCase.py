@@ -67,8 +67,8 @@ class PexpectTestCase(unittest.TestCase):
         os.chdir(self.original_path)
 
         # restore signal handlers
-        for signal_name in self.restore_ignored_signals:
-            signal.signal(getattr(signal, signal_name), signal.SIG_IGN)
+        for signal_value in self.restore_ignored_signals:
+            signal.signal(signal_value, signal.SIG_IGN)
 
     if sys.version_info < (2, 7):
         # We want to use these methods, which are new/improved in 2.7, but

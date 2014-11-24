@@ -5,21 +5,24 @@
 set -e
 set -o pipefail
 
-function usage() {
-	echo "$0 (2.6|2.7|3.3|3.4)"
-}
 if [ -z $1 ]; then
-	usage
+	echo "$0 (2.6|2.7|3.3|3.4)"
 	exit 1
 fi
 
 pyversion=$1
 here=$(cd `dirname $0`; pwd)
 osrel=$(uname -s)
+venv=teamcity-pexpect
+venv_wrapper=$(which virtualenvwrapper.sh)
 
-. `which virtualenvwrapper.sh`
-rmvirtualenv teamcity-pexpect || true
-mkvirtualenv -p `which python${pyversion}` teamcity-pexpect
+if [ -z $venv_wrapper ]; then
+	echo "virtualenvwrapper.sh not found in PATH."
+fi
+
+. ${venv_wrapper}
+rmvirtualenv ${venv} || true
+mkvirtualenv -p `which python${pyversion}` ${venv} || true
 
 # install ptyprocess
 cd $here/../../ptyprocess

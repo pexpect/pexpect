@@ -17,7 +17,7 @@ Here is an example of Pexpect in action::
     child.expect('ftp> ')
     child.sendline('lcd /tmp')
     child.expect('ftp> ')
-    child.sendline('cd pub')
+    child.sendline('cd pub/OpenBSD')
     child.expect('ftp> ')
     child.sendline('get README')
     child.expect('ftp> ')

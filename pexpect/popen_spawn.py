@@ -14,13 +14,13 @@ from .spawnbase import SpawnBase, SpawnBaseUnicode
 
 class PopenSpawn(SpawnBase):
     def __init__(self, cmd, timeout=30, maxread=2000, searchwindowsize=None,
-                 logfile=None, **kwargs):
+                 logfile=None, cwd=None,  env=None):
         super(PopenSpawn, self).__init__(timeout=timeout, maxread=maxread,
                 searchwindowsize=searchwindowsize, logfile=logfile)
                 
-        kwargs.update(dict(bufsize=0, stdin=subprocess.PIPE,
-                           stderr=subprocess.STDOUT,
-                           stdout=subprocess.PIPE))
+        kwargs = dict(bufsize=0, stdin=subprocess.PIPE,
+                      stderr=subprocess.STDOUT, stdout=subprocess.PIPE,
+                      cwd=cwd, env=env)
 
         if sys.platform == 'win32':
             startupinfo = subprocess.STARTUPINFO()

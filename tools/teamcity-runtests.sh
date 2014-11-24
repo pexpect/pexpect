@@ -45,7 +45,7 @@ py.test \
 if [ $ret -ne 0 ]; then
 	# we always exit 0, preferring instead the jUnit XML
 	# results to be the dominate cause of a failed build.
-	echo "py.test returned excit code ${ret}." >&2
+	echo "py.test returned exit code ${ret}." >&2
 	echo "the build should detect and report these failing tests." >&2
 fi
 

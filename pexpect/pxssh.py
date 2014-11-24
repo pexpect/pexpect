@@ -120,6 +120,10 @@ class pxssh (spawn):
         #self.SSH_OPTS = "-x -o'RSAAuthentication=no' -o 'PubkeyAuthentication=no'"
         self.force_password = False
 
+        # User defined SSH options, eg,
+        # ssh.otions = dict(StrictHostKeyChecking="no",UserKnownHostsFile="/dev/null")
+        self.options = {}
+
     def levenshtein_distance(self, a, b):
         '''This calculates the Levenshtein distance between a and b.
         '''
@@ -165,7 +169,7 @@ class pxssh (spawn):
             try:
                 prompt += self.read_nonblocking(size=1, timeout=timeout)
                 expired = time.time() - begin # updated total time expired
-                timeout = inter_char_timeout 
+                timeout = inter_char_timeout
             except TIMEOUT:
                 break
 
@@ -241,7 +245,7 @@ class pxssh (spawn):
         manually set the :attr:`PROMPT` attribute.
         '''
 
-        ssh_options = ''
+        ssh_options = ''.join([" -o '%s=%s'" % (o, v) for (o, v) in self.options.items()])
         if quiet:
             ssh_options = ssh_options + ' -q'
         if not check_local_ip:

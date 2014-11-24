@@ -32,15 +32,18 @@ pip install --upgrade pytest-cov coverage coveralls pytest-capturelog
 
 # run tests
 cd $here/..
+ret=0
 py.test \
 	--cov pexpect \
 	--cov-config .coveragerc \
 	--junit-xml=results.${osrel}.py${pyversion}.xml \
 	--verbose \
-	--verbose
+	--verbose \
+	|| ret=$?
 
 # combine all coverage to single file, publish as build
 # artifact in {pexpect_projdir}/build-output
 mkdir -p build-output
 coverage combine
 mv .coverage build-output/.coverage.${osrel}.py{$pyversion}.$RANDOM.$$
+exit $ret

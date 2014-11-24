@@ -54,7 +54,7 @@ class PexpectTestCase(unittest.TestCase):
         self.restore_ignored_signals = [
             value for value in (signal.SIGHUP, signal.SIGINT,)
             if signal.getsignal(value) == signal.SIG_IGN]
-        if signal.SIGHUP in self.store_ignored_signals:
+        if signal.SIGHUP in self.restore_ignored_signals:
             # sighup should be set to default handler
             signal.signal(signal.SIGHUP, signal.SIG_DFL)
         if signal.SIGINT in self.restore_ignored_signals:

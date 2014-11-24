@@ -191,7 +191,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat')
         child.terminate(force=1)
         # Force an invalid state to test isalive
-        child.terminated = 0
+        child.ptyproc.terminated = 0
         try:
             with self.assertRaisesRegexp(pexpect.ExceptionPexpect,
                                          ".*" + expect_errmsg):

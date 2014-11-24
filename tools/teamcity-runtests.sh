@@ -17,7 +17,8 @@ venv=teamcity-pexpect
 venv_wrapper=$(which virtualenvwrapper.sh)
 
 if [ -z $venv_wrapper ]; then
-	echo "virtualenvwrapper.sh not found in PATH."
+	echo "virtualenvwrapper.sh not found in PATH." >&2
+	exit 1
 fi
 
 . ${venv_wrapper}
@@ -41,9 +42,15 @@ py.test \
 	--verbose \
 	|| ret=$?
 
+if [ $ret -ne 0 ]; then
+	# we always exit 0, preferring instead the jUnit XML
+	# results to be the dominate cause of a failed build.
+	echo "py.test returned excit code ${ret}." >&2
+	echo "the build should detect and report these failing tests." >&2
+fi
+
 # combine all coverage to single file, publish as build
 # artifact in {pexpect_projdir}/build-output
 mkdir -p build-output
 coverage combine
 mv .coverage build-output/.coverage.${osrel}.py{$pyversion}.$RANDOM.$$
-exit $ret

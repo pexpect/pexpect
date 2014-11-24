@@ -10,7 +10,7 @@ try:
 except ImportError:
     from Queue import Queue  # Python 2
 
-from .spawnbase import SpawnBase
+from .spawnbase import SpawnBase, SpawnBaseUnicode
 
 class PopenSpawn(SpawnBase):
     def __init__(self, cmd, timeout=30, maxread=2000, searchwindowsize=None,
@@ -75,9 +75,27 @@ class PopenSpawn(SpawnBase):
         for s in sequence:
             self.send(s)
 
+    def _send(self, s):
+        return self.proc.stdin.write(s)
+
     def send(self, s):
         self._log(s, 'send')
-        return self.proc.stdin.write(s)
+        return self._send(s)        
 
     def sendline(self, line):
         return self.send(line + '\n')
+
+    def wait(self):
+        status = self.proc.wait()
+        if status >= 0:
+            self.exitstatus = status
+            self.signalstatus = None
+        else:
+            self.exitstatus = None
+            self.signalstatus = -status
+        self.terminated = True
+        return status
+
+class PopenSpawnUnicode(SpawnBaseUnicode, PopenSpawn):
+    def _send(self, s):
+        super(PopenSpawnUnicode, self)._send(s.encode(self.encoding, self.errors))

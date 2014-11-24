@@ -21,16 +21,18 @@ if [ -z $venv_wrapper ]; then
 fi
 
 . ${venv_wrapper}
-rmvirtualenv ${venv} || true
-mkvirtualenv -p `which python${pyversion}` ${venv} || true
+workon ${venv} || mkvirtualenv -p `which python${pyversion}` ${venv} || true
 
 # install ptyprocess
 cd $here/../../ptyprocess
 python setup.py install
 
+# install all test requirements
+pip install --upgrade pytest pytest pytest-cov coverage coveralls pytest-capturelog
+
 # run tests
 cd $here/..
-py.test-${pyversion} \
+py.test \
 	--cov pexpect \
 	--cov-config .coveragerc \
 	--junit-xml=results.${osrel}.py${pyversion}.xml \

@@ -678,6 +678,12 @@ class spawn(object):
             except IOError as err:
                 if err.args[0] not in (errno.EINVAL, errno.ENOTTY):
                     raise
+            except OSError as err:
+                # setwinsize (intermittently!) fails on Solaris *from the
+                # child* process, raising EXNIO. See for example in tmux,
+                # http://sourceforge.net/p/tmux/tickets/158/?limit=100
+                if err.args[0] not in (errno.EXNIO,):
+                    raise
 
             # disable echo if spawn argument echo was unset
             if not self.echo:

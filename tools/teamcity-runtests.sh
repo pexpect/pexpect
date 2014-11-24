@@ -28,7 +28,7 @@ cd $here/../../ptyprocess
 python setup.py install
 
 # install all test requirements
-pip install --upgrade pytest pytest pytest-cov coverage coveralls pytest-capturelog
+pip install --upgrade pytest-cov coverage coveralls pytest-capturelog
 
 # run tests
 cd $here/..

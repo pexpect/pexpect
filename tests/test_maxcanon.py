@@ -38,7 +38,7 @@ XXX interpreters without any deterministic results.
         self.echo = False
         if sys.platform.lower().startswith('linux'):
             # linux is 4096, N_TTY_BUF_SIZE.
-            self.max_input = 4096 + 1
+            self.max_input = 4096
             self.echo = True
         elif sys.platform.lower().startswith('sunos'):
             # SunOS allows PC_MAX_CANON + 1; see
@@ -76,8 +76,8 @@ XXX interpreters without any deterministic results.
             child.expect_exact('\a')
 
         # cleanup,
-        child.sendeof()   # exit cat(1)
-        child.sendeof()   # exit bash(1)
+        child.sendeof()           # exit cat(1)
+        child.sendline('exit 0')  # exit bash(1)
         child.expect(pexpect.EOF)
         assert not child.isalive()
         assert child.exitstatus == 0
@@ -106,8 +106,8 @@ XXX interpreters without any deterministic results.
             child.expect_exact('_', timeout=1)
 
         # cleanup,
-        child.sendeof()         # exit cat(1)
-        child.sendeof()         # exit bash(1)
+        child.sendeof()           # exit cat(1)
+        child.sendline('exit 0')  # exit bash(1)
         child.expect_exact(pexpect.EOF)
         assert not child.isalive()
         assert child.exitstatus == 0
@@ -135,7 +135,7 @@ XXX interpreters without any deterministic results.
         child.expect_exact('_' * send_bytes)
 
         # cleanup,
-        child.sendcontrol('c')  # exit cat(1) (eof wont work in -icanon)
+        child.sendcontrol('c')    # exit cat(1) (eof wont work in -icanon)
         child.sendline('exit 0')  # exit bash(1)
         child.expect(pexpect.EOF)
         assert not child.isalive()

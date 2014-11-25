@@ -49,8 +49,9 @@ if [ $ret -ne 0 ]; then
 	echo "the build should detect and report these failing tests." >&2
 fi
 
-# combine all coverage to single file, publish as build
-# artifact in {pexpect_projdir}/build-output
+# combine all coverage to single file, report for this build,
+# then move into ./build-output/ as a unique artifact to allow
+# the final "Full build" step to combine and report to coveralls.io
+`dirname $0`/teamcity-coverage-report.sh
 mkdir -p build-output
-coverage combine
 mv .coverage build-output/.coverage.${osrel}.py{$pyversion}.$RANDOM.$$

@@ -13,6 +13,8 @@ install:
   - pip install coveralls pytest-cov ptyprocess
 
 script:
+    - ./tools/display-sighandlers.py
+    - ./tools/display-terminalinfo.py
     - py.test --cov pexpect --cov-config .coveragerc
 
 after_success:

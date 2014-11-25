@@ -171,6 +171,8 @@ def display_conf(kind, names, getter):
 def main():
     fd = sys.stdin.fileno()
 
+    print('os.isatty({0}) => {1}'.format(fd, os.isatty(fd)))
+
     display_conf(kind='pathconf',
                  names=os.pathconf_names,
                  getter=lambda name: os.fpathconf(fd, name))
@@ -195,9 +197,8 @@ def main():
                         value=lflag)
         display_ctl_chars(index=CTLCHAR_INDEX,
                           cc=cc)
-    print('os.isatty({0}) => {1}'.format(fd, os.isatty(fd)))
-    print('os.ttyname({0}) => {1}'.format(fd, os.ttyname(fd)))
-    print('os.ctermid() => {0}'.format(os.ttyname(fd)))
+        print('os.ttyname({0}) => {1}'.format(fd, os.ttyname(fd)))
+        print('os.ctermid() => {0}'.format(os.ttyname(fd)))
 
 
 if __name__ == '__main__':

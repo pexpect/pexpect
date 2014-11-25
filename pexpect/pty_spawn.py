@@ -476,11 +476,11 @@ class spawn(SpawnBase):
         On such a system, only 256 bytes may be received per line. Any
         subsequent bytes received will be discarded. BEL (``'\a'``) is then
         sent to output if IMAXBEL (termios.h) is set by the tty driver.
-        This is usually enabled by default.  Linux does not implement honor
-        this as an option -- it behaves as though it is always set on.
+        This is usually enabled by default.  Linux does not honor this as
+        an option -- it behaves as though it is always set on.
 
         Canonical input processing may be disabled all together by executing
-        a shell, then executing stty(1) before executing the final program::
+        a shell, then stty(1), before executing the final program::
 
         >>> bash = pexpect.spawn('/bin/bash', echo=False)
         >>> bash.sendline('stty -icanon')

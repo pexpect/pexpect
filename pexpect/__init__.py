@@ -76,7 +76,7 @@ __revision__ = ''
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'spawnu', 'run', 'runu',
            'which', 'split_command_line', '__version__', '__revision__']
 
-def run(command, timeout=-1, withexitstatus=False, events=None,
+def run(command, timeout=30, withexitstatus=False, events=None,
         extra_args=None, logfile=None, cwd=None, env=None):
 
     '''
@@ -164,7 +164,7 @@ def run(command, timeout=-1, withexitstatus=False, events=None,
                 events=events, extra_args=extra_args, logfile=logfile, cwd=cwd,
                 env=env, _spawn=spawn)
 
-def runu(command, timeout=-1, withexitstatus=False, events=None,
+def runu(command, timeout=30, withexitstatus=False, events=None,
         extra_args=None, logfile=None, cwd=None, env=None, **kwargs):
     """This offers the same interface as :func:`run`, but using unicode.
 

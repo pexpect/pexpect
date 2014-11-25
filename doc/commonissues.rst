@@ -106,8 +106,8 @@ child does not receive full input, emits BEL
 --------------------------------------------
 
 You may notice when running for example cat(1) or base64(1), when sending a
-very long input line, that it is not fully recieved, and the BEL ('\a') is
-found in output.
+very long input line, that it is not fully received, and the BEL ('\a') may
+be found in output.
 
 By default the child terminal matches the parent, which is often in "canonical
 mode processing". You may wish to disable this mode. The exact limit of a line

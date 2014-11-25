@@ -35,9 +35,11 @@ XXX interpreters without any deterministic results.
     def setUp(self):
         super(TestCaseCanon, self).setUp()
 
+        self.echo = False
         if sys.platform.lower().startswith('linux'):
             # linux is 4096, N_TTY_BUF_SIZE.
             self.max_input = 4096
+            self.echo = True
         elif sys.platform.lower().startswith('sunos'):
             # SunOS allows PC_MAX_CANON + 1; see
             # https://bitbucket.org/illumos/illumos-gate/src/d07a59219ab7fd2a7f39eb47c46cf083c88e932f/usr/src/uts/common/io/ldterm.c?at=default#cl-1888
@@ -49,7 +51,7 @@ XXX interpreters without any deterministic results.
     def test_under_max_canon(self):
         " BEL is not sent by terminal driver at maximum bytes - 1. "
         # given,
-        child = pexpect.spawn('bash', echo=False, timeout=5)
+        child = pexpect.spawn('bash', echo=self.echo, timeout=5)
         child.sendline('echo READY')
         child.sendline('stty icanon imaxbel')
         child.sendline('echo BEGIN; cat')
@@ -83,7 +85,7 @@ XXX interpreters without any deterministic results.
     def test_beyond_max_icanon(self):
         " a single BEL is sent when maximum bytes is reached. "
         # given,
-        child = pexpect.spawn('bash', echo=False, timeout=5)
+        child = pexpect.spawn('bash', echo=self.echo, timeout=5)
         child.sendline('stty icanon imaxbel erase ^H')
         child.sendline('cat')
         send_bytes = self.max_input
@@ -113,7 +115,7 @@ XXX interpreters without any deterministic results.
     def test_max_no_icanon(self):
         " may exceed maximum input bytes if canonical mode is disabled. "
         # given,
-        child = pexpect.spawn('bash', echo=False, timeout=5)
+        child = pexpect.spawn('bash', echo=self.echo, timeout=5)
         child.sendline('stty -icanon imaxbel')
         child.sendline('echo BEGIN; cat')
         send_bytes = self.max_input + 11

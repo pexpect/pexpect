@@ -20,7 +20,7 @@ total_no_lines=$(awk '/TOTAL/{printf("%s",$2)}' < "${report_file}")
 total_no_misses=$(awk '/TOTAL/{printf("%s",$3)}' < "${report_file}")
 total_no_covered=$((${total_no_lines} - ${total_no_misses}))
 echo "##teamcity[buildStatisticValue key='<CodeCoverageAbsLTotal>' value='""<${total_no_lines}"">']"
-echo "##teamcity[buildStatisticValue key='<CodeCoverageAbsLCovered>' value='""<${total_no_covered}""'>']"
+echo "##teamcity[buildStatisticValue key='<CodeCoverageAbsLCovered>' value='""<${total_no_covered}"">']"
 
 # Display for human consumption and remove ascii file.
 cat "${report_file}"

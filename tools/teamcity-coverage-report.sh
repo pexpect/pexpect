@@ -16,8 +16,8 @@ coverage report --rcfile=`dirname $0`/../.coveragerc > "${report_file}" 2>/dev/n
 # Report Code Coverage for TeamCity, using 'Service Messages',
 # https://confluence.jetbrains.com/display/TCD8/How+To...#HowTo...-ImportcoverageresultsinTeamCity
 # https://confluence.jetbrains.com/display/TCD8/Custom+Chart#CustomChart-DefaultStatisticsValuesProvidedbyTeamCity
-total_no_lines=$(awk '/TOTAL/{printf("%s",$2)}')
-total_no_misses=$(awk '/TOTAL/{printf("%s",$3)}')
+total_no_lines=$(awk '/TOTAL/{printf("%s",$2)}' < "${report_file}")
+total_no_misses=$(awk '/TOTAL/{printf("%s",$3)}' < "${report_file}")
 total_no_covered=$((${total_no_lines} - ${total_no_misses}))
 echo "##teamcity[buildStatisticValue key='<CodeCoverageAbsLTotal>' value='""<${total_no_lines}"">']"
 echo "##teamcity[buildStatisticValue key='<CodeCoverageAbsLCovered>' value='""<${total_no_covered}""'>']"

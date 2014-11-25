@@ -102,8 +102,8 @@ This bypasses the need for a password. I'm not happy with this solution. The
 problem is due to poor support for Solaris Pseudo TTYs in the Python Standard
 Library.
 
-child input not fully received
-------------------------------
+child does not receive full input, emits BEL
+--------------------------------------------
 
 You may notice when running for example cat(1) or base64(1), when sending a
 very long input line, that it is not fully recieved, and the BEL ('\a') is

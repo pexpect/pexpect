@@ -38,7 +38,7 @@ XXX interpreters without any deterministic results.
         self.echo = False
         if sys.platform.lower().startswith('linux'):
             # linux is 4096, N_TTY_BUF_SIZE.
-            self.max_input = 4096
+            self.max_input = 4096 + 1
             self.echo = True
         elif sys.platform.lower().startswith('sunos'):
             # SunOS allows PC_MAX_CANON + 1; see

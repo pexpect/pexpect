@@ -68,6 +68,14 @@ class pxssh (spawn):
             print("pxssh failed on login.")
             print(e)
 
+    Example showing how to specify SSH options::
+
+        import pxssh
+        s = pxssh.pxssh(options={
+                            "StrictHostKeyChecking": "no",
+                            "UserKnownHostsFile": "/dev/null"})
+        ...
+
     Note that if you have ssh-agent running while doing development with pxssh
     then this can lead to a lot of confusion. Many X display managers (xdm,
     gdm, kdm, etc.) will automatically start a GUI agent. You may see a GUI
@@ -86,7 +94,8 @@ class pxssh (spawn):
     '''
 
     def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
-                    logfile=None, cwd=None, env=None, ignore_sighup=True, echo=True):
+                    logfile=None, cwd=None, env=None, ignore_sighup=True, echo=True,
+                    options={}):
 
         spawn.__init__(self, None, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env, ignore_sighup=ignore_sighup, echo=echo)
 
@@ -122,7 +131,7 @@ class pxssh (spawn):
 
         # User defined SSH options, eg,
         # ssh.otions = dict(StrictHostKeyChecking="no",UserKnownHostsFile="/dev/null")
-        self.options = {}
+        self.options = options
 
     def levenshtein_distance(self, a, b):
         '''This calculates the Levenshtein distance between a and b.

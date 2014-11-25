@@ -175,21 +175,26 @@ def main():
                  names=os.pathconf_names,
                  getter=lambda name: os.fpathconf(fd, name))
 
-    (iflag, oflag, cflag, lflag, ispeed, ospeed, cc) = termios.tcgetattr(fd)
-    display_bitmask(kind='Input Mode',
-                    bitmap=BITMAP_IFLAG,
-                    value=iflag)
-    display_bitmask(kind='Output Mode',
-                    bitmap=BITMAP_OFLAG,
-                    value=oflag)
-    display_bitmask(kind='Control Mode',
-                    bitmap=BITMAP_CFLAG,
-                    value=cflag)
-    display_bitmask(kind='Local Mode',
-                    bitmap=BITMAP_LFLAG,
-                    value=lflag)
-    display_ctl_chars(index=CTLCHAR_INDEX,
-                      cc=cc)
+    try:
+        (iflag, oflag, cflag, lflag, ispeed, ospeed, cc
+         ) = termios.tcgetattr(fd)
+    except termios.error as err:
+        print('stdin is not a typewriter: {0}'.format(err))
+    else:
+        display_bitmask(kind='Input Mode',
+                        bitmap=BITMAP_IFLAG,
+                        value=iflag)
+        display_bitmask(kind='Output Mode',
+                        bitmap=BITMAP_OFLAG,
+                        value=oflag)
+        display_bitmask(kind='Control Mode',
+                        bitmap=BITMAP_CFLAG,
+                        value=cflag)
+        display_bitmask(kind='Local Mode',
+                        bitmap=BITMAP_LFLAG,
+                        value=lflag)
+        display_ctl_chars(index=CTLCHAR_INDEX,
+                          cc=cc)
     print('os.isatty({0}) => {1}'.format(fd, os.isatty(fd)))
     print('os.ttyname({0}) => {1}'.format(fd, os.ttyname(fd)))
     print('os.ctermid() => {0}'.format(os.ttyname(fd)))

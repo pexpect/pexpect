@@ -68,6 +68,14 @@ class pxssh (spawn):
             print("pxssh failed on login.")
             print(e)
 
+    Example showing how to specify SSH options::
+
+        import pxssh
+        s = pxssh.pxssh(options={
+                            "StrictHostKeyChecking": "no",
+                            "UserKnownHostsFile": "/dev/null"})
+        ...
+
     Note that if you have ssh-agent running while doing development with pxssh
     then this can lead to a lot of confusion. Many X display managers (xdm,
     gdm, kdm, etc.) will automatically start a GUI agent. You may see a GUI
@@ -86,7 +94,8 @@ class pxssh (spawn):
     '''
 
     def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
-                    logfile=None, cwd=None, env=None, ignore_sighup=True, echo=True):
+                    logfile=None, cwd=None, env=None, ignore_sighup=True, echo=True,
+                    options={}):
 
         spawn.__init__(self, None, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env, ignore_sighup=ignore_sighup, echo=echo)
 
@@ -119,6 +128,10 @@ class pxssh (spawn):
         # Unsetting SSH_ASKPASS on the remote side doesn't disable it! Annoying!
         #self.SSH_OPTS = "-x -o'RSAAuthentication=no' -o 'PubkeyAuthentication=no'"
         self.force_password = False
+
+        # User defined SSH options, eg,
+        # ssh.otions = dict(StrictHostKeyChecking="no",UserKnownHostsFile="/dev/null")
+        self.options = options
 
     def levenshtein_distance(self, a, b):
         '''This calculates the Levenshtein distance between a and b.
@@ -165,7 +178,7 @@ class pxssh (spawn):
             try:
                 prompt += self.read_nonblocking(size=1, timeout=timeout)
                 expired = time.time() - begin # updated total time expired
-                timeout = inter_char_timeout 
+                timeout = inter_char_timeout
             except TIMEOUT:
                 break
 
@@ -241,7 +254,7 @@ class pxssh (spawn):
         manually set the :attr:`PROMPT` attribute.
         '''
 
-        ssh_options = ''
+        ssh_options = ''.join([" -o '%s=%s'" % (o, v) for (o, v) in self.options.items()])
         if quiet:
             ssh_options = ssh_options + ' -q'
         if not check_local_ip:

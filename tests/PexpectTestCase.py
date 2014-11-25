@@ -38,6 +38,11 @@ class PexpectTestCase(unittest.TestCase):
         # programs in this folder executed by spawn().
         os.chdir(tests_dir)
 
+        # If the pexpect raises an exception after fork(), but before
+        # exec(), our test runner *also* forks.  We prevent this by
+        # storing our pid and asserting equality on tearDown.
+        self.pid = os.getpid()
+
         coverage_rc = os.path.join(project_dir, '.coveragerc')
         os.environ['COVERAGE_PROCESS_START'] = coverage_rc
         os.environ['COVERAGE_FILE'] = os.path.join(project_dir, '.coverage')
@@ -65,6 +70,14 @@ class PexpectTestCase(unittest.TestCase):
     def tearDown(self):
         # restore original working folder
         os.chdir(self.original_path)
+
+        if self.pid != os.getpid():
+            # The build server pattern-matches phrase 'Test runner has forked!'
+            print("Test runner has forked! This means a child process raised "
+                  "an exception before exec() in a test case, the error is "
+                  "more than likely found above this line in stderr.",
+                  file=sys.stderr)
+            exit(1)
 
         # restore signal handlers
         for signal_value in self.restore_ignored_signals:

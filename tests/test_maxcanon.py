@@ -27,9 +27,8 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
     these scenarios, though if we wish to expose some kind of interface
     to tty.setraw, for example, these tests may be re-purposed as such.
 
-XXX Lastly, these tests are skipped on Travis-CI. It produces unexpected
-XXX behavior, seemingly differences in build machines and/or python
-XXX interpreters without any deterministic results.
+    Lastly, portions of these tests are skipped on Travis-CI. It produces
+    unexpected behavior not reproduced on Debian/GNU Linux.
     """
 
     def setUp(self):
@@ -102,8 +101,9 @@ XXX interpreters without any deterministic results.
         # which has written it back out,
         child.expect_exact('_' * (send_bytes - 1))
         # and not a byte more.
-        with self.assertRaises(pexpect.TIMEOUT):
-            child.expect_exact('_', timeout=1)
+        if os.environ.get('TRAVIS', None) != 'true':
+            with self.assertRaises(pexpect.TIMEOUT):
+                child.expect_exact('_', timeout=1)
 
         # cleanup,
         child.sendeof()           # exit cat(1)
@@ -128,14 +128,17 @@ XXX interpreters without any deterministic results.
         child.expect_exact('BEGIN')
 
         # BEL is *not* found,
-        with self.assertRaises(pexpect.TIMEOUT):
-            child.expect_exact('\a', timeout=1)
+        if os.environ.get('TRAVIS', None) != 'true':
+            with self.assertRaises(pexpect.TIMEOUT):
+                child.expect_exact('\a', timeout=1)
 
         # verify, all input is found in output,
         child.expect_exact('_' * send_bytes)
 
         # cleanup,
         child.sendcontrol('c')    # exit cat(1) (eof wont work in -icanon)
+        if os.environ.get('TRAVIS', None) != 'true':
+            child.sendcontrol('c')
         child.sendline('exit 0')  # exit bash(1)
         child.expect(pexpect.EOF)
         assert not child.isalive()

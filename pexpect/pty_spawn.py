@@ -479,7 +479,7 @@ class spawn(SpawnBase):
         This is usually enabled by default.  Linux does not honor this as
         an option -- it behaves as though it is always set on.
 
-        Canonical input processing may be disabled all together by executing
+        Canonical input processing may be disabled altogether by executing
         a shell, then stty(1), before executing the final program::
 
         >>> bash = pexpect.spawn('/bin/bash', echo=False)

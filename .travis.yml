@@ -1,9 +1,7 @@
 language: python
 
 python:
-  - 2.6
   - 2.7
-  - 3.2
   - 3.3
   - 3.4
   - pypy
@@ -12,7 +10,7 @@ before_install:
   - sudo apt-get install python-yaml python3-yaml
 install:
   - export PYTHONIOENCODING=UTF8
-  - pip install coveralls pytest-cov
+  - pip install coveralls pytest-cov ptyprocess
 
 script:
     - py.test --cov pexpect --cov-config .coveragerc

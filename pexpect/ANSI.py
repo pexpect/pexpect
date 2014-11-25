@@ -186,18 +186,18 @@ class term (screen.screen):
     provides a common base class for other terminals
     such as an ANSI terminal. '''
 
-    def __init__ (self, r=24, c=80):
+    def __init__ (self, r=24, c=80, *args, **kwargs):
 
-        screen.screen.__init__(self, r,c)
+        screen.screen.__init__(self, r,c,*args,**kwargs)
 
 class ANSI (term):
     '''This class implements an ANSI (VT100) terminal.
     It is a stream filter that recognizes ANSI terminal
     escape sequences and maintains the state of a screen object. '''
 
-    def __init__ (self, r=24,c=80):
+    def __init__ (self, r=24,c=80,*args,**kwargs):
 
-        term.__init__(self,r,c)
+        term.__init__(self,r,c,*args,**kwargs)
 
         #self.screen = screen (24,80)
         self.state = FSM.FSM ('INIT',[self])
@@ -227,7 +227,7 @@ class ANSI (term):
         self.state.add_transition ('J', 'ELB', DoEraseDown, 'INIT')
         self.state.add_transition ('K', 'ELB', DoEraseEndOfLine, 'INIT')
         self.state.add_transition ('r', 'ELB', DoEnableScroll, 'INIT')
-        self.state.add_transition ('m', 'ELB', None, 'INIT')
+        self.state.add_transition ('m', 'ELB', self.do_sgr, 'INIT')
         self.state.add_transition ('?', 'ELB', None, 'MODECRAP')
         self.state.add_transition_list (string.digits, 'ELB', DoStartNumber, 'NUMBER_1')
         self.state.add_transition_list (string.digits, 'NUMBER_1', DoBuildNumber, 'NUMBER_1')
@@ -241,16 +241,16 @@ class ANSI (term):
         ### It gets worse... the 'm' code can have infinite number of
         ### number;number;number before it. I've never seen more than two,
         ### but the specs say it's allowed. crap!
-        self.state.add_transition ('m', 'NUMBER_1', None, 'INIT')
+        self.state.add_transition ('m', 'NUMBER_1', self.do_sgr, 'INIT')
         ### LED control. Same implementation problem as 'm' code.
-        self.state.add_transition ('q', 'NUMBER_1', None, 'INIT')
+        self.state.add_transition ('q', 'NUMBER_1', self.do_decsca, 'INIT')
 
         # \E[?47h switch to alternate screen
         # \E[?47l restores to normal screen from alternate screen.
         self.state.add_transition_list (string.digits, 'MODECRAP', DoStartNumber, 'MODECRAP_NUM')
         self.state.add_transition_list (string.digits, 'MODECRAP_NUM', DoBuildNumber, 'MODECRAP_NUM')
-        self.state.add_transition ('l', 'MODECRAP_NUM', None, 'INIT')
-        self.state.add_transition ('h', 'MODECRAP_NUM', None, 'INIT')
+        self.state.add_transition ('l', 'MODECRAP_NUM', self.do_modecrap, 'INIT')
+        self.state.add_transition ('h', 'MODECRAP_NUM', self.do_modecrap, 'INIT')
 
 #RM   Reset Mode                Esc [ Ps l                   none
         self.state.add_transition (';', 'NUMBER_1', None, 'SEMICOLON')
@@ -264,21 +264,24 @@ class ANSI (term):
         ### It gets worse... the 'm' code can have infinite number of
         ### number;number;number before it. I've never seen more than two,
         ### but the specs say it's allowed. crap!
-        self.state.add_transition ('m', 'NUMBER_2', None, 'INIT')
+        self.state.add_transition ('m', 'NUMBER_2', self.do_sgr, 'INIT')
         ### LED control. Same problem as 'm' code.
-        self.state.add_transition ('q', 'NUMBER_2', None, 'INIT')
+        self.state.add_transition ('q', 'NUMBER_2', self.do_decsca, 'INIT')
         self.state.add_transition (';', 'NUMBER_2', None, 'SEMICOLON_X')
 
         # Create a state for 'q' and 'm' which allows an infinite number of ignored numbers
         self.state.add_transition_any ('SEMICOLON_X', DoLog, 'INIT')
-        self.state.add_transition_list (string.digits, 'SEMICOLON_X', None, 'NUMBER_X')
+        self.state.add_transition_list (string.digits, 'SEMICOLON_X', DoStartNumber, 'NUMBER_X')
+        self.state.add_transition_list (string.digits, 'NUMBER_X', DoBuildNumber, 'NUMBER_X')
         self.state.add_transition_any ('NUMBER_X', DoLog, 'INIT')
-        self.state.add_transition ('m', 'NUMBER_X', None, 'INIT')
-        self.state.add_transition ('q', 'NUMBER_X', None, 'INIT')
-        self.state.add_transition (';', 'NUMBER_2', None, 'SEMICOLON_X')
+        self.state.add_transition ('m', 'NUMBER_X', self.do_sgr, 'INIT')
+        self.state.add_transition ('q', 'NUMBER_X', self.do_decsca, 'INIT')
+        self.state.add_transition (';', 'NUMBER_X', None, 'SEMICOLON_X')
 
     def process (self, c):
-        """Process a single byte. Called by :meth:`write`."""
+        """Process a single character. Called by :meth:`write`."""
+        if isinstance(c, bytes):
+            c = self._decode(c)
         self.state.process(c)
 
     def process_list (self, l):
@@ -289,6 +292,8 @@ class ANSI (term):
         """Process text, writing it to the virtual screen while handling
         ANSI escape codes.
         """
+        if isinstance(s, bytes):
+            s = self._decode(s)
         for c in s:
             self.process(c)
 
@@ -300,22 +305,20 @@ class ANSI (term):
         position is moved forward with wrap-around, but no scrolling is done if
         the cursor hits the lower-right corner of the screen. '''
 
+        if isinstance(ch, bytes):
+            ch = self._decode(ch)
+
         #\r and \n both produce a call to cr() and lf(), respectively.
         ch = ch[0]
 
-        if ch == '\r':
+        if ch == u'\r':
             self.cr()
             return
-        if ch == '\n':
+        if ch == u'\n':
             self.crlf()
             return
         if ch == chr(screen.BS):
             self.cursor_back()
-            return
-        if ch not in string.printable:
-            fout = open ('log', 'a')
-            fout.write ('Nonprint: ' + str(ord(ch)) + '\n')
-            fout.close()
             return
         self.put_abs(self.cur_r, self.cur_c, ch)
         old_r = self.cur_r
@@ -329,3 +332,20 @@ class ANSI (term):
                 self.scroll_up ()
                 self.cursor_home (self.cur_r, 1)
                 self.erase_line()
+
+    def do_sgr (self, fsm):
+        '''Select Graphic Rendition, e.g. color. '''
+        screen = fsm.memory[0]
+        fsm.memory = [screen]
+
+    def do_decsca (self, fsm):
+        '''Select character protection attribute. '''
+        screen = fsm.memory[0]
+        fsm.memory = [screen]
+
+    def do_modecrap (self, fsm):
+        '''Handler for \x1b[?<number>h and \x1b[?<number>l. If anyone
+        wanted to actually use these, they'd need to add more states to the
+        FSM rather than just improve or override this method. '''
+        screen = fsm.memory[0]
+        fsm.memory = [screen]

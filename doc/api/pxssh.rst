@@ -23,6 +23,10 @@ pxssh class
       server to ask for a password. Note that the sysadmin can disable password
       logins, in which case this won't work.
 
+   .. attribute:: options
+
+      The dictionary of user specified SSH options, eg, ``options = dict(StrictHostKeyChecking="no", UserKnownHostsFile="/dev/null")``
+
    .. automethod:: login
    .. automethod:: logout
    .. automethod:: prompt

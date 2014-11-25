@@ -149,41 +149,24 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
 
     def test_sighup(self):
         " validate argument `ignore_sighup=True` and `ignore_sighup=False`. "
-        # If a parent process sets an Ignore handler for SIGHUP (as on Fedora's
-        # build machines), this test breaks. We temporarily restore the default
-        # handler, so the child process will quit. However, we can't simply
-        # replace any installed handler, because getsignal returns None for
-        # handlers not set in Python code, so we wouldn't be able to restore
-        # them.
-        if signal.getsignal(signal.SIGHUP) == signal.SIG_IGN:
-            signal.signal(signal.SIGHUP, signal.SIG_DFL)
-            restore_sig_ign = True
-        else:
-            restore_sig_ign = False
-
         getch = sys.executable + ' getch.py'
-        try:
-            child = pexpect.spawn(getch, ignore_sighup=True)
-            child.expect('READY')
-            child.kill(signal.SIGHUP)
-            for _ in range(10):
-                if not child.isalive():
-                    self.fail('Child process should not have exited.')
-                time.sleep(0.1)
+        child = pexpect.spawn(getch, ignore_sighup=True)
+        child.expect('READY')
+        child.kill(signal.SIGHUP)
+        for _ in range(10):
+            if not child.isalive():
+                self.fail('Child process should not have exited.')
+            time.sleep(0.1)
 
-            child = pexpect.spawn(getch, ignore_sighup=False)
-            child.expect('READY')
-            child.kill(signal.SIGHUP)
-            for _ in range(10):
-                if not child.isalive():
-                    break
-                time.sleep(0.1)
-            else:
-                self.fail('Child process should have exited.')
-
-        finally:
-            if restore_sig_ign:
-                signal.signal(signal.SIGHUP, signal.SIG_IGN)
+        child = pexpect.spawn(getch, ignore_sighup=False)
+        child.expect('READY')
+        child.kill(signal.SIGHUP)
+        for _ in range(10):
+            if not child.isalive():
+                break
+            time.sleep(0.1)
+        else:
+            self.fail('Child process should have exited.')
 
     def test_bad_child_pid(self):
         " assert bad condition error in isalive(). "
@@ -191,7 +174,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat')
         child.terminate(force=1)
         # Force an invalid state to test isalive
-        child.terminated = 0
+        child.ptyproc.terminated = 0
         try:
             with self.assertRaisesRegexp(pexpect.ExceptionPexpect,
                                          ".*" + expect_errmsg):
@@ -351,144 +334,8 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         else:
             assert False, "Should have raised an exception."
 
-
-if os.environ.get('TRAVIS', None) != 'true':
-    # Travis-CI demonstrates unexpected behavior.
-
-    class TestCaseCanon(PexpectTestCase.PexpectTestCase):
-        " Test expected Canonical mode behavior (limited input line length)."
-        #
-        # All systems use the value of MAX_CANON which can be found using
-        # fpathconf(3) value PC_MAX_CANON -- with the exception of Linux.
-        #
-        # Linux, though defining a value of 255, actually honors the value
-        # of 4096 from linux kernel include file tty.h definition
-        # N_TTY_BUF_SIZE.
-        #
-        # Linux also does not honor IMAXBEL. termios(3) states, "Linux does not
-        # implement this bit, and acts as if it is always set." Although these
-        # tests ensure it is enabled, this is a non-op for Linux.
-        #
-        # These tests only ensure the correctness of the behavior described by
-        # the sendline() docstring. pexpect is not particularly involved in
-        # these scenarios, though if we wish to expose some kind of interface
-        # to tty.setraw, for example, these tests may be re-purposed as such.
-        #
-        # Lastly, these tests are skipped on Travis-CI. It produces unexpected
-        # behavior, seeminly differences in build machines and/or python
-        # interpreters without any deterministic results.
-
-        def setUp(self):
-            super(TestCaseCanon, self).setUp()
-
-            if sys.platform.lower().startswith('linux'):
-               # linux is 4096, N_TTY_BUF_SIZE.
-               self.max_input = 4096
-            elif sys.platform.lower().startswith('sunos'):
-               # SunOS allows PC_MAX_CANON + 1; see
-               # https://bitbucket.org/illumos/illumos-gate/src/d07a59219ab7fd2a7f39eb47c46cf083c88e932f/usr/src/uts/common/io/ldterm.c?at=default#cl-1888
-               self.max_input = os.fpathconf(0, 'PC_MAX_CANON') + 1
-            else:
-               # All others (probably) limit exactly at PC_MAX_CANON
-               self.max_input = os.fpathconf(0, 'PC_MAX_CANON')
-
-        def test_under_max_canon(self):
-            " BEL is not sent by terminal driver at maximum bytes - 2. "
-            # given,
-            child = pexpect.spawn('bash', echo=True, timeout=5)
-            child.sendline('stty icanon imaxbel')
-            child.sendline('echo BEGIN; cat')
-
-            # some systems BEL on (maximum - 1), not able to receive CR,
-            # even though all characters up until then were received, they
-            # simply cannot be transmitted, as CR is part of the transmission.
-            send_bytes = self.max_input - 2
-
-            # exercise,
-            child.sendline('_' * send_bytes)
-
-            # fast forward beyond 'cat' command, as ^G can be found as part of
-            # set-xterm-title sequence of $PROMPT_COMMAND or $PS1.
-            child.expect_exact('BEGIN')
-
-            # verify, all input is found in echo output,
-            child.expect_exact('_' * send_bytes)
-
-            # BEL is not found,
-            with self.assertRaises(pexpect.TIMEOUT, timeout=1):
-                child.expect_exact('\a')
-
-            # and cat(1) output matches and received all bytes.
-            child.expect_exact('_' * send_bytes)
-
-            # cleanup,
-            child.sendeof()   # exit cat(1)
-            child.sendeof()   # exit bash(1)
-            child.expect(pexpect.EOF)
-            assert not child.isalive()
-            assert child.exitstatus == 0
-
-        def test_beyond_max_icanon(self):
-            " a single BEL is sent when maximum bytes is reached. "
-            # given,
-            child = pexpect.spawn('bash', echo=True, timeout=5)
-            child.sendline('stty icanon imaxbel erase ^H')
-            child.sendline('cat')
-            send_bytes = self.max_input
-
-            # exercise,
-            child.sendline('_' * send_bytes)
-            child.expect_exact('\a')
-
-            # exercise, we must now backspace to send CR.
-            child.sendcontrol('h')
-            child.sendline()
-
-            # verify the length of (maximum - 1) received by cat(1).
-            child.expect_exact('_' * (send_bytes - 1))
-
-            # cleanup,
-            child.sendeof()         # exit cat(1)
-            child.sendeof()         # exit bash(1)
-            child.expect_exact(pexpect.EOF)
-            assert not child.isalive()
-            assert child.exitstatus == 0
-
-        def test_max_no_icanon(self):
-            " may exceed maximum input bytes if canonical mode is disabled. "
-            # given,
-            child = pexpect.spawn('bash', echo=True, timeout=5)
-            child.sendline('stty -icanon imaxbel')
-            child.sendline('echo BEGIN; cat')
-            send_bytes = self.max_input + 11
-
-            # exercise,
-            child.sendline('_' * send_bytes)
-
-            # fast forward beyond 'cat' command, as ^G can be found as part of
-            # set-xterm-title sequence of $PROMPT_COMMAND or $PS1.
-            child.expect_exact('BEGIN')
-
-            # BEL is *not* found,
-            with self.assertRaises(pexpect.TIMEOUT):
-                child.expect_exact('\a', timeout=1)
-
-            # verify, all input is found in echo output,
-            child.expect_exact('_' * send_bytes)
-
-            # cat(1) also received all input,
-            child.expect_exact('_' * send_bytes)
-
-            # cleanup,
-            child.sendcontrol('c')  # exit cat(1) (eof wont work in -icanon)
-            child.sendline('true')  # ensure exit status of 0 for,
-            child.sendline('exit')  # exit bash(1)
-            child.expect(pexpect.EOF)
-            assert not child.isalive()
-            assert child.exitstatus == 0
-
-
 if __name__ == '__main__':
     unittest.main()
 
 suite = unittest.makeSuite(TestCaseMisc,'test')
+

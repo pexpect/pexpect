@@ -89,7 +89,7 @@ sometimes will not allow TTY password authentication. For example, you may
 expect SSH to ask you for a password using code like this::
 
     child = pexpect.spawn('ssh user@example.com')
-    child.expect('assword')
+    child.expect('password')
     child.sendline('mypassword')
 
 You may see the following error come back from a spawned child SSH::

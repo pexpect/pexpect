@@ -92,10 +92,9 @@ CTLCHAR_INDEX = {
 }
 
 
-
 def display_bitmask(kind, bitmap, value):
     """ Display all matching bitmask values for ``value`` given ``bitmap``. """
-    col1_width = max(map(len, bitmap.keys() + [kind]))
+    col1_width = max(map(len, list(bitmap.keys()) + [kind]))
     col2_width = 7
     FMT = '{name:>{col1_width}} {value:>{col2_width}}   {description}'
     print(FMT.format(name=kind,
@@ -104,8 +103,8 @@ def display_bitmask(kind, bitmap, value):
                      col1_width=col1_width,
                      col2_width=col2_width))
     print('{0} {1}   {2}'.format('-' * col1_width,
-                               '-' * col2_width,
-                               '-' * max(map(len, bitmap.values()))))
+                                 '-' * col2_width,
+                                 '-' * max(map(len, bitmap.values()))))
     for flag_name, description in bitmap.items():
         try:
             bitmask = getattr(termios, flag_name)
@@ -133,8 +132,8 @@ def display_ctl_chars(index, cc):
                      col1_width=col1_width,
                      col2_width=col2_width))
     print('{0}   {1} {2}'.format('-' * col1_width,
-                               '-' * col2_width,
-                               '-' * 10))
+                                 '-' * col2_width,
+                                 '-' * 10))
     for index_name, name in index.items():
         try:
             index = getattr(termios, index_name)

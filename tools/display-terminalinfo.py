@@ -175,6 +175,7 @@ def main():
     encoding = locale.getpreferredencoding()
 
     print('os.isatty({0}) => {1}'.format(fd, os.isatty(fd)))
+    print('locale.getpreferredencoding() => {0}'.format(encoding))
 
     display_conf(kind='pathconf',
                  names=os.pathconf_names,
@@ -202,7 +203,6 @@ def main():
                           cc=cc)
         print('os.ttyname({0}) => {1}'.format(fd, os.ttyname(fd)))
         print('os.ctermid() => {0}'.format(os.ttyname(fd)))
-        print('locale.getpreferredencoding() => {0}'.format(encoding))
 
 
 if __name__ == '__main__':

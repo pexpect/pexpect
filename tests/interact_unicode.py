@@ -11,7 +11,11 @@ except ImportError:
 
 from utils import no_coverage_env
 import pexpect
+import codecs
 import sys
+
+sys.stdout = codecs.getwriter('utf8')(sys.stdout)
+sys.stderr = codecs.getwriter('utf8')(sys.stderr)
 
 
 def main():

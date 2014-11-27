@@ -11,6 +11,8 @@ if [ -z $1 ]; then
 fi
 
 export PYTHONIOENCODING=UTF8
+export LANG=en_US.UTF-8
+
 pyversion=$1
 here=$(cd `dirname $0`; pwd)
 osrel=$(uname -s)

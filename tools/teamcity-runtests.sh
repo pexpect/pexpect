@@ -10,6 +10,7 @@ if [ -z $1 ]; then
 	exit 1
 fi
 
+export PYTHONIOENCODING=UTF8
 pyversion=$1
 here=$(cd `dirname $0`; pwd)
 osrel=$(uname -s)

@@ -2,6 +2,7 @@
 """ Display known information about our terminal. """
 from __future__ import print_function
 import termios
+import locale
 import sys
 import os
 
@@ -170,8 +171,11 @@ def display_conf(kind, names, getter):
 
 def main():
     fd = sys.stdin.fileno()
+    locale.setlocale(locale.LC_ALL, '')
+    encoding = locale.getpreferredencoding()
 
     print('os.isatty({0}) => {1}'.format(fd, os.isatty(fd)))
+    print('locale.getpreferredencoding() => {0}'.format(encoding))
 
     display_conf(kind='pathconf',
                  names=os.pathconf_names,

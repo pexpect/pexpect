@@ -26,7 +26,7 @@ class PopenSpawn(SpawnBase):
                  logfile=None, cwd=None,  env=None):
         super(PopenSpawn, self).__init__(timeout=timeout, maxread=maxread,
                 searchwindowsize=searchwindowsize, logfile=logfile)
-                
+
         kwargs = dict(bufsize=0, stdin=subprocess.PIPE,
                       stderr=subprocess.STDOUT, stdout=subprocess.PIPE,
                       cwd=cwd, env=env)
@@ -106,7 +106,7 @@ class PopenSpawn(SpawnBase):
 
     def writelines(self, sequence):
         '''This calls write() for each element in the sequence.
-        
+
         The sequence can be any iterable object producing strings, typically a
         list of strings. This does not add line separators. There is no return
         value.
@@ -152,6 +152,12 @@ class PopenSpawn(SpawnBase):
                 sig = signal.SIGTERM
 
         os.kill(self.proc.pid, sig)
+
+    def sendeof(self):
+        if sys.platform == 'win32':
+            self.kill(signal.CTRL_BREAK_EVENT)
+        else:
+            self.kill(signal.SIGTERM)
 
 
 class PopenSpawnUnicode(SpawnBaseUnicode, PopenSpawn):

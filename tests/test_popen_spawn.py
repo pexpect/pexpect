@@ -29,9 +29,31 @@ from . import PexpectTestCase
 
 class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
+    def test_expect_basic(self):
+        p = PopenSpawn('cat', timeout=5)
+        p.sendline(b'Hello')
+        p.sendline(b'there')
+        p.sendline(b'Mr. Python')
+        p.expect(b'Hello')
+        p.expect(b'there')
+        p.expect(b'Mr. Python')
+        p.sendeof()
+        p.expect(pexpect.EOF)
+
+    def test_expect_exact_basic(self):
+        p = PopenSpawn('cat', timeout=5)
+        p.sendline(b'Hello')
+        p.sendline(b'there')
+        p.sendline(b'Mr. Python')
+        p.expect_exact(b'Hello')
+        p.expect_exact(b'there')
+        p.expect_exact(b'Mr. Python')
+        p.sendeof()
+        p.expect_exact(pexpect.EOF)
+
     def test_expect(self):
         the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
-                stdout=subprocess.PIPE).communicate()[0].rstrip()
+                                       stdout=subprocess.PIPE).communicate()[0].rstrip()
         p = PopenSpawn('ls -l /bin')
         the_new_way = b''
         while 1:
@@ -45,7 +67,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_expect_exact(self):
         the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
-                stdout=subprocess.PIPE).communicate()[0].rstrip()
+                                       stdout=subprocess.PIPE).communicate()[0].rstrip()
         p = PopenSpawn('ls -l /bin')
         the_new_way = b''
         while 1:
@@ -64,7 +86,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_expect_eof(self):
         the_old_way = subprocess.Popen(args=['/bin/ls', '-l', '/bin'],
-                stdout=subprocess.PIPE).communicate()[0].rstrip()
+                                       stdout=subprocess.PIPE).communicate()[0].rstrip()
         p = PopenSpawn('/bin/ls -l /bin')
         # This basically tells it to read everything. Same as pexpect.run()
         # function.

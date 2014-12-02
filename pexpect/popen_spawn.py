@@ -128,8 +128,7 @@ class PopenSpawn(SpawnBase):
         automatically appended. Returns number of bytes written. '''
 
         n = self.send(s)
-        n = n + self.send(self.linesep)
-        return n
+        return n + self.send(self.linesep)
 
     def wait(self):
         status = self.proc.wait()
@@ -154,10 +153,7 @@ class PopenSpawn(SpawnBase):
         os.kill(self.proc.pid, sig)
 
     def sendeof(self):
-        if sys.platform == 'win32':
-            self.kill(signal.CTRL_BREAK_EVENT)
-        else:
-            self.kill(signal.SIGTERM)
+        self.proc.stdin.close()
 
 
 class PopenSpawnUnicode(SpawnBaseUnicode, PopenSpawn):

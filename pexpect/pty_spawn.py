@@ -266,7 +266,7 @@ class spawn(SpawnBase):
 
         kwargs = {'echo': self.echo}
         if self.ignore_sighup:
-            kwargs['before_exec'] = [lambda: signal.signal(signal.SIGHUP, signal.SIG_IGN)]
+            kwargs['preexec_fn'] = lambda: signal.signal(signal.SIGHUP, signal.SIG_IGN)
         self.ptyproc = self.ptyprocess_class.spawn(self.args, env=self.env,
                                                    cwd=self.cwd, **kwargs)
 

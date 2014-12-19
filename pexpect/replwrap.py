@@ -108,6 +108,6 @@ def python(command="python"):
 def bash(command="bash"):
     """Start a bash shell and return a :class:`REPLWrapper` object."""
     bashrc = os.path.join(os.path.dirname(__file__), 'bashrc.sh')
-    child = pexpect.spawnu(command, ['--rcfile', bashrc])
+    child = pexpect.spawnu(command, ['--rcfile', bashrc], echo=False)
     return REPLWrapper(child, u'\$', u("PS1='{0}' PS2='{1}' PROMPT_COMMAND=''"),
                        extra_init_cmd="export PAGER=cat")

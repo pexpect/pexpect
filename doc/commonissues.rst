@@ -101,3 +101,15 @@ The only solution I have found is to use public key authentication with SSH.
 This bypasses the need for a password. I'm not happy with this solution. The
 problem is due to poor support for Solaris Pseudo TTYs in the Python Standard
 Library.
+
+child does not receive full input, emits BEL
+--------------------------------------------
+
+You may notice when running for example cat(1) or base64(1), when sending a
+very long input line, that it is not fully received, and the BEL ('\a') may
+be found in output.
+
+By default the child terminal matches the parent, which is often in "canonical
+mode processing". You may wish to disable this mode. The exact limit of a line
+varies by operating system, and details of disabling canonical mode may be
+found in the docstring of :meth:`~pexpect.spawn.send`.

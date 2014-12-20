@@ -37,7 +37,7 @@ class spawn(SpawnBase):
 
     def __init__(self, command, args=[], timeout=30, maxread=2000,
                  searchwindowsize=None, logfile=None, cwd=None, env=None,
-                 ignore_sighup=True, echo=True):
+                 ignore_sighup=True, echo=True, preexec_fn=None):
         '''This is the constructor. The command parameter may be a string that
         includes a command and any arguments to the command. For example::
 
@@ -166,6 +166,10 @@ class spawn(SpawnBase):
         using setecho(False) followed by waitnoecho().  However, for some
         platforms such as Solaris, this is not possible, and should be
         disabled immediately on spawn.
+        
+        If preexec_fn is given, it will be called in the child process before
+        launching the given command. This is useful to e.g. reset inherited
+        signal handlers.
         '''
         super(spawn, self).__init__(timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize,
                                     logfile=logfile)
@@ -182,7 +186,7 @@ class spawn(SpawnBase):
             self.args = None
             self.name = '<pexpect factory incomplete>'
         else:
-            self._spawn(command, args)
+            self._spawn(command, args, preexec_fn)
 
     def __str__(self):
         '''This returns a human-readable string that represents the state of
@@ -218,7 +222,7 @@ class spawn(SpawnBase):
         s.append('delayafterterminate: ' + str(self.delayafterterminate))
         return '\n'.join(s)
 
-    def _spawn(self, command, args=[]):
+    def _spawn(self, command, args=[], preexec_fn=None):
         '''This starts the given command in a child process. This does all the
         fork/exec type of stuff for a pty. This is called by __init__. If args
         is empty then command will be parsed (split on spaces) and args will be
@@ -264,9 +268,15 @@ class spawn(SpawnBase):
         assert self.pid is None, 'The pid member must be None.'
         assert self.command is not None, 'The command member must not be None.'
 
-        kwargs = {'echo': self.echo}
+        kwargs = {'echo': self.echo, 'preexec_fn': preexec_fn}
         if self.ignore_sighup:
-            kwargs['before_exec'] = [lambda: signal.signal(signal.SIGHUP, signal.SIG_IGN)]
+            def preexec_wrapper():
+                "Set SIGHUP to be ignored, then call the real preexec_fn"
+                signal.signal(signal.SIGHUP, signal.SIG_IGN)
+                if preexec_fn is not None:
+                    preexec_fn()
+            kwargs['preexec_fn'] = preexec_wrapper
+
         self.ptyproc = self.ptyprocess_class.spawn(self.args, env=self.env,
                                                    cwd=self.cwd, **kwargs)
 

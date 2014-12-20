@@ -307,9 +307,9 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         " test forced self.__fork_pty() and __pty_make_controlling_tty "
         # given,
         class spawn_ourptyfork(pexpect.spawn):
-            def _spawn(self, command, args=[]):
+            def _spawn(self, command, args=[], preexec_fn=None):
                 self.use_native_pty_fork = False
-                pexpect.spawn._spawn(self, command, args)
+                pexpect.spawn._spawn(self, command, args, preexec_fn)
 
         # exercise,
         p = spawn_ourptyfork('cat', echo=False)

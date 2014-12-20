@@ -6,8 +6,6 @@ python:
   - 3.4
   - pypy
 
-before_install:
-  - sudo apt-get install python-yaml python3-yaml
 install:
   - export PYTHONIOENCODING=UTF8
   - pip install coveralls pytest-cov ptyprocess
@@ -20,3 +18,6 @@ script:
 after_success:
   - coverage combine
   - coveralls
+
+# Use new Travis stack, should be faster
+sudo: false

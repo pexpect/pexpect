@@ -188,6 +188,10 @@ class TestCaseWhich(PexpectTestCase.PexpectTestCase):
             shutil.copy(bin_echo, bin_path)
             isroot = os.getuid() == 0
             for should_match, mode in (
+                # note that although the file may have matching 'group' or
+                # 'other' executable permissions, it is *not* executable
+                # because the current uid is the owner of the file -- which
+                # takes precedence
                 (False,  0o000),   # ----------, no
                 (isroot, 0o001),   # ---------x, no
                 (isroot, 0o010),   # ------x---, no

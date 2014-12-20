@@ -141,6 +141,16 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         with self.assertRaises(pexpect.EOF):
             child.expect('the unexpected')
 
+    def test_with(self):
+        "spawn can be used as a context manager"
+        with pexpect.spawn(sys.executable + ' echo_w_prompt.py') as p:
+            p.expect('<in >')
+            p.sendline(b'alpha')
+            p.expect(b'<out>alpha')
+            assert p.isalive()
+        
+        assert not p.isalive()
+
     def test_terminate(self):
         " test force terminate always succeeds (SIGKILL). "
         child = pexpect.spawn('cat')

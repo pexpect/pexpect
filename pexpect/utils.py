@@ -1,48 +1,35 @@
 import os
+import sys
 import stat
 
 
 def is_executable_file(path):
-    """Checks that path is an executable regular file (or a symlink to a file).
+    """Checks that path is an executable regular file, or a symlink towards one.
 
-    This is roughly ``os.path isfile(path) and os.access(path, os.X_OK)``, but
-    on some platforms :func:`os.access` gives us the wrong answer, so this
-    checks permission bits directly.
+    This is roughly ``os.path isfile(path) and os.access(path, os.X_OK)``.
     """
     # follow symlinks,
     fpath = os.path.realpath(path)
 
-    # return False for non-files (directories, fifo, etc.)
     if not os.path.isfile(fpath):
+        # non-files (directories, fifo, etc.)
         return False
 
-    # On Solaris, etc., "If the process has appropriate privileges, an
-    # implementation may indicate success for X_OK even if none of the
-    # execute file permission bits are set."
-    #
-    # For this reason, it is necessary to explicitly check st_mode
-
-    # get file mode using os.stat, and check if `other',
-    # that is anybody, may read and execute.
     mode = os.stat(fpath).st_mode
-    if mode & stat.S_IROTH and mode & stat.S_IXOTH:
-        return True
 
-    # get current user's group ids, and check if `group',
-    # when matching ours, may read and execute.
-    user_gids = os.getgroups() + [os.getgid()]
-    if (os.stat(fpath).st_gid in user_gids and
-            mode & stat.S_IRGRP and mode & stat.S_IXGRP):
-        return True
+    if (sys.platform.startswith('sunos')
+            and os.getuid() == 0):
+        # When root on Solaris, os.X_OK is True for *all* files, irregardless
+        # of their executability -- instead, any permission bit of any user,
+        # group, or other is fine enough.
+        #
+        # (This may be true for other "Unix98" OS's such as HP-UX and AIX)
+        return bool(mode & (stat.S_IXUSR |
+                            stat.S_IXGRP |
+                            stat.S_IXOTH))
 
-    # finally, if file owner matches our effective userid,
-    # check if `user', may read and execute.
-    user_gids = os.getgroups() + [os.getgid()]
-    if (os.stat(fpath).st_uid == os.geteuid() and
-            mode & stat.S_IRUSR and mode & stat.S_IXUSR):
-        return True
+    return os.access(fpath, os.X_OK)
 
-    return False
 
 def which(filename):
     '''This takes a given filename; tries to find it in the environment path;

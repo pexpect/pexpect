@@ -29,6 +29,7 @@ workon ${venv} || mkvirtualenv -p `which python${pyversion}` ${venv} || true
 
 # install ptyprocess
 cd $here/../../ptyprocess
+pip uninstall --yes ptyprocess || true
 python setup.py install
 
 # install all test requirements

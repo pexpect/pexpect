@@ -229,5 +229,4 @@ def _run(command, timeout, withexitstatus, events, extra_args, logfile, cwd,
     else:
         return child_result
 
-
 # vim: set shiftround expandtab tabstop=4 shiftwidth=4 ft=python autoindent :

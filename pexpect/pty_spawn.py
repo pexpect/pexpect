@@ -713,7 +713,7 @@ class spawn(SpawnBase):
         self.buffer = self.string_type()
         mode = tty.tcgetattr(self.STDIN_FILENO)
         tty.setraw(self.STDIN_FILENO)
-        if PY3:
+        if PY3 and escape_character:
             escape_character = escape_character.encode('latin-1')
         try:
             self.__interact_copy(escape_character, input_filter, output_filter)
@@ -763,7 +763,7 @@ class spawn(SpawnBase):
                 data = self.__interact_read(self.STDIN_FILENO)
                 if input_filter:
                     data = input_filter(data)
-                i = data.rfind(escape_character)
+                i = data.rfind(escape_character) if escape_character else -1
                 if i != -1:
                     data = data[:i]
                     self.__interact_writen(self.child_fd, data)

@@ -677,7 +677,7 @@ class spawn(SpawnBase):
         the stdout and stderr output of the child process is printed. This
         simply echos the child stdout and child stderr to the real stdout and
         it echos the real stdin to the child stdin. When the user types the
-        escape_character this method will stop. Escaping may be disableall-together
+        escape_character this method will stop. Escaping may be disable entirely
         by setting escape_character=None. The default for escape_character
         is ^]. This should not be confused with ASCII 27 -- the ESC character.
         ASCII 29 was chosen for historical merit because this is the character used

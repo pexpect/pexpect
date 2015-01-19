@@ -150,9 +150,6 @@ class pxssh_mixin:
                 current[j] = min(add, delete, change)
         return current[n]
 
-    def get_base_prompt(self):
-        return b''
-
     def try_read_prompt(self, timeout_multiplier):
         '''This facilitates using communication timeouts to perform
         synchronization as quickly as possible, while supporting high latency
@@ -170,7 +167,7 @@ class pxssh_mixin:
         # maximum time for reading the entire prompt
         total_timeout = timeout_multiplier * 3.0
 
-        prompt = self.get_base_prompt()
+        prompt = self.string_type()
         begin = time.time()
         expired = 0.0
         timeout = first_char_timeout
@@ -413,8 +410,5 @@ class pxsshu (spawnu, pxssh_mixin):
                   logfile=None, cwd=None, env=None):
         spawnu.__init__(self, None, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env)
         pxssh_mixin.__init__(self, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env)
-
-    def get_base_prompt(self):
-        return ''
 
 # vi:ts=4:sw=4:expandtab:ft=python:

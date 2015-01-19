@@ -20,18 +20,18 @@ PEXPECT LICENSE
 
 '''
 
-from pexpect import ExceptionPexpect, TIMEOUT, EOF, spawn
+from pexpect import ExceptionPexpect, TIMEOUT, EOF, spawn, spawnu
 import time
 import os
 
-__all__ = ['ExceptionPxssh', 'pxssh']
+__all__ = ['ExceptionPxssh', 'pxssh', 'pxsshu']
 
 # Exception classes used by this module.
 class ExceptionPxssh(ExceptionPexpect):
     '''Raised for pxssh exceptions.
     '''
 
-class pxssh (spawn):
+class pxssh_mixin:
     '''This class extends pexpect.spawn to specialize setting up SSH
     connections. This adds methods for login, logout, and expecting the shell
     prompt. It does various tricky things to handle many situations in the SSH
@@ -97,8 +97,6 @@ class pxssh (spawn):
                     logfile=None, cwd=None, env=None, ignore_sighup=True, echo=True,
                     options={}):
 
-        spawn.__init__(self, None, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env, ignore_sighup=ignore_sighup, echo=echo)
-
         self.name = '<pxssh>'
 
         #SUBTLE HACK ALERT! Note that the command that SETS the prompt uses a
@@ -152,6 +150,9 @@ class pxssh (spawn):
                 current[j] = min(add, delete, change)
         return current[n]
 
+    def get_base_prompt(self):
+        return b''
+
     def try_read_prompt(self, timeout_multiplier):
         '''This facilitates using communication timeouts to perform
         synchronization as quickly as possible, while supporting high latency
@@ -169,7 +170,7 @@ class pxssh (spawn):
         # maximum time for reading the entire prompt
         total_timeout = timeout_multiplier * 3.0
 
-        prompt = b''
+        prompt = self.get_base_prompt()
         begin = time.time()
         expired = 0.0
         timeout = first_char_timeout
@@ -399,5 +400,21 @@ class pxssh (spawn):
             if i == 0:
                 return False
         return True
+
+
+class pxssh (spawn, pxssh_mixin):
+    def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
+                  logfile=None, cwd=None, env=None):
+        spawn.__init__(self, None, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env)
+        pxssh_mixin.__init__(self, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env)
+
+class pxsshu (spawnu, pxssh_mixin):
+    def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
+                  logfile=None, cwd=None, env=None):
+        spawnu.__init__(self, None, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env)
+        pxssh_mixin.__init__(self, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env)
+
+    def get_base_prompt(self):
+        return ''
 
 # vi:ts=4:sw=4:expandtab:ft=python:

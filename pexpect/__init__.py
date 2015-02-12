@@ -206,7 +206,8 @@ def _run(command, timeout, withexitstatus, events, extra_args, logfile, cwd,
                 child_result_list.append(child.before)
             if isinstance(responses[index], child.allowed_string_types):
                 child.send(responses[index])
-            elif isinstance(responses[index], types.FunctionType):
+            elif isinstance(responses[index], types.FunctionType) or \
+                 isinstance(responses[index], types.MethodType):
                 callback_result = responses[index](locals())
                 sys.stdout.flush()
                 if isinstance(callback_result, child.allowed_string_types):
@@ -214,7 +215,7 @@ def _run(command, timeout, withexitstatus, events, extra_args, logfile, cwd,
                 elif callback_result:
                     break
             else:
-                raise TypeError('The callback must be a string or function.')
+                raise TypeError('The callback must be a string, function or method.')
             event_count = event_count + 1
         except TIMEOUT:
             child_result_list.append(child.before)

@@ -149,8 +149,8 @@ def run(command, timeout=30, withexitstatus=False, events=None,
 
     Note that you should put newlines in your string if Enter is necessary.
 
-    Like the example above, the responses may also contain callback functions.
-    Any callback is a function that takes a dictionary as an argument.
+    Like the example above, the responses may also contain a callback, either
+    a function or method.  It should accept a dictionary value as an argument.
     The dictionary contains all the locals from the run() function, so you can
     access the child spawn object or any other variable defined in run()
     (event_count, child, and extra_args are the most useful). A callback may

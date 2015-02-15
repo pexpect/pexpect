@@ -95,7 +95,7 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
             'ls -l /najoeufhdnzkxjd', withexitstatus=1)
         assert exitstatus != 0
 
-    def test_run_tuple_list(self):
+    def test_run_event_as_string(self):
         events = [
             # second match on 'abc', echo 'def'
             ('abc\r\n.*GO:', 'echo "def"\n'),
@@ -112,7 +112,7 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
             timeout=10)
         assert exitstatus == 0
 
-    def test_run_function(self):
+    def test_run_event_as_function(self):
         events = [
             ('GO:', function_events_callback)
         ]
@@ -124,9 +124,9 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
             timeout=10)
         assert exitstatus == 0
 
-    def test_run_method(self):
+    def test_run_event_as_method(self):
         events = [
-            ('GO:', self.method_events_callback)
+            ('GO:', self._method_events_callback)
         ]
 
         (data, exitstatus) = pexpect.run(

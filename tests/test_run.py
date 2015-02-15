@@ -29,25 +29,28 @@ from . import PexpectTestCase
 
 unicode_type = str if pexpect.PY3 else unicode
 
-def timeout_callback (d):
-#    print d["event_count"],
-    if d["event_count"]>3:
+
+def timeout_callback(values):
+    if values["event_count"] > 3:
         return 1
     return 0
 
-def function_events_callback (d):
+
+def function_events_callback(values):
     try:
-        previous_echoed = d["child_result_list"][-1].decode().split("\n")[-2].strip()
-        if previous_echoed.endswith("foo1"):
-            return "echo foo2\n"
-        elif previous_echoed.endswith("foo2"):
-            return "echo foo3\n"
-        elif previous_echoed.endswith("foo3"):
+        previous_echoed = (values["child_result_list"][-1]
+                           .decode().split("\n")[-2].strip())
+        if previous_echoed.endswith("stage-1"):
+            return "echo stage-2\n"
+        elif previous_echoed.endswith("stage-2"):
+            return "echo stage-3\n"
+        elif previous_echoed.endswith("stage-3"):
             return "exit\n"
         else:
             raise Exception("Unexpected output {0}".format(previous_echoed))
     except IndexError:
-        return "echo foo1\n"
+        return "echo stage-1\n"
+
 
 class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
     runfunc = staticmethod(pexpect.run)
@@ -65,27 +68,34 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
         os.unlink(self.rcfile)
         super(RunFuncTestCase, self).tearDown()
 
-    def test_run_exit (self):
+    def test_run_exit(self):
         (data, exitstatus) = self.runfunc('python exit1.py', withexitstatus=1)
         assert exitstatus == 1, "Exit status of 'python exit1.py' should be 1."
 
-    def test_run (self):
-        the_old_way = subprocess.Popen(args=['uname', '-m', '-n'],
-                stdout=subprocess.PIPE).communicate()[0].rstrip()
-        (the_new_way, exitstatus) = self.runfunc('uname -m -n', withexitstatus=1)
+    def test_run(self):
+        the_old_way = subprocess.Popen(
+            args=['uname', '-m', '-n'],
+            stdout=subprocess.PIPE
+        ).communicate()[0].rstrip()
+
+        (the_new_way, exitstatus) = self.runfunc(
+            'uname -m -n', withexitstatus=1)
         the_new_way = the_new_way.replace(self.cr, self.empty).rstrip()
+
         self.assertEqual(self.prep_subprocess_out(the_old_way), the_new_way)
         self.assertEqual(exitstatus, 0)
 
-    def test_run_callback (self): # TODO it seems like this test could block forever if run fails...
-        self.runfunc("cat", timeout=1, events={pexpect.TIMEOUT:timeout_callback})
+    def test_run_callback(self):
+        # TODO it seems like this test could block forever if run fails...
+        events = {pexpect.TIMEOUT: timeout_callback}
+        self.runfunc("cat", timeout=1, events=events)
 
-    def test_run_bad_exitstatus (self):
-        (the_new_way, exitstatus) = self.runfunc('ls -l /najoeufhdnzkxjd',
-                                                    withexitstatus=1)
+    def test_run_bad_exitstatus(self):
+        (the_new_way, exitstatus) = self.runfunc(
+            'ls -l /najoeufhdnzkxjd', withexitstatus=1)
         assert exitstatus != 0
 
-    def test_run_tuple_list (self):
+    def test_run_tuple_list(self):
         events = [
             # second match on 'abc', echo 'def'
             ('abc\r\n.*GO:', 'echo "def"\n'),
@@ -102,33 +112,34 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
             timeout=10)
         assert exitstatus == 0
 
-    def test_run_function (self):
+    def test_run_function(self):
         events = [
             ('GO:', function_events_callback)
         ]
-    
+
         (data, exitstatus) = pexpect.run(
             'bash --rcfile {0}'.format(self.rcfile),
             withexitstatus=True,
             events=events,
             timeout=10)
         assert exitstatus == 0
-    
-    def test_run_method (self):
+
+    def test_run_method(self):
         events = [
             ('GO:', self.method_events_callback)
         ]
-    
+
         (data, exitstatus) = pexpect.run(
             'bash --rcfile {0}'.format(self.rcfile),
             withexitstatus=True,
             events=events,
             timeout=10)
         assert exitstatus == 0
-    
-    def method_events_callback (self, d):
+
+    def method_events_callback(self, d):
         try:
-            previous_echoed = d["child_result_list"][-1].decode().split("\n")[-2].strip()
+            previous_echoed = (d["child_result_list"][-1].decode()
+                               .split("\n")[-2].strip())
             if previous_echoed.endswith("foo1"):
                 return "echo foo2\n"
             elif previous_echoed.endswith("foo2"):
@@ -136,15 +147,18 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
             elif previous_echoed.endswith("foo3"):
                 return "exit\n"
             else:
-                raise Exception("Unexpected output {0}".format(previous_echoed))
+                raise Exception("Unexpected output {0!r}"
+                                .format(previous_echoed))
         except IndexError:
             return "echo foo1\n"
+
 
 class RunUnicodeFuncTestCase(RunFuncTestCase):
     runfunc = staticmethod(pexpect.runu)
     cr = b'\r'.decode('ascii')
     empty = b''.decode('ascii')
     prep_subprocess_out = staticmethod(lambda x: x.decode('utf-8', 'replace'))
+
     def test_run_unicode(self):
         if pexpect.PY3:
             c = chr(254)   # þ

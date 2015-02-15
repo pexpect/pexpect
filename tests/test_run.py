@@ -144,9 +144,9 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
                         events=events,
                         timeout=10)
 
-    def _method_events_callback(self, d):
+    def _method_events_callback(self, values):
         try:
-            previous_echoed = (d["child_result_list"][-1].decode()
+            previous_echoed = (values["child_result_list"][-1].decode()
                                .split("\n")[-2].strip())
             if previous_echoed.endswith("foo1"):
                 return "echo foo2\n"
@@ -169,23 +169,23 @@ class RunUnicodeFuncTestCase(RunFuncTestCase):
 
     def test_run_unicode(self):
         if pexpect.PY3:
-            c = chr(254)   # þ
+            char = chr(254)   # þ
             pattern = '<in >'
         else:
-            c = unichr(254)  # analysis:ignore
+            char = unichr(254)  # analysis:ignore
             pattern = '<in >'.decode('ascii')
 
-        def callback(d):
-            if d['event_count'] == 0:
-                return c + '\n'
+        def callback(values):
+            if values['event_count'] == 0:
+                return char + '\n'
             else:
                 return True  # Stop the child process
 
         output = pexpect.runu(sys.executable + ' echo_w_prompt.py',
-                              env={'PYTHONIOENCODING':'utf-8'},
-                              events={pattern:callback})
+                              env={'PYTHONIOENCODING': 'utf-8'},
+                              events={pattern: callback})
         assert isinstance(output, unicode_type), type(output)
-        assert '<out>'+c in output, output
+        assert ('<out>' + char) in output, output
 
 if __name__ == '__main__':
     unittest.main()

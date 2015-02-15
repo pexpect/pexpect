@@ -215,7 +215,9 @@ def _run(command, timeout, withexitstatus, events, extra_args, logfile, cwd,
                 elif callback_result:
                     break
             else:
-                raise TypeError('The callback must be a string, function or method.')
+                raise TypeError("parameter `event' at index {index} must be "
+                                "a string, method, or function: {value!r}"
+                                .format(index=index, value=responses[index]))
             event_count = event_count + 1
         except TIMEOUT:
             child_result_list.append(child.before)

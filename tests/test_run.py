@@ -136,7 +136,15 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
             timeout=10)
         assert exitstatus == 0
 
-    def method_events_callback(self, d):
+    def test_run_event_typeerror(self):
+        events = [('GO:', -1)]
+        with self.assertRaises(TypeError):
+            pexpect.run('bash --rcfile {0}'.format(self.rcfile),
+                        withexitstatus=True,
+                        events=events,
+                        timeout=10)
+
+    def _method_events_callback(self, d):
         try:
             previous_echoed = (d["child_result_list"][-1].decode()
                                .split("\n")[-2].strip())

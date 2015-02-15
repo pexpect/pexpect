@@ -35,6 +35,20 @@ def timeout_callback (d):
         return 1
     return 0
 
+def function_events_callback (d):
+    try:
+        previous_echoed = d["child_result_list"][-1].decode().split("\n")[-2].strip()
+        if previous_echoed.endswith("foo1"):
+            return "echo foo2\n"
+        elif previous_echoed.endswith("foo2"):
+            return "echo foo3\n"
+        elif previous_echoed.endswith("foo3"):
+            return "exit\n"
+        else:
+            raise Exception("Unexpected output {0}".format(previous_echoed))
+    except IndexError:
+        return "echo foo1\n"
+
 class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
     runfunc = staticmethod(pexpect.run)
     cr = b'\r'
@@ -87,6 +101,44 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
             events=events,
             timeout=10)
         assert exitstatus == 0
+
+    def test_run_function (self):
+        events = [
+            ('GO:', function_events_callback)
+        ]
+    
+        (data, exitstatus) = pexpect.run(
+            'bash --rcfile {0}'.format(self.rcfile),
+            withexitstatus=True,
+            events=events,
+            timeout=10)
+        assert exitstatus == 0
+    
+    def test_run_method (self):
+        events = [
+            ('GO:', self.method_events_callback)
+        ]
+    
+        (data, exitstatus) = pexpect.run(
+            'bash --rcfile {0}'.format(self.rcfile),
+            withexitstatus=True,
+            events=events,
+            timeout=10)
+        assert exitstatus == 0
+    
+    def method_events_callback (self, d):
+        try:
+            previous_echoed = d["child_result_list"][-1].decode().split("\n")[-2].strip()
+            if previous_echoed.endswith("foo1"):
+                return "echo foo2\n"
+            elif previous_echoed.endswith("foo2"):
+                return "echo foo3\n"
+            elif previous_echoed.endswith("foo3"):
+                return "exit\n"
+            else:
+                raise Exception("Unexpected output {0}".format(previous_echoed))
+        except IndexError:
+            return "echo foo1\n"
 
 class RunUnicodeFuncTestCase(RunFuncTestCase):
     runfunc = staticmethod(pexpect.runu)

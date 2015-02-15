@@ -71,7 +71,7 @@ from .utils import split_command_line, which, is_executable_file
 from .pty_spawn import spawn, spawnu, PY3
 from .expect import Expecter, searcher_re, searcher_string
 
-__version__ = '3.3'
+__version__ = '4.0.dev'
 __revision__ = ''
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'spawnu', 'run', 'runu',
            'which', 'split_command_line', '__version__', '__revision__']

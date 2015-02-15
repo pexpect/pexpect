@@ -12,6 +12,8 @@ Version 4.0
   coroutine. You can get the result using ``yield from``, or wrap it in an
   :class:`asyncio.Task`. This allows the event loop to do other things while
   waiting for output that matches a pattern.
+* Enhancement: allow method as callbacks of argument ``events`` for
+  :func:`pexpect.run` (:ghissue:`176`).
 
 Version 3.4
 ```````````

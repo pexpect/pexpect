@@ -1,10 +1,14 @@
 """ Module for canonical-mode tests. """
+# std imports
 import sys
 import os
 
-
+# local
 import pexpect
 from . import PexpectTestCase
+
+# 3rd-party
+import pytest
 
 
 class TestCaseCanon(PexpectTestCase.PexpectTestCase):
@@ -55,6 +59,10 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
             # All others (probably) limit exactly at PC_MAX_CANON
             self.max_input = os.fpathconf(0, 'PC_MAX_CANON')
 
+    @pytest.mark.skipif(
+        sys.platform.lower().startswith('freebsd'),
+        reason='os.write to BLOCK indefinitely on FreeBSD in this case'
+    )
     def test_under_max_canon(self):
         " BEL is not sent by terminal driver at maximum bytes - 1. "
         # given,
@@ -89,6 +97,10 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         assert not child.isalive()
         assert child.exitstatus == 0
 
+    @pytest.mark.skipif(
+        sys.platform.lower().startswith('freebsd'),
+        reason='os.write to BLOCK indefinitely on FreeBSD in this case'
+    )
     def test_beyond_max_icanon(self):
         " a single BEL is sent when maximum bytes is reached. "
         # given,
@@ -98,7 +110,7 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         send_bytes = self.max_input
 
         # exercise,
-        child.send('_' * send_bytes)
+        child.sendline('_' * send_bytes)
         child.expect_exact('\a')
 
         # exercise, we must now backspace to send CR.
@@ -124,6 +136,10 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         assert not child.isalive()
         assert child.exitstatus == 0
 
+    @pytest.mark.skipif(
+        sys.platform.lower().startswith('freebsd'),
+        reason='os.write to BLOCK indefinitely on FreeBSD in this case'
+    )
     def test_max_no_icanon(self):
         " may exceed maximum input bytes if canonical mode is disabled. "
         # given,

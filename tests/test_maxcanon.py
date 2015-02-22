@@ -12,7 +12,8 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
     Test expected Canonical mode behavior (limited input line length).
 
     All systems use the value of MAX_CANON which can be found using
-    fpathconf(3) value PC_MAX_CANON -- with the exception of Linux.
+    fpathconf(3) value PC_MAX_CANON -- with the exception of Linux
+    and FreeBSD.
 
     Linux, though defining a value of 255, actually honors the value
     of 4096 from linux kernel include file tty.h definition
@@ -21,6 +22,10 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
     Linux also does not honor IMAXBEL. termios(3) states, "Linux does not
     implement this bit, and acts as if it is always set." Although these
     tests ensure it is enabled, this is a non-op for Linux.
+
+    FreeBSD supports neither, and instead uses a fraction (1/5) of the tty
+    speed which is always 9600.  Therefor, the maximum limited input line
+    length is 9600 / 5 = 1920.
 
     These tests only ensure the correctness of the behavior described by
     the sendline() docstring. pexpect is not particularly involved in
@@ -43,6 +48,9 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
             # SunOS allows PC_MAX_CANON + 1; see
             # https://bitbucket.org/illumos/illumos-gate/src/d07a59219ab7fd2a7f39eb47c46cf083c88e932f/usr/src/uts/common/io/ldterm.c?at=default#cl-1888
             self.max_input = os.fpathconf(0, 'PC_MAX_CANON') + 1
+        elif sys.platform.lower().startswith('freebsd'):
+            # http://lists.freebsd.org/pipermail/freebsd-stable/2009-October/052318.html
+            self.max_input = 9600 / 5
         else:
             # All others (probably) limit exactly at PC_MAX_CANON
             self.max_input = os.fpathconf(0, 'PC_MAX_CANON')
@@ -90,7 +98,7 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         send_bytes = self.max_input
 
         # exercise,
-        child.sendline('_' * send_bytes)
+        child.send('_' * send_bytes)
         child.expect_exact('\a')
 
         # exercise, we must now backspace to send CR.

@@ -14,7 +14,7 @@ import ptyprocess
 from ptyprocess.ptyprocess import use_native_pty_fork
 
 from .exceptions import ExceptionPexpect, EOF, TIMEOUT
-from .spawnbase import SpawnBase, SpawnBaseUnicode
+from .spawnbase import SpawnBase
 from .utils import which, split_command_line
 
 @contextmanager
@@ -30,14 +30,14 @@ PY3 = (sys.version_info[0] >= 3)
 class spawn(SpawnBase):
     '''This is the main class interface for Pexpect. Use this class to start
     and control child applications. '''
-    ptyprocess_class = ptyprocess.PtyProcess
 
     # This is purely informational now - changing it has no effect
     use_native_pty_fork = use_native_pty_fork
 
     def __init__(self, command, args=[], timeout=30, maxread=2000,
                  searchwindowsize=None, logfile=None, cwd=None, env=None,
-                 ignore_sighup=True, echo=True, preexec_fn=None):
+                 ignore_sighup=True, echo=True, preexec_fn=None,
+                 encoding=None, codec_errors='strict'):
         '''This is the constructor. The command parameter may be a string that
         includes a command and any arguments to the command. For example::
 
@@ -172,7 +172,7 @@ class spawn(SpawnBase):
         signal handlers.
         '''
         super(spawn, self).__init__(timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize,
-                                    logfile=logfile)
+                                    logfile=logfile, encoding=encoding, codec_errors=codec_errors)
         self.STDIN_FILENO = pty.STDIN_FILENO
         self.STDOUT_FILENO = pty.STDOUT_FILENO
         self.STDERR_FILENO = pty.STDERR_FILENO
@@ -277,7 +277,7 @@ class spawn(SpawnBase):
                     preexec_fn()
             kwargs['preexec_fn'] = preexec_wrapper
 
-        self.ptyproc = self.ptyprocess_class.spawn(self.args, env=self.env,
+        self.ptyproc = ptyprocess.PtyProcess.spawn(self.args, env=self.env,
                                                    cwd=self.cwd, **kwargs)
 
         self.pid = self.ptyproc.pid
@@ -503,10 +503,8 @@ class spawn(SpawnBase):
         s = self._coerce_send_string(s)
         self._log(s, 'send')
 
-        return self._send(s)
-
-    def _send(self, s):
-        return os.write(self.child_fd, s)
+        b = self._encoder.encode(s, final=False)
+        return os.write(self.child_fd, b)
 
     def sendline(self, s=''):
         '''Wraps send(), sending string ``s`` to child process, with
@@ -519,9 +517,11 @@ class spawn(SpawnBase):
         n = n + self.send(self.linesep)
         return n
 
-    def _log_control(self, byte):
+    def _log_control(self, s):
         """Write control characters to the appropriate log files"""
-        self._log(byte, 'send')
+        if self.encoding is not None:
+            s = s.decode(self.encoding, 'replace')
+        self._log(s, 'send')
 
     def sendcontrol(self, char):
         '''Helper method that wraps send() with mnemonic access for sending control
@@ -798,22 +798,7 @@ class spawn(SpawnBase):
                     # this actually is an exception.
                     raise
 
-
-class spawnu(SpawnBaseUnicode, spawn):
-    """Works like spawn, but accepts and returns unicode strings.
-
-    Extra parameters:
-
-    :param encoding: The encoding to use for communications (default: 'utf-8')
-    :param errors: How to handle encoding/decoding errors; one of 'strict'
-                   (the default), 'ignore', or 'replace', as described
-                   for :meth:`~bytes.decode` and :meth:`~str.encode`.
-    """
-    ptyprocess_class = ptyprocess.PtyProcessUnicode
-
-    def _send(self, s):
-        return os.write(self.child_fd, s.encode(self.encoding, self.errors))
-
-    def _log_control(self, byte):
-        s = byte.decode(self.encoding, 'replace')
-        self._log(s, 'send')
+def spawnu(*args, **kwargs):
+    """Deprecated: pass encoding to spawn() instead."""
+    kwargs.setdefault('encoding', 'utf-8')
+    return spawn(*args, **kwargs)

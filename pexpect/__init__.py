@@ -77,7 +77,7 @@ __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'spawnu', 'run', 'runu
            'which', 'split_command_line', '__version__', '__revision__']
 
 def run(command, timeout=30, withexitstatus=False, events=None,
-        extra_args=None, logfile=None, cwd=None, env=None):
+        extra_args=None, logfile=None, cwd=None, env=None, dimensions=None):
 
     '''
     This function runs the given command; waits for it to finish; then
@@ -162,7 +162,7 @@ def run(command, timeout=30, withexitstatus=False, events=None,
     '''
     return _run(command, timeout=timeout, withexitstatus=withexitstatus,
                 events=events, extra_args=extra_args, logfile=logfile, cwd=cwd,
-                env=env, _spawn=spawn)
+                env=env,dimensions=dimensions, _spawn=spawn)
 
 def runu(command, timeout=30, withexitstatus=False, events=None,
         extra_args=None, logfile=None, cwd=None, env=None, **kwargs):

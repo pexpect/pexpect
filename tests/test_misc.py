@@ -141,6 +141,16 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         with self.assertRaises(pexpect.EOF):
             child.expect('the unexpected')
 
+    def test_with(self):
+        "spawn can be used as a context manager"
+        with pexpect.spawn(sys.executable + ' echo_w_prompt.py') as p:
+            p.expect('<in >')
+            p.sendline(b'alpha')
+            p.expect(b'<out>alpha')
+            assert p.isalive()
+        
+        assert not p.isalive()
+
     def test_terminate(self):
         " test force terminate always succeeds (SIGKILL). "
         child = pexpect.spawn('cat')
@@ -149,41 +159,24 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
 
     def test_sighup(self):
         " validate argument `ignore_sighup=True` and `ignore_sighup=False`. "
-        # If a parent process sets an Ignore handler for SIGHUP (as on Fedora's
-        # build machines), this test breaks. We temporarily restore the default
-        # handler, so the child process will quit. However, we can't simply
-        # replace any installed handler, because getsignal returns None for
-        # handlers not set in Python code, so we wouldn't be able to restore
-        # them.
-        if signal.getsignal(signal.SIGHUP) == signal.SIG_IGN:
-            signal.signal(signal.SIGHUP, signal.SIG_DFL)
-            restore_sig_ign = True
-        else:
-            restore_sig_ign = False
-
         getch = sys.executable + ' getch.py'
-        try:
-            child = pexpect.spawn(getch, ignore_sighup=True)
-            child.expect('READY')
-            child.kill(signal.SIGHUP)
-            for _ in range(10):
-                if not child.isalive():
-                    self.fail('Child process should not have exited.')
-                time.sleep(0.1)
+        child = pexpect.spawn(getch, ignore_sighup=True)
+        child.expect('READY')
+        child.kill(signal.SIGHUP)
+        for _ in range(10):
+            if not child.isalive():
+                self.fail('Child process should not have exited.')
+            time.sleep(0.1)
 
-            child = pexpect.spawn(getch, ignore_sighup=False)
-            child.expect('READY')
-            child.kill(signal.SIGHUP)
-            for _ in range(10):
-                if not child.isalive():
-                    break
-                time.sleep(0.1)
-            else:
-                self.fail('Child process should have exited.')
-
-        finally:
-            if restore_sig_ign:
-                signal.signal(signal.SIGHUP, signal.SIG_IGN)
+        child = pexpect.spawn(getch, ignore_sighup=False)
+        child.expect('READY')
+        child.kill(signal.SIGHUP)
+        for _ in range(10):
+            if not child.isalive():
+                break
+            time.sleep(0.1)
+        else:
+            self.fail('Child process should have exited.')
 
     def test_bad_child_pid(self):
         " assert bad condition error in isalive(). "
@@ -191,7 +184,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat')
         child.terminate(force=1)
         # Force an invalid state to test isalive
-        child.terminated = 0
+        child.ptyproc.terminated = 0
         try:
             with self.assertRaisesRegexp(pexpect.ExceptionPexpect,
                                          ".*" + expect_errmsg):
@@ -324,9 +317,9 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         " test forced self.__fork_pty() and __pty_make_controlling_tty "
         # given,
         class spawn_ourptyfork(pexpect.spawn):
-            def _spawn(self, command, args=[]):
+            def _spawn(self, command, args=[], preexec_fn=None):
                 self.use_native_pty_fork = False
-                pexpect.spawn._spawn(self, command, args)
+                pexpect.spawn._spawn(self, command, args, preexec_fn)
 
         # exercise,
         p = spawn_ourptyfork('cat', echo=False)

@@ -176,11 +176,11 @@ def daemonize (stdin=None, stdout=None, stderr=None, daemon_pid_filename=None):
     if stderr is None: stderr = DEVNULL
 
     try:
-        pid = os.fork()
+        pid = os.fork() # fork first child
     except OSError as e:
         raise Exception("%s [%d]" % (e.strerror, e.errno))
 
-    if pid != 0:   # The first child.
+    if pid != 0: 
         os.waitpid(pid,0)
         if daemon_pid_filename is not None:
             daemon_pid = int(file(daemon_pid_filename,'r').read())

@@ -15,6 +15,9 @@ Version 4.0
 
 Version 3.4
 ```````````
+* Fix regression that prevented executable, but unreadable files from
+  being found when not specified by absolute path -- such as
+  /usr/bin/sudo (:ghissue:`104`).
 * Fixed regression when executing pexpect with some prior releases of
   the multiprocessing module where stdin has been closed (:ghissue:`86`).
 

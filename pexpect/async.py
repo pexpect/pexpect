@@ -56,6 +56,7 @@ class PatternWaiter(asyncio.Protocol):
         # N.B. If this gets called, async will close the pipe (the spawn object)
         # for us
         try:
+            self.expecter.spawn.flag_eof = True
             index = self.expecter.eof()
         except EOF as e:
             self.error(e)

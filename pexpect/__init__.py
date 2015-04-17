@@ -490,7 +490,10 @@ class spawn(object):
         # inherit EOF and INTR definitions from controlling process.
         try:
             from termios import VEOF, VINTR
-            fd = sys.__stdin__.fileno()
+            try:
+                fd = sys.__stdin__.fileno()
+            except ValueError:
+                fd = sys.__stdout__.fileno()
             self._INTR = ord(termios.tcgetattr(fd)[6][VINTR])
             self._EOF = ord(termios.tcgetattr(fd)[6][VEOF])
         except (ImportError, OSError, IOError, termios.error):

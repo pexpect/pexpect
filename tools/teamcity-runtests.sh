@@ -26,7 +26,8 @@ if [ -z $venv_wrapper ]; then
 fi
 
 . ${venv_wrapper}
-workon ${venv} || mkvirtualenv -p `which python${pyversion}` ${venv} || true
+rmvirtualenv ${venv} || true
+mkvirtualenv -p `which python${pyversion}` ${venv}
 
 # install ptyprocess
 cd $here/../../ptyprocess

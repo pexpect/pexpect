@@ -6,10 +6,11 @@ from pexpect import EOF
 @asyncio.coroutine
 def expect_async(expecter, timeout=None):
     # First process data that was previously read - if it maches, we don't need
-    # async stuff.    
-    idx = expecter.new_data(expecter.spawn.buffer)
+    # async stuff.
+    previously_read = expecter.spawn.buffer
     expecter.spawn.buffer = expecter.spawn.string_type()
-    if idx:
+    idx = expecter.new_data(previously_read)
+    if idx is not None:
         return idx
 
     transport, pw = yield from asyncio.get_event_loop()\

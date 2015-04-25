@@ -27,7 +27,8 @@ fi
 
 . ${venv_wrapper}
 rmvirtualenv ${venv} || true
-mkvirtualenv -p `which python${pyversion}` ${venv}
+mkvirtualenv -p `which python${pyversion}` ${venv} || true
+workon ${venv}
 
 # install ptyprocess
 cd $here/../../ptyprocess

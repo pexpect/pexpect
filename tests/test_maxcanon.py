@@ -1,10 +1,14 @@
 """ Module for canonical-mode tests. """
+# std imports
 import sys
 import os
 
-
+# local
 import pexpect
 from . import PexpectTestCase
+
+# 3rd-party
+import pytest
 
 
 class TestCaseCanon(PexpectTestCase.PexpectTestCase):
@@ -12,7 +16,8 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
     Test expected Canonical mode behavior (limited input line length).
 
     All systems use the value of MAX_CANON which can be found using
-    fpathconf(3) value PC_MAX_CANON -- with the exception of Linux.
+    fpathconf(3) value PC_MAX_CANON -- with the exception of Linux
+    and FreeBSD.
 
     Linux, though defining a value of 255, actually honors the value
     of 4096 from linux kernel include file tty.h definition
@@ -21,6 +26,10 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
     Linux also does not honor IMAXBEL. termios(3) states, "Linux does not
     implement this bit, and acts as if it is always set." Although these
     tests ensure it is enabled, this is a non-op for Linux.
+
+    FreeBSD supports neither, and instead uses a fraction (1/5) of the tty
+    speed which is always 9600.  Therefor, the maximum limited input line
+    length is 9600 / 5 = 1920.
 
     These tests only ensure the correctness of the behavior described by
     the sendline() docstring. pexpect is not particularly involved in
@@ -43,10 +52,17 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
             # SunOS allows PC_MAX_CANON + 1; see
             # https://bitbucket.org/illumos/illumos-gate/src/d07a59219ab7fd2a7f39eb47c46cf083c88e932f/usr/src/uts/common/io/ldterm.c?at=default#cl-1888
             self.max_input = os.fpathconf(0, 'PC_MAX_CANON') + 1
+        elif sys.platform.lower().startswith('freebsd'):
+            # http://lists.freebsd.org/pipermail/freebsd-stable/2009-October/052318.html
+            self.max_input = 9600 / 5
         else:
             # All others (probably) limit exactly at PC_MAX_CANON
             self.max_input = os.fpathconf(0, 'PC_MAX_CANON')
 
+    @pytest.mark.skipif(
+        sys.platform.lower().startswith('freebsd'),
+        reason='os.write to BLOCK indefinitely on FreeBSD in this case'
+    )
     def test_under_max_canon(self):
         " BEL is not sent by terminal driver at maximum bytes - 1. "
         # given,
@@ -81,6 +97,10 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         assert not child.isalive()
         assert child.exitstatus == 0
 
+    @pytest.mark.skipif(
+        sys.platform.lower().startswith('freebsd'),
+        reason='os.write to BLOCK indefinitely on FreeBSD in this case'
+    )
     def test_beyond_max_icanon(self):
         " a single BEL is sent when maximum bytes is reached. "
         # given,
@@ -116,6 +136,10 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         assert not child.isalive()
         assert child.exitstatus == 0
 
+    @pytest.mark.skipif(
+        sys.platform.lower().startswith('freebsd'),
+        reason='os.write to BLOCK indefinitely on FreeBSD in this case'
+    )
     def test_max_no_icanon(self):
         " may exceed maximum input bytes if canonical mode is disabled. "
         # given,

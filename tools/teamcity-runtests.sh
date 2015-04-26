@@ -51,16 +51,12 @@ if [ $ret -ne 0 ]; then
 	echo "py.test returned exit code ${ret}." >&2
 	echo "the build should detect and report these failing tests." >&2
 fi
-# combine ptyprocess's coverage into pexpect's
-coverage combine
-cp .coverage $here/../.coverage.ptyprocess.${osrel}
 
-# install ptyprocess,
+# install ptyprocess as a package,
 python setup.py install
 
-# run tests
+# run pexpect tests (now that ptyprocess dependency is fulfilled)
 cd $here/..
-pwd
 ret=0
 py.test \
 	--cov pexpect --cov $here/../../ptyprocess/ptyprocess \

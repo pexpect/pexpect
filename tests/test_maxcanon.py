@@ -87,8 +87,8 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         child.expect_exact('_' * send_bytes)
 
         # BEL is not found,
-        with self.assertRaises(pexpect.TIMEOUT, timeout=5):
-            child.expect_exact('\a')
+        with self.assertRaises(pexpect.TIMEOUT):
+            child.expect_exact('\a', timeout=1)
 
         # cleanup,
         child.sendeof()           # exit cat(1)

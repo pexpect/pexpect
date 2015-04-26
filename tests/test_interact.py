@@ -66,9 +66,12 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         p.expect(b'<out>alpha')
         p.expect(b'<out>beta')
         p.sendeof()
-        p.expect_exact('<eof>')
-        p.expect_exact('Escaped interact')
-        p.expect(pexpect.EOF)
+        # strangely, on travis-ci, sendeof() terminates the subprocess,
+        # it doesn't receive ^D, just immediately throws EOF.
+        idx = p.expect_exact(['<eof>', pexpect.EOF])
+        if idx == 0:
+            p.expect_exact('Escaped interact')
+            p.expect(pexpect.EOF)
         assert not p.isalive()
         assert p.exitstatus == 0
 
@@ -81,9 +84,12 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         p.expect('<out>ɑlpha')
         p.expect('<out>Βeta')
         p.sendeof()
-        p.expect_exact('<eof>')
-        p.expect_exact('Escaped interact')
-        p.expect(pexpect.EOF)
+        # strangely, on travis-ci, sendeof() terminates the subprocess,
+        # it doesn't receive ^D, just immediately throws EOF.
+        idx = p.expect_exact(['<eof>', pexpect.EOF])
+        if idx == 0:
+            p.expect_exact('Escaped interact')
+            p.expect(pexpect.EOF)
         assert not p.isalive()
         assert p.exitstatus == 0
 

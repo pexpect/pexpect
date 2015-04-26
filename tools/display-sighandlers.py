@@ -12,7 +12,11 @@ for name, value in [(signal_name, getattr(signal, signal_name))
                     for signal_name in dir(signal)
                     if signal_name.startswith('SIG')
                     and not signal_name.startswith('SIG_')]:
-    handler = signal.getsignal(value)
+    try:
+        handler = signal.getsignal(value)
+    except ValueError:
+        # FreeBSD: signal number out of range
+        handler = 'out of range'
     description = {
         signal.SIG_IGN: "ignored(SIG_IGN)",
         signal.SIG_DFL: "default(SIG_DFL)"

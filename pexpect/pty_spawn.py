@@ -475,7 +475,7 @@ class spawn(SpawnBase):
 
         On Linux systems, this is 4096 (defined by N_TTY_BUF_SIZE). All
         other systems honor the POSIX.1 definition PC_MAX_CANON -- 1024
-        on OSX, 256 on OpenSolaris, 255 on FreeBSD.
+        on OSX, 256 on OpenSolaris, and 1920 on FreeBSD.
 
         This value may be discovered using fpathconf(3)::
 

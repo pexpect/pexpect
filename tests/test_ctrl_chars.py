@@ -26,6 +26,9 @@ from . import PexpectTestCase
 import time
 import sys
 
+from ptyprocess import ptyprocess
+ptyprocess._make_eof_intr()
+
 if sys.version_info[0] >= 3:
     def byte(i):
         return bytes([i])
@@ -54,7 +57,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('python getch.py', echo=False, timeout=5)
         child.expect('READY')
         child.sendintr()
-        child.expect(str(child._INTR) + '<STOP>')
+        child.expect(str(ord(ptyprocess._INTR)) + '<STOP>')
 
         child.send(byte(0))
         child.expect('0<STOP>')
@@ -66,7 +69,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('python getch.py', echo=False, timeout=5)
         child.expect('READY')
         child.sendeof()
-        child.expect(str(child._EOF) + '<STOP>')
+        child.expect(str(ord(ptyprocess._EOF)) + '<STOP>')
 
         child.send(byte(0))
         child.expect('0<STOP>')

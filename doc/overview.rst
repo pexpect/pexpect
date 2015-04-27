@@ -17,7 +17,7 @@ Here is an example of Pexpect in action::
     child.expect('ftp> ')
     child.sendline('lcd /tmp')
     child.expect('ftp> ')
-    child.sendline('cd pub')
+    child.sendline('cd pub/OpenBSD')
     child.expect('ftp> ')
     child.sendline('get README')
     child.expect('ftp> ')
@@ -84,13 +84,13 @@ The following code fragment gives an example of this::
     # We expect any of these three patterns...
     i = child.expect (['Permission denied', 'Terminal type', '[#\$] '])
     if i==0:
-        print('Permission denied on host. Can't login')
+        print('Permission denied on host. Can\'t login')
         child.kill(0)
-    elif i==2:
+    elif i==1:
         print('Login OK... need to send terminal type.')
         child.sendline('vt100')
         child.expect('[#\$] ')
-    elif i==3:
+    elif i==2:
         print('Login OK.')
         print('Shell command prompt', child.after)
 

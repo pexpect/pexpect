@@ -22,21 +22,35 @@ PEXPECT LICENSE
 import pexpect
 import unittest
 import subprocess
+import tempfile
 import sys
+import os
 from . import PexpectTestCase
-
-# TODO Many of these test cases blindly assume that sequential
-# TODO listing of the /bin directory will yield the same results.
-# TODO This may not always be true, but seems adequate for testing for now.
-# TODO I should fix this at some point.
 
 unicode_type = str if pexpect.PY3 else unicode
 
-def timeout_callback (d):
-#    print d["event_count"],
-    if d["event_count"]>3:
+
+def timeout_callback(values):
+    if values["event_count"] > 3:
         return 1
     return 0
+
+
+def function_events_callback(values):
+    try:
+        previous_echoed = (values["child_result_list"][-1]
+                           .decode().split("\n")[-2].strip())
+        if previous_echoed.endswith("stage-1"):
+            return "echo stage-2\n"
+        elif previous_echoed.endswith("stage-2"):
+            return "echo stage-3\n"
+        elif previous_echoed.endswith("stage-3"):
+            return "exit\n"
+        else:
+            raise Exception("Unexpected output {0}".format(previous_echoed))
+    except IndexError:
+        return "echo stage-1\n"
+
 
 class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
     runfunc = staticmethod(pexpect.run)
@@ -44,50 +58,134 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
     empty = b''
     prep_subprocess_out = staticmethod(lambda x: x)
 
-    def test_run_exit (self):
+    def setUp(self):
+        fd, self.rcfile = tempfile.mkstemp()
+        os.write(fd, b'PS1=GO: \n')
+        os.close(fd)
+        super(RunFuncTestCase, self).setUp()
+
+    def tearDown(self):
+        os.unlink(self.rcfile)
+        super(RunFuncTestCase, self).tearDown()
+
+    def test_run_exit(self):
         (data, exitstatus) = self.runfunc('python exit1.py', withexitstatus=1)
         assert exitstatus == 1, "Exit status of 'python exit1.py' should be 1."
 
-    def test_run (self):
-        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
-                stdout=subprocess.PIPE).communicate()[0].rstrip()
-        (the_new_way, exitstatus) = self.runfunc('ls -l /bin', withexitstatus=1)
+    def test_run(self):
+        the_old_way = subprocess.Popen(
+            args=['uname', '-m', '-n'],
+            stdout=subprocess.PIPE
+        ).communicate()[0].rstrip()
+
+        (the_new_way, exitstatus) = self.runfunc(
+            'uname -m -n', withexitstatus=1)
         the_new_way = the_new_way.replace(self.cr, self.empty).rstrip()
+
         self.assertEqual(self.prep_subprocess_out(the_old_way), the_new_way)
         self.assertEqual(exitstatus, 0)
 
-    def test_run_callback (self): # TODO it seems like this test could block forever if run fails...
-        self.runfunc("cat", timeout=1, events={pexpect.TIMEOUT:timeout_callback})
+    def test_run_callback(self):
+        # TODO it seems like this test could block forever if run fails...
+        events = {pexpect.TIMEOUT: timeout_callback}
+        self.runfunc("cat", timeout=1, events=events)
 
-    def test_run_bad_exitstatus (self):
-        (the_new_way, exitstatus) = self.runfunc('ls -l /najoeufhdnzkxjd',
-                                                    withexitstatus=1)
+    def test_run_bad_exitstatus(self):
+        (the_new_way, exitstatus) = self.runfunc(
+            'ls -l /najoeufhdnzkxjd', withexitstatus=1)
         assert exitstatus != 0
+
+    def test_run_event_as_string(self):
+        events = [
+            # second match on 'abc', echo 'def'
+            ('abc\r\n.*GO:', 'echo "def"\n'),
+            # final match on 'def': exit
+            ('def\r\n.*GO:', 'exit\n'),
+            # first match on 'GO:' prompt, echo 'abc'
+            ('GO:', 'echo "abc"\n')
+        ]
+
+        (data, exitstatus) = pexpect.run(
+            'bash --rcfile {0}'.format(self.rcfile),
+            withexitstatus=True,
+            events=events,
+            timeout=10)
+        assert exitstatus == 0
+
+    def test_run_event_as_function(self):
+        events = [
+            ('GO:', function_events_callback)
+        ]
+
+        (data, exitstatus) = pexpect.run(
+            'bash --rcfile {0}'.format(self.rcfile),
+            withexitstatus=True,
+            events=events,
+            timeout=10)
+        assert exitstatus == 0
+
+    def test_run_event_as_method(self):
+        events = [
+            ('GO:', self._method_events_callback)
+        ]
+
+        (data, exitstatus) = pexpect.run(
+            'bash --rcfile {0}'.format(self.rcfile),
+            withexitstatus=True,
+            events=events,
+            timeout=10)
+        assert exitstatus == 0
+
+    def test_run_event_typeerror(self):
+        events = [('GO:', -1)]
+        with self.assertRaises(TypeError):
+            pexpect.run('bash --rcfile {0}'.format(self.rcfile),
+                        withexitstatus=True,
+                        events=events,
+                        timeout=10)
+
+    def _method_events_callback(self, values):
+        try:
+            previous_echoed = (values["child_result_list"][-1].decode()
+                               .split("\n")[-2].strip())
+            if previous_echoed.endswith("foo1"):
+                return "echo foo2\n"
+            elif previous_echoed.endswith("foo2"):
+                return "echo foo3\n"
+            elif previous_echoed.endswith("foo3"):
+                return "exit\n"
+            else:
+                raise Exception("Unexpected output {0!r}"
+                                .format(previous_echoed))
+        except IndexError:
+            return "echo foo1\n"
+
 
 class RunUnicodeFuncTestCase(RunFuncTestCase):
     runfunc = staticmethod(pexpect.runu)
     cr = b'\r'.decode('ascii')
     empty = b''.decode('ascii')
     prep_subprocess_out = staticmethod(lambda x: x.decode('utf-8', 'replace'))
+
     def test_run_unicode(self):
         if pexpect.PY3:
-            c = chr(254)   # þ
+            char = chr(254)   # þ
             pattern = '<in >'
         else:
-            c = unichr(254)  # analysis:ignore
+            char = unichr(254)  # analysis:ignore
             pattern = '<in >'.decode('ascii')
 
-        def callback(d):
-            if d['event_count'] == 0:
-                return c + '\n'
+        def callback(values):
+            if values['event_count'] == 0:
+                return char + '\n'
             else:
                 return True  # Stop the child process
 
         output = pexpect.runu(sys.executable + ' echo_w_prompt.py',
-                              env={'PYTHONIOENCODING':'utf-8'},
-                              events={pattern:callback})
+                              env={'PYTHONIOENCODING': 'utf-8'},
+                              events={pattern: callback})
         assert isinstance(output, unicode_type), type(output)
-        assert '<out>'+c in output, output
+        assert ('<out>' + char) in output, output
 
 if __name__ == '__main__':
     unittest.main()

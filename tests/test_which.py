@@ -1,8 +1,13 @@
+import subprocess
 import tempfile
+import shutil
+import errno
 import os
 
 import pexpect
 from . import PexpectTestCase
+
+import pytest
 
 
 class TestCaseWhich(PexpectTestCase.PexpectTestCase):
@@ -162,27 +167,101 @@ class TestCaseWhich(PexpectTestCase.PexpectTestCase):
         try:
             # setup
             os.environ['PATH'] = bin_dir
-            with open(bin_path, 'w') as fp:
-                fp.write('#!/bin/sh\necho hello, world\n')
-            for should_match, mode in ((False, 0o000),
-                                       (True,  0o005),
-                                       (True,  0o050),
-                                       (True,  0o500),
-                                       (False, 0o004),
-                                       (False, 0o040),
-                                       (False, 0o400)):
+
+            # an interpreted script requires the ability to read,
+            # whereas a binary program requires only to be executable.
+            #
+            # to gain access to a binary program, we make a copy of
+            # the existing system program echo(1).
+            bin_echo = None
+            for pth in ('/bin/echo', '/usr/bin/echo'):
+                if os.path.exists(pth):
+                    bin_echo = pth
+                    break
+            bin_which = None
+            for pth in ('/bin/which', '/usr/bin/which'):
+                if os.path.exists(pth):
+                    bin_which = pth
+                    break
+            if not bin_echo or not bin_which:
+                pytest.skip('needs `echo` and `which` binaries')
+            shutil.copy(bin_echo, bin_path)
+            isroot = os.getuid() == 0
+            for should_match, mode in (
+                # note that although the file may have matching 'group' or
+                # 'other' executable permissions, it is *not* executable
+                # because the current uid is the owner of the file -- which
+                # takes precedence
+                (False,  0o000),   # ----------, no
+                (isroot, 0o001),   # ---------x, no
+                (isroot, 0o010),   # ------x---, no
+                (True,   0o100),   # ---x------, yes
+                (False,  0o002),   # --------w-, no
+                (False,  0o020),   # -----w----, no
+                (False,  0o200),   # --w-------, no
+                (isroot, 0o003),   # --------wx, no
+                (isroot, 0o030),   # -----wx---, no
+                (True,   0o300),   # --wx------, yes
+                (False,  0o004),   # -------r--, no
+                (False,  0o040),   # ----r-----, no
+                (False,  0o400),   # -r--------, no
+                (isroot, 0o005),   # -------r-x, no
+                (isroot, 0o050),   # ----r-x---, no
+                (True,   0o500),   # -r-x------, yes
+                (False,  0o006),   # -------rw-, no
+                (False,  0o060),   # ----rw----, no
+                (False,  0o600),   # -rw-------, no
+                (isroot, 0o007),   # -------rwx, no
+                (isroot, 0o070),   # ----rwx---, no
+                (True,   0o700),   # -rwx------, yes
+                (isroot, 0o4001),  # ---S-----x, no
+                (isroot, 0o4010),  # ---S--x---, no
+                (True,   0o4100),  # ---s------, yes
+                (isroot, 0o4003),  # ---S----wx, no
+                (isroot, 0o4030),  # ---S-wx---, no
+                (True,   0o4300),  # --ws------, yes
+                (isroot, 0o2001),  # ------S--x, no
+                (isroot, 0o2010),  # ------s---, no
+                (True,   0o2100),  # ---x--S---, yes
+
+            ):
+                mode_str = '{0:0>4o}'.format(mode)
+
+                # given file mode,
                 os.chmod(bin_path, mode)
 
-                if not should_match:
-                    # should not be found because it is not executable
-                    assert pexpect.which(fname) is None
-                else:
-                    # should match full path
-                    assert pexpect.which(fname) == bin_path
+                # exercise whether we may execute
+                can_execute = True
+                try:
+                    subprocess.Popen(fname).wait() == 0
+                except OSError as err:
+                    if err.errno != errno.EACCES:
+                        raise
+                    # permission denied
+                    can_execute = False
+
+                assert should_match == can_execute, (
+                    should_match, can_execute, mode_str)
+
+                # exercise whether which(1) would match
+                proc = subprocess.Popen((bin_which, fname),
+                                        env={'PATH': bin_dir},
+                                        stdout=subprocess.PIPE)
+                bin_which_match = bool(not proc.wait())
+                assert should_match == bin_which_match, (
+                    should_match, bin_which_match, mode_str)
+
+                # finally, exercise pexpect's which(1) matches
+                # the same.
+                pexpect_match = bool(pexpect.which(fname))
+
+                assert should_match == pexpect_match == bin_which_match, (
+                    should_match, pexpect_match, bin_which_match, mode_str)
 
         finally:
             # restore,
             os.environ['PATH'] = save_path
+
             # destroy scratch files and folders,
             if os.path.exists(bin_path):
                 os.unlink(bin_path)

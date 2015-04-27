@@ -1,6 +1,15 @@
 from distutils.core import setup
+import os
+import re
 
-from pexpect import __version__
+with open(os.path.join(os.path.dirname(__file__), 'pexpect', '__init__.py'), 'r') as f:
+    for line in f:
+        version_match = re.search(r"__version__ = ['\"]([^'\"]*)['\"]", line)
+        if version_match:
+            version = version_match.group(1)
+            break
+    else:
+        raise Exception("couldn't find version number")
 
 long_description = """
 Pexpect is a pure Python module for spawning child applications; controlling
@@ -19,7 +28,7 @@ The Pexpect interface was designed to be easy to use.
 """
 
 setup (name='pexpect',
-    version=__version__,
+    version=version,
     py_modules=['pxssh', 'fdpexpect', 'FSM', 'screen', 'ANSI'],
     packages=['pexpect'],
     description='Pexpect allows easy control of interactive console applications.',
@@ -52,4 +61,5 @@ setup (name='pexpect',
         'Topic :: System :: Software Distribution',
         'Topic :: Terminals',
     ],
+    install_requires=['ptyprocess'],
 )

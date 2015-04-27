@@ -1,18 +1,8 @@
 
-The best way to run these tests is from the directory above this one. Source
-the test.env environment file. This will make sure that you are using the
-correct pexpect.py file otherwise Python might try to import a different
-version if it is already installed in this environment. Then run the testall.py
-script in the tools/ directory. This script will automatically build a test
-suite from all the test scripts in the tests/ directory. This allows you to add
-new test scripts simply by dropping them in the tests/ directory. You don't
-have to register the test or do anything else to integrate it into the test
-suite.
+The best way to run these tests is from the directory above this one. Run:
 
-For example, this is the normal set of commands you would use to run all tests
-in the tests/ directory:
+    py.test
 
-    $ cd /home/user/pexpect_dev/
-    $ . test.env
-    $ ./tools/testall.py
+To run a specific test file:
 
+    py.test tests/test_constructor.py

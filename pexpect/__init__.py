@@ -1537,7 +1537,7 @@ class spawn(object):
                 # Still have time left, so read more data
                 c = self.read_nonblocking(self.maxread, timeout)
                 freshlen = len(c)
-                time.sleep(0.0001)
+                #time.sleep(0.0001)
                 incoming = incoming + c
                 if timeout is not None:
                     timeout = end_time - time.time()

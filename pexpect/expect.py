@@ -95,7 +95,6 @@ class Expecter(object):
                     return self.timeout()
                 # Still have time left, so read more data
                 incoming = spawn.read_nonblocking(spawn.maxread, timeout)
-                time.sleep(0.0001)
                 if timeout is not None:
                     timeout = end_time - time.time()
         except EOF as e:

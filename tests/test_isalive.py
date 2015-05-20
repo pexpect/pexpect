@@ -25,22 +25,33 @@ import sys
 import time
 from . import PexpectTestCase
 
+
 class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
+    """Various tests for the running status of processes."""
 
-    def test_expect_wait (self):
-        '''This tests that calling wait on a finished process works as expected.
-        '''
-        p = pexpect.spawn('sleep 3')
+    def test_expect_wait(self):
+        """Ensure consistency in wait() and isalive()."""
+        p = pexpect.spawn('sleep 1')
         assert p.isalive()
-        p.wait()
+        assert p.wait() == 0
         assert not p.isalive()
+        # In previous versions of ptyprocess/pexpect, calling wait() a second
+        # time would raise an exception, but not since v4.0
+        assert p.wait() == 0
 
+    def test_expect_wait_after_termination(self):
+        """Ensure wait on a process terminated by kill -9."""
         p = pexpect.spawn('sleep 3')
         assert p.isalive()
         p.kill(9)
         time.sleep(1)
-        with self.assertRaises(pexpect.ExceptionPexpect):
-            p.wait()
+
+        # when terminated, the exitstatus is None, but p.signalstatus
+        # and p.terminated reflects that the kill -9 nature.
+        assert p.wait() is None
+        assert p.signalstatus == 9
+        assert p.terminated == True
+        assert not p.isalive()
 
     def test_signal_wait(self):
         '''Test calling wait with a process terminated by a signal.'''
@@ -102,7 +113,7 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
         p = pexpect.spawn('cat')
         assert p.isalive()
         assert p.isalive()
-        p.kill(9)
+        p.sendeof()
         p.expect(pexpect.EOF)
         assert not p.isalive()
         assert not p.isalive()

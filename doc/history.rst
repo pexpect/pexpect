@@ -14,6 +14,9 @@ Version 4.0
   waiting for output that matches a pattern.
 * Enhancement: allow method as callbacks of argument ``events`` for
   :func:`pexpect.run` (:ghissue:`176`).
+* It is now possible to call :meth:`~.wait` multiple times, or after a process
+  is already determined to be terminated without raising an exception
+  (:ghpull:`211`).
 
 Version 3.4
 ```````````

@@ -84,3 +84,27 @@ class fdspawn(SpawnBase):
 
     def terminate (self, force=False):  # pragma: no cover
         raise ExceptionPexpect('This method is not valid for file descriptors.')
+    
+    # These four methods are left around for backwards compatibility, but not
+    # documented as part of fdpexpect. You're encouraged to use os.write#
+    # directly.
+    def send(self, s):
+        "Write to fd, return number of bytes written"
+        s = self._coerce_send_string(s)
+        self._log(s, 'send')
+        
+        return os.write(self.child_fd, s)
+    
+    def sendline(self, s):
+        "Write to fd with trailing newline, return number of bytes written"
+        s = self._coerce_send_string(s)
+        return self.send(s + self.linesep)
+    
+    def write(self, s):
+        "Write to fd, return None"
+        self.send(s)
+    
+    def writelines(self, sequence):
+        "Call self.write() for each item in sequence"
+        for s in sequence:
+            self.write(s)

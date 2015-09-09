@@ -29,7 +29,6 @@ The Pexpect interface was designed to be easy to use.
 
 setup (name='pexpect',
     version=version,
-    py_modules=['pxssh', 'fdpexpect', 'FSM', 'screen', 'ANSI'],
     packages=['pexpect'],
     description='Pexpect allows easy control of interactive console applications.',
     long_description=long_description,

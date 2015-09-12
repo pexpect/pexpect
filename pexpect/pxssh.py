@@ -172,7 +172,7 @@ class pxssh (spawn):
         # maximum time for reading the entire prompt
         total_timeout = timeout_multiplier * 3.0
 
-        prompt = b''
+        prompt = self.string_type()
         begin = time.time()
         expired = 0.0
         timeout = first_char_timeout

@@ -116,14 +116,18 @@ class PopenSpawn(SpawnBase):
         for s in sequence:
             self.send(s)
 
-    def _send(self, s):
-        return self.proc.stdin.write(s)
-
     def send(self, s):
         s = self._coerce_send_string(s)
         self._log(s, 'send')
 
-        return self._send(s)
+        b = self._encoder.encode(s, final=False)
+        if PY3:
+            return self.proc.stdin.write(b)
+        else:
+            # On Python 2, .write() returns None, so we return the length of
+            # bytes written ourselves. This assumes they all got written.
+            self.proc.stdin.write(b)
+            return len(b)
 
     def sendline(self, s=''):
         '''Wraps send(), sending string ``s`` to child process, with os.linesep

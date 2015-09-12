@@ -27,6 +27,13 @@ import codecs
 import copy
 import sys
 
+import warnings
+
+warnings.warn(("pexpect.screen and pexpect.ANSI are deprecated. "
+               "We recommend using pyte to emulate a terminal screen: "
+               "https://pypi.python.org/pypi/pyte"),
+               stacklevel=2)
+
 NUL = 0    # Fill character; ignored on input.
 ENQ = 5    # Transmit answerback message.
 BEL = 7    # Ring the bell.

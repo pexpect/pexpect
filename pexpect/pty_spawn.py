@@ -397,7 +397,7 @@ class spawn(SpawnBase):
         then this will raise a TIMEOUT exception.
 
         The timeout refers only to the amount of time to read at least one
-        character. This is not effected by the 'size' parameter, so if you call
+        character. This is not affected by the 'size' parameter, so if you call
         read_nonblocking(size=100, timeout=30) and only one character is
         available right away then one character will be returned immediately.
         It will not wait for 30 seconds for another 99 characters to come in.

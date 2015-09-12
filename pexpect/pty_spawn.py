@@ -117,7 +117,7 @@ class spawn(SpawnBase):
             child = pexpect.spawn('some_command')
             child.logfile_read = sys.stdout
 
-        Remember to use spawnu instead of spawn for the above code if you are
+        You will need to pass an encoding to spawn in the above code if you are
         using Python 3.
 
         To separately log output sent to the child use logfile_send::

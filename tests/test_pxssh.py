@@ -48,6 +48,14 @@ class PxsshTestCase(SSHTestBase):
         else:
             assert False, 'should have raised exception, pxssh.ExceptionPxssh'
 
+    def test_fake_ssh_with_unicode(self):
+        ssh = pxssh.pxsshu()
+        ssh.login('server', 'me', password='s3cret')
+        p.sendline('abcdé')
+        p.expect('abcdé')
+        assert ssh.prompt(timeout=10)
+        ssh.logout()
+
 
 if __name__ == '__main__':
     unittest.main()

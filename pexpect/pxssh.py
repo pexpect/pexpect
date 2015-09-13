@@ -20,84 +20,21 @@ PEXPECT LICENSE
 
 '''
 
-from pexpect import ExceptionPexpect, TIMEOUT, EOF, spawn
+from pexpect import ExceptionPexpect, TIMEOUT, EOF, spawn, spawnu
 import time
 import os
 
-__all__ = ['ExceptionPxssh', 'pxssh']
+__all__ = ['ExceptionPxssh', 'pxssh', 'pxsshu']
 
 # Exception classes used by this module.
 class ExceptionPxssh(ExceptionPexpect):
     '''Raised for pxssh exceptions.
     '''
 
-class pxssh (spawn):
-    '''This class extends pexpect.spawn to specialize setting up SSH
-    connections. This adds methods for login, logout, and expecting the shell
-    prompt. It does various tricky things to handle many situations in the SSH
-    login process. For example, if the session is your first login, then pxssh
-    automatically accepts the remote certificate; or if you have public key
-    authentication setup then pxssh won't wait for the password prompt.
-
-    pxssh uses the shell prompt to synchronize output from the remote host. In
-    order to make this more robust it sets the shell prompt to something more
-    unique than just $ or #. This should work on most Borne/Bash or Csh style
-    shells.
-
-    Example that runs a few commands on a remote server and prints the result::
-
-        import pxssh
-        import getpass
-        try:
-            s = pxssh.pxssh()
-            hostname = raw_input('hostname: ')
-            username = raw_input('username: ')
-            password = getpass.getpass('password: ')
-            s.login(hostname, username, password)
-            s.sendline('uptime')   # run a command
-            s.prompt()             # match the prompt
-            print(s.before)        # print everything before the prompt.
-            s.sendline('ls -l')
-            s.prompt()
-            print(s.before)
-            s.sendline('df')
-            s.prompt()
-            print(s.before)
-            s.logout()
-        except pxssh.ExceptionPxssh as e:
-            print("pxssh failed on login.")
-            print(e)
-
-    Example showing how to specify SSH options::
-
-        import pxssh
-        s = pxssh.pxssh(options={
-                            "StrictHostKeyChecking": "no",
-                            "UserKnownHostsFile": "/dev/null"})
-        ...
-
-    Note that if you have ssh-agent running while doing development with pxssh
-    then this can lead to a lot of confusion. Many X display managers (xdm,
-    gdm, kdm, etc.) will automatically start a GUI agent. You may see a GUI
-    dialog box popup asking for a password during development. You should turn
-    off any key agents during testing. The 'force_password' attribute will turn
-    off public key authentication. This will only work if the remote SSH server
-    is configured to allow password logins. Example of using 'force_password'
-    attribute::
-
-            s = pxssh.pxssh()
-            s.force_password = True
-            hostname = raw_input('hostname: ')
-            username = raw_input('username: ')
-            password = getpass.getpass('password: ')
-            s.login (hostname, username, password)
-    '''
-
+class pxssh_mixin:
     def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
                     logfile=None, cwd=None, env=None, ignore_sighup=True, echo=True,
                     options={}):
-
-        spawn.__init__(self, None, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env, ignore_sighup=ignore_sighup, echo=echo)
 
         self.name = '<pxssh>'
 
@@ -169,7 +106,7 @@ class pxssh (spawn):
         # maximum time for reading the entire prompt
         total_timeout = timeout_multiplier * 3.0
 
-        prompt = b''
+        prompt = self.string_type()
         begin = time.time()
         expired = 0.0
         timeout = first_char_timeout
@@ -399,5 +336,81 @@ class pxssh (spawn):
             if i == 0:
                 return False
         return True
+
+
+class pxssh (spawn, pxssh_mixin):
+    '''This class extends pexpect.spawn to specialize setting up SSH
+    connections. This adds methods for login, logout, and expecting the shell
+    prompt. It does various tricky things to handle many situations in the SSH
+    login process. For example, if the session is your first login, then pxssh
+    automatically accepts the remote certificate; or if you have public key
+    authentication setup then pxssh won't wait for the password prompt.
+
+    pxssh uses the shell prompt to synchronize output from the remote host. In
+    order to make this more robust it sets the shell prompt to something more
+    unique than just $ or #. This should work on most Borne/Bash or Csh style
+    shells.
+
+    Example that runs a few commands on a remote server and prints the result::
+
+        import pxssh
+        import getpass
+        try:
+            s = pxssh.pxssh()
+            hostname = raw_input('hostname: ')
+            username = raw_input('username: ')
+            password = getpass.getpass('password: ')
+            s.login(hostname, username, password)
+            s.sendline('uptime')   # run a command
+            s.prompt()             # match the prompt
+            print(s.before)        # print everything before the prompt.
+            s.sendline('ls -l')
+            s.prompt()
+            print(s.before)
+            s.sendline('df')
+            s.prompt()
+            print(s.before)
+            s.logout()
+        except pxssh.ExceptionPxssh as e:
+            print("pxssh failed on login.")
+            print(e)
+
+    Example showing how to specify SSH options::
+
+        import pxssh
+        s = pxssh.pxssh(options={
+                            "StrictHostKeyChecking": "no",
+                            "UserKnownHostsFile": "/dev/null"})
+        ...
+
+    Note that if you have ssh-agent running while doing development with pxssh
+    then this can lead to a lot of confusion. Many X display managers (xdm,
+    gdm, kdm, etc.) will automatically start a GUI agent. You may see a GUI
+    dialog box popup asking for a password during development. You should turn
+    off any key agents during testing. The 'force_password' attribute will turn
+    off public key authentication. This will only work if the remote SSH server
+    is configured to allow password logins. Example of using 'force_password'
+    attribute::
+
+            s = pxssh.pxssh()
+            s.force_password = True
+            hostname = raw_input('hostname: ')
+            username = raw_input('username: ')
+            password = getpass.getpass('password: ')
+            s.login (hostname, username, password)
+    '''
+
+    def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
+                  logfile=None, cwd=None, env=None):
+        spawn.__init__(self, None, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env)
+        pxssh_mixin.__init__(self, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env)
+
+class pxsshu (spawnu, pxssh_mixin):
+    '''Works like pxssh, but accepts and returns unicode strings.
+    '''
+    def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
+                  logfile=None, cwd=None, env=None):
+        spawnu.__init__(self, None, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env)
+        pxssh_mixin.__init__(self, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env)
 
 # vi:ts=4:sw=4:expandtab:ft=python:

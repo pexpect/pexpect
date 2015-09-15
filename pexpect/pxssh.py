@@ -334,7 +334,7 @@ class pxssh (spawn):
             if not self.set_unique_prompt():
                 self.close()
                 raise ExceptionPxssh('could not set shell prompt '
-                                     '(recieved: %r, expected: %r).' % (
+                                     '(received: %r, expected: %r).' % (
                                          self.before, self.PROMPT,))
         return True
 

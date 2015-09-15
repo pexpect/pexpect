@@ -95,9 +95,12 @@ class pxssh (spawn):
 
     def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
                     logfile=None, cwd=None, env=None, ignore_sighup=True, echo=True,
-                    options={}):
+                    options={}, encoding=None, codec_errors='strict'):
 
-        spawn.__init__(self, None, timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize, logfile=logfile, cwd=cwd, env=env, ignore_sighup=ignore_sighup, echo=echo)
+        spawn.__init__(self, None, timeout=timeout, maxread=maxread,
+                       searchwindowsize=searchwindowsize, logfile=logfile,
+                       cwd=cwd, env=env, ignore_sighup=ignore_sighup, echo=echo,
+                       encoding=encoding, codec_errors=codec_errors)
 
         self.name = '<pxssh>'
 
@@ -169,7 +172,7 @@ class pxssh (spawn):
         # maximum time for reading the entire prompt
         total_timeout = timeout_multiplier * 3.0
 
-        prompt = b''
+        prompt = self.string_type()
         begin = time.time()
         expired = 0.0
         timeout = first_char_timeout

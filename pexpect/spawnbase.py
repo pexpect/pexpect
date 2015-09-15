@@ -7,35 +7,30 @@ from .exceptions import ExceptionPexpect, EOF, TIMEOUT
 from .expect import Expecter, searcher_string, searcher_re
 
 PY3 = (sys.version_info[0] >= 3)
+text_type = str if PY3 else unicode
+
+class _NullCoder(object):
+    """Pass bytes through unchanged."""
+    @staticmethod
+    def encode(b, final=False):
+        return b
+
+    @staticmethod
+    def decode(b, final=False):
+        return b
 
 class SpawnBase(object):
     """A base class providing the backwards-compatible spawn API for Pexpect.
 
-    This should not be instantiated directly: use :class:`pexpect.spawn` or :class:`pexpect.fdpexpect.fdspawn`."""
-    string_type = bytes
-    if PY3:
-        allowed_string_types = (bytes, str)
-        linesep = os.linesep.encode('ascii')
-        crlf = '\r\n'.encode('ascii')
-
-        @staticmethod
-        def write_to_stdout(b):
-            try:
-                return sys.stdout.buffer.write(b)
-            except AttributeError:
-                # If stdout has been replaced, it may not have .buffer
-                return sys.stdout.write(b.decode('ascii', 'replace'))
-    else:
-        allowed_string_types = (basestring,)  # analysis:ignore
-        linesep = os.linesep
-        crlf = '\r\n'
-        write_to_stdout = sys.stdout.write
-
+    This should not be instantiated directly: use :class:`pexpect.spawn` or
+    :class:`pexpect.fdpexpect.fdspawn`.
+    """
     encoding = None
     pid = None
     flag_eof = False
 
-    def __init__(self, timeout=30, maxread=2000, searchwindowsize=None, logfile=None):
+    def __init__(self, timeout=30, maxread=2000, searchwindowsize=None,
+                 logfile=None, encoding=None, codec_errors='strict'):
         self.stdin = sys.stdin
         self.stdout = sys.stdout
         self.stderr = sys.stderr
@@ -63,7 +58,7 @@ class SpawnBase(object):
         # max bytes to read at one time into buffer
         self.maxread = maxread
         # This is the read buffer. See maxread.
-        self.buffer = self.string_type()
+        self.buffer = bytes() if (encoding is None) else text_type()
         # Data before searchwindowsize point is preserved, but not searched.
         self.searchwindowsize = searchwindowsize
         # Delay used before sending data to child. Time in seconds.
@@ -79,6 +74,42 @@ class SpawnBase(object):
         self.name = '<' + repr(self) + '>'
         self.closed = True
 
+        # Unicode interface
+        self.encoding = encoding
+        self.codec_errors = codec_errors
+        if encoding is None:
+            # bytes mode (accepts some unicode for backwards compatibility)
+            self._encoder = self._decoder = _NullCoder()
+            self.string_type = bytes
+            self.crlf = b'\r\n'
+            if PY3:
+                self.allowed_string_types = (bytes, str)
+                self.linesep = os.linesep.encode('ascii')
+                def write_to_stdout(b):
+                    try:
+                        return sys.stdout.buffer.write(b)
+                    except AttributeError:
+                        # If stdout has been replaced, it may not have .buffer
+                        return sys.stdout.write(b.decode('ascii', 'replace'))
+                self.write_to_stdout = write_to_stdout
+            else:
+                self.allowed_string_types = (basestring,)  # analysis:ignore
+                self.linesep = os.linesep
+                self.write_to_stdout = sys.stdout.write
+        else:
+            # unicode mode
+            self._encoder = codecs.getincrementalencoder(encoding)(codec_errors)
+            self._decoder = codecs.getincrementaldecoder(encoding)(codec_errors)
+            self.string_type = text_type
+            self.crlf = u'\r\n'
+            self.allowed_string_types = (text_type, )
+            if PY3:
+                self.linesep = os.linesep
+            else:
+                self.linesep = os.linesep.decode('ascii')
+            # This can handle unicode in both Python 2 and 3
+            self.write_to_stdout = sys.stdout.write
+
     def _log(self, s, direction):
         if self.logfile is not None:
             self.logfile.write(s)
@@ -88,20 +119,17 @@ class SpawnBase(object):
             second_log.write(s)
             second_log.flush()
 
-    @staticmethod
-    def _coerce_expect_string(s):
-        if not isinstance(s, bytes):
+    # For backwards compatibility, in bytes mode (when encoding is None)
+    # unicode is accepted for send and expect. Unicode mode is strictly unicode
+    # only.
+    def _coerce_expect_string(self, s):
+        if self.encoding is None and not isinstance(s, bytes):
             return s.encode('ascii')
         return s
 
-    @staticmethod
-    def _coerce_send_string(s):
-        if not isinstance(s, bytes):
+    def _coerce_send_string(self, s):
+        if self.encoding is None and not isinstance(s, bytes):
             return s.encode('utf-8')
-        return s
-
-    @staticmethod
-    def _coerce_read_string(s):
         return s
 
     def read_nonblocking(self, size=1, timeout=None):
@@ -125,7 +153,7 @@ class SpawnBase(object):
             self.flag_eof = True
             raise EOF('End Of File (EOF). Empty string style platform.')
 
-        s = self._coerce_read_string(s)
+        s = self._decoder.decode(s, final=False)
         self._log(s, 'read')
         return s
 
@@ -451,34 +479,3 @@ class SpawnBase(object):
         # We rely on subclasses to implement close(). If they don't, it's not
         # clear what a context manager should do.
         self.close()
-
-class SpawnBaseUnicode(SpawnBase):
-    if PY3:
-        string_type = str
-        allowed_string_types = (str, )
-        linesep = os.linesep
-        crlf = '\r\n'
-    else:
-        string_type = unicode
-        allowed_string_types = (unicode, )
-        linesep = os.linesep.decode('ascii')
-        crlf = '\r\n'.decode('ascii')
-    # This can handle unicode in both Python 2 and 3
-    write_to_stdout = sys.stdout.write
-
-    def __init__(self, *args, **kwargs):
-        self.encoding = kwargs.pop('encoding', 'utf-8')
-        self.errors = kwargs.pop('errors', 'strict')
-        self._decoder = codecs.getincrementaldecoder(self.encoding)(errors=self.errors)
-        super(SpawnBaseUnicode, self).__init__(*args, **kwargs)
-
-    @staticmethod
-    def _coerce_expect_string(s):
-        return s
-
-    @staticmethod
-    def _coerce_send_string(s):
-        return s
-
-    def _coerce_read_string(self, s):
-        return self._decoder.decode(s, final=False)

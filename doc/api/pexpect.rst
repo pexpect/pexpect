@@ -36,9 +36,9 @@ spawn class
 
       .. note::
 
-         With a :class:`spawn` instance, the log files should be open for
-         writing binary data. With a :class:`spawnu` instance, they should
-         be open for writing unicode text.
+         With :class:`spawn` in bytes mode, the log files should be open for
+         writing binary data. In unicode mode, they should
+         be open for writing unicode text. See :ref:`unicode`.
 
 Controlling the child process
 `````````````````````````````
@@ -69,30 +69,34 @@ Controlling the child process
 Handling unicode
 ````````````````
 
-For backwards compatibility, :class:`spawn` can handle some Unicode: its
+By default, :class:`spawn` is a bytes interface: its read methods return bytes,
+and its write/send and expect methods expect bytes. If you pass the *encoding*
+parameter to the constructor, it will instead act as a unicode interface:
+strings you send will be encoded using that encoding, and bytes received will
+be decoded before returning them to you. In this mode, patterns for
+:meth:`~spawn.expect` and :meth:`~spawn.expect_exact` should also be unicode.
+
+.. versionchanged:: 4.0
+
+   :class:`spawn` provides both the bytes and unicode interfaces. In Pexpect
+   3.x, the unicode interface was provided by a separate ``spawnu`` class.
+
+For backwards compatibility, some Unicode is allowed in bytes mode: the
 send methods will encode arbitrary unicode as UTF-8 before sending it to the
 child process, and its expect methods can accept ascii-only unicode strings.
-However, for a proper unicode API to a subprocess, use this subclass:
-
-.. autoclass:: spawnu
-   :show-inheritance:
-
-There is also a :func:`runu` function, the unicode counterpart to :func:`run`.
 
 .. note::
 
    Unicode handling with pexpect works the same way on Python 2 and 3, despite
    the difference in names. I.e.:
 
-   - :class:`spawn` works with ``str`` on Python 2, and :class:`bytes` on Python 3,
-   - :class:`spawnu` works with ``unicode`` on Python 2, and :class:`str` on Python 3.
+   - Bytes mode works with ``str`` on Python 2, and :class:`bytes` on Python 3,
+   - Unicode mode works with ``unicode`` on Python 2, and :class:`str` on Python 3.
 
 run function
 ------------
 
 .. autofunction:: run
-
-.. autofunction:: runu
 
 Exceptions
 ----------

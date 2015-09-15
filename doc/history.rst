@@ -17,6 +17,11 @@ Version 4.0
 * It is now possible to call :meth:`~.wait` multiple times, or after a process
   is already determined to be terminated without raising an exception
   (:ghpull:`211`).
+* Deprecated ``pexpect.screen`` and ``pexpect.ANSI``. Please use other packages
+  such as `pyte <https://pypi.python.org/pypi/pyte>`__ to emulate a terminal.
+* Removed the independent top-level modules (``pxssh fdpexpect FSM screen ANSI``)
+  which were installed alongside Pexpect. These were moved into the Pexpect
+  package in 3.0, but the old names were left as aliases.
 
 Version 3.4
 ```````````

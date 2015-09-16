@@ -33,7 +33,10 @@ import sys
 def main():
     p = pexpect.spawn(sys.executable + ' echo_w_prompt.py',
                       env=no_coverage_env())
-    p.interact()
+    escape_character = chr(29)  # default matches api
+    if len(sys.argv) > 2 and sys.argv[1] == '--no-escape':
+        escape_character = None
+    p.interact(escape_character=escape_character)
     print("Escaped interact")
 
 if __name__ == '__main__':

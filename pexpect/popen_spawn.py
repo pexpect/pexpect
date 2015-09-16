@@ -99,7 +99,6 @@ class PopenSpawn(SpawnBase):
                 return
 
             self._read_queue.put(buf)
-            time.sleep(0.001)
 
     def write(self, s):
         '''This is similar to send() except that there is no return value.

@@ -6,10 +6,11 @@ from pexpect import EOF
 @asyncio.coroutine
 def expect_async(expecter, timeout=None):
     # First process data that was previously read - if it maches, we don't need
-    # async stuff.    
-    idx = expecter.new_data(expecter.spawn.buffer)
+    # async stuff.
+    previously_read = expecter.spawn.buffer
     expecter.spawn.buffer = expecter.spawn.string_type()
-    if idx:
+    idx = expecter.new_data(previously_read)
+    if idx is not None:
         return idx
 
     transport, pw = yield from asyncio.get_event_loop()\
@@ -36,7 +37,7 @@ class PatternWaiter(asyncio.Protocol):
     
     def data_received(self, data):
         spawn = self.expecter.spawn
-        s = spawn._coerce_read_string(data)
+        s = spawn._decoder.decode(data)
         spawn._log(s, 'read')
 
         if self.fut.done():
@@ -56,6 +57,7 @@ class PatternWaiter(asyncio.Protocol):
         # N.B. If this gets called, async will close the pipe (the spawn object)
         # for us
         try:
+            self.expecter.spawn.flag_eof = True
             index = self.expecter.eof()
         except EOF as e:
             self.error(e)

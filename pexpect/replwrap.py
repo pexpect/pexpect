@@ -11,6 +11,7 @@ PY3 = (sys.version_info[0] >= 3)
 
 if PY3:
     def u(s): return s
+    basestring = str
 else:
     def u(s): return s.decode('utf-8')
 
@@ -37,7 +38,7 @@ class REPLWrapper(object):
                  new_prompt=PEXPECT_PROMPT,
                  continuation_prompt=PEXPECT_CONTINUATION_PROMPT,
                  extra_init_cmd=None):
-        if isinstance(cmd_or_spawn, str):
+        if isinstance(cmd_or_spawn, basestring):
             self.child = pexpect.spawnu(cmd_or_spawn, echo=False)
         else:
             self.child = cmd_or_spawn

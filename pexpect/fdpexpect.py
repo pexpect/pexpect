@@ -32,7 +32,8 @@ class fdspawn(SpawnBase):
     descriptor. For example, you could use it to read through a file looking
     for patterns, or to control a modem or serial device. '''
 
-    def __init__ (self, fd, args=None, timeout=30, maxread=2000, searchwindowsize=None, logfile=None):
+    def __init__ (self, fd, args=None, timeout=30, maxread=2000, searchwindowsize=None,
+                  logfile=None, encoding=None, codec_errors='strict'):
         '''This takes a file descriptor (an int) or an object that support the
         fileno() method (returning an int). All Python file-like objects
         support fileno(). '''
@@ -50,7 +51,8 @@ class fdspawn(SpawnBase):
 
         self.args = None
         self.command = None
-        SpawnBase.__init__(self, timeout, maxread, searchwindowsize, logfile)
+        SpawnBase.__init__(self, timeout, maxread, searchwindowsize, logfile,
+                           encoding=encoding, codec_errors=codec_errors)
         self.child_fd = fd
         self.own_fd = False
         self.closed = False
@@ -84,3 +86,28 @@ class fdspawn(SpawnBase):
 
     def terminate (self, force=False):  # pragma: no cover
         raise ExceptionPexpect('This method is not valid for file descriptors.')
+    
+    # These four methods are left around for backwards compatibility, but not
+    # documented as part of fdpexpect. You're encouraged to use os.write#
+    # directly.
+    def send(self, s):
+        "Write to fd, return number of bytes written"
+        s = self._coerce_send_string(s)
+        self._log(s, 'send')
+        
+        b = self._encoder.encode(s, final=False)
+        return os.write(self.child_fd, b)
+    
+    def sendline(self, s):
+        "Write to fd with trailing newline, return number of bytes written"
+        s = self._coerce_send_string(s)
+        return self.send(s + self.linesep)
+    
+    def write(self, s):
+        "Write to fd, return None"
+        self.send(s)
+    
+    def writelines(self, sequence):
+        "Call self.write() for each item in sequence"
+        for s in sequence:
+            self.write(s)

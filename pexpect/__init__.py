@@ -71,13 +71,13 @@ from .utils import split_command_line, which, is_executable_file
 from .pty_spawn import spawn, spawnu, PY3
 from .expect import Expecter, searcher_re, searcher_string
 
-__version__ = '3.3'
+__version__ = '4.0.dev'
 __revision__ = ''
 __all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'spawnu', 'run', 'runu',
            'which', 'split_command_line', '__version__', '__revision__']
 
 def run(command, timeout=30, withexitstatus=False, events=None,
-        extra_args=None, logfile=None, cwd=None, env=None, dimensions=None):
+        extra_args=None, logfile=None, cwd=None, env=None, **kwargs):
 
     '''
     This function runs the given command; waits for it to finish; then
@@ -149,8 +149,8 @@ def run(command, timeout=30, withexitstatus=False, events=None,
 
     Note that you should put newlines in your string if Enter is necessary.
 
-    Like the example above, the responses may also contain callback functions.
-    Any callback is a function that takes a dictionary as an argument.
+    Like the example above, the responses may also contain a callback, either
+    a function or method.  It should accept a dictionary value as an argument.
     The dictionary contains all the locals from the run() function, so you can
     access the child spawn object or any other variable defined in run()
     (event_count, child, and extra_args are the most useful). A callback may
@@ -159,29 +159,16 @@ def run(command, timeout=30, withexitstatus=False, events=None,
     sent to the child. 'extra_args' is not used by directly run(). It provides
     a way to pass data to a callback function through run() through the locals
     dictionary passed to a callback.
+
+    Like :class:`spawn`, passing *encoding* will make it work with unicode
+    instead of bytes. You can pass *codec_errors* to control how errors in
+    encoding and decoding are handled.
     '''
-    return _run(command, timeout=timeout, withexitstatus=withexitstatus,
-                events=events, extra_args=extra_args, logfile=logfile, cwd=cwd,
-                env=env,dimensions=dimensions, _spawn=spawn)
-
-def runu(command, timeout=30, withexitstatus=False, events=None,
-        extra_args=None, logfile=None, cwd=None, env=None, **kwargs):
-    """This offers the same interface as :func:`run`, but using unicode.
-
-    Like :class:`spawnu`, you can pass ``encoding`` and ``errors`` parameters,
-    which will be used for both input and output.
-    """
-    return _run(command, timeout=timeout, withexitstatus=withexitstatus,
-                events=events, extra_args=extra_args, logfile=logfile, cwd=cwd,
-                env=env, _spawn=spawnu, **kwargs)
-
-def _run(command, timeout, withexitstatus, events, extra_args, logfile, cwd,
-         env, _spawn, **kwargs):
     if timeout == -1:
-        child = _spawn(command, maxread=2000, logfile=logfile, cwd=cwd, env=env,
+        child = spawn(command, maxread=2000, logfile=logfile, cwd=cwd, env=env,
                         **kwargs)
     else:
-        child = _spawn(command, timeout=timeout, maxread=2000, logfile=logfile,
+        child = spawn(command, timeout=timeout, maxread=2000, logfile=logfile,
                 cwd=cwd, env=env, **kwargs)
     if isinstance(events, list):
         patterns= [x for x,y in events]
@@ -206,7 +193,8 @@ def _run(command, timeout, withexitstatus, events, extra_args, logfile, cwd,
                 child_result_list.append(child.before)
             if isinstance(responses[index], child.allowed_string_types):
                 child.send(responses[index])
-            elif isinstance(responses[index], types.FunctionType):
+            elif (isinstance(responses[index], types.FunctionType) or
+                  isinstance(responses[index], types.MethodType)):
                 callback_result = responses[index](locals())
                 sys.stdout.flush()
                 if isinstance(callback_result, child.allowed_string_types):
@@ -214,7 +202,9 @@ def _run(command, timeout, withexitstatus, events, extra_args, logfile, cwd,
                 elif callback_result:
                     break
             else:
-                raise TypeError('The callback must be a string or function.')
+                raise TypeError("parameter `event' at index {index} must be "
+                                "a string, method, or function: {value!r}"
+                                .format(index=index, value=responses[index]))
             event_count = event_count + 1
         except TIMEOUT:
             child_result_list.append(child.before)
@@ -228,5 +218,14 @@ def _run(command, timeout, withexitstatus, events, extra_args, logfile, cwd,
         return (child_result, child.exitstatus)
     else:
         return child_result
+
+def runu(command, timeout=30, withexitstatus=False, events=None,
+        extra_args=None, logfile=None, cwd=None, env=None, **kwargs):
+    """Deprecated: pass encoding to run() instead.
+    """
+    kwargs.setdefault('encoding', 'utf-8')
+    return run(command, timeout=timeout, withexitstatus=withexitstatus,
+                events=events, extra_args=extra_args, logfile=logfile, cwd=cwd,
+                env=env, **kwargs)
 
 # vim: set shiftround expandtab tabstop=4 shiftwidth=4 ft=python autoindent :

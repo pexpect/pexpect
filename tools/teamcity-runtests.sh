@@ -14,6 +14,7 @@ export PYTHONIOENCODING=UTF8
 export LANG=en_US.UTF-8
 
 pyversion=$1
+shift
 here=$(cd `dirname $0`; pwd)
 osrel=$(uname -s)
 venv=teamcity-pexpect
@@ -25,7 +26,9 @@ if [ -z $venv_wrapper ]; then
 fi
 
 . ${venv_wrapper}
-workon ${venv} || mkvirtualenv -p `which python${pyversion}` ${venv} || true
+rmvirtualenv ${venv} || true
+mkvirtualenv -p `which python${pyversion}` ${venv} || true
+workon ${venv}
 
 # install ptyprocess
 cd $here/../../ptyprocess
@@ -44,7 +47,7 @@ py.test \
 	--junit-xml=results.${osrel}.py${pyversion}.xml \
 	--verbose \
 	--verbose \
-	|| ret=$?
+	"$@" || ret=$?
 
 if [ $ret -ne 0 ]; then
 	# we always exit 0, preferring instead the jUnit XML

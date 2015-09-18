@@ -57,6 +57,21 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         assert not p.isalive()
         assert p.exitstatus == 0
 
+    def test_interact_escape_None(self):
+        " Return only after Termination when `escape_character=None'. "
+        p = pexpect.spawn('{self.interact_py} --no-escape'.format(self=self),
+                          timeout=5, env=self.env)
+        p.expect('<in >')
+        p.sendcontrol(']')
+        p.sendline('')
+        p.expect('<out>\x1d')
+        p.sendcontrol('d')
+        p.expect('<eof>')
+        p.expect_exact('Escaped interact')
+        p.expect(pexpect.EOF)
+        assert not p.isalive()
+        assert p.exitstatus == 0
+
     def test_interact_spawn_eof(self):
         " Ensure subprocess receives EOF and exit. "
         p = pexpect.spawn(self.interact_py, timeout=5, env=self.env)

@@ -684,11 +684,10 @@ class spawn(SpawnBase):
         the stdout and stderr output of the child process is printed. This
         simply echos the child stdout and child stderr to the real stdout and
         it echos the real stdin to the child stdin. When the user types the
-        escape_character this method will stop. The default for
-        escape_character is ^]. This should not be confused with ASCII 27 --
-        the ESC character. ASCII 29 was chosen for historical merit because
-        this is the character used by 'telnet' as the escape character. The
-        escape_character will not be sent to the child process.
+        escape_character this method will return None. The escape_character
+        will not be transmitted.  The default for escape_character is
+        entered as ``Ctrl - ]``, the very same as BSD telnet. To prevent
+        escaping, escape_character may be set to None.
 
         You may pass in optional input and output filter functions. These
         functions should take a string and return a string. The output_filter
@@ -720,7 +719,7 @@ class spawn(SpawnBase):
         self.buffer = self.string_type()
         mode = tty.tcgetattr(self.STDIN_FILENO)
         tty.setraw(self.STDIN_FILENO)
-        if PY3:
+        if escape_character is not None and PY3:
             escape_character = escape_character.encode('latin-1')
         try:
             self.__interact_copy(escape_character, input_filter, output_filter)
@@ -770,7 +769,9 @@ class spawn(SpawnBase):
                 data = self.__interact_read(self.STDIN_FILENO)
                 if input_filter:
                     data = input_filter(data)
-                i = data.rfind(escape_character)
+                i = -1
+                if escape_character is not None:
+                    i = data.rfind(escape_character)
                 if i != -1:
                     data = data[:i]
                     self.__interact_writen(self.child_fd, data)

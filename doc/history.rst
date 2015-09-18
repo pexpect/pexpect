@@ -22,6 +22,9 @@ Version 4.0
 * Removed the independent top-level modules (``pxssh fdpexpect FSM screen ANSI``)
   which were installed alongside Pexpect. These were moved into the Pexpect
   package in 3.0, but the old names were left as aliases.
+* New :class:`pexpect.spawn` keyword argument, ``dimensions=(rows, columns)``
+  allows setting terminal screen dimensions before launching a program
+  (:ghissue:`122`).
 
 Version 3.4
 ```````````

@@ -25,39 +25,29 @@ import time
 
 class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
 
-    def test_winsize (self):
-        '''
-        This tests that the child process can set and get the windows size.
-        This makes use of an external script sigwinch_report.py.
-        '''
-        p1 = pexpect.spawn('%s sigwinch_report.py' % self.PYTHONBIN)
-        p1.expect('READY', timeout=10)
+    def test_initial_winsize(self):
+        p = pexpect.spawn('{self.PYTHONBIN} sigwinch_report.py'
+                          .format(self=self), timeout=3)
+        # default size by PtyProcess class is 24 rows by 80 columns.
+        p.expect_exact('Initial Size: (24, 80)')
+        p.close()
 
-        p1.setwinsize (11,22)
-        index = p1.expect ([pexpect.TIMEOUT, b'SIGWINCH: \(([0-9]*), ([0-9]*)\)'],
-                                       timeout=30)
-        if index == 0:
-            self.fail("TIMEOUT -- this platform may not support sigwinch properly.\n" + str(p1))
-        self.assertEqual(p1.match.group(1, 2), (b"11" ,b"22"))
-        self.assertEqual(p1.getwinsize(), (11, 22))
+    def test_initial_winsize_by_dimension(self):
+        p = pexpect.spawn('{self.PYTHONBIN} sigwinch_report.py'
+                          .format(self=self), timeout=3,
+                          dimensions=(40, 100))
+        p.expect_exact('Initial Size: (40, 100)')
+        p.close()
 
-        time.sleep(1)
-        p1.setwinsize (24,80)
-        index = p1.expect ([pexpect.TIMEOUT, b'SIGWINCH: \(([0-9]*), ([0-9]*)\)'],
-                                       timeout=10)
-        if index == 0:
-            self.fail ("TIMEOUT -- this platform may not support sigwinch properly.\n" + str(p1))
-        self.assertEqual(p1.match.group(1, 2), (b"24" ,b"80"))
-        self.assertEqual(p1.getwinsize(), (24, 80))
-
-        p1.close()
-
-#    def test_parent_resize (self):
-#        pid = os.getpid()
-#        p1 = pexpect.spawn('%s sigwinch_report.py' % self.PYTHONBIN)
-#        time.sleep(10)
-#        p1.setwinsize (11,22)
-#        os.kill (pid, signal.SIGWINCH)
+    def test_setwinsize(self):
+        p = pexpect.spawn('{self.PYTHONBIN} sigwinch_report.py'
+                          .format(self=self), timeout=3)
+        # Note that we must await the installation of the child process'
+        # signal handler,
+        p.expect_exact('READY')
+        p.setwinsize(19, 84)
+        p.expect_exact('SIGWINCH: (19, 84)')
+        p.close()
 
 if __name__ == '__main__':
     unittest.main()

@@ -26,6 +26,7 @@ import time
 class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
 
     def test_initial_winsize(self):
+        """ Assert initial window dimension size (24, 80). """
         p = pexpect.spawn('{self.PYTHONBIN} sigwinch_report.py'
                           .format(self=self), timeout=3)
         # default size by PtyProcess class is 24 rows by 80 columns.
@@ -33,6 +34,7 @@ class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
         p.close()
 
     def test_initial_winsize_by_dimension(self):
+        """ Assert user-parameter window dimension size is initial. """
         p = pexpect.spawn('{self.PYTHONBIN} sigwinch_report.py'
                           .format(self=self), timeout=3,
                           dimensions=(40, 100))
@@ -40,6 +42,7 @@ class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
         p.close()
 
     def test_setwinsize(self):
+        """ Ensure method .setwinsize() sends signal caught by child. """
         p = pexpect.spawn('{self.PYTHONBIN} sigwinch_report.py'
                           .format(self=self), timeout=3)
         # Note that we must await the installation of the child process'

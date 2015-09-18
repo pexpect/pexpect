@@ -686,7 +686,7 @@ class spawn(SpawnBase):
         it echos the real stdin to the child stdin. When the user types the
         escape_character this method will return None. The escape_character
         will not be transmitted.  The default for escape_character is
-        entered as ``Ctrl - ]``, the very same for bsd telnet. To prevent
+        entered as ``Ctrl - ]``, the very same as BSD telnet. To prevent
         escaping, escape_character may be set to None.
 
         You may pass in optional input and output filter functions. These

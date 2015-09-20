@@ -234,7 +234,7 @@ If you wish to read up to the end of the child's output without generating an
 The :meth:`~pexpect.spawn.expect` and :meth:`~pexpect.spawn.read` methods will
 also timeout if the child does not generate any output for a given amount of
 time. If this happens they will raise a :class:`~pexpect.TIMEOUT` exception.
-You can have these method ignore a timeout and block indefinitely by passing 
+You can have these methods ignore a timeout and block indefinitely by passing
 ``None`` for the timeout parameter::
 
     child.expect(pexpect.EOF, timeout=None)

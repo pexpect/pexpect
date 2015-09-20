@@ -87,6 +87,12 @@ class spawn(SpawnBase):
         amount of data where you want to match. The searchwindowsize does not
         affect the size of the incoming data buffer. You will still have
         access to the full buffer after expect() returns.
+        When the keyword argument ``timeout`` is specified as a number,
+        (default: *30*), then :class:`TIMEOUT` will raise after the value
+        specified has elapsed, in seconds, for any of the :meth:`~.expect`
+        family of method calls.  When None, TIMEOUT will not be raised, and
+        :meth:`~.expect` may block indefinitely until match.
+
 
         The logfile member turns on or off logging. All input and output will
         be copied to the given file object. Set logfile to None to stop

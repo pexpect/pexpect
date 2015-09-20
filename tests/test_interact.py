@@ -26,7 +26,6 @@ import os
 import pexpect
 import unittest
 import sys
-import platform
 from . import PexpectTestCase
 
 
@@ -66,9 +65,7 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         p.sendcontrol(']')
         p.sendline('')
         p.expect('<out>\x1d')
-        p.sendcontrol('d')
-        if platform.python_implementation() != 'PyPy':
-            p.expect('<eof>')
+        p.sendcontrol('c')
         p.expect_exact('Escaped interact')
         p.expect(pexpect.EOF)
         assert not p.isalive()

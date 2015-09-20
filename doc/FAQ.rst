@@ -134,3 +134,11 @@ I am working on an ANSI / VT100 terminal emulator that will have methods
 to get characters from an arbitrary X,Y coordinate of the virtual screen.
 It works and you can play with it (see :mod:`pexpect.ANSI`), but I have
 no working examples at this time. 
+
+**Q: I get strange behavior with pexect and gevent**
+
+A: Pexpect uses fork(2), exec(2), select(2), waitpid(2), and implements its
+own selector in expect family of calls. pexpect has been known to misbehave
+when paired with gevent.  A solution might be to isolate your pexpect
+dependent code from any frameworks that manipulate event selection behavior
+by running it in an another process entirely.

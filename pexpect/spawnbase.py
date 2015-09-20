@@ -251,6 +251,9 @@ class SpawnBase(object):
 
         If timeout is -1 then timeout will be set to the self.timeout value.
 
+        When the keyword argument searchwindowsize is -1 (default), then the
+        value specified by the class maxread attribute is used.
+
         A list entry may be EOF or TIMEOUT instead of a string. This will
         catch these exceptions and return the index of the list entry instead
         of raising the exception. The attribute 'after' will be set to the

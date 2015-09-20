@@ -249,7 +249,10 @@ class SpawnBase(object):
         occurred then 'before' will be set to all the data read so far and
         'after' and 'match' will be None.
 
-        If timeout is -1 then timeout will be set to the self.timeout value.
+        When the keyword argument timeout is -1 (default), then TIMEOUT will
+        raise after the default value specified by the class timeout
+        attribute. When None, TIMEOUT will not be raised and may block
+        indefinitely until match.
 
         A list entry may be EOF or TIMEOUT instead of a string. This will
         catch these exceptions and return the index of the list entry instead

@@ -41,15 +41,12 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         else:
             env['PYTHONPATH'] = self.project_dir
 
-        self.interact_py = ' '.join((sys.executable,
-                                     'interact.py',))
-        self.interact_ucs_py = ' '.join((sys.executable,
-                                         'interact_unicode.py',))
+        self.interact_py = ('{sys.executable} interact.py'.format(sys=sys))
 
     def test_interact_escape(self):
         " Ensure `escape_character' value exits interactive mode. "
         p = pexpect.spawn(self.interact_py, timeout=5, env=self.env)
-        p.expect('<in >')
+        p.expect('READY')
         p.sendcontrol(']')  # chr(29), the default `escape_character'
                             # value of pexpect.interact().
         p.expect_exact('Escaped interact')
@@ -57,39 +54,43 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         assert not p.isalive()
         assert p.exitstatus == 0
 
-    def test_interact_spawn_eof(self):
-        " Ensure subprocess receives EOF and exit. "
-        p = pexpect.spawn(self.interact_py, timeout=5, env=self.env)
-        p.expect('<in >')
-        p.sendline(b'alpha')
-        p.sendline(b'beta')
-        p.expect(b'<out>alpha')
-        p.expect(b'<out>beta')
-        p.sendeof()
-        # strangely, on travis-ci, sendeof() terminates the subprocess,
-        # it doesn't receive ^D, just immediately throws EOF.
-        idx = p.expect_exact(['<eof>', pexpect.EOF])
-        if idx == 0:
+    def test_interact_escape_None(self):
+        " Return only after Termination when `escape_character=None'. "
+        p = pexpect.spawn('{self.interact_py} --no-escape'.format(self=self),
+                          timeout=5, env=self.env)
+        p.expect('READY')
+        p.sendcontrol(']')
+        p.expect('29<STOP>')
+        p.send('\x00')
+        if not os.environ.get('TRAVIS', None):
+            # on Travis-CI, we sometimes miss trailing stdout from the
+            # chain of child processes, not entirely sure why. So this
+            # is skipped on such systems.
+            p.expect('0<STOP>')
             p.expect_exact('Escaped interact')
-            p.expect(pexpect.EOF)
+        p.expect(pexpect.EOF)
         assert not p.isalive()
         assert p.exitstatus == 0
 
-    def test_interact_spawnu_eof(self):
-        " Ensure subprocess receives unicode, EOF, and exit. "
-        p = pexpect.spawnu(self.interact_ucs_py, timeout=5, env=self.env)
-        p.expect('<in >')
-        p.sendline('ɑlpha')
-        p.sendline('Βeta')
-        p.expect('<out>ɑlpha')
-        p.expect('<out>Βeta')
-        p.sendeof()
-        # strangely, on travis-ci, sendeof() terminates the subprocess,
-        # it doesn't receive ^D, just immediately throws EOF.
-        idx = p.expect_exact(['<eof>', pexpect.EOF])
-        if idx == 0:
+    def test_interact_exit_unicode(self):
+        " Ensure subprocess receives utf8. "
+        p = pexpect.spawnu('{self.interact_py} --utf8'.format(self=self),
+                           timeout=5, env=self.env)
+        p.expect('READY')
+        p.send('ɑ')              # >>> map(ord, u'ɑ'.encode('utf8'))
+        p.expect('201<STOP>')    # [201, 145]
+        p.expect('145<STOP>')
+        p.send('Β')              # >>> map(ord, u'Β'.encode('utf8'))
+        p.expect('206<STOP>')    # [206, 146]
+        p.expect('146<STOP>')
+        p.send('\x00')
+        if not os.environ.get('TRAVIS', None):
+            # on Travis-CI, we sometimes miss trailing stdout from the
+            # chain of child processes, not entirely sure why. So this
+            # is skipped on such systems.
+            p.expect('0<STOP>')
             p.expect_exact('Escaped interact')
-            p.expect(pexpect.EOF)
+        p.expect(pexpect.EOF)
         assert not p.isalive()
         assert p.exitstatus == 0
 

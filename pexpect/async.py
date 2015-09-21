@@ -37,7 +37,7 @@ class PatternWaiter(asyncio.Protocol):
     
     def data_received(self, data):
         spawn = self.expecter.spawn
-        s = spawn._coerce_read_string(data)
+        s = spawn._decoder.decode(data)
         spawn._log(s, 'read')
 
         if self.fut.done():

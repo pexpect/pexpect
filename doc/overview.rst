@@ -60,7 +60,7 @@ Special EOF and TIMEOUT patterns
 --------------------------------
 
 There are two special patterns to match the End Of File (:class:`~pexpect.EOF`)
-or a Timeout condition (:class:`~pexpect.TIMEOUT`). You you can pass these
+or a Timeout condition (:class:`~pexpect.TIMEOUT`). You can pass these
 patterns to :meth:`~pexpect.spawn.expect`. These patterns are not regular
 expressions. Use them like predefined constants.
 

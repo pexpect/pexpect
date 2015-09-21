@@ -31,9 +31,21 @@ import sys
 
 
 def main():
-    p = pexpect.spawn(sys.executable + ' echo_w_prompt.py',
+    p = pexpect.spawn('{sys.executable} getch.py'.format(sys=sys),
                       env=no_coverage_env())
-    p.interact()
+
+    # defaults matches api
+    escape_character = chr(29)
+    encoding = None
+
+    if len(sys.argv) > 1 and '--no-escape' in sys.argv:
+        escape_character = None
+
+    if len(sys.argv) > 1 and '--utf8' in sys.argv:
+        encoding = 'utf8'
+
+    p.interact(escape_character=escape_character)
+
     print("Escaped interact")
 
 if __name__ == '__main__':

@@ -18,6 +18,7 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
+from __future__ import print_function
 import sys, tty, termios
 
 if hasattr(sys.stdin, 'buffer'):
@@ -27,13 +28,13 @@ else:
     stdin = sys.stdin
 
 def main():
-    print('READY')
+    print('READY', end='\r\n')
     while True:
         try:
             val = ord(stdin.read(1))
         except KeyboardInterrupt:
             val = 3
-        sys.stdout.write('%d<STOP>\r\n' % (val,))
+        print('%d<STOP>' % (val,), end='\r\n')
         if val == 0:
             # StopIteration equivalent is ctrl+' ' (\x00, NUL)
             break
@@ -46,3 +47,4 @@ if __name__ == '__main__':
         main()
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    sys.stdout.flush()

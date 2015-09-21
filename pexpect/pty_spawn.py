@@ -388,8 +388,8 @@ class spawn(SpawnBase):
         '''This reads at most size characters from the child application. It
         includes a timeout. If the read does not complete within the timeout
         period then a TIMEOUT exception is raised. If the end of file is read
-        then an EOF exception will be raised. If a log file was set using
-        setlog() then all data will also be written to the log file.
+        then an EOF exception will be raised.  If a logfile is specified, a
+        copy is written to that log.
 
         If timeout is None then the read may block indefinitely.
         If timeout is -1 then the self.timeout value is used. If timeout is 0
@@ -689,6 +689,9 @@ class spawn(SpawnBase):
         entered as ``Ctrl - ]``, the very same as BSD telnet. To prevent
         escaping, escape_character may be set to None.
 
+        If a logfile is specified, then the data sent and received from the
+        child process in interact mode is duplicated to the given log.
+
         You may pass in optional input and output filter functions. These
         functions should take a string and return a string. The output_filter
         will be passed all the output from the child process. The input_filter
@@ -761,9 +764,7 @@ class spawn(SpawnBase):
                     break
                 if output_filter:
                     data = output_filter(data)
-                if self.logfile is not None:
-                    self.logfile.write(data)
-                    self.logfile.flush()
+                self._log(data, 'read')
                 os.write(self.STDOUT_FILENO, data)
             if self.STDIN_FILENO in r:
                 data = self.__interact_read(self.STDIN_FILENO)
@@ -774,8 +775,11 @@ class spawn(SpawnBase):
                     i = data.rfind(escape_character)
                 if i != -1:
                     data = data[:i]
+                    if data:
+                        self._log(data, 'send')
                     self.__interact_writen(self.child_fd, data)
                     break
+                self._log(data, 'send')
                 self.__interact_writen(self.child_fd, data)
 
     def __select(self, iwtd, owtd, ewtd, timeout=None):

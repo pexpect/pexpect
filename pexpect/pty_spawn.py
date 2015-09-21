@@ -295,7 +295,7 @@ class spawn(SpawnBase):
         and SIGINT). '''
 
         self.flush()
-        self.ptyproc.close()
+        self.ptyproc.close(force=force)
         self.isalive()  # Update exit status from ptyproc
         self.child_fd = -1
 

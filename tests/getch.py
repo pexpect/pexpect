@@ -47,3 +47,4 @@ if __name__ == '__main__':
         main()
     finally:
         termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+    sys.stdout.flush()

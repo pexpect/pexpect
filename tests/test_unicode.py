@@ -177,7 +177,8 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         """ Ensure a program can be executed with unicode arguments. """
         p = pexpect.spawn(u'{self.PYTHONBIN} sleep_for.py ǝpoɔıun'
                           .format(self=self), timeout=5, encoding='utf8')
-        p.expect(u'could not convert string to float:.*ǝpoɔıun')
+        p.expect(u'(could not convert string to float:.*ǝpoɔıun'  # py2.7/3.4
+                 u'|invalid literal for float():.*ǝpoɔıun)')      # pypy !?
         p.expect(pexpect.EOF)
         assert not p.isalive()
         assert p.exitstatus != 0  # child process could not convert to float

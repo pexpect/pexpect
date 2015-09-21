@@ -173,6 +173,15 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         # exercise,
         assert child.readline() == 'input' + child.crlf
 
+    def test_unicode_argv(self):
+        """ Ensure a program can be executed with unicode arguments. """
+        p = pexpect.spawn(u'{self.PYTHONBIN} sleep_for.py ǝpoɔıun'
+                          .format(self=self), timeout=5, encoding='utf8')
+        p.expect_exact(u'could not convert string to float: ǝpoɔıun')
+        p.expect(pexpect.EOF)
+        assert not p.isalive()
+        assert p.exitstatus != 0  # child process could not convert to float
+
 if __name__ == '__main__':
     unittest.main()
 

@@ -17,11 +17,6 @@ Version 4.0
 * It is now possible to call :meth:`~.wait` multiple times, or after a process
   is already determined to be terminated without raising an exception
   (:ghpull:`211`).
-* Deprecated ``pexpect.screen`` and ``pexpect.ANSI``. Please use other packages
-  such as `pyte <https://pypi.python.org/pypi/pyte>`__ to emulate a terminal.
-* Removed the independent top-level modules (``pxssh fdpexpect FSM screen ANSI``)
-  which were installed alongside Pexpect. These were moved into the Pexpect
-  package in 3.0, but the old names were left as aliases.
 * New :class:`pexpect.spawn` keyword argument, ``dimensions=(rows, columns)``
   allows setting terminal screen dimensions before launching a program
   (:ghissue:`122`).
@@ -30,6 +25,18 @@ Version 4.0
   /usr/bin/sudo (:ghissue:`104`).
 * Fixed regression when executing pexpect with some prior releases of
   the multiprocessing module where stdin has been closed (:ghissue:`86`).
+
+Backwards incompatible changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Deprecated ``pexpect.screen`` and ``pexpect.ANSI``. Please use other packages
+  such as `pyte <https://pypi.python.org/pypi/pyte>`__ to emulate a terminal.
+* Removed the independent top-level modules (``pxssh fdpexpect FSM screen ANSI``)
+  which were installed alongside Pexpect. These were moved into the Pexpect
+  package in 3.0, but the old names were left as aliases.
+* Child processes created by Pexpect no longer ignore SIGHUP by default: the
+  ``ignore_sighup`` parameter of :class:`pexpect.spawn` defaults to False. To
+  get the old behaviour, pass ``ignore_sighup=True``.
 
 Version 3.3
 ```````````

@@ -36,7 +36,7 @@ class spawn(SpawnBase):
 
     def __init__(self, command, args=[], timeout=30, maxread=2000,
                  searchwindowsize=None, logfile=None, cwd=None, env=None,
-                 ignore_sighup=True, echo=True, preexec_fn=None,
+                 ignore_sighup=False, echo=True, preexec_fn=None,
                  encoding=None, codec_errors='strict', dimensions=None):
         '''This is the constructor. The command parameter may be a string that
         includes a command and any arguments to the command. For example::
@@ -129,9 +129,8 @@ class spawn(SpawnBase):
             child.logfile_send = fout
 
         If ``ignore_sighup`` is True, the child process will ignore SIGHUP
-        signals. For now, the default is True, to preserve the behaviour of
-        earlier versions of Pexpect, but you should pass this explicitly if you
-        want to rely on it.
+        signals. The default is False from Pexpect 4.0, meaning that SIGHUP
+        will be handled normally by the child.
 
         The delaybeforesend helps overcome a weird behavior that many users
         were experiencing. The typical problem was that a user would expect() a

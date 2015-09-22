@@ -3,13 +3,13 @@ FAQ
 
 **Q: Where can I get help with pexpect?  Is there a mailing list?**
 
-A: As of 2015, the best ways to get general python support is the website
-forum stackoverflow_, the python-list_ mailing list, and the `#python`_
-internet relay chat channels.  Please refrain from using github for general
+A: You can use the `pexpect tag on Stackoverflow <http://stackoverflow.com/questions/tagged/pexpect>`__
+to ask questions specifically related to Pexpect. For more general Python
+support, there's the python-list_ mailing list, and the `#python`_
+IRC channel.  Please refrain from using github for general
 python or systems scripting support.
 
 .. _python-list: https://mail.python.org/mailman/listinfo/python-list
-.. _stackoverflow: https://stackoverflow.com/
 .. _#python: https://www.python.org/community/irc/
 
 **Q: Why don't shell pipe and redirect (| and >) work when I spawn a command?**

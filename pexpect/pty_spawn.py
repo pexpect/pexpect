@@ -37,7 +37,7 @@ class spawn(SpawnBase):
     def __init__(self, command, args=[], timeout=30, maxread=2000,
                  searchwindowsize=None, logfile=None, cwd=None, env=None,
                  ignore_sighup=False, echo=True, preexec_fn=None,
-                 encoding=None, codec_errors='strict'):
+                 encoding=None, codec_errors='strict', dimensions=None):
         '''This is the constructor. The command parameter may be a string that
         includes a command and any arguments to the command. For example::
 
@@ -84,6 +84,13 @@ class spawn(SpawnBase):
         and may be reduced to collaterally reduce search cost.  After
         :meth:`~.expect` returns, the full buffer attribute remains up to
         size *maxread* irrespective of *searchwindowsize* value.
+
+        When the keyword argument ``timeout`` is specified as a number,
+        (default: *30*), then :class:`TIMEOUT` will be raised after the value
+        specified has elapsed, in seconds, for any of the :meth:`~.expect`
+        family of method calls.  When None, TIMEOUT will not be raised, and
+        :meth:`~.expect` may block indefinitely until match.
+
 
         The logfile member turns on or off logging. All input and output will
         be copied to the given file object. Set logfile to None to stop
@@ -166,6 +173,10 @@ class spawn(SpawnBase):
         If preexec_fn is given, it will be called in the child process before
         launching the given command. This is useful to e.g. reset inherited
         signal handlers.
+
+        The dimensions attribute specifies the size of the pseudo-terminal as
+        seen by the subprocess, and is specified as a two-entry tuple (rows,
+        columns). If this is unspecified, the defaults in ptyprocess will apply.
         '''
         super(spawn, self).__init__(timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize,
                                     logfile=logfile, encoding=encoding, codec_errors=codec_errors)
@@ -182,7 +193,7 @@ class spawn(SpawnBase):
             self.args = None
             self.name = '<pexpect factory incomplete>'
         else:
-            self._spawn(command, args, preexec_fn)
+            self._spawn(command, args, preexec_fn, dimensions)
 
     def __str__(self):
         '''This returns a human-readable string that represents the state of
@@ -218,7 +229,7 @@ class spawn(SpawnBase):
         s.append('delayafterterminate: ' + str(self.delayafterterminate))
         return '\n'.join(s)
 
-    def _spawn(self, command, args=[], preexec_fn=None):
+    def _spawn(self, command, args=[], preexec_fn=None, dimensions=None):
         '''This starts the given command in a child process. This does all the
         fork/exec type of stuff for a pty. This is called by __init__. If args
         is empty then command will be parsed (split on spaces) and args will be
@@ -272,6 +283,9 @@ class spawn(SpawnBase):
                 if preexec_fn is not None:
                     preexec_fn()
             kwargs['preexec_fn'] = preexec_wrapper
+
+        if dimensions is not None:
+            kwargs['dimensions'] = dimensions
 
         self.ptyproc = ptyprocess.PtyProcess.spawn(self.args, env=self.env,
                                                    cwd=self.cwd, **kwargs)

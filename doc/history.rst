@@ -17,6 +17,9 @@ Version 4.0
 * It is now possible to call :meth:`~.wait` multiple times, or after a process
   is already determined to be terminated without raising an exception
   (:ghpull:`211`).
+* New :class:`pexpect.spawn` keyword argument, ``dimensions=(rows, columns)``
+  allows setting terminal screen dimensions before launching a program
+  (:ghissue:`122`).
 * Fix regression that prevented executable, but unreadable files from
   being found when not specified by absolute path -- such as
   /usr/bin/sudo (:ghissue:`104`).

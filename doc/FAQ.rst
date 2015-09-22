@@ -127,7 +127,7 @@ another application.
 
 A: That depends. If your application just does line-oriented output then
 this is easy. If a program emits many terminal sequences, from video
-attributes to screen addressing such as those typically using curses(3x), then
+attributes to screen addressing, such as programs using curses, then
 it may become very difficult to ascertain what text is displayed on a screen.
 
 We suggest using the `pyte <https://github.com/selectel/pyte>`_ library to

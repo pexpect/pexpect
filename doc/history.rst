@@ -22,9 +22,6 @@ Version 4.0
 * Removed the independent top-level modules (``pxssh fdpexpect FSM screen ANSI``)
   which were installed alongside Pexpect. These were moved into the Pexpect
   package in 3.0, but the old names were left as aliases.
-
-Version 3.4
-```````````
 * Fix regression that prevented executable, but unreadable files from
   being found when not specified by absolute path -- such as
   /usr/bin/sudo (:ghissue:`104`).

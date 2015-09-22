@@ -49,20 +49,6 @@ off::
     child = pexpect.spawn ("ssh user@example.com")
     child.delaybeforesend = 0
 
-Timing issue with isalive()
----------------------------
-
-Reading the state of :meth:`~pexpect.spawn.isalive` immediately after a child
-exits may sometimes return 1. This is a race condition. The child has closed its
-file descriptor, but has not yet fully exited before Pexpect's
-:meth:`~pexpect.spawn.isalive` executes. Addings a slight delay before the
-:meth:`~pexpect.spawn.isalive` call will help. For example::
-
-    child = pexpect.spawn('ls')
-    child.expect(pexpect.EOF)
-    time.sleep(0.1)
-    print child.isalive()
-
 Truncated output just before child exits
 ----------------------------------------
 

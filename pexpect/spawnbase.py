@@ -242,12 +242,14 @@ class SpawnBase(object):
             # returns 0('foobar') if all input is available at once,
             # but returs 1('foo') if parts of the final 'bar' arrive late
 
-        After a match is found the instance attributes 'before', 'after' and
-        'match' will be set. You can see all the data read before the match in
-        'before'. You can see the data that was matched in 'after'. The
-        re.MatchObject used in the re match will be in 'match'. If an error
-        occurred then 'before' will be set to all the data read so far and
-        'after' and 'match' will be None.
+        When a match is found for the given pattern, the class instance
+        attribute *match* becomes an re.MatchObject result.  Should an EOF
+        or TIMEOUT pattern match, then the match attribute will be an instance
+        of that exception class.  The pairing before and after class
+        instance attributes are views of the data preceding and following
+        the matching pattern.  On general exception, class attribute
+        *before* is all data received up to the exception, while *match* and
+        *after* attributes are value None.
 
         If timeout is -1 then timeout will be set to the self.timeout value.
 

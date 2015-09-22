@@ -21,15 +21,6 @@ previous example::
     child = pexpect.spawn('/bin/bash', ['-c', shell_cmd])
     child.expect(pexpect.EOF)
 
-**Q: Isn't there already a Python Expect?**
-
-A: Yes, there are several of them. They usually require you to compile C.
-I wanted something that was pure Python and preferably a single module
-that was simple to install. I also wanted something that was easy to use.
-This pure Python expect only became possible with the introduction of
-the pty module in the standard Python library. Previously, C extensions
-were required.
-
 **Q: The `before` and `after` properties sound weird.**
 
 A: This is how the -B and -A options in grep works, so that made it

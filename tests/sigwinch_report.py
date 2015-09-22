@@ -39,6 +39,7 @@ def handler(signum, frame):
     print('SIGWINCH:', getwinsize ())
     sys.stdout.flush()
 
+print("Initial Size:", getwinsize())
 print("setting handler for SIGWINCH")
 signal.signal(signal.SIGWINCH, handler)
 print("READY")

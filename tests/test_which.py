@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import subprocess
 import tempfile
 import shutil
@@ -21,9 +22,13 @@ class TestCaseWhich(PexpectTestCase.PexpectTestCase):
 
     def test_os_defpath_which(self):
         " which() finds an executable in $PATH and returns its abspath. "
-        fname = 'cc'
+
         bin_dir = tempfile.mkdtemp()
-        bin_path = os.path.join(bin_dir, fname)
+        temp_obj = tempfile.NamedTemporaryFile(
+            suffix=u'.sh', prefix=u'ǝpoɔıun-',
+            dir=bin_dir, delete=False)
+        bin_path = temp_obj.name
+        fname = os.path.basename(temp_obj.name)
         save_path = os.environ['PATH']
         save_defpath = os.defpath
 

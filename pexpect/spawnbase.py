@@ -251,7 +251,10 @@ class SpawnBase(object):
         *before* is all data received up to the exception, while *match* and
         *after* attributes are value None.
 
-        If timeout is -1 then timeout will be set to the self.timeout value.
+        When the keyword argument timeout is -1 (default), then TIMEOUT will
+        raise after the default value specified by the class timeout
+        attribute. When None, TIMEOUT will not be raised and may block
+        indefinitely until match.
 
         When the keyword argument searchwindowsize is -1 (default), then the
         value specified by the class maxread attribute is used.
@@ -319,9 +322,8 @@ class SpawnBase(object):
         expressions). This method is similar to the expect() method except that
         expect_list() does not recompile the pattern list on every call. This
         may help if you are trying to optimize for speed, otherwise just use
-        the expect() method.  This is called by expect(). If timeout==-1 then
-        the self.timeout value is used. If searchwindowsize==-1 then the
-        self.searchwindowsize value is used.
+        the expect() method.  This is called by expect().
+
 
         Like :meth:`expect`, passing ``async=True`` will make this return an
         asyncio coroutine.

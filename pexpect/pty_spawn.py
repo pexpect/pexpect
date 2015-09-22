@@ -85,6 +85,13 @@ class spawn(SpawnBase):
         :meth:`~.expect` returns, the full buffer attribute remains up to
         size *maxread* irrespective of *searchwindowsize* value.
 
+        When the keyword argument ``timeout`` is specified as a number,
+        (default: *30*), then :class:`TIMEOUT` will be raised after the value
+        specified has elapsed, in seconds, for any of the :meth:`~.expect`
+        family of method calls.  When None, TIMEOUT will not be raised, and
+        :meth:`~.expect` may block indefinitely until match.
+
+
         The logfile member turns on or off logging. All input and output will
         be copied to the given file object. Set logfile to None to stop
         logging. This is the default. Set logfile to sys.stdout to echo

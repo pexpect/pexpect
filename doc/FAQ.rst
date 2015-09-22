@@ -117,14 +117,13 @@ another application.
 **Q: Can I do screen scraping with this thing?**
 
 A: That depends. If your application just does line-oriented output then
-this is easy. If it does screen-oriented output then it may work, but it
-could be hard. For example, trying to scrape data from the 'top' command
-would be hard. The top command repaints the text window.
+this is easy. If a program emits many terminal sequences, from video
+attributes to screen addressing, such as programs using curses, then
+it may become very difficult to ascertain what text is displayed on a screen.
 
-I am working on an ANSI / VT100 terminal emulator that will have methods
-to get characters from an arbitrary X,Y coordinate of the virtual screen.
-It works and you can play with it (see :mod:`pexpect.ANSI`), but I have
-no working examples at this time. 
+We suggest using the `pyte <https://github.com/selectel/pyte>`_ library to
+screen-scrape.  The module :mod:`pexpect.ANSI` released with previous versions
+of pexpect is now marked deprecated and may be removed in the future.
 
 **Q: I get strange behavior with pexect and gevent**
 

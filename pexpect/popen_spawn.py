@@ -44,19 +44,26 @@ class PopenSpawn(SpawnBase):
 
         self.proc = subprocess.Popen(cmd, **kwargs)
         self.closed = False
-        self._buf = ''
+        self._buf = self.string_type()
 
         self._read_queue = Queue()
         self._read_thread = threading.Thread(target=self._read_incoming)
         self._read_thread.setDaemon(True)
         self._read_thread.start()
 
+    _read_reached_eof = False
+
     def read_nonblocking(self, size, timeout):
-        if self.closed:
-            raise ValueError('I/O operation on closed file.')
-        elif self.flag_eof:
-            self.closed = True
-            raise EOF('End Of File (EOF).')
+        buf = self._buf
+        if self._read_reached_eof:
+            # We have already finished reading. Use up any buffered data,
+            # then raise EOF
+            if buf:
+                self._buf = buf[size:]
+                return buf[:size]
+            else:
+                self.flag_eof = True
+                raise EOF('End Of File (EOF).')
 
         if timeout == -1:
             timeout = self.timeout
@@ -64,7 +71,6 @@ class PopenSpawn(SpawnBase):
             timeout = 1e6
 
         t0 = time.time()
-        buf = self.string_type()
         while (time.time() - t0) < timeout and size and len(buf) < size:
             try:
                 incoming = self._read_queue.get_nowait()
@@ -72,17 +78,15 @@ class PopenSpawn(SpawnBase):
                 break
             else:
                 if incoming is None:
-                    self.flag_eof = True
-                    raise EOF('End of File')
+                    self._read_reached_eof = True
+                    break
 
                 buf += self._decoder.decode(incoming, final=False)
 
-        if len(buf) > size:
-            self.buffer = buf[size:]
-            buf = buf[:size]
+        r, self._buf = buf[:size], buf[size:]
 
-        self._log(buf, 'read')
-        return buf
+        self._log(r, 'read')
+        return r
 
     def _read_incoming(self):
         """Run in a thread to move output from a pipe to a queue."""
@@ -95,6 +99,7 @@ class PopenSpawn(SpawnBase):
                 self._log(e, 'read')
 
             if not buf:
+                # This indicates we have reached EOF
                 self._read_queue.put(None)
                 return
 

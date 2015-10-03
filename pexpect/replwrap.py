@@ -3,7 +3,6 @@
 import os.path
 import signal
 import sys
-import re
 
 import pexpect
 

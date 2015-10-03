@@ -238,3 +238,20 @@ You can have these methods ignore timeout and block indefinitely by passing
 ``None`` for the timeout parameter::
 
     child.expect(pexpect.EOF, timeout=None)
+
+.. _windows:
+
+Pexpect on Windows
+------------------
+
+.. versionadded:: 4.0
+   Windows support
+
+Pexpect can be used on Windows to wait for a pattern to be produced by a child
+process, using :class:`pexpect.popen_spawn.PopenSpawn`, or a file descriptor,
+using :class:`pexpect.fdpexpect.fdspawn`. This should be considered experimental
+for now.
+
+:class:`pexpect.spawn` and :func:`pexpect.run` are *not* available on Windows,
+as they rely on Unix pseudoterminals (ptys). Cross platform code must not use
+these.

@@ -1,4 +1,4 @@
-"""Spawn interface using subprocess.Popen
+"""Provides an interface like pexpect.spawn interface using subprocess.Popen
 """
 import os
 import threading
@@ -121,6 +121,10 @@ class PopenSpawn(SpawnBase):
             self.send(s)
 
     def send(self, s):
+        '''Send data to the subprocess' stdin.
+        
+        Returns the number of bytes written.
+        '''
         s = self._coerce_send_string(s)
         self._log(s, 'send')
 
@@ -141,6 +145,10 @@ class PopenSpawn(SpawnBase):
         return n + self.send(self.linesep)
 
     def wait(self):
+        '''Wait for the subprocess to finish.
+        
+        Returns the exit code.
+        '''
         status = self.proc.wait()
         if status >= 0:
             self.exitstatus = status
@@ -152,6 +160,10 @@ class PopenSpawn(SpawnBase):
         return status
 
     def kill(self, sig):
+        '''Sends a Unix signal to the subprocess.
+        
+        Use constants from the :mod:`signal` module to specify which signal.
+        '''
         if sys.platform == 'win32':
             if sig in [signal.SIGINT, signal.CTRL_C_EVENT]:
                 sig = signal.CTRL_C_EVENT
@@ -163,4 +175,5 @@ class PopenSpawn(SpawnBase):
         os.kill(self.proc.pid, sig)
 
     def sendeof(self):
+        '''Closes the stdin pipe from the writing end.'''
         self.proc.stdin.close()

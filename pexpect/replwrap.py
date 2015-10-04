@@ -84,11 +84,11 @@ class REPLWrapper(object):
         if not cmdlines:
             raise ValueError("No command was given")
 
-        res = u''
+        res = []
         self.child.sendline(cmdlines[0])
         for line in cmdlines[1:]:
             self._expect_prompt(timeout=timeout)
-            res += self.child.before
+            res.append(self.child.before)
             self.child.sendline(line)
 
         # Command was fully submitted, now wait for the next prompt
@@ -98,7 +98,7 @@ class REPLWrapper(object):
             self._expect_prompt(timeout=1)
             raise ValueError("Continuation prompt found - input was incomplete:\n"
                              + command)
-        return res + self.child.before
+        return u''.join(res + [self.child.before])
 
 def python(command="python"):
     """Start a Python shell and return a :class:`REPLWrapper` object."""

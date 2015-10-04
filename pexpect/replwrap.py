@@ -3,20 +3,16 @@
 import os.path
 import signal
 import sys
-import re
 
 import pexpect
 
 PY3 = (sys.version_info[0] >= 3)
 
 if PY3:
-    def u(s): return s
     basestring = str
-else:
-    def u(s): return s.decode('utf-8')
 
-PEXPECT_PROMPT = u('[PEXPECT_PROMPT>')
-PEXPECT_CONTINUATION_PROMPT = u('[PEXPECT_PROMPT+')
+PEXPECT_PROMPT = u'[PEXPECT_PROMPT>'
+PEXPECT_CONTINUATION_PROMPT = u'[PEXPECT_PROMPT+'
 
 class REPLWrapper(object):
     """Wrapper for a REPL.
@@ -88,7 +84,7 @@ class REPLWrapper(object):
         if not cmdlines:
             raise ValueError("No command was given")
 
-        res = u('')
+        res = u''
         self.child.sendline(cmdlines[0])
         for line in cmdlines[1:]:
             self._expect_prompt(timeout=timeout)
@@ -106,11 +102,11 @@ class REPLWrapper(object):
 
 def python(command="python"):
     """Start a Python shell and return a :class:`REPLWrapper` object."""
-    return REPLWrapper(command, u(">>> "), u("import sys; sys.ps1={0!r}; sys.ps2={1!r}"))
+    return REPLWrapper(command, u">>> ", u"import sys; sys.ps1={0!r}; sys.ps2={1!r}")
 
 def bash(command="bash"):
     """Start a bash shell and return a :class:`REPLWrapper` object."""
     bashrc = os.path.join(os.path.dirname(__file__), 'bashrc.sh')
     child = pexpect.spawnu(command, ['--rcfile', bashrc], echo=False)
-    return REPLWrapper(child, u'\$', u("PS1='{0}' PS2='{1}' PROMPT_COMMAND=''"),
+    return REPLWrapper(child, u'\$', u"PS1='{0}' PS2='{1}' PROMPT_COMMAND=''",
                        extra_init_cmd="export PAGER=cat")

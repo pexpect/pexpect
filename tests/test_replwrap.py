@@ -42,6 +42,12 @@ class REPLWrapTestCase(unittest.TestCase):
     def test_long_running_continuation(self):
         " also ensure timeout when used within continuation prompts. "
         bash = replwrap.bash()
+        # The two extra '\\' in the following expression force a continuation
+        # prompt:
+        # $ echo begin\
+        #     + ;
+        # $ sleep 2
+        # $ echo done
         res = bash.run_command("echo begin\\\n;sleep 2\r\necho done")
         self.assertEqual(res.strip().splitlines(), ['begin', 'done'])
 

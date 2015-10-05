@@ -7,14 +7,15 @@ Releases
 Version 4.0
 ```````````
 
-* Integration with :mod:`asyncio`: passing ``async=True`` to :meth:`~.expect`,
-  :meth:`~.expect_exact` or :meth:`~.expect_list` will make them return a
+* Integration with :mod:`asyncio`: passing ``async=True`` to :meth:`~.spawn.expect`,
+  :meth:`~.spawn.expect_exact` or :meth:`~.spawn.expect_list` will make them return a
   coroutine. You can get the result using ``yield from``, or wrap it in an
   :class:`asyncio.Task`. This allows the event loop to do other things while
   waiting for output that matches a pattern.
+* Experimental support for Windows (with some caveats)—see :ref:`windows`.
 * Enhancement: allow method as callbacks of argument ``events`` for
   :func:`pexpect.run` (:ghissue:`176`).
-* It is now possible to call :meth:`~.wait` multiple times, or after a process
+* It is now possible to call :meth:`~.spawn.wait` multiple times, or after a process
   is already determined to be terminated without raising an exception
   (:ghpull:`211`).
 * New :class:`pexpect.spawn` keyword argument, ``dimensions=(rows, columns)``

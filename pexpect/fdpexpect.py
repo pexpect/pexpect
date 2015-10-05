@@ -85,10 +85,11 @@ class fdspawn(SpawnBase):
             return False
 
     def terminate (self, force=False):  # pragma: no cover
+        '''Deprecated and invalid. Just raises an exception.'''
         raise ExceptionPexpect('This method is not valid for file descriptors.')
     
     # These four methods are left around for backwards compatibility, but not
-    # documented as part of fdpexpect. You're encouraged to use os.write#
+    # documented as part of fdpexpect. You're encouraged to use os.write
     # directly.
     def send(self, s):
         "Write to fd, return number of bytes written"

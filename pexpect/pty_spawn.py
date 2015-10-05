@@ -2,10 +2,8 @@ import os
 import sys
 import time
 import select
-import re
 import pty
 import tty
-import termios
 import errno
 import signal
 from contextlib import contextmanager

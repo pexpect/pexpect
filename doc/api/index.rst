@@ -6,6 +6,7 @@ API documentation
 
    pexpect
    fdpexpect
+   popen_spawn
    replwrap
    pxssh
 

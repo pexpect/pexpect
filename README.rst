@@ -16,10 +16,12 @@ Pexpect can be used for automating interactive applications such as ssh, ftp,
 passwd, telnet, etc. It can be used to a automate setup scripts for duplicating
 software package installations on different servers. It can be used for
 automated software testing. Pexpect is in the spirit of Don Libes' Expect, but
-Pexpect is pure Python. Unlike other Expect-like modules for Python, Pexpect
-does not require TCL or Expect nor does it require C extensions to be compiled.
-It should work on any platform that supports the standard Python pty module.
-The Pexpect interface was designed to be easy to use.
+Pexpect is pure Python.
+
+The main features of Pexpect require the pty module in the Python standard
+library, which is only available on Unix-like systems. Some features—waiting
+for patterns from file descriptors or subprocesses—are also available on
+Windows.
 
 If you want to work with the development version of the source code then please
 read the DEVELOPERS.rst document in the root of the source code tree.

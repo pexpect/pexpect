@@ -27,6 +27,9 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
     implement this bit, and acts as if it is always set." Although these
     tests ensure it is enabled, this is a non-op for Linux.
 
+    More unsettling in regards to Linux, Fedora and Debian have different
+    behaviours.  For this reason, **these test has been disabled entirely**.
+
     FreeBSD supports neither, and instead uses a fraction (1/5) of the tty
     speed which is always 9600.  Therefor, the maximum limited input line
     length is 9600 / 5 = 1920.
@@ -63,7 +66,7 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         sys.platform.lower().startswith('freebsd'),
         reason='os.write to BLOCK indefinitely on FreeBSD in this case'
     )
-    def test_under_max_canon(self):
+    def disabled_under_max_canon(self):
         " BEL is not sent by terminal driver at maximum bytes - 1. "
         # given,
         child = pexpect.spawn('bash', echo=self.echo, timeout=5)
@@ -101,7 +104,7 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         sys.platform.lower().startswith('freebsd'),
         reason='os.write to BLOCK indefinitely on FreeBSD in this case'
     )
-    def test_beyond_max_icanon(self):
+    def disabled_beyond_max_icanon(self):
         " a single BEL is sent when maximum bytes is reached. "
         # given,
         child = pexpect.spawn('bash', echo=self.echo, timeout=5)
@@ -140,7 +143,7 @@ class TestCaseCanon(PexpectTestCase.PexpectTestCase):
         sys.platform.lower().startswith('freebsd'),
         reason='os.write to BLOCK indefinitely on FreeBSD in this case'
     )
-    def test_max_no_icanon(self):
+    def disabled_max_no_icanon(self):
         " may exceed maximum input bytes if canonical mode is disabled. "
         # given,
         child = pexpect.spawn('bash', echo=self.echo, timeout=5)

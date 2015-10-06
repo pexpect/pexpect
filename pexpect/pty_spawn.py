@@ -492,9 +492,9 @@ class spawn(SpawnBase):
 
         This value may be discovered using fpathconf(3)::
 
-        >>> from os import fpathconf
-        >>> print(fpathconf(0, 'PC_MAX_CANON'))
-        256
+            >>> from os import fpathconf
+            >>> print(fpathconf(0, 'PC_MAX_CANON'))
+            256
 
         On such a system, only 256 bytes may be received per line. Any
         subsequent bytes received will be discarded. BEL (``'\a'``) is then
@@ -505,10 +505,10 @@ class spawn(SpawnBase):
         Canonical input processing may be disabled altogether by executing
         a shell, then stty(1), before executing the final program::
 
-        >>> bash = pexpect.spawn('/bin/bash', echo=False)
-        >>> bash.sendline('stty -icanon')
-        >>> bash.sendline('base64')
-        >>> bash.sendline('x' * 5000)
+            >>> bash = pexpect.spawn('/bin/bash', echo=False)
+            >>> bash.sendline('stty -icanon')
+            >>> bash.sendline('base64')
+            >>> bash.sendline('x' * 5000)
         '''
 
         time.sleep(self.delaybeforesend)

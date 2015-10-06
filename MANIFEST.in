@@ -1,7 +1,6 @@
 recursive-include doc *
 prune doc/_build
 recursive-include examples *
-include README.rst LICENSE
-include setup.py pexpect/bashrc.sh
+include README.rst LICENSE pexpect/bashrc.sh
 recursive-include tests *
 global-exclude __pycache__ *.pyc *~

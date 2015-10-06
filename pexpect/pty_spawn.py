@@ -285,6 +285,11 @@ class spawn(SpawnBase):
         if dimensions is not None:
             kwargs['dimensions'] = dimensions
 
+        if self.encoding is not None:
+            # Encode command line using the specified encoding
+            self.args = [a if isinstance(a, bytes) else a.encode(self.encoding)
+                         for a in self.args]
+
         self.ptyproc = ptyprocess.PtyProcess.spawn(self.args, env=self.env,
                                                    cwd=self.cwd, **kwargs)
 

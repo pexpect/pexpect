@@ -175,8 +175,7 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
 
     def test_unicode_argv(self):
         """ Ensure a program can be executed with unicode arguments. """
-        p = pexpect.spawn(u'echo ǝpoɔıun'.format(self=self),
-                          timeout=5, encoding='utf8')
+        p = pexpect.spawn(u'echo ǝpoɔıun', timeout=5, encoding='utf8')
         p.expect(u'ǝpoɔıun')
         p.expect(pexpect.EOF)
         assert not p.isalive()

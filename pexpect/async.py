@@ -23,6 +23,7 @@ def expect_async(expecter, timeout=None):
         return expecter.timeout(e)
 
 class PatternWaiter(asyncio.Protocol):
+    transport = None
     def __init__(self, expecter):
         self.expecter = expecter
         self.fut = asyncio.Future()
@@ -30,10 +31,15 @@ class PatternWaiter(asyncio.Protocol):
     def found(self, result):
         if not self.fut.done():
             self.fut.set_result(result)
+            self.transport.pause_reading()
     
     def error(self, exc):
         if not self.fut.done():
             self.fut.set_exception(exc)
+            self.transport.pause_reading()
+
+    def connection_made(self, transport):
+        self.transport = transport
     
     def data_received(self, data):
         spawn = self.expecter.spawn

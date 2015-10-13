@@ -41,11 +41,11 @@ class PatternWaiter(asyncio.Protocol):
         spawn._log(s, 'read')
 
         if self.fut.done():
-            spawn.buffer += data
+            spawn.buffer += s
             return
 
         try:
-            index = self.expecter.new_data(data)
+            index = self.expecter.new_data(s)
             if index is not None:
                 # Found a match
                 self.found(index)

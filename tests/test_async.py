@@ -43,9 +43,15 @@ class AsyncTests(PexpectTestCase):
         coro = p.expect('Blah', async=True)
         with self.assertRaises(pexpect.EOF):
             run(coro)
-    
+
     def test_expect_exact(self):
         p = pexpect.spawn('%s list100.py' % sys.executable)
         assert run(p.expect_exact(b'5', async=True)) == 0
         assert run(p.expect_exact(['wpeok', b'11'], async=True)) == 1
         assert run(p.expect_exact([b'foo', pexpect.EOF], async=True)) == 1
+
+    def test_async_utf8(self):
+        p = pexpect.spawn('%s list100.py' % sys.executable, encoding='utf8')
+        assert run(p.expect_exact(u'5', async=True)) == 0
+        assert run(p.expect_exact([u'wpeok', u'11'], async=True)) == 1
+        assert run(p.expect_exact([u'foo', pexpect.EOF], async=True)) == 1

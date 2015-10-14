@@ -70,6 +70,10 @@ class SpawnBase(object):
         # Used by terminate() to give kernel time to update process status.
         # Time in seconds.
         self.delayafterterminate = 0.1
+        # After each call to read_nonblocking(), pexpect releases the GIL
+        # through a time.sleep(0.0001) call by default since version 2.1.
+        # When set as value 'None', the old 2.0 behavior is restored.
+        self.delayafterread = 0.0001
         self.softspace = False
         self.name = '<' + repr(self) + '>'
         self.closed = True

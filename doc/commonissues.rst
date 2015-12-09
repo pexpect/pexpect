@@ -47,7 +47,7 @@ not be an issue for most users. For some applications you might with to turn it
 off::
 
     child = pexpect.spawn ("ssh user@example.com")
-    child.delaybeforesend = 0
+    child.delaybeforesend = None
 
 Truncated output just before child exits
 ----------------------------------------

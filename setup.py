@@ -33,6 +33,7 @@ Windows.
 setup (name='pexpect',
     version=version,
     packages=['pexpect'],
+    package_data={'pexpect': ['bashrc.sh']},
     description='Pexpect allows easy control of interactive console applications.',
     long_description=long_description,
     author='Noah Spurrier; Thomas Kluyver; Jeff Quast',

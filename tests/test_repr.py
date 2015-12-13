@@ -28,7 +28,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         """ Exercise derived spawn.__str__() """
         # given,
         child = pexpect.spawn(None, None)
-        child.closed = False
+        child.read_nonblocking = lambda size, timeout: b''
         try:
             child.expect('alpha', timeout=0.1)
         except pexpect.TIMEOUT:

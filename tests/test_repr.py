@@ -24,3 +24,14 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         # verify
         assert isinstance(value, str)
 
+    def test_str_before_spawn(self):
+        """ Exercise derived spawn.__str__() """
+        # given,
+        child = pexpect.spawn(None, None)
+        child.closed = False
+        try:
+            child.expect('alpha', timeout=0.1)
+        except pexpect.TIMEOUT:
+            pass
+        else:
+            assert False, 'TIMEOUT exception expected. No exception aised.'

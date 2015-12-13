@@ -210,7 +210,8 @@ class spawn(SpawnBase):
         s.append('match: %r' % (self.match,))
         s.append('match_index: ' + str(self.match_index))
         s.append('exitstatus: ' + str(self.exitstatus))
-        s.append('flag_eof: ' + str(self.flag_eof))
+        if hasattr(self, 'ptyproc'):
+            s.append('flag_eof: ' + str(self.flag_eof))
         s.append('pid: ' + str(self.pid))
         s.append('child_fd: ' + str(self.child_fd))
         s.append('closed: ' + str(self.closed))

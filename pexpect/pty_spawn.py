@@ -452,6 +452,7 @@ class spawn(SpawnBase):
         # For this case, I test isalive() before doing any reading.
         # If isalive() is false, then I pretend that this is the same as EOF.
         if not self.isalive():
+            self.flag_eof = True
             raise EOF('End Of File (EOF). Braindead platform.')
         elif self.__irix_hack:
             # Irix takes a long time before it realizes a child was terminated.

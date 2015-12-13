@@ -433,7 +433,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self._before_after(p)
 
     def _ordering(self, p):
-        p.timeout = 20
+        p.timeout = 5
         p.expect(b'>>> ')
 
         p.sendline('list(range(4*3))')

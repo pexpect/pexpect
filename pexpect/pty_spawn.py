@@ -144,8 +144,7 @@ class spawn(SpawnBase):
         many users that I decided that the default pexpect behavior should be
         to sleep just before writing to the child application. 1/20th of a
         second (50 ms) seems to be enough to clear up the problem. You can set
-        delaybeforesend to 0 to return to the old behavior. Most Linux machines
-        don't like this to be below 0.03. I don't know why.
+        delaybeforesend to None to return to the old behavior.
 
         Note that spawn is clever about finding commands on your path.
         It uses the same logic that "which" uses to find executables.
@@ -511,7 +510,8 @@ class spawn(SpawnBase):
             >>> bash.sendline('x' * 5000)
         '''
 
-        time.sleep(self.delaybeforesend)
+        if self.delaybeforesend is not None:
+            time.sleep(self.delaybeforesend)
 
         s = self._coerce_send_string(s)
         self._log(s, 'send')

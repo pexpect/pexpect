@@ -525,10 +525,8 @@ class spawn(SpawnBase):
         written.  Only a limited number of bytes may be sent for each
         line in the default terminal mode, see docstring of :meth:`send`.
         '''
-
-        n = self.send(s)
-        n = n + self.send(self.linesep)
-        return n
+        s = self._coerce_send_string(s)
+        return self.send(s + self.linesep)
 
     def _log_control(self, s):
         """Write control characters to the appropriate log files"""

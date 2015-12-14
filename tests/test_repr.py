@@ -31,7 +31,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         child.read_nonblocking = lambda size, timeout: b''
         try:
             child.expect('alpha', timeout=0.1)
-        except pexpect.TIMEOUT:
-            pass
+        except pexpect.TIMEOUT as e:
+            str(e)  # Smoketest
         else:
-            assert False, 'TIMEOUT exception expected. No exception aised.'
+            assert False, 'TIMEOUT exception expected. No exception raised.'

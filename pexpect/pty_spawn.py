@@ -290,7 +290,7 @@ class spawn(SpawnBase):
             self.args = [a if isinstance(a, bytes) else a.encode(self.encoding)
                          for a in self.args]
 
-        self.ptyproc = self.spawnpty(self.args, env=self.env,
+        self.ptyproc = self._spawnpty(self.args, env=self.env,
                                      cwd=self.cwd, **kwargs)
 
         self.pid = self.ptyproc.pid
@@ -300,7 +300,7 @@ class spawn(SpawnBase):
         self.terminated = False
         self.closed = False
 
-    def spawnpty(self, args, **kwargs):
+    def _spawnpty(self, args, **kwargs):
         '''Spawn a pty and return an instance of PtyProcess.'''
         return ptyprocess.PtyProcess.spawn(args, **kwargs)
 

@@ -62,7 +62,7 @@ class SpawnBase(object):
         # Data before searchwindowsize point is preserved, but not searched.
         self.searchwindowsize = searchwindowsize
         # Delay used before sending data to child. Time in seconds.
-        # Most Linux machines don't like this to be below 0.03 (30 ms).
+        # Set this to None to skip the time.sleep() call completely.
         self.delaybeforesend = 0.05
         # Used by close() to give kernel time to update process status.
         # Time in seconds.
@@ -70,6 +70,12 @@ class SpawnBase(object):
         # Used by terminate() to give kernel time to update process status.
         # Time in seconds.
         self.delayafterterminate = 0.1
+        # Delay in seconds to sleep after each call to read_nonblocking().
+        # Set this to None to skip the time.sleep() call completely: that
+        # would restore the behavior from pexpect-2.0 (for performance
+        # reasons or because you don't want to release Python's global
+        # interpreter lock).
+        self.delayafterread = 0.0001
         self.softspace = False
         self.name = '<' + repr(self) + '>'
         self.closed = True

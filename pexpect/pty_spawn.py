@@ -154,7 +154,12 @@ class spawn(SpawnBase):
         in self.exitstatus or self.signalstatus. If the child exited normally
         then exitstatus will store the exit return code and signalstatus will
         be None. If the child was terminated abnormally with a signal then
-        signalstatus will store the signal value and exitstatus will be None.
+        signalstatus will store the signal value and exitstatus will be None::
+
+            child = pexpect.spawn('some_command')
+            child.close()
+            print(child.exitstatus, child.signalstatus)
+
         If you need more detail you can also read the self.status member which
         stores the status returned by os.waitpid. You can interpret this using
         os.WIFEXITED/os.WEXITSTATUS or os.WIFSIGNALED/os.TERMSIG.

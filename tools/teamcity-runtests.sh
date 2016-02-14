@@ -14,7 +14,7 @@ export PYTHONIOENCODING=UTF8
 export LANG=en_US.UTF-8
 
 pyversion=$1
-version_flit=3.5
+pyversion_flit=3.5
 shift
 here=$(cd `dirname $0`; pwd)
 osrel=$(uname -s)
@@ -24,18 +24,14 @@ venv_flit=flit-builder
 function prepare_virtualenvwrapper() {
 	venv_wrapper=$(which virtualenvwrapper.sh)
 	. ${venv_wrapper}
-	if [ -z $venv_wrapper ]; then
-		echo "virtualenvwrapper.sh not found in PATH." >&2
-		exit 1
-	fi
 }
 
 function make_wheel_for_ptyprocess() {
-	mkvirtualenv -p`which python${version_flit}` ${venv_flit} || true
+	mkvirtualenv -p`which python${pyversion_flit}` ${venv_flit} || true
 	workon ${venv_flit}
 	# explicitly use pip3.5 to install/upgrade flit, a dependency for building
 	# the ptyprocess wheel package.  Flit is not compatible with python 2.7.
-	pip${version_flit} install --upgrade flit
+	pip${pyversion_flit} install --upgrade flit
 
 	# create ptyprocess wheel
 	cd $here/../../ptyprocess

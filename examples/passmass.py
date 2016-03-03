@@ -46,7 +46,7 @@ def login(host, user, password):
 
     child = pexpect.spawn('ssh -l %s %s'%(user, host))
     fout = file ("LOG.TXT","wb")
-    child.setlog (fout)
+    child.logfile = fout
 
     i = child.expect([pexpect.TIMEOUT, SSH_NEWKEY, '[Pp]assword: '])
     if i == 0: # Timeout

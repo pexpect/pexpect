@@ -70,7 +70,7 @@ class socket_spawn(fdspawn):
                     if timeout is not None:
                         timeout = end_time - time.time()
                         if timeout < 0:
-                            return tuple([], [], [])
+                            return [], [], []
                 else:
                     # something else caused the select.error, so
                     # this actually is an exception.

@@ -101,6 +101,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
             os.kill(test_proc.pid, signal.SIGINT)
             if not test_proc.is_alive():
                 break
+        test_proc.join()
 
     def test_maxread(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

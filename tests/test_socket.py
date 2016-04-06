@@ -50,7 +50,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
 *                                                                            *
 *           comments: jmasters@wunderground.com                              *
 ------------------------------------------------------------------------------
-""".replace('\n', '\n\r') + b"\r\n"
+""".replace(b'\n', b'\n\r') + b"\r\n"
         self.assertEqual(session.before, motd)
 
     def test_timeout(self):

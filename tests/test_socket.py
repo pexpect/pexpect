@@ -63,6 +63,14 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         session.expect(pexpect.EOF)
         self.assertEqual(session.before, b'')
 
+    def test_not_int(self):
+        with self.assertRaises(pexpect.ExceptionPexpect):
+            session = socket_pexpect.socket_spawn('bogus', timeout=10)
+
+    def test_not_file_descriptor(self):
+        with self.assertRaises(pexpect.ExceptionPexpect):
+            session = socket_pexpect.socket_spawn(-1, timeout=10)
+
     def test_timeout(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect(('rainmaker.wunderground.com', 23))

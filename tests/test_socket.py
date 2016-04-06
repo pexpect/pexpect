@@ -72,36 +72,38 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
             session = socket_pexpect.socket_spawn(-1, timeout=10)
 
     def test_timeout(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect(('rainmaker.wunderground.com', 23))
-        session = socket_pexpect.socket_spawn(sock.fileno(), timeout=10)
-        result_list = [b'Bogus response', pexpect.TIMEOUT]
-        result = session.expect(result_list)
-        self.assertEqual(result, result_list.index(pexpect.TIMEOUT))
+        with self.assertRaises(pexpect.TIMEOUT):
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect(('rainmaker.wunderground.com', 23))
+            session = socket_pexpect.socket_spawn(sock, timeout=10)
+            session.expect(b'Bogus response')
 
     def test_interrupt(self):
         def socket_fn(self):
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect(('rainmaker.wunderground.com', 23))
-            session = socket_pexpect.socket_spawn(sock.fileno(), timeout=10)
-            session.expect('Press Return to continue:')
-            self.assertEqual(session.before, self.motd)
-            session.send('\r\n')
-            session.expect('or enter 3 letter forecast city code--')
-            session.send('\r\n')
-            session.expect('Selection:')
-            session.send('X\r\n')
-            session.expect(pexpect.EOF)
-            self.assertEqual(session.before, b'')
+            result = 0
+            try:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.connect(('rainmaker.wunderground.com', 23))
+                session = socket_pexpect.socket_spawn(sock, timeout=10)
+                # Get all data from server
+                session.read_nonblocking(size=4096)
+                # This read should timeout
+                session.read_nonblocking(size=4096)
+            except pexpect.TIMEOUT:
+                result = 1
+            exit(result)
         test_proc = multiprocessing.Process(target=socket_fn, args=(self,))
         test_proc.daemon = True
         test_proc.start()
+        time.sleep(5.0)
         while True:
-            time.sleep(0.250)
-            os.kill(test_proc.pid, signal.SIGINT)
-            if not test_proc.is_alive():
+            if test_proc.is_alive():
+                os.kill(test_proc.pid, signal.SIGWINCH)
+            else:
                 break
+            time.sleep(0.250)
         test_proc.join()
+        self.assertEqual(test_proc.exitcode, 1)
 
     def test_maxread(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

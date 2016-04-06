@@ -36,7 +36,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         sock.connect(('rainmaker.wunderground.com', 23))
         session = socket_pexpect.socket_spawn(sock.fileno(), timeout=10)
         session.expect('Press Return to continue:')
-        motd = """\
+        motd = b"""\
 ------------------------------------------------------------------------------
 *               Welcome to THE WEATHER UNDERGROUND telnet service!            *
 ------------------------------------------------------------------------------
@@ -50,14 +50,14 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
 *                                                                            *
 *           comments: jmasters@wunderground.com                              *
 ------------------------------------------------------------------------------
-""".replace('\n', '\n\r') + "\r\n"
+""".replace('\n', '\n\r') + b"\r\n"
         self.assertEqual(session.before, motd)
 
     def test_timeout(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect(('rainmaker.wunderground.com', 23))
         session = socket_pexpect.socket_spawn(sock.fileno(), timeout=10)
-        result_list = ['Bogus response', pexpect.TIMEOUT]
+        result_list = [b'Bogus response', pexpect.TIMEOUT]
         result = session.expect(result_list)
         self.assertEqual(result, result_list.index(pexpect.TIMEOUT))
 

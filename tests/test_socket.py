@@ -21,8 +21,7 @@ PEXPECT LICENSE
 import pexpect
 from pexpect import socket_pexpect
 import unittest
-# from . import PexpectTestCase
-import PexpectTestCase
+from . import PexpectTestCase
 import os
 import socket
 import sys

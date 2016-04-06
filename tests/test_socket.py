@@ -52,6 +52,13 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         session = socket_pexpect.socket_spawn(sock.fileno(), timeout=10)
         session.expect('Press Return to continue:')
         self.assertEqual(session.before, self.motd)
+        session.send('\r\n')
+        session.expect('or enter 3 letter forecast city code--')
+        session.send('\r\n')
+        session.expect('Selection:')
+        session.send('X\r\n')
+        session.expect(pexpect.EOF)
+        self.assertEqual(session.before, b'')
 
     def test_timeout(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -68,6 +75,13 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         session.maxread = 1100
         session.expect('Press Return to continue:')
         self.assertEqual(session.before, self.motd)
+        session.send('\r\n')
+        session.expect('or enter 3 letter forecast city code--')
+        session.send('\r\n')
+        session.expect('Selection:')
+        session.send('X\r\n')
+        session.expect(pexpect.EOF)
+        self.assertEqual(session.before, b'')
 
     def test_fd_isalive (self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

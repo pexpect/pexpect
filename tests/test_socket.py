@@ -30,13 +30,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def setUp(self):
         print(self.id())
         PexpectTestCase.PexpectTestCase.setUp(self)
-
-    def test_socket (self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect(('rainmaker.wunderground.com', 23))
-        session = socket_pexpect.socket_spawn(sock.fileno(), timeout=10)
-        session.expect('Press Return to continue:')
-        motd = b"""\
+        self.motd = b"""\
 ------------------------------------------------------------------------------
 *               Welcome to THE WEATHER UNDERGROUND telnet service!            *
 ------------------------------------------------------------------------------
@@ -51,7 +45,13 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
 *           comments: jmasters@wunderground.com                              *
 ------------------------------------------------------------------------------
 """.replace(b'\n', b'\n\r') + b"\r\n"
-        self.assertEqual(session.before, motd)
+
+    def test_socket (self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(('rainmaker.wunderground.com', 23))
+        session = socket_pexpect.socket_spawn(sock.fileno(), timeout=10)
+        session.expect('Press Return to continue:')
+        self.assertEqual(session.before, self.motd)
 
     def test_timeout(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -60,6 +60,31 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         result_list = [b'Bogus response', pexpect.TIMEOUT]
         result = session.expect(result_list)
         self.assertEqual(result, result_list.index(pexpect.TIMEOUT))
+
+    def test_maxread(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(('rainmaker.wunderground.com', 23))
+        session = socket_pexpect.socket_spawn(sock.fileno(), timeout=10)
+        session.maxread = 1100
+        session.expect('Press Return to continue:')
+        self.assertEqual(session.before, self.motd)
+
+    def test_fd_isalive (self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(('rainmaker.wunderground.com', 23))
+        session = socket_pexpect.socket_spawn(sock.fileno(), timeout=10)
+        assert session.isalive()
+        sock.close()
+        assert not session.isalive(), "Should not be alive after close()"
+
+    def test_fileobj(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(('rainmaker.wunderground.com', 23))
+        session = socket_pexpect.socket_spawn(sock, timeout=10) # Should get the fileno from the socket
+        session.expect('Press Return to continue:')
+        session.close()
+        assert not session.isalive()
+        session.close()  # Smoketest - should be able to call this again
 
 if __name__ == '__main__':
     unittest.main()

@@ -77,6 +77,13 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         sock.close()
         assert not session.isalive(), "Should not be alive after close()"
 
+    def test_fd_isatty (self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect(('rainmaker.wunderground.com', 23))
+        session = socket_pexpect.socket_spawn(sock.fileno(), timeout=10)
+        assert not session.isatty()
+        session.close()
+
     def test_fileobj(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect(('rainmaker.wunderground.com', 23))

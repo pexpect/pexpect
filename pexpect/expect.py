@@ -44,6 +44,7 @@ class Expecter(object):
             spawn.match = None
             spawn.match_index = None
             msg = str(spawn)
+            msg += '\nsearcher: %s' % self.searcher
             if err is not None:
                 msg = str(err) + '\n' + msg
             raise EOF(msg)
@@ -63,6 +64,7 @@ class Expecter(object):
             spawn.match = None
             spawn.match_index = None
             msg = str(spawn)
+            msg += '\nsearcher: %s' % self.searcher
             if err is not None:
                 msg = str(err) + '\n' + msg
             raise TIMEOUT(msg)

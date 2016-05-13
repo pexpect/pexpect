@@ -31,7 +31,7 @@ def is_executable_file(path):
     return os.access(fpath, os.X_OK)
 
 
-def which(filename):
+def which(filename, env=None):
     '''This takes a given filename; tries to find it in the environment path;
     then checks if it is executable. This returns the full path to the filename
     if found and executable. Otherwise this returns None.'''
@@ -39,10 +39,11 @@ def which(filename):
     # Special case where filename contains an explicit path.
     if os.path.dirname(filename) != '' and is_executable_file(filename):
         return filename
-    if 'PATH' not in os.environ or os.environ['PATH'] == '':
+    if env is None:
+        env = os.environ
+    p = env.get('PATH')
+    if not p:
         p = os.defpath
-    else:
-        p = os.environ['PATH']
     pathlist = p.split(os.pathsep)
     for path in pathlist:
         ff = os.path.join(path, filename)

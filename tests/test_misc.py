@@ -247,13 +247,6 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         with self.assertRaises(TypeError):
             child.expect({})
 
-    def test_env(self):
-        " check keyword argument `env=' of pexpect.run() "
-        default_env_output = pexpect.run('env')
-        custom_env_output = pexpect.run('env', env={'_key': '_value'})
-        assert custom_env_output != default_env_output
-        assert b'_key=_value' in custom_env_output
-
     def test_cwd(self):
         " check keyword argument `cwd=' of pexpect.run() "
         tmp_dir = os.path.realpath(tempfile.gettempdir())

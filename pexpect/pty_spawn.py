@@ -266,7 +266,7 @@ class spawn(SpawnBase):
             self.args.insert(0, command)
             self.command = command
 
-        command_with_path = which(self.command)
+        command_with_path = which(self.command, env=self.env)
         if command_with_path is None:
             raise ExceptionPexpect('The command was not found or was not ' +
                     'executable: %s.' % self.command)

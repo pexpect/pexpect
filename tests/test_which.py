@@ -20,6 +20,23 @@ class TestCaseWhich(PexpectTestCase.PexpectTestCase):
         assert exercise is not None
         assert exercise.startswith('/')
 
+    def test_path_from_env(self):
+        " executable found from optional env argument "
+        bin_name = 'pexpect-test-path-from-env'
+        tempdir = tempfile.mkdtemp()
+        try:
+            bin_path = os.path.join(tempdir, bin_name)
+            with open(bin_path, 'w') as f:
+                f.write('# test file not to be run')
+            try:
+                os.chmod(bin_path, 0o700)
+                found_path = pexpect.which(bin_name, env={'PATH': tempdir})
+            finally:
+                os.remove(bin_path)
+            self.assertEqual(bin_path, found_path)
+        finally:
+            os.rmdir(tempdir)
+
     def test_os_defpath_which(self):
         " which() finds an executable in $PATH and returns its abspath. "
 

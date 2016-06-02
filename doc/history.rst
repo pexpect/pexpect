@@ -106,7 +106,7 @@ new maintenance after a long dormancy, so some caution is warranted.
 * Ignoring ``SIGHUP`` is now optional - thanks to Kimmo Parviainen-Jalanko for
   the patch.
 
-We also now have `docs on ReadTheDocs <http://pexpect.readthedocs.org/>`_,
+We also now have `docs on ReadTheDocs <https://pexpect.readthedocs.io/>`_,
 and `continuous integration on Travis CI <https://travis-ci.org/pexpect/pexpect>`_.
 
 Version 2.4

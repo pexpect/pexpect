@@ -32,7 +32,7 @@ You can install Pexpect using pip::
 
     pip install pexpect
 
-`Docs on ReadTheDocs <http://pexpect.readthedocs.org/>`_
+`Docs on ReadTheDocs <https://pexpect.readthedocs.io/>`_
 
 PEXPECT LICENSE::
 

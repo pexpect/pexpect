@@ -4,6 +4,15 @@ History
 Releases
 --------
 
+Version 4.2
+```````````
+
+* Change: When an ``env`` parameter is specified to the :class:`~.spawn` or
+  :class:`~.run` family of calls containing a value for ``PATH``, its value is
+  used to discover the target executable from a relative path, rather than the
+  current process's environment ``PATH``.  This mirrors the behavior of
+  :func:`subprocess.Popen` in the standard library.
+
 Version 4.0
 ```````````
 

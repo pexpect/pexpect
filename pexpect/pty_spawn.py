@@ -1,7 +1,6 @@
 import os
 import sys
 import time
-import select
 import pty
 import tty
 import errno
@@ -13,7 +12,7 @@ from ptyprocess.ptyprocess import use_native_pty_fork
 
 from .exceptions import ExceptionPexpect, EOF, TIMEOUT
 from .spawnbase import SpawnBase
-from .utils import which, split_command_line
+from .utils import which, split_command_line, select_ignore_interrupts
 
 @contextmanager
 def _wrap_ptyprocess_err():
@@ -440,7 +439,7 @@ class spawn(SpawnBase):
         # If isalive() is false, then I pretend that this is the same as EOF.
         if not self.isalive():
             # timeout of 0 means "poll"
-            r, w, e = self.__select([self.child_fd], [], [], 0)
+            r, w, e = select_ignore_interrupts([self.child_fd], [], [], 0)
             if not r:
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Braindead platform.')
@@ -448,12 +447,12 @@ class spawn(SpawnBase):
             # Irix takes a long time before it realizes a child was terminated.
             # FIXME So does this mean Irix systems are forced to always have
             # FIXME a 2 second delay when calling read_nonblocking? That sucks.
-            r, w, e = self.__select([self.child_fd], [], [], 2)
+            r, w, e = select_ignore_interrupts([self.child_fd], [], [], 2)
             if not r and not self.isalive():
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Slow platform.')
 
-        r, w, e = self.__select([self.child_fd], [], [], timeout)
+        r, w, e = select_ignore_interrupts([self.child_fd], [], [], timeout)
 
         if not r:
             if not self.isalive():
@@ -771,7 +770,7 @@ class spawn(SpawnBase):
         '''
 
         while self.isalive():
-            r, w, e = self.__select([self.child_fd, self.STDIN_FILENO], [], [])
+            r, w, e = select_ignore_interrupts([self.child_fd, self.STDIN_FILENO], [], [])
             if self.child_fd in r:
                 try:
                     data = self.__interact_read(self.child_fd)
@@ -803,33 +802,6 @@ class spawn(SpawnBase):
                 self._log(data, 'send')
                 self.__interact_writen(self.child_fd, data)
 
-    def __select(self, iwtd, owtd, ewtd, timeout=None):
-
-        '''This is a wrapper around select.select() that ignores signals. If
-        select.select raises a select.error exception and errno is an EINTR
-        error then it is ignored. Mainly this is used to ignore sigwinch
-        (terminal resize). '''
-
-        # if select() is interrupted by a signal (errno==EINTR) then
-        # we loop back and enter the select() again.
-        if timeout is not None:
-            end_time = time.time() + timeout
-        while True:
-            try:
-                return select.select(iwtd, owtd, ewtd, timeout)
-            except select.error:
-                err = sys.exc_info()[1]
-                if err.args[0] == errno.EINTR:
-                    # if we loop back we have to subtract the
-                    # amount of time we already waited.
-                    if timeout is not None:
-                        timeout = end_time - time.time()
-                        if timeout < 0:
-                            return([], [], [])
-                else:
-                    # something else caused the select.error, so
-                    # this actually is an exception.
-                    raise
 
 def spawnu(*args, **kwargs):
     """Deprecated: pass encoding to spawn() instead."""

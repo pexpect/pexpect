@@ -22,7 +22,8 @@ PEXPECT LICENSE
 '''
 
 from .spawnbase import SpawnBase
-from .exceptions import ExceptionPexpect
+from .exceptions import ExceptionPexpect, TIMEOUT
+from .utils import select_ignore_interrupts
 import os
 
 __all__ = ['fdspawn']
@@ -112,3 +113,19 @@ class fdspawn(SpawnBase):
         "Call self.write() for each item in sequence"
         for s in sequence:
             self.write(s)
+
+    def read_nonblocking(self, size=1, timeout=-1):
+        '''The read_nonblocking method of fdspawn assumes that the file
+        will never block. This is not the case for all file like objects
+        that support fileno (e.g. POSIX sockets and serial ports). So we
+        use select to implement the timeout on POSIX.'''
+        if os.name == 'posix':
+            if timeout == -1:
+                timeout = self.timeout
+            rlist = [self.child_fd]
+            wlist = []
+            xlist = []
+            rlist, wlist, xlist = select_ignore_interrupts(rlist, wlist, xlist, timeout)
+            if self.child_fd not in rlist:
+                raise TIMEOUT('Timeout exceeded.')
+        return super(fdspawn, self).read_nonblocking(size)

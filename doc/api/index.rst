@@ -9,6 +9,7 @@ API documentation
    popen_spawn
    replwrap
    pxssh
+   socket_pexpect
 
 The modules ``pexpect.screen`` and ``pexpect.ANSI`` have been deprecated in
 Pexpect version 4. They were separate from the main use cases for Pexpect, and

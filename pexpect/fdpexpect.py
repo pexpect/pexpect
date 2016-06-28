@@ -116,6 +116,8 @@ class fdspawn(SpawnBase):
 
     def read_nonblocking(self, size=1, timeout=-1):
         if os.name == 'posix':
+            self.__class__ = spawn
             spawn.read_nonblocking(self, size, timeout)
+            self.__class__ = SpawnBase
         else:
             SpawnBase.read_nonblocking(self, size, timeout)

@@ -23,6 +23,7 @@ PEXPECT LICENSE
 
 from .spawnbase import SpawnBase
 from .exceptions import ExceptionPexpect
+from .pty_spawn import spawn
 import os
 
 __all__ = ['fdspawn']
@@ -112,3 +113,9 @@ class fdspawn(SpawnBase):
         "Call self.write() for each item in sequence"
         for s in sequence:
             self.write(s)
+
+    def read_nonblocking(self, size=1, timeout=-1):
+        if os.name == 'posix':
+            spawn.read_nonblocking(self, size, timeout)
+        else:
+            SpawnBase.read_nonblocking(self, size, timeout)

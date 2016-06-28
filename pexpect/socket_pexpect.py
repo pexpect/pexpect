@@ -1,4 +1,4 @@
-'''This is like fdpexpect, but it will work sockets. You are responsible
+'''This is like fdpexpect, but it will work with sockets. You are responsible
 for opening and closing the socket.
 
 PEXPECT LICENSE

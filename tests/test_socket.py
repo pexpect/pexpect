@@ -80,40 +80,37 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         PexpectTestCase.PexpectTestCase.tearDown(self)
 
     def socket_server(self, server_up):
-        with open('log.txt', 'w') as log_file:
-            log_file.write("Starting socket server...\n")
-            sock = None
+        sock = None
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.bind((self.host, self.port))
+            sock.listen(5)
+            server_up.set()
+            while True:
+                (conn, addr) = sock.accept()
+                conn.send(self.motd)
+                conn.send(self.prompt1)
+                result = conn.recv(1024)
+                if result != b'\r\n':
+                    break
+                conn.send(self.prompt2)
+                result = conn.recv(1024)
+                if result != b'\r\n':
+                    break
+                conn.send(self.prompt3)
+                result = conn.recv(1024)
+                if result.startswith(b'X'):
+                    conn.shutdown(socket.SHUT_RDWR)
+                    conn.close()
+        except KeyboardInterrupt:
+            pass
+        if sock is not None:
             try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-                sock.bind((self.host, self.port))
-                sock.listen(5)
-                server_up.set()
-                while True:
-                    (conn, addr) = sock.accept()
-                    conn.send(self.motd)
-                    conn.send(self.prompt1)
-                    result = conn.recv(1024)
-                    if result != b'\r\n':
-                        break
-                    conn.send(self.prompt2)
-                    result = conn.recv(1024)
-                    if result != b'\r\n':
-                        break
-                    conn.send(self.prompt3)
-                    result = conn.recv(1024)
-                    if result.startswith(b'X'):
-                        conn.shutdown(socket.SHUT_RDWR)
-                        conn.close()
-            except KeyboardInterrupt:
+                sock.shutdown(socket.SHUT_RDWR)
+                sock.close()
+            except socket.error:
                 pass
-            if sock is not None:
-                try:
-                    sock.shutdown(socket.SHUT_RDWR)
-                    sock.close()
-                except socket.error:
-                    pass
-            log_file.write("Exiting socket server\n")
         exit(0)
 
     def socket_fn(self, timed_out, all_read):
@@ -223,7 +220,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.host, self.port))
         session = fdpexpect.fdspawn(sock, timeout=10) # Should get the fileno from the socket
-        session.expect('Press Return to continue:')
+        session.expect(self.prompt1)
         session.close()
         assert not session.isalive()
         session.close()  # Smoketest - should be able to call this again

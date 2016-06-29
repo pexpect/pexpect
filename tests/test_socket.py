@@ -207,7 +207,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         session.expect(self.prompt2)
         session.send(self.enter)
         session.expect(self.prompt3)
-        session.send(self.enter)
+        session.send(self.exit)
         session.expect(pexpect.EOF)
         self.assertEqual(session.before, b'')
 

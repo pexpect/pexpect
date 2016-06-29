@@ -30,6 +30,10 @@ import time
 import errno
 
 
+class SocketServerError(Exception):
+    pass
+
+
 class ExpectTestCase(PexpectTestCase.PexpectTestCase):
 
     def setUp(self):
@@ -67,12 +71,18 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         self.prompt1 = b'Press Return to continue:'
         self.prompt2 = b'Rate this unit test>'
         self.prompt3 = b'Press X to exit:'
+        self.enter = b'\r\n'
+        self.exit = b'X\r\n'
         self.server_up = multiprocessing.Event()
         self.server_process = multiprocessing.Process(target=self.socket_server, args=(self.server_up,))
         self.server_process.daemon = True
         self.server_process.start()
+        counter = 0
         while not self.server_up.is_set():
             time.sleep(0.250)
+            counter += 1
+            if counter > (10 / 0.250):
+                raise SocketServerError("Could not start socket server")
 
     def tearDown(self):
         os.kill(self.server_process.pid, signal.SIGINT)
@@ -92,15 +102,15 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
                 conn.send(self.motd)
                 conn.send(self.prompt1)
                 result = conn.recv(1024)
-                if result != b'\r\n':
+                if result != self.enter:
                     break
                 conn.send(self.prompt2)
                 result = conn.recv(1024)
-                if result != b'\r\n':
+                if result != self.enter:
                     break
                 conn.send(self.prompt3)
                 result = conn.recv(1024)
-                if result.startswith(b'X'):
+                if result.startswith(self.exit[0]):
                     conn.shutdown(socket.SHUT_RDWR)
                     conn.close()
         except KeyboardInterrupt:
@@ -135,11 +145,11 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         session = fdpexpect.fdspawn(sock.fileno(), timeout=10)
         session.expect(self.prompt1)
         self.assertEqual(session.before, self.motd)
-        session.send(b'\r\n')
+        session.send(self.enter)
         session.expect(self.prompt2)
-        session.send(b'\r\n')
+        session.send(self.enter)
         session.expect(self.prompt3)
-        session.send(b'X\r\n')
+        session.send(self.exit)
         session.expect(pexpect.EOF)
         self.assertEqual(session.before, b'')
 
@@ -193,11 +203,11 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         session.maxread = 1100
         session.expect(self.prompt1)
         self.assertEqual(session.before, self.motd)
-        session.send(b'\r\n')
+        session.send(self.enter)
         session.expect(self.prompt2)
-        session.send(b'\r\n')
+        session.send(self.enter)
         session.expect(self.prompt3)
-        session.send(b'X\r\n')
+        session.send(self.enter)
         session.expect(pexpect.EOF)
         self.assertEqual(session.before, b'')
 

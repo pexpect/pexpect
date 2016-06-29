@@ -110,6 +110,21 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
             sock.close()
         exit(0)
 
+    def socket_fn(self, timed_out):
+        result = 0
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((self.host, self.port))
+            session = fdpexpect.fdspawn(sock, timeout=10)
+            # Get all data from server
+            session.read_nonblocking(size=4096)
+            # This read should timeout
+            session.read_nonblocking(size=4096)
+        except pexpect.TIMEOUT:
+            timed_out.set()
+            result = errno.ETIMEDOUT
+        exit(result)
+
     def test_socket(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.host, self.port))
@@ -140,24 +155,24 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
             session.expect(b'Bogus response')
 
     def test_interrupt(self):
-        def socket_fn(self, timed_out):
-            result = 0
-            try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.connect((self.host, self.port))
-                session = fdpexpect.fdspawn(sock, timeout=10)
-                # Get all data from server
-                session.read_nonblocking(size=4096)
-                # This read should timeout
-                session.read_nonblocking(size=4096)
-            except pexpect.TIMEOUT:
-                timed_out.set()
-                result = errno.ETIMEDOUT
-            exit(result)
         timed_out = multiprocessing.Event()
-        test_proc = multiprocessing.Process(target=socket_fn, args=(self, timed_out))
+        test_proc = multiprocessing.Process(target=self.socket_fn, args=(timed_out,))
         test_proc.daemon = True
         test_proc.start()
+        while not timed_out.is_set():
+            time.sleep(0.250)
+        os.kill(test_proc.pid, signal.SIGWINCH)
+        test_proc.join(timeout=5.0)
+        self.assertEqual(test_proc.exitcode, errno.ETIMEDOUT)
+
+    def test_multiple_interrupts(self):
+        timed_out = multiprocessing.Event()
+        test_proc = multiprocessing.Process(target=self.socket_fn, args=(timed_out,))
+        test_proc.daemon = True
+        test_proc.start()
+        for x in range(15):
+            os.kill(test_proc.pid, signal.SIGWINCH)
+            time.sleep(1.0)
         while not timed_out.is_set():
             time.sleep(0.250)
         os.kill(test_proc.pid, signal.SIGWINCH)

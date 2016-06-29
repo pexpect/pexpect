@@ -403,8 +403,6 @@ class spawn(SpawnBase):
         '''
         return self.ptyproc.setecho(state)
 
-        self.echo = state
-
     def read_nonblocking(self, size=1, timeout=-1):
         '''This reads at most size characters from the child application. It
         includes a timeout. If the read does not complete within the timeout

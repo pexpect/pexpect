@@ -64,9 +64,9 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
 * particle).                                                                 *
 ------------------------------------------------------------------------------
 """.replace(b'\n', b'\n\r') + b"\r\n"
-        self.prompt1 = 'Press Return to continue:'
-        self.prompt2 = 'Rate this unit test>'
-        self.prompt3 = 'Press X to exit:'
+        self.prompt1 = b'Press Return to continue:'
+        self.prompt2 = b'Rate this unit test>'
+        self.prompt3 = b'Press X to exit:'
         self.server_up = multiprocessing.Event()
         self.server_process = multiprocessing.Process(target=self.socket_server, args=(self.server_up,))
         self.server_process.daemon = True
@@ -80,37 +80,40 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         PexpectTestCase.PexpectTestCase.tearDown(self)
 
     def socket_server(self, server_up):
-        sock = None
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.bind((self.host, self.port))
-            sock.listen(5)
-            server_up.set()
-            while True:
-                (conn, addr) = sock.accept()
-                conn.send(self.motd)
-                conn.send(self.prompt1)
-                result = conn.recv(1024)
-                if result != '\r\n':
-                    break
-                conn.send(self.prompt2)
-                result = conn.recv(1024)
-                if result != '\r\n':
-                    break
-                conn.send(self.prompt3)
-                result = conn.recv(1024)
-                if result.startswith('X'):
-                    conn.shutdown(socket.SHUT_RDWR)
-                    conn.close()
-        except KeyboardInterrupt:
-            pass
-        if sock is not None:
+        with open('log.txt', 'w') as log_file:
+            log_file.write("Starting socket server...\n")
+            sock = None
             try:
-                sock.shutdown(socket.SHUT_RDWR)
-                sock.close()
-            except socket.error:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                sock.bind((self.host, self.port))
+                sock.listen(5)
+                server_up.set()
+                while True:
+                    (conn, addr) = sock.accept()
+                    conn.send(self.motd)
+                    conn.send(self.prompt1)
+                    result = conn.recv(1024)
+                    if result != b'\r\n':
+                        break
+                    conn.send(self.prompt2)
+                    result = conn.recv(1024)
+                    if result != b'\r\n':
+                        break
+                    conn.send(self.prompt3)
+                    result = conn.recv(1024)
+                    if result.startswith(b'X'):
+                        conn.shutdown(socket.SHUT_RDWR)
+                        conn.close()
+            except KeyboardInterrupt:
                 pass
+            if sock is not None:
+                try:
+                    sock.shutdown(socket.SHUT_RDWR)
+                    sock.close()
+                except socket.error:
+                    pass
+            log_file.write("Exiting socket server\n")
         exit(0)
 
     def socket_fn(self, timed_out, all_read):
@@ -135,11 +138,11 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         session = fdpexpect.fdspawn(sock.fileno(), timeout=10)
         session.expect(self.prompt1)
         self.assertEqual(session.before, self.motd)
-        session.send('\r\n')
+        session.send(b'\r\n')
         session.expect(self.prompt2)
-        session.send('\r\n')
+        session.send(b'\r\n')
         session.expect(self.prompt3)
-        session.send('X\r\n')
+        session.send(b'X\r\n')
         session.expect(pexpect.EOF)
         self.assertEqual(session.before, b'')
 
@@ -178,9 +181,11 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         test_proc = multiprocessing.Process(target=self.socket_fn, args=(timed_out, all_read))
         test_proc.daemon = True
         test_proc.start()
+        while not all_read.is_set():
+            time.sleep(1.0)
         while not timed_out.is_set():
             os.kill(test_proc.pid, signal.SIGWINCH)
-            time.sleep(0.250)
+            time.sleep(1.0)
         test_proc.join(timeout=5.0)
         self.assertEqual(test_proc.exitcode, errno.ETIMEDOUT)
 
@@ -191,11 +196,11 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         session.maxread = 1100
         session.expect(self.prompt1)
         self.assertEqual(session.before, self.motd)
-        session.send('\r\n')
+        session.send(b'\r\n')
         session.expect(self.prompt2)
-        session.send('\r\n')
+        session.send(b'\r\n')
         session.expect(self.prompt3)
-        session.send('X\r\n')
+        session.send(b'X\r\n')
         session.expect(pexpect.EOF)
         self.assertEqual(session.before, b'')
 

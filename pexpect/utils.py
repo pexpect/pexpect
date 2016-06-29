@@ -5,6 +5,12 @@ import select
 import time
 import errno
 
+try:
+    InterruptedError
+except NameError:
+    # Alias Python2 exception to Python3
+    InterruptedError = select.error
+
 
 def is_executable_file(path):
     """Checks that path is an executable regular file, or a symlink towards one.
@@ -129,7 +135,7 @@ def select_ignore_interrupts(iwtd, owtd, ewtd, timeout=None):
     while True:
         try:
             return select.select(iwtd, owtd, ewtd, timeout)
-        except select.error:
+        except InterruptedError:
             err = sys.exc_info()[1]
             if err.args[0] == errno.EINTR:
                 # if we loop back we have to subtract the

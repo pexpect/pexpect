@@ -153,6 +153,20 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         session.expect(pexpect.EOF)
         self.assertEqual(session.before, b'')
 
+    def test_socket_with_write(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((self.host, self.port))
+        session = fdpexpect.fdspawn(sock.fileno(), timeout=10)
+        session.expect(self.prompt1)
+        self.assertEqual(session.before, self.motd)
+        session.write(self.enter)
+        session.expect(self.prompt2)
+        session.write(self.enter)
+        session.expect(self.prompt3)
+        session.write(self.exit)
+        session.expect(pexpect.EOF)
+        self.assertEqual(session.before, b'')
+
     def test_not_int(self):
         with self.assertRaises(pexpect.ExceptionPexpect):
             session = fdpexpect.fdspawn('bogus', timeout=10)

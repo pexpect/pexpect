@@ -115,10 +115,10 @@ class fdspawn(SpawnBase):
             self.write(s)
 
     def read_nonblocking(self, size=1, timeout=-1):
-        '''The read_nonblocking method of fdspawn assumes that the file
-        will never block. This is not the case for all file like objects
-        that support fileno (e.g. POSIX sockets and serial ports). So we
-        use select to implement the timeout on POSIX.'''
+        """The read_nonblocking method of SpawnBase assumes that a call to
+        os.read will not block. This is not the case for POSIX file like
+        objects like sockets and serial ports. So we use select to implement
+        the timeout on POSIX."""
         if os.name == 'posix':
             if timeout == -1:
                 timeout = self.timeout

@@ -106,11 +106,14 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         except KeyboardInterrupt:
             pass
         if sock is not None:
-            sock.shutdown(socket.SHUT_RDWR)
-            sock.close()
+            try:
+                sock.shutdown(socket.SHUT_RDWR)
+                sock.close()
+            except socket.error:
+                pass
         exit(0)
 
-    def socket_fn(self, timed_out):
+    def socket_fn(self, timed_out, all_read):
         result = 0
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -118,6 +121,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
             session = fdpexpect.fdspawn(sock, timeout=10)
             # Get all data from server
             session.read_nonblocking(size=4096)
+            all_read.set()
             # This read should timeout
             session.read_nonblocking(size=4096)
         except pexpect.TIMEOUT:
@@ -156,26 +160,27 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
 
     def test_interrupt(self):
         timed_out = multiprocessing.Event()
-        test_proc = multiprocessing.Process(target=self.socket_fn, args=(timed_out,))
+        all_read = multiprocessing.Event()
+        test_proc = multiprocessing.Process(target=self.socket_fn, args=(timed_out, all_read))
         test_proc.daemon = True
         test_proc.start()
-        while not timed_out.is_set():
-            time.sleep(0.250)
+        while not all_read.is_set():
+            time.sleep(1.0)
         os.kill(test_proc.pid, signal.SIGWINCH)
+        while not timed_out.is_set():
+            time.sleep(1.0)
         test_proc.join(timeout=5.0)
         self.assertEqual(test_proc.exitcode, errno.ETIMEDOUT)
 
     def test_multiple_interrupts(self):
         timed_out = multiprocessing.Event()
-        test_proc = multiprocessing.Process(target=self.socket_fn, args=(timed_out,))
+        all_read = multiprocessing.Event()
+        test_proc = multiprocessing.Process(target=self.socket_fn, args=(timed_out, all_read))
         test_proc.daemon = True
         test_proc.start()
-        for x in range(15):
-            os.kill(test_proc.pid, signal.SIGWINCH)
-            time.sleep(1.0)
         while not timed_out.is_set():
+            os.kill(test_proc.pid, signal.SIGWINCH)
             time.sleep(0.250)
-        os.kill(test_proc.pid, signal.SIGWINCH)
         test_proc.join(timeout=5.0)
         self.assertEqual(test_proc.exitcode, errno.ETIMEDOUT)
 

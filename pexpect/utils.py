@@ -1,6 +1,15 @@
 import os
 import sys
 import stat
+import select
+import time
+import errno
+
+try:
+    InterruptedError
+except NameError:
+    # Alias Python2 exception to Python3
+    InterruptedError = select.error
 
 
 def is_executable_file(path):
@@ -111,3 +120,32 @@ def split_command_line(command_line):
     if arg != '':
         arg_list.append(arg)
     return arg_list
+
+
+def select_ignore_interrupts(iwtd, owtd, ewtd, timeout=None):
+
+    '''This is a wrapper around select.select() that ignores signals. If
+    select.select raises a select.error exception and errno is an EINTR
+    error then it is ignored. Mainly this is used to ignore sigwinch
+    (terminal resize). '''
+
+    # if select() is interrupted by a signal (errno==EINTR) then
+    # we loop back and enter the select() again.
+    if timeout is not None:
+        end_time = time.time() + timeout
+    while True:
+        try:
+            return select.select(iwtd, owtd, ewtd, timeout)
+        except InterruptedError:
+            err = sys.exc_info()[1]
+            if err.args[0] == errno.EINTR:
+                # if we loop back we have to subtract the
+                # amount of time we already waited.
+                if timeout is not None:
+                    timeout = end_time - time.time()
+                    if timeout < 0:
+                        return([], [], [])
+            else:
+                # something else caused the select.error, so
+                # this actually is an exception.
+                raise

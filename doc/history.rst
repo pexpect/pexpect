@@ -11,7 +11,10 @@ Version 4.2
   :class:`~.run` family of calls containing a value for ``PATH``, its value is
   used to discover the target executable from a relative path, rather than the
   current process's environment ``PATH``.  This mirrors the behavior of
-  :func:`subprocess.Popen` in the standard library.
+  :func:`subprocess.Popen` in the standard library (:ghissue:`348`).
+
+* Regression: Re-introduce capability for :meth:`read_nonblocking` in class
+  :class:`fdspawn` as previously supported in version 3.3 (:ghissue:`359`).
 
 Version 4.0
 ```````````

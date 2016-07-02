@@ -115,17 +115,20 @@ class fdspawn(SpawnBase):
             self.write(s)
 
     def read_nonblocking(self, size=1, timeout=-1):
-        """ Read from the file descriptor and return the result as a string.
+        """
+        Read from the file descriptor and return the result as a string.
 
-        The read_nonblocking method of SpawnBase assumes that a call to
-        os.read will not block. This is not the case for POSIX file like
-        objects like sockets and serial ports. So we use select to implement
-        the timeout on POSIX.
+        The read_nonblocking method of :class:`SpawnBase` assumes that a call
+        to os.read will not block (timeout parameter is ignored). This is not
+        the case for POSIX file-like objects such as sockets and serial ports.
 
-        :param size:    Read at most size bytes
-        :param timeout: Wait timeout seconds for file descriptor to be ready
-                        to read. If -1, use self.timeout. If 0, poll.
-        :return:        String containing the bytes read
+        Use :func:`select.select`, timeout is implemented conditionally for
+        POSIX systems.
+
+        :param int size: Read at most *size* bytes.
+        :param int timeout: Wait timeout seconds for file descriptor to be
+            ready to read. When -1 (default), use self.timeout. When 0, poll.
+        :return: String containing the bytes read
         """
         if os.name == 'posix':
             if timeout == -1:

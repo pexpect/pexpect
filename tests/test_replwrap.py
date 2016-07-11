@@ -34,6 +34,8 @@ class REPLWrapTestCase(unittest.TestCase):
         assert 'SLEEP' in res, res
 
     def test_bash_env(self):
+        """env, which displays PS1=..., should not mess up finding the prompt.
+        """
         bash = replwrap.bash()
         res = bash.run_command("env")
         self.assertIn('PS1', res)

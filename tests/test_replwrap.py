@@ -33,6 +33,15 @@ class REPLWrapTestCase(unittest.TestCase):
         res = bash.run_command('man sleep', timeout=5)
         assert 'SLEEP' in res, res
 
+    def test_bash_env(self):
+        """env, which displays PS1=..., should not mess up finding the prompt.
+        """
+        bash = replwrap.bash()
+        res = bash.run_command("env")
+        self.assertIn('PS1', res)
+        res = bash.run_command("echo $HOME")
+        assert res.startswith('/'), res
+
     def test_long_running_multiline(self):
         " ensure the default timeout is used for multi-line commands. "
         bash = replwrap.bash()

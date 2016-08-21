@@ -277,7 +277,7 @@ class pxssh (spawn):
         # This does not distinguish between a remote server 'password' prompt
         # and a local ssh 'passphrase' prompt (for unlocking a private key).
         spawn._spawn(self, cmd)
-        i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT, "(?i)connection closed by remote host"], timeout=login_timeout)
+        i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT, "(?i)connection closed by remote host", EOF], timeout=login_timeout)
 
         # First phase
         if i==0:
@@ -292,6 +292,9 @@ class pxssh (spawn):
         if i==4:
             self.sendline(terminal_type)
             i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
+        if i==7:
+            self.close()
+            raise ExceptionPxssh('Could not establish connection to host')
 
         # Second phase
         if i==0:

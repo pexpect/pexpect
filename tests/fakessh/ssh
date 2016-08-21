@@ -7,6 +7,11 @@ PY3 = (sys.version_info[0] >= 3)
 if not PY3:
     input = raw_input
 
+server = sys.argv[-1]
+if server == 'noserver':
+    print('No route to host')
+    sys.exit(1)
+
 print("Mock SSH client for tests. Do not enter real security info.")
 
 pw = getpass.getpass('password:')

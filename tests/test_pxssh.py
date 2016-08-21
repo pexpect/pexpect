@@ -48,6 +48,15 @@ class PxsshTestCase(SSHTestBase):
         else:
             assert False, 'should have raised exception, pxssh.ExceptionPxssh'
 
+    def test_connection_refused(self):
+        ssh = pxssh.pxssh()
+        try:
+            ssh.login('noserver', 'me', password='s3cret')
+        except pxssh.ExceptionPxssh:
+            pass
+        else:
+            assert False, 'should have raised exception, pxssh.ExceptionPxssh'
+
 
 if __name__ == '__main__':
     unittest.main()

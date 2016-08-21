@@ -4,6 +4,13 @@ History
 Releases
 --------
 
+Version 4.2.1
+`````````````
+
+* Fix to allow running ``env`` in replwrap-ed bash.
+* Raise more informative exception from pxssh if it fails to connect.
+* Change ``passmass`` example to not log passwords entered.
+
 Version 4.2
 ```````````
 

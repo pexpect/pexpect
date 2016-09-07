@@ -115,6 +115,8 @@ class SpawnBase(object):
                 self.linesep = os.linesep.decode('ascii')
             # This can handle unicode in both Python 2 and 3
             self.write_to_stdout = sys.stdout.write
+        # storage for async transport
+        self.async_pw_transport = None
 
     def _log(self, s, direction):
         if self.logfile is not None:

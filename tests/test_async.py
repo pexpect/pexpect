@@ -3,6 +3,7 @@ try:
 except ImportError:
     asyncio = None
 
+import gc
 import sys
 import unittest
 
@@ -55,3 +56,15 @@ class AsyncTests(PexpectTestCase):
         assert run(p.expect_exact(u'5', async=True)) == 0
         assert run(p.expect_exact([u'wpeok', u'11'], async=True)) == 1
         assert run(p.expect_exact([u'foo', pexpect.EOF], async=True)) == 1
+
+    def test_async_and_gc(self):
+        p = pexpect.spawn('%s sleep_for.py 1' % sys.executable, encoding='utf8')
+        assert run(p.expect_exact(u'READY', async=True)) == 0
+        gc.collect()
+        assert run(p.expect_exact(u'END', async=True)) == 0
+
+    def test_async_and_sync(self):
+        p = pexpect.spawn('echo 1234', encoding='utf8', maxread=1)
+        assert run(p.expect_exact(u'1', async=True)) == 0
+        assert p.expect_exact(u'2') == 0
+        assert run(p.expect_exact(u'3', async=True)) == 0

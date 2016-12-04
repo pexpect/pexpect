@@ -202,7 +202,7 @@ class pxssh(spawn):
 
         while True:
             try:
-                char_buffer = ssh.read_nonblocking(size=1, timeout=0.5)
+                char_buffer = self.read_nonblocking(size=1, timeout=0.5)
                 buffer += char_buffer
                 char_buffer = ""
 

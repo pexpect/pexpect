@@ -34,9 +34,6 @@ class ExceptionPxssh(ExceptionPexpect):
 
 class pxssh(spawn):
 
-    """
-        Class to handle basic commincation and setup of the ssh session.
-    """
     _PROMPT_ESCAPES =["$", "(", ")", "[", "]"]
     _REGEX_STRINGS = {
         "accept_key": "(?i)are you sure you want to continue connecting",
@@ -121,11 +118,7 @@ class pxssh(spawn):
         )
 
     def _second_phase(self, result):
-        """
-            Second Phase Checks.
-        :param result: type: int
-        :return:
-        """
+
         second_phase_success = {
             1: "prompt",
             5: "timeout"
@@ -134,7 +127,7 @@ class pxssh(spawn):
             0: 'Got "are you sure" prompt twice.',
             2: 'password refused',
             3: 'permission denied',
-            4: 'Weird error. Got "terminal type" prompt twice.',
+            4: 'Got "terminal type" prompt twice.',
             6: 'connection closed'
         }
 
@@ -166,7 +159,7 @@ class pxssh(spawn):
         self.force_password = False
         self.PROMPT = None
         self.login_timeout = 10
-        self.options = {}
+        self.options = options
         self.original_prompt = r"[#$]"
         self.password = None
         self.server = None
@@ -192,26 +185,18 @@ class pxssh(spawn):
             self.set_unique_prompt()
 
     def logout(self):
-        """
-            Sends exit to the remote shell.
 
-            If there are stopped jobs then this automatically sends exit twice.
-        :return:
-        """
         self.sendline("exit")
         index = self.expect([EOF, "(?i)there are stopped jobs"])
+
         if index==1:
             self.sendline("exit")
             self.expect(EOF)
+
         self.close()
 
     def read_prompt(self):
-        """
-            Read the character buffer coming in on the ssh channel, till a timeout occurs, this should be the end of the
-            prompt.
-            # Todo: Need to check that this will get the correct prompt even on a slow device. prehaps a sliding window ?
-        :return:
-        """
+
         buffer = ''
         char_buffer = ''
 
@@ -220,15 +205,14 @@ class pxssh(spawn):
                 char_buffer = ssh.read_nonblocking(size=1, timeout=0.5)
                 buffer += char_buffer
                 char_buffer = ""
-            except TIMEOUT as err:
+
+            except TIMEOUT:
                 break
+
         return buffer
 
     def set_unique_prompt(self):
-        """
-            Method to auto set the prompt.
-        :return:
-        """
+
         self.sendline('')
         x = self.read_prompt()
 
@@ -241,11 +225,7 @@ class pxssh(spawn):
                 self.PROMPT = self.PROMPT.replace(escape, "\{0}".format(escape))
 
     def prompt(self, timeout=-1):
-        """
-            Match the original prompt
-        :param timeout:
-        :return:
-        """
+
         if timeout == -1:
             timeout = self.timeout
 
@@ -253,16 +233,3 @@ class pxssh(spawn):
         if i==1:
             return False
         return True
-
-
-if __name__ == '__main__':
-    ssh = pxssh()
-
-    ssh.login("ssh unnethack@eu.un.nethack.nu", "john", "05May1981")
-
-    ssh.sendline("curl -kvvL http://www.bbc.co.uk")
-    ssh.prompt()
-    print ssh.before
-
-    raw_input("")
-

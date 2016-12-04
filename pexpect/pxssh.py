@@ -50,6 +50,9 @@ class pxssh(spawn):
         "port": " -p {0}",
         "ssh_key": " -i {0}"
     }
+    PROMPT_SET_SH = "PS1='[PEXPECT]\$ '"
+    PROMPT_SET_CSH = "set prompt='[PEXPECT]\$ '"
+    UNIQUE_PROMPT = "\[PEXPECT\][\$\#] "
 
     def _build_ssh_command(self):
         """
@@ -137,7 +140,7 @@ class pxssh(spawn):
 
             if result in second_phase_errors:
                 self.close()
-                raise ExceptionPxssh(second_phase_errors[result[0]])
+                raise ExceptionPxssh(second_phase_errors[result])
             else:
                 self.close()
                 raise ExceptionPxssh("Unknown ssh error.")
@@ -157,7 +160,7 @@ class pxssh(spawn):
         self.auto_prompt_reset = True
         self.command = None
         self.force_password = False
-        self.PROMPT = None
+        self.PROMPT = self.UNIQUE_PROMPT
         self.login_timeout = 10
         self.options = options
         self.original_prompt = r"[#$]"
@@ -182,7 +185,11 @@ class pxssh(spawn):
         self._second_phase(first_phase)
 
         if self.auto_prompt_reset:
-            self.set_unique_prompt()
+            if not self.set_unique_prompt():
+                self.close()
+                raise ExceptionPxssh('could not set shell prompt '
+                                     '(received: %r, expected: %r).' % (
+                                         self.before, self.PROMPT,))
 
     def logout(self):
 
@@ -212,6 +219,18 @@ class pxssh(spawn):
         return buffer
 
     def set_unique_prompt(self):
+
+        self.sendline("unset PROMPT_COMMAND")
+        self.sendline(self.PROMPT_SET_SH)  # sh-style
+        i = self.expect([TIMEOUT, self.PROMPT], timeout=10)
+        if i == 0:  # csh-style
+            self.sendline(self.PROMPT_SET_CSH)
+            i = self.expect([TIMEOUT, self.PROMPT], timeout=10)
+            if i == 0:
+                return False
+        return True
+
+    def sync_original_prompt(self):
 
         self.sendline('')
         x = self.read_prompt()

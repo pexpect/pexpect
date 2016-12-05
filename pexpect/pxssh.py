@@ -61,7 +61,7 @@ class pxssh(spawn):
         """
         options = ''.join([" -o '%s=%s'" % (o, v) for (o, v) in self.options.items()])
 
-        for key, val in pxssh._SSH_OPTIONS.iteritems():
+        for key, val in pxssh._SSH_OPTIONS.items():
             try:
                 options += val.format(getattr(self, key))
             except AttributeError:

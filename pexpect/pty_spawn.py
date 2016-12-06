@@ -106,8 +106,9 @@ class spawn(SpawnBase):
             child = pexpect.spawn('some_command')
             child.logfile = sys.stdout
 
-            # In Python 3, spawnu should be used to give str to stdout:
-            child = pexpect.spawnu('some_command')
+            # In Python 3, spawn with the argument ``encoding`` should be used to ensure utf-8 
+            encoded data is sent to stdout:
+            child = pexpect.spawn('some_command', encoding='utf-8')
             child.logfile = sys.stdout
 
         The logfile_read and logfile_send members can be used to separately log

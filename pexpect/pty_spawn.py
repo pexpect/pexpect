@@ -106,8 +106,8 @@ class spawn(SpawnBase):
             child = pexpect.spawn('some_command')
             child.logfile = sys.stdout
 
-            # In Python 3, spawn with the argument ``encoding`` should be used to ensure utf-8 
-            encoded data is sent to stdout:
+            # In Python 3, we'll use the ``encoding`` argument to decode data
+            # from the subprocess and handle it as unicode:
             child = pexpect.spawn('some_command', encoding='utf-8')
             child.logfile = sys.stdout
 

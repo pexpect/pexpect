@@ -18,7 +18,7 @@ fix_cvs_files.py
     CVS. This script scans the given path to find binary files;
     checks with CVS to see if the sticky options are set to -kb;
     finally if sticky options are not -kb then uses 'cvs admin'
-    to set the -kb option. 
+    to set the -kb option.
 
 ftp.py
     This demonstrates an FTP "bookmark".
@@ -50,9 +50,6 @@ rippy.py
     video file to another. It has options for resampling the audio stream;
     removing interlace artifacts, fitting to a target file size, etc.
     There are lots of options, but the process is simple and easy to use.
-
-sshls.py
-    This lists a directory on a remote machine.
 
 ssh_tunnel.py
     This starts an SSH tunnel to a remote machine. It monitors the connection

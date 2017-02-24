@@ -230,7 +230,7 @@ class pxssh (spawn):
     def login (self, server, username, password='', terminal_type='ansi',
                 original_prompt=r"[#$]", login_timeout=10, port=None,
                 auto_prompt_reset=True, ssh_key=None, quiet=True,
-                sync_multiplier=1, check_local_ip=True, bail_on_timeout=False):
+                sync_multiplier=1, check_local_ip=True):
         '''This logs the user into the given server.
 
         It uses
@@ -324,7 +324,7 @@ class pxssh (spawn):
             #can't be sure, but it's safe to guess that we did login because if
             #I presume wrong and we are not logged in then this should be caught
             #later when I try to set the shell prompt.
-            if bail_on_timeout:
+            if not auto_prompt_reset:
                 raise ExceptionPxssh('connection timeout')
             pass
         elif i==6: # Connection closed by remote host

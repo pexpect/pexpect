@@ -47,6 +47,7 @@ class Expecter(object):
             msg += '\nsearcher: %s' % self.searcher
             if err is not None:
                 msg = str(err) + '\n' + msg
+            spawn.flag_eof = True
             raise EOF(msg)
     
     def timeout(self, err=None):

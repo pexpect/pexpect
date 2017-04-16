@@ -9,6 +9,71 @@ handle back to a worker thread. The child is successfully spawned but you can't
 interact with it. The only way to make it work is to spawn and interact with the
 child all in the same thread. [Adam Kerrison]
 
+Blocking Child
+--------------
+
+A child process that writes to its standard out will eventually block unless
+you continue to call :meth:`~pexpect.spawn.expect` or some family of read
+methods.  Once the pipe buffer is filled, the child's call to write(2)
+will block.  If this child provides other services, such as a network server,
+such services will be unavailable until the write(2) call returns.
+
+There are many solutions, the simplest is to simply expect ``pexpect.EOF``,
+perhaps in a background thread, this ensures that all child process output
+is read until the program exits, for example::
+
+    import pexpect, threading
+
+    class DiscardOutput(threading.Thread):
+        def __init__(self, child):
+            self.child = child
+            threading.Thread.__init__(self)
+
+        def run(self):
+            # discard all output, expecting to program exit
+            self.child.expect(pexpect.EOF)
+
+    bash = pexpect.spawn('bash', echo=False)
+    bash.sendline('n=0; while [ $n -lt 10000 ]; do echo $n; '
+                  'let n="$n + 1"; done; exit')
+    # in this example, we care only that we've reached #100,
+    bash.expect(re.compile('\s100\s'))
+    # after which, we don't care what happens; we begin discarding output
+    thread = DiscardOutput(bash)
+    thread.start()
+    thread.join()
+
+You may also use the "disown" facility of bash(1) to put the child process in
+the background, then detatch it from the parent process::
+
+    from pexpect import spawn, EOF
+
+    # first, start bash
+    jot = spawn('bash')
+
+    # then start the process that will run for long time
+    jot.sendline('jot 100000 1')
+
+    # Look for a marker (here, 220 surrounded by newlines)
+    jot.expect(re.compile('\s220\s'))
+
+    # stop the jot(1) process (SIGSTOP)
+    jot.sendcontrol('z')
+
+    # wait for bash to return to prompt
+    jot.expect(u'Stopped')
+
+    # put jot(1) in background,
+    # disown process ownership,
+    # exit bash.
+    jot.sendline('bg; disown; exit')
+
+    # wait for bash to exit
+    jot.expect(EOF)
+
+    # the program jot(1) has continued and completed
+    # without requiring read from parent.
+
 Timing issue with send() and sendline()
 ---------------------------------------
 

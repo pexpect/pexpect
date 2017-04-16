@@ -30,19 +30,36 @@ rmvirtualenv ${venv} || true
 mkvirtualenv -p `which python${pyversion}` ${venv} || true
 workon ${venv}
 
-# install ptyprocess
-cd $here/../../ptyprocess
-pip uninstall --yes ptyprocess || true
-python setup.py install
-
 # install all test requirements
 pip install --upgrade pytest-cov coverage coveralls pytest-capturelog
 
-# run tests
+# test ptyprocess first,
+cd $here/../../ptyprocess
+pip uninstall --yes ptyprocess || true
+ret=0
+py.test \
+	--cov ptyprocess \
+	--cov-config .coveragerc \
+	--junit-xml=results.ptyprocess.${osrel}.py${pyversion}.xml \
+	--verbose \
+	--verbose \
+	"$@" || ret=$?
+
+if [ $ret -ne 0 ]; then
+	# we always exit 0, preferring instead the jUnit XML
+	# results to be the dominate cause of a failed build.
+	echo "py.test returned exit code ${ret}." >&2
+	echo "the build should detect and report these failing tests." >&2
+fi
+
+# install ptyprocess as a package,
+python setup.py install
+
+# run pexpect tests (now that ptyprocess dependency is fulfilled)
 cd $here/..
 ret=0
 py.test \
-	--cov pexpect \
+	--cov pexpect --cov $here/../../ptyprocess/ptyprocess \
 	--cov-config .coveragerc \
 	--junit-xml=results.${osrel}.py${pyversion}.xml \
 	--verbose \

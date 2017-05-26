@@ -324,6 +324,8 @@ class pxssh (spawn):
             #can't be sure, but it's safe to guess that we did login because if
             #I presume wrong and we are not logged in then this should be caught
             #later when I try to set the shell prompt.
+            if not auto_prompt_reset:
+                raise ExceptionPxssh('connection timeout')
             pass
         elif i==6: # Connection closed by remote host
             self.close()

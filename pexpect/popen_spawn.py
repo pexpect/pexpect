@@ -43,6 +43,7 @@ class PopenSpawn(SpawnBase):
             cmd = shlex.split(cmd)
 
         self.proc = subprocess.Popen(cmd, **kwargs)
+        self.pid = self.proc.pid
         self.closed = False
         self._buf = self.string_type()
 

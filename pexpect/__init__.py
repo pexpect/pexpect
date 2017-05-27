@@ -74,6 +74,8 @@ if sys.platform != 'win32':
     # On Unix, these are available at the top level for backwards compatibility
     from .pty_spawn import spawn, spawnu
     from .run import run, runu
+else:
+	import popen_spawn
 
 __version__ = '4.2.1'
 __revision__ = ''

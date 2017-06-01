@@ -29,8 +29,8 @@ automated software testing. Pexpect is in the spirit of Don Libes' Expect, but
 Pexpect is pure Python.
 
 The main features of Pexpect require the pty module in the Python standard
-library, which is only available on Unix-like systems. Some features—waiting
-for patterns from file descriptors or subprocesses—are also available on
+library, which is only available on Unix-like systems. Some features waiting
+for patterns from file descriptors or subprocesses are also available on
 Windows.
 """
 

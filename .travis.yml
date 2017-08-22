@@ -7,6 +7,11 @@ python:
   - 3.5
   - pypy
 
+matrix:
+  allow_failures:
+    # PyPy on Travis is currently incompatible with Cryptography.
+    - python: pypy
+
 install:
   - export PYTHONIOENCODING=UTF8
   - pip install coveralls pytest-cov ptyprocess

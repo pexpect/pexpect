@@ -249,9 +249,19 @@ Pexpect on Windows
 
 Pexpect can be used on Windows to wait for a pattern to be produced by a child
 process, using :class:`pexpect.popen_spawn.PopenSpawn`, or a file descriptor,
-using :class:`pexpect.fdpexpect.fdspawn`. This should be considered experimental
-for now.
+using :class:`pexpect.fdpexpect.fdspawn`.
 
 :class:`pexpect.spawn` and :func:`pexpect.run` are *not* available on Windows,
 as they rely on Unix pseudoterminals (ptys). Cross platform code must not use
 these.
+
+``PopenSpawn`` is not a direct replacement for ``spawn``. Many programs only
+offer interactive behaviour if they detect that they are running in a terminal.
+When run by ``PopenSpawn``, they may behave differently.
+
+.. seealso::
+
+   `winpexpect <https://pypi.python.org/pypi/winpexpect>`__ and
+   `wexpect <https://gist.github.com/anthonyeden/8488763>`__
+     Two unmaintained pexpect-like modules for Windows, which work with a
+     hidden console.

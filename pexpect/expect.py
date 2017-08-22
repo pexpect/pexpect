@@ -79,7 +79,6 @@ class Expecter(object):
     def expect_loop(self, timeout=-1):
         """Blocking expect"""
         spawn = self.spawn
-        from . import EOF, TIMEOUT
 
         if timeout is not None:
             end_time = time.time() + timeout

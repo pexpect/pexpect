@@ -15,6 +15,7 @@ except ImportError:
 
 from .spawnbase import SpawnBase, PY3
 from .exceptions import EOF
+from .utils import string_types
 
 class PopenSpawn(SpawnBase):
     if PY3:
@@ -39,7 +40,7 @@ class PopenSpawn(SpawnBase):
             kwargs['startupinfo'] = startupinfo
             kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
 
-        if not isinstance(cmd, (list, tuple)):
+        if isinstance(cmd, string_types):
             cmd = shlex.split(cmd)
 
         self.proc = subprocess.Popen(cmd, **kwargs)

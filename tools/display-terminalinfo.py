@@ -201,9 +201,12 @@ def main():
                         value=lflag)
         display_ctl_chars(index=CTLCHAR_INDEX,
                           cc=cc)
-        print('os.ttyname({0}) => {1}'.format(fd, os.ttyname(fd)))
-        print('os.ctermid() => {0}'.format(os.ttyname(fd)))
-
+        try:
+            print('os.ttyname({0}) => {1}'.format(fd, os.ttyname(fd)))
+            print('os.ctermid() => {0}'.format(os.ctermid()))
+        except OSError as e:
+            # Travis fails on ttyname with errno 0 'Error'.
+            print("Error inspecting TTY: {0}".format(e))
 
 if __name__ == '__main__':
     main()

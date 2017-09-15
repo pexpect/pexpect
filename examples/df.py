@@ -35,7 +35,7 @@ import pexpect
 child = pexpect.spawn ('df')
 
 # parse 'df' output into a list.
-pattern = "\n(\S+).*?([0-9]+)%"
+pattern = r"\n(\S+).*?([0-9]+)%"
 filesystem_list = []
 for dummy in range (0, 1000):
     i = child.expect ([pattern, pexpect.EOF])

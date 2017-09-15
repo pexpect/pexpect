@@ -41,7 +41,7 @@ class PopenSpawn(SpawnBase):
             kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
 
         if isinstance(cmd, string_types):
-            cmd = shlex.split(cmd)
+            cmd = shlex.split(cmd, posix=sys.platform != 'win32')
 
         self.proc = subprocess.Popen(cmd, **kwargs)
         self.pid = self.proc.pid

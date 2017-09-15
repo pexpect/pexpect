@@ -200,7 +200,7 @@ Version 2.3
 * Changed the name of ``send_eof()`` to ``sendeof()``.
 * Modified ``kill()`` so that it checks to make sure the pid ``isalive()``.
 * modified ``spawn()`` (really called from ``__spawn()``) so that it does not
-  raise an expection if ``setwinsize()`` fails. Some platforms such as Cygwin
+  raise an exception if ``setwinsize()`` fails. Some platforms such as Cygwin
   do not like setwinsize. This was a constant problem and since it is not a
   critical feature I decided to just silence the error.  Normally I don't like
   to do that, but in this case I'm making an exception.

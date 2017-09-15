@@ -12,7 +12,7 @@ The client web browser needs nothing but CSS and Javascript.
     --port     : set the local port for the server to listen on
     --watch    : show the virtual screen after each client request
 
-This project is probably not the most security concious thing I've ever built.
+This project is probably not the most security conscious thing I've ever built.
 This should be considered an experimental tool -- at best.
 """
 

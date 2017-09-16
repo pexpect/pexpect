@@ -429,7 +429,7 @@ class SpawnBase(object):
 
         # I could have done this more directly by not using expect(), but
         # I deliberately decided to couple read() to expect() so that
-        # I would catch any bugs early and ensure consistant behavior.
+        # I would catch any bugs early and ensure consistent behavior.
         # It's a little less efficient, but there is less for me to
         # worry about if I have to later modify read() or expect().
         # Note, it's OK if size==-1 in the regex. That just means it

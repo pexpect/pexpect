@@ -19,7 +19,7 @@
 # http://www.erlenstar.demon.co.uk/unix/faq_4.html#SEC52
 
 # Nonblocking on Win32?
-# Reasearch this as a way to maybe make pipe work for Win32.
+# Research this as a way to maybe make pipe work for Win32.
 # http://groups.google.com/groups?q=setraw+tty&hl=en&selm=uvgpvisvk.fsf%40roundpoint.com&rnum=7
 # 
 #    if istty:

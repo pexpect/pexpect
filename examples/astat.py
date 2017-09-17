@@ -90,7 +90,7 @@ def main():
     p = pxssh.pxssh()
     p.login(hostname, username, password)
     p.sendline('apachectl status')
-    p.expect('([0-9]+\.[0-9]+)\s*requests/sec')
+    p.expect(r'([0-9]+\.[0-9]+)\s*requests/sec')
     requests_per_second = p.match.groups()[0]
     p.logout()
     print(requests_per_second)

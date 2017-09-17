@@ -206,10 +206,10 @@ def main():
         stddev_trigger = 5
 
     if ipv6_flag:
-        netstat_pattern = '(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+::ffff:(\S+):(\S+)\s+.*?\r'
+        netstat_pattern = r'(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+::ffff:(\S+):(\S+)\s+.*?\r'
     else:
-        netstat_pattern = '(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(?:::ffff:)*(\S+):(\S+)\s+.*?\r'
-        #netstat_pattern = '(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+):(\S+)\s+.*?\r'
+        netstat_pattern = r'(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(?:::ffff:)*(\S+):(\S+)\s+.*?\r'
+        #netstat_pattern = r'(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+):(\S+)\s+.*?\r'
 
     # run netstat (either locally or via SSH).
     if use_localhost:

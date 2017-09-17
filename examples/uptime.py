@@ -54,7 +54,7 @@ import re
 p = pexpect.spawnu('uptime')
 
 # This parses uptime output into the major groups using regex group matching.
-p.expect('up\s+(.*?),\s+([0-9]+) users?,\s+load averages?: ([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9])')
+p.expect(r'up\s+(.*?),\s+([0-9]+) users?,\s+load averages?: ([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9])')
 duration, users, av1, av5, av15 = p.match.groups()
 
 # The duration is a little harder to parse because of all the different
@@ -65,14 +65,14 @@ days = '0'
 hours = '0'
 mins = '0'
 if 'day' in duration:
-    p.match = re.search('([0-9]+)\s+day',duration)
+    p.match = re.search(r'([0-9]+)\s+day',duration)
     days = str(int(p.match.group(1)))
 if ':' in duration:
     p.match = re.search('([0-9]+):([0-9]+)',duration)
     hours = str(int(p.match.group(1)))
     mins = str(int(p.match.group(2)))
 if 'min' in duration:
-    p.match = re.search('([0-9]+)\s+min',duration)
+    p.match = re.search(r'([0-9]+)\s+min',duration)
     mins = str(int(p.match.group(1)))
 
 # Print the parsed fields in CSV format.

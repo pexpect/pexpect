@@ -246,6 +246,10 @@ class pxssh(spawn):
                                          self.before, self.PROMPT,))
 
     def logout(self):
+        """
+            Sends exit to the remote shell.
+            If there are stopped jobs then this automatically sends exit twice.
+        """
 
         self.sendline("exit")
         index = self.expect([EOF, "(?i)there are stopped jobs"])
@@ -274,6 +278,21 @@ class pxssh(spawn):
 
     def set_unique_prompt(self):
 
+        """
+            This sets the remote prompt to something more unique than ``#`` or ``$``.
+            This makes it easier for the :meth:`prompt` method to match the shell prompt
+            unambiguously. This method is called automatically by the :meth:`login`
+            method, but you may want to call it manually if you somehow reset the
+            shell prompt. For example, if you 'su' to a different user then you
+            will need to manually reset the prompt. This sends shell commands to
+            the remote host to set the prompt, so this assumes the remote host is
+            ready to receive commands.
+            Alternatively, you may use your own prompt pattern. In this case you
+            should call :meth:`login` with ``auto_prompt_reset=False``; then set the
+            :attr:`PROMPT` attribute to a regular expression. After that, the
+            :meth:`prompt` method will try to match your prompt pattern.
+        """
+
         self.sendline("unset PROMPT_COMMAND")
         self.sendline(self.PROMPT_SET_SH)  # sh-style
         i = self.expect([TIMEOUT, self.PROMPT], timeout=10)
@@ -285,6 +304,16 @@ class pxssh(spawn):
         return True
 
     def sync_original_prompt(self):
+
+        """
+            This attempts to find the prompt. Basically, press enter and record
+            the response; press enter again and record the response; if the two
+            responses are similar then assume we are at the original prompt.
+            This can be a slow function. Worst case with the default sync_multiplier
+            can take 12 seconds. Low latency connections are more likely to fail
+            with a low sync_multiplier. Best case sync time gets worse with a
+            high sync multiplier (500 ms with default).
+        """
 
         self.sendline('')
         x = self.read_prompt()

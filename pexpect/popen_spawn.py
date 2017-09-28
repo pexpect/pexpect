@@ -40,7 +40,7 @@ class PopenSpawn(SpawnBase):
             kwargs['startupinfo'] = startupinfo
             kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
 
-        if isinstance(cmd, string_types):
+        if isinstance(cmd, string_types) and sys.platform != 'win32':
             cmd = shlex.split(cmd, posix=os.name == 'posix')
 
         self.proc = subprocess.Popen(cmd, **kwargs)

@@ -1,4 +1,4 @@
-.. image:: https://travis-ci.org/pexpect/pexpect.png?branch=master
+.. image:: https://travis-ci.org/pexpect/pexpect.svg?branch=master
    :target: https://travis-ci.org/pexpect/pexpect
    :align: right
    :alt: Build status

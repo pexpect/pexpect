@@ -349,7 +349,7 @@ class SpawnBase(object):
 
         exp = Expecter(self, searcher_re(pattern_list), searchwindowsize)
         if async_:
-            from .async import expect_async
+            from ._async import expect_async
             return expect_async(exp, timeout)
         else:
             return exp.expect_loop(timeout)
@@ -398,7 +398,7 @@ class SpawnBase(object):
 
         exp = Expecter(self, searcher_string(pattern_list), searchwindowsize)
         if async_:
-            from .async import expect_async
+            from ._async import expect_async
             return expect_async(exp, timeout)
         else:
             return exp.expect_loop(timeout)
@@ -501,7 +501,7 @@ class SpawnBase(object):
     # For 'with spawn(...) as child:'
     def __enter__(self):
         return self
-    
+
     def __exit__(self, etype, evalue, tb):
         # We rely on subclasses to implement close(). If they don't, it's not
         # clear what a context manager should do.

@@ -4,6 +4,31 @@ History
 Releases
 --------
 
+Version 4.3
+```````````
+
+* The ``async=`` parameter to integrate with asyncio has become ``async_=``
+  (:ghpull:`431`), as *async* is becoming a Python keyword from Python 3.6.
+  Pexpect will still recognise ``async`` as an alternative spelling.
+* Similarly, the module ``pexpect.async`` became ``pexpect._async``
+  (:ghpull:`450`). This module is not part of the public API.
+* Fix problems with asyncio objects closing file descriptors during garbage
+  collection (:ghissue:`347`, :ghpull:`376`).
+* Set the ``.pid`` attribute of a :class:`~.PopenSpawn` object (:ghpull:`417`).
+* Fix passing Windows paths to :class:`~.PopenSpawn` (:ghpull:`446`).
+* :class:`~.PopenSpawn` on Windows can pass string commands through to ``Popen``
+  without splitting them into a list (:ghpull:`447`).
+* Stop ``shlex`` trying to read from stdin when :class:`~.PopenSpawn` is
+  passed ``cmd=None`` (:ghissue:`433`, :ghpull:`434`).
+* Ensure that an error closing a Pexpect spawn object raises a Pexpect error,
+  rather than a Ptyprocess error (:ghissue:`383`, :ghpull:`386`).
+* Cleaned up invalid backslash escape sequences in strings (:ghpull:`430`,
+  :ghpull:`445`).
+* The pattern for a password prompt in :mod:`pexpect.pxssh` changed from
+  ``password`` to ``password:`` (:ghpull:`452`).
+* Correct docstring for using unicode with spawn (:ghpull:`395`).
+* Various other improvements to documentation.
+
 Version 4.2.1
 `````````````
 

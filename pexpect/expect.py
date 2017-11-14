@@ -30,7 +30,6 @@ class Expecter(object):
     
     def eof(self, err=None):
         spawn = self.spawn
-        from . import EOF
 
         spawn.before = spawn.buffer
         spawn.buffer = spawn.string_type()
@@ -51,7 +50,6 @@ class Expecter(object):
     
     def timeout(self, err=None):
         spawn = self.spawn
-        from . import TIMEOUT
 
         spawn.before = spawn.buffer
         spawn.after = TIMEOUT

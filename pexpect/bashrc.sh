@@ -11,3 +11,6 @@ fi
 
 # Reset PS1 so pexpect can find it
 PS1="$"
+
+# Unset PROMPT_COMMAND, so that it can't change PS1 to something unexpected.
+unset PROMPT_COMMAND

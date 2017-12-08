@@ -1,3 +1,4 @@
+# Different platforms have different names for the systemwide bashrc
 if [[ -f /etc/bashrc ]]; then
   source /etc/bashrc
 fi

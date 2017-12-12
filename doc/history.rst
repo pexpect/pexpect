@@ -4,6 +4,14 @@ History
 Releases
 --------
 
+Version 4.3.1
+`````````````
+
+* When launching bash for :mod:`pexpect.replwrap`, load the system ``bashrc``
+  from a couple of different common locations (:ghpull:`457`), and then unset
+  the ``PROMPT_COMMAND`` environment variable, which can interfere with the
+  prompt we're expecting (:ghpull:`459`).
+
 Version 4.3
 ```````````
 

@@ -114,12 +114,12 @@ class pxssh (spawn):
         #prompt command different than the regex.
 
         # used to match the command-line prompt
-        self.UNIQUE_PROMPT = "\[PEXPECT\][\$\#] "
+        self.UNIQUE_PROMPT = r"\[PEXPECT\][\$\#] "
         self.PROMPT = self.UNIQUE_PROMPT
 
         # used to set shell command-line prompt to UNIQUE_PROMPT.
-        self.PROMPT_SET_SH = "PS1='[PEXPECT]\$ '"
-        self.PROMPT_SET_CSH = "set prompt='[PEXPECT]\$ '"
+        self.PROMPT_SET_SH = r"PS1='[PEXPECT]\$ '"
+        self.PROMPT_SET_CSH = r"set prompt='[PEXPECT]\$ '"
         self.SSH_OPTS = ("-o'RSAAuthentication=no'"
                 + " -o 'PubkeyAuthentication=no'")
 # Disabling host key checking, makes you vulnerable to MITM attacks.
@@ -277,7 +277,7 @@ class pxssh (spawn):
         # This does not distinguish between a remote server 'password' prompt
         # and a local ssh 'passphrase' prompt (for unlocking a private key).
         spawn._spawn(self, cmd)
-        i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT, "(?i)connection closed by remote host", EOF], timeout=login_timeout)
+        i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password:)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT, "(?i)connection closed by remote host", EOF], timeout=login_timeout)
 
         # First phase
         if i==0:
@@ -285,13 +285,13 @@ class pxssh (spawn):
             # This is what you get if SSH does not have the remote host's
             # public key stored in the 'known_hosts' cache.
             self.sendline("yes")
-            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
+            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password:)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
         if i==2: # password or passphrase
             self.sendline(password)
-            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
+            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password:)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
         if i==4:
             self.sendline(terminal_type)
-            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
+            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password:)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
         if i==7:
             self.close()
             raise ExceptionPxssh('Could not establish connection to host')

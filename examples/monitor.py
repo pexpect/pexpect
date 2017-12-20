@@ -59,7 +59,7 @@ except NameError:
 # Some constants.
 #
 COMMAND_PROMPT = '[#$] ' ### This is way too simple for industrial use -- we will change is ASAP.
-TERMINAL_PROMPT = '(?i)terminal type\?'
+TERMINAL_PROMPT = r'(?i)terminal type\?'
 TERMINAL_TYPE = 'vt100'
 # This is the prompt we get if SSH does not have the remote host's public key stored in the cache.
 SSH_NEWKEY = '(?i)are you sure you want to continue connecting'
@@ -130,12 +130,12 @@ def main():
     #
     # Set command prompt to something more unique.
     #
-    COMMAND_PROMPT = "\[PEXPECT\]\$ "
-    child.sendline ("PS1='[PEXPECT]\$ '") # In case of sh-style
+    COMMAND_PROMPT = r"\[PEXPECT\]\$ "
+    child.sendline (r"PS1='[PEXPECT]\$ '") # In case of sh-style
     i = child.expect ([pexpect.TIMEOUT, COMMAND_PROMPT], timeout=10)
     if i == 0:
         print("# Couldn't set sh-style prompt -- trying csh-style.")
-        child.sendline ("set prompt='[PEXPECT]\$ '")
+        child.sendline (r"set prompt='[PEXPECT]\$ '")
         i = child.expect ([pexpect.TIMEOUT, COMMAND_PROMPT], timeout=10)
         if i == 0:
             print("Failed to set command prompt using sh or csh style.")
@@ -159,20 +159,20 @@ def main():
 
     # Run and parse 'uptime'.
     child.sendline ('uptime')
-    child.expect('up\s+(.*?),\s+([0-9]+) users?,\s+load averages?: ([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9])')
+    child.expect(r'up\s+(.*?),\s+([0-9]+) users?,\s+load averages?: ([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9])')
     duration, users, av1, av5, av15 = child.match.groups()
     days = '0'
     hours = '0'
     mins = '0'
     if 'day' in duration:
-        child.match = re.search('([0-9]+)\s+day',duration)
+        child.match = re.search(r'([0-9]+)\s+day',duration)
         days = str(int(child.match.group(1)))
     if ':' in duration:
         child.match = re.search('([0-9]+):([0-9]+)',duration)
         hours = str(int(child.match.group(1)))
         mins = str(int(child.match.group(2)))
     if 'min' in duration:
-        child.match = re.search('([0-9]+)\s+min',duration)
+        child.match = re.search(r'([0-9]+)\s+min',duration)
         mins = str(int(child.match.group(1)))
     print()
     print('Uptime: %s days, %s users, %s (1 min), %s (5 min), %s (15 min)' % (

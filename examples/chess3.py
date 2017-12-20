@@ -29,8 +29,8 @@ from __future__ import absolute_import
 import pexpect
 import ANSI
 
-REGEX_MOVE = '(?:[a-z]|\x1b\[C)(?:[0-9]|\x1b\[C)(?:[a-z]|\x1b\[C)(?:[0-9]|\x1b\[C)'
-REGEX_MOVE_PART = '(?:[0-9]|\x1b\[C)(?:[a-z]|\x1b\[C)(?:[0-9]|\x1b\[C)'
+REGEX_MOVE = r'(?:[a-z]|\x1b\[C)(?:[0-9]|\x1b\[C)(?:[a-z]|\x1b\[C)(?:[0-9]|\x1b\[C)'
+REGEX_MOVE_PART = r'(?:[0-9]|\x1b\[C)(?:[a-z]|\x1b\[C)(?:[0-9]|\x1b\[C)'
 
 class Chess:
 
@@ -74,7 +74,7 @@ class Chess:
 
     def get_computer_move (self):
         print('Here')
-        i = self.child.expect (['\[17;59H', '\[17;58H'])
+        i = self.child.expect ([r'\[17;59H', r'\[17;58H'])
         print(i)
         if i == 0:
             self.child.expect (REGEX_MOVE)

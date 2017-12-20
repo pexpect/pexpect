@@ -5,7 +5,14 @@ python:
   - 3.3
   - 3.4
   - 3.5
+  - 3.6
   - pypy
+  - nightly
+
+matrix:
+  allow_failures:
+    # PyPy on Travis is currently incompatible with Cryptography.
+    - python: pypy
 
 install:
   - export PYTHONIOENCODING=UTF8

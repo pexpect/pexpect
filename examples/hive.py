@@ -15,7 +15,7 @@ Example:
     password:
     connecting to host1.example.com - OK
     connecting to host2.example.net - OK
-    targetting hosts: 192.168.1.104 192.168.1.107
+    targeting hosts: 192.168.1.104 192.168.1.107
     CMD (? for help) > uptime
     =======================================================================
     host1.example.com
@@ -160,7 +160,7 @@ CMD_HELP='''Hive commands are preceded by a colon : (just think of vi).
 :resync
 
     This is similar to :sync, but it does not change the mode. It looks for the
-    prompt and thus consumes all input from all targetted hosts.
+    prompt and thus consumes all input from all targeted hosts.
 
 :prompt
 
@@ -170,12 +170,12 @@ CMD_HELP='''Hive commands are preceded by a colon : (just think of vi).
 
 :send my text
 
-    This will send the 'my text' wihtout a line feed to the targetted hosts.
+    This will send the 'my text' wihtout a line feed to the targeted hosts.
     This output of the hosts is not automatically synchronized.
 
 :control X
 
-    This will send the given control character to the targetted hosts.
+    This will send the given control character to the targeted hosts.
     For example, ":control c" will send ASCII 3.
 
 :exit
@@ -255,7 +255,7 @@ def main ():
 
     synchronous_mode = True
     target_hostnames = host_names[:]
-    print('targetting hosts:', ' '.join(target_hostnames))
+    print('targeting hosts:', ' '.join(target_hostnames))
     while True:
         cmd = raw_input('CMD (? for help) > ')
         cmd = cmd.strip()
@@ -348,7 +348,7 @@ def main ():
             target_hostnames = cmd.split()[1:]
             if len(target_hostnames) == 0 or target_hostnames[0] == all:
                 target_hostnames = host_names[:]
-            print('targetting hosts:', ' '.join(target_hostnames))
+            print('targeting hosts:', ' '.join(target_hostnames))
             continue
         elif cmd == ':exit' or cmd == ':q' or cmd == ':quit':
             break

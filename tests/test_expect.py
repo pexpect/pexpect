@@ -400,6 +400,14 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         else:
             self.fail ('Expected an EOF exception.')
 
+    def test_buffer_interface(self):
+        p = pexpect.spawn('cat', timeout=5)
+        p.sendline (b'Hello')
+        p.expect (b'Hello')
+        assert len(p.buffer)
+        p.buffer = b'Testing'
+        p.sendeof ()
+
     def _before_after(self, p):
         p.timeout = 5
 

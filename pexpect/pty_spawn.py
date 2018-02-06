@@ -322,6 +322,7 @@ class spawn(SpawnBase):
             self.ptyproc.close(force=force)
         self.isalive()  # Update exit status from ptyproc
         self.child_fd = -1
+        self.closed = True
 
     def isatty(self):
         '''This returns True if the file descriptor is open and connected to a
@@ -729,9 +730,10 @@ class spawn(SpawnBase):
                 s = struct.pack("HHHH", 0, 0, 0, 0)
                 a = struct.unpack('hhhh', fcntl.ioctl(sys.stdout.fileno(),
                     termios.TIOCGWINSZ , s))
-                global p
-                p.setwinsize(a[0],a[1])
-            # Note this 'p' global and used in sigwinch_passthrough.
+                if not self.closed:
+                    p.setwinsize(a[0],a[1])
+
+            # Note this 'p' is global and used in sigwinch_passthrough.
             p = pexpect.spawn('/bin/bash')
             signal.signal(signal.SIGWINCH, sigwinch_passthrough)
             p.interact()

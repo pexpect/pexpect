@@ -730,7 +730,7 @@ class spawn(SpawnBase):
                 s = struct.pack("HHHH", 0, 0, 0, 0)
                 a = struct.unpack('hhhh', fcntl.ioctl(sys.stdout.fileno(),
                     termios.TIOCGWINSZ , s))
-                if not self.closed:
+                if not p.closed:
                     p.setwinsize(a[0],a[1])
 
             # Note this 'p' is global and used in sigwinch_passthrough.

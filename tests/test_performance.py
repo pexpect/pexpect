@@ -23,6 +23,7 @@ from __future__ import print_function
 import unittest, time, sys
 import platform
 import pexpect
+import re
 from . import PexpectTestCase
 
 # This isn't exactly a unit test, but it fits in nicely with the rest of the tests.
@@ -100,6 +101,11 @@ class PerformanceTestCase (PexpectTestCase.PexpectTestCase):
         start_time = time.time()
         self.faster_range(100000)
         print("100000 calls to faster_range:", (time.time() - start_time))
+
+    def test_large_stdout_stream(self):
+        e = pexpect.spawn('openssl rand -base64 {}'.format(1024*1024*25), searchwindowsize=1000)
+        resp = e.expect(['Password:', pexpect.EOF, pexpect.TIMEOUT])
+        assert resp == 1  # index 1 == EOF
 
 if __name__ == "__main__":
     unittest.main()

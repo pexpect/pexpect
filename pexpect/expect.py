@@ -9,30 +9,42 @@ class Expecter(object):
         if searchwindowsize == -1:
             searchwindowsize = spawn.searchwindowsize
         self.searchwindowsize = searchwindowsize
-    
+
     def new_data(self, data):
         spawn = self.spawn
         searcher = self.searcher
 
-        incoming = spawn.buffer + data
-        freshlen = len(data)
-        index = searcher.search(incoming, freshlen, self.searchwindowsize)
+        pos = spawn._buffer.tell()
+        spawn._buffer.write(data)
+
+        # determine which chunk of data to search; if a windowsize is
+        # specified, this is the *new* data + the preceding <windowsize> bytes
+        if self.searchwindowsize:
+            spawn._buffer.seek(max(0, pos - self.searchwindowsize))
+            window = spawn._buffer.read(self.searchwindowsize + len(data))
+        else:
+            # otherwise, search the whole buffer (really slow for large datasets)
+            window = spawn.buffer
+        index = searcher.search(window, len(data))
         if index >= 0:
-            spawn.buffer = incoming[searcher.end:]
-            spawn.before = incoming[: searcher.start]
-            spawn.after = incoming[searcher.start: searcher.end]
+            value = spawn.buffer
+            spawn._buffer = spawn.buffer_type()
+            spawn._buffer.write(value[searcher.end:])
+            spawn.before = value[: searcher.start]
+            spawn.after = value[searcher.start: searcher.end]
             spawn.match = searcher.match
             spawn.match_index = index
             # Found a match
             return index
-    
-        spawn.buffer = incoming
-    
+        elif self.searchwindowsize:
+            spawn._buffer = spawn.buffer_type()
+            spawn._buffer.write(window)
+
     def eof(self, err=None):
         spawn = self.spawn
 
         spawn.before = spawn.buffer
-        spawn.buffer = spawn.string_type()
+        spawn._buffer = spawn.buffer_type()
         spawn.after = EOF
         index = self.searcher.eof_index
         if index >= 0:
@@ -83,7 +95,7 @@ class Expecter(object):
 
         try:
             incoming = spawn.buffer
-            spawn.buffer = spawn.string_type()  # Treat buffer as new data
+            spawn._buffer = spawn.buffer_type()
             while True:
                 idx = self.new_data(incoming)
                 # Keep reading until exception or return.

@@ -4,6 +4,19 @@ History
 Releases
 --------
 
+Version 4.4
+```````````
+
+* :class:`~.PopenSpawn` now has a ``preexec_fn`` parameter, like :class:`~.spawn`
+  and :class:`subprocess.Popen`, for a function to be called in the child
+  process before executing the new command. Like in ``Popen``, this works only
+  in POSIX, and can cause issues if your application also uses threads
+  (:ghpull:`460`).
+* Significant performance improvements when processing large amounts of data
+  (:ghpull:`464`).
+* Ensure that ``spawn.closed`` gets set by :meth:`~.spawn.close`, and improve
+  an example for passing ``SIGWINCH`` through to a child process (:ghpull:`466`).
+
 Version 4.3.1
 `````````````
 

@@ -271,7 +271,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         expected_output = '{0}:'.format(searcher.__name__)
         idx = 0
         for word in given_words:
-            expected_output += fmt.format(idx, '"{0}"'.format(word))
+            expected_output += fmt.format(idx, "'{0}'".format(word))
             idx += 1
         if plus is not None:
             if plus == pexpect.EOF:

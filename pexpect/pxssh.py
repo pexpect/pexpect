@@ -273,9 +273,9 @@ class pxssh (spawn):
         manually set the :attr:`PROMPT` attribute.
         '''
         
-        self.session_regex_array = ["(?i)are you sure you want to continue connecting", original_prompt, self.password_regex, "(?i)permission denied", "(?i)terminal type", TIMEOUT]
-        self.session_init_regex_array = self.session_regex_array.copy()
-        self.session_init_regex_array.append("(?i)connection closed by remote host", EOF)
+        session_regex_array = ["(?i)are you sure you want to continue connecting", original_prompt, self.password_regex, "(?i)permission denied", "(?i)terminal type", TIMEOUT]
+        session_init_regex_array = session_regex_array.copy()
+        session_init_regex_array.append("(?i)connection closed by remote host", EOF)
 
         ssh_options = ''.join([" -o '%s=%s'" % (o, v) for (o, v) in self.options.items()])
         if quiet:
@@ -297,7 +297,7 @@ class pxssh (spawn):
         # This does not distinguish between a remote server 'password' prompt
         # and a local ssh 'passphrase' prompt (for unlocking a private key).
         spawn._spawn(self, cmd)
-        i = self.expect(self.session_init_regex_array, timeout=login_timeout)
+        i = self.expect(session_init_regex_array, timeout=login_timeout)
 
         # First phase
         if i==0:
@@ -305,13 +305,13 @@ class pxssh (spawn):
             # This is what you get if SSH does not have the remote host's
             # public key stored in the 'known_hosts' cache.
             self.sendline("yes")
-            i = self.expect(self.session_start_regex_array)
+            i = self.expect(session_regex_array)
         if i==2: # password or passphrase
             self.sendline(password)
-            i = self.expect(self.session_start_regex_array)
+            i = self.expect(session_regex_array)
         if i==4:
             self.sendline(terminal_type)
-            i = self.expect(self.session_start_regex_array)
+            i = self.expect(session_regex_array)
         if i==7:
             self.close()
             raise ExceptionPxssh('Could not establish connection to host')

@@ -95,7 +95,9 @@ class pxssh (spawn):
 
     def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
                     logfile=None, cwd=None, env=None, ignore_sighup=True, echo=True,
-                    options={}, encoding=None, codec_errors='strict'):
+                    options={}, encoding=None, codec_errors='strict',
+                       password_regex='(?i)(?:password:)|(?:passphrase for key)',
+                       disable_original_sync=False):
 
         spawn.__init__(self, None, timeout=timeout, maxread=maxread,
                        searchwindowsize=searchwindowsize, logfile=logfile,
@@ -116,6 +118,20 @@ class pxssh (spawn):
         # used to match the command-line prompt
         self.UNIQUE_PROMPT = r"\[PEXPECT\][\$\#] "
         self.PROMPT = self.UNIQUE_PROMPT
+
+        # In the case your target SSH server disconnects
+        # due to a custom shell spawned not liking 
+        # the enter key being played with.
+        self.disable_original_sync = disable_original_sync
+
+        # Playing with these regexes or arrays is like playing in traffic.
+        # Do it at your own risk, don't expect everything you write
+        # to match the first time.
+        self.password_regex = password_regex
+        self.session_regex_array = ["(?i)are you sure you want to continue connecting", original_prompt, self.password_regex, "(?i)permission denied", "(?i)terminal type", TIMEOUT]
+        self.session_init_regex_array = self.session_regex_array.copy()
+        self.session_init_regex_array.append("(?i)connection closed by remote host", EOF)
+
 
         # used to set shell command-line prompt to UNIQUE_PROMPT.
         self.PROMPT_SET_SH = r"PS1='[PEXPECT]\$ '"
@@ -195,7 +211,10 @@ class pxssh (spawn):
         can take 12 seconds. Low latency connections are more likely to fail
         with a low sync_multiplier. Best case sync time gets worse with a
         high sync multiplier (500 ms with default). '''
-
+        
+        if self.disable_original_sync:
+            return(True)
+        
         # All of these timing pace values are magic.
         # I came up with these based on what seemed reliable for
         # connecting to a heavily loaded machine I have.
@@ -277,7 +296,7 @@ class pxssh (spawn):
         # This does not distinguish between a remote server 'password' prompt
         # and a local ssh 'passphrase' prompt (for unlocking a private key).
         spawn._spawn(self, cmd)
-        i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password:)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT, "(?i)connection closed by remote host", EOF], timeout=login_timeout)
+        i = self.expect(self.session_init_regex_array, timeout=login_timeout)
 
         # First phase
         if i==0:
@@ -285,13 +304,13 @@ class pxssh (spawn):
             # This is what you get if SSH does not have the remote host's
             # public key stored in the 'known_hosts' cache.
             self.sendline("yes")
-            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password:)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
+            i = self.expect(self.session_start_regex_array)
         if i==2: # password or passphrase
             self.sendline(password)
-            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password:)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
+            i = self.expect(self.session_start_regex_array)
         if i==4:
             self.sendline(terminal_type)
-            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password:)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
+            i = self.expect(self.session_start_regex_array)
         if i==7:
             self.close()
             raise ExceptionPxssh('Could not establish connection to host')

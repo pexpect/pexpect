@@ -274,7 +274,8 @@ class pxssh (spawn):
         '''
         
         session_regex_array = ["(?i)are you sure you want to continue connecting", original_prompt, self.password_regex, "(?i)permission denied", "(?i)terminal type", TIMEOUT]
-        session_init_regex_array = session_regex_array
+        session_init_regex_array = []
+        session_init_regex_array.extend(session_regex_array)
         session_init_regex_array.extend(["(?i)connection closed by remote host", EOF])
 
         ssh_options = ''.join([" -o '%s=%s'" % (o, v) for (o, v) in self.options.items()])

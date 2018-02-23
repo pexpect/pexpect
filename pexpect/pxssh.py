@@ -124,13 +124,10 @@ class pxssh (spawn):
         # the enter key being played with.
         self.disable_original_sync = disable_original_sync
 
-        # Playing with these regexes or arrays is like playing in traffic.
+        # Playing with this regex is like playing in traffic.
         # Do it at your own risk, don't expect everything you write
         # to match the first time.
         self.password_regex = password_regex
-        self.session_regex_array = ["(?i)are you sure you want to continue connecting", original_prompt, self.password_regex, "(?i)permission denied", "(?i)terminal type", TIMEOUT]
-        self.session_init_regex_array = self.session_regex_array.copy()
-        self.session_init_regex_array.append("(?i)connection closed by remote host", EOF)
 
 
         # used to set shell command-line prompt to UNIQUE_PROMPT.
@@ -275,6 +272,10 @@ class pxssh (spawn):
         not reset then this will disable the :meth:`prompt` method unless you
         manually set the :attr:`PROMPT` attribute.
         '''
+        
+        self.session_regex_array = ["(?i)are you sure you want to continue connecting", original_prompt, self.password_regex, "(?i)permission denied", "(?i)terminal type", TIMEOUT]
+        self.session_init_regex_array = self.session_regex_array.copy()
+        self.session_init_regex_array.append("(?i)connection closed by remote host", EOF)
 
         ssh_options = ''.join([" -o '%s=%s'" % (o, v) for (o, v) in self.options.items()])
         if quiet:

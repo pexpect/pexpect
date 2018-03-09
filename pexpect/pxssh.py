@@ -195,7 +195,7 @@ class pxssh (spawn):
         can take 12 seconds. Low latency connections are more likely to fail
         with a low sync_multiplier. Best case sync time gets worse with a
         high sync multiplier (500 ms with default). '''
-
+        
         # All of these timing pace values are magic.
         # I came up with these based on what seemed reliable for
         # connecting to a heavily loaded machine I have.
@@ -229,8 +229,10 @@ class pxssh (spawn):
     ### TODO: I need to draw a flow chart for this.
     def login (self, server, username, password='', terminal_type='ansi',
                 original_prompt=r"[#$]", login_timeout=10, port=None,
+                password_regex=r'(?i)(?:password:)|(?:passphrase for key)',
                 auto_prompt_reset=True, ssh_key=None, quiet=True,
-                sync_multiplier=1, check_local_ip=True):
+                sync_multiplier=1, check_local_ip=True,
+                sync_original_prompt=True):
         '''This logs the user into the given server.
 
         It uses
@@ -255,7 +257,16 @@ class pxssh (spawn):
         uses a unique prompt in the :meth:`prompt` method. If the original prompt is
         not reset then this will disable the :meth:`prompt` method unless you
         manually set the :attr:`PROMPT` attribute.
+        
+        Set ``password_regex`` if there is a MOTD message with `password` in it.
+        Changing this is like playing in traffic, don't (p)expect it to match straight
+        away.
         '''
+        
+        session_regex_array = ["(?i)are you sure you want to continue connecting", original_prompt, password_regex, "(?i)permission denied", "(?i)terminal type", TIMEOUT]
+        session_init_regex_array = []
+        session_init_regex_array.extend(session_regex_array)
+        session_init_regex_array.extend(["(?i)connection closed by remote host", EOF])
 
         ssh_options = ''.join([" -o '%s=%s'" % (o, v) for (o, v) in self.options.items()])
         if quiet:
@@ -277,7 +288,7 @@ class pxssh (spawn):
         # This does not distinguish between a remote server 'password' prompt
         # and a local ssh 'passphrase' prompt (for unlocking a private key).
         spawn._spawn(self, cmd)
-        i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password:)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT, "(?i)connection closed by remote host", EOF], timeout=login_timeout)
+        i = self.expect(session_init_regex_array, timeout=login_timeout)
 
         # First phase
         if i==0:
@@ -285,13 +296,13 @@ class pxssh (spawn):
             # This is what you get if SSH does not have the remote host's
             # public key stored in the 'known_hosts' cache.
             self.sendline("yes")
-            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password:)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
+            i = self.expect(session_regex_array)
         if i==2: # password or passphrase
             self.sendline(password)
-            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password:)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
+            i = self.expect(session_regex_array)
         if i==4:
             self.sendline(terminal_type)
-            i = self.expect(["(?i)are you sure you want to continue connecting", original_prompt, "(?i)(?:password:)|(?:passphrase for key)", "(?i)permission denied", "(?i)terminal type", TIMEOUT])
+            i = self.expect(session_regex_array)
         if i==7:
             self.close()
             raise ExceptionPxssh('Could not establish connection to host')
@@ -331,9 +342,10 @@ class pxssh (spawn):
         else: # Unexpected
             self.close()
             raise ExceptionPxssh('unexpected login response')
-        if not self.sync_original_prompt(sync_multiplier):
-            self.close()
-            raise ExceptionPxssh('could not synchronize with original prompt')
+        if sync_original_prompt:
+            if not self.sync_original_prompt(sync_multiplier):
+                self.close()
+                raise ExceptionPxssh('could not synchronize with original prompt')
         # We appear to be in.
         # set shell prompt to something unique.
         if auto_prompt_reset:

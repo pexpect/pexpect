@@ -95,9 +95,7 @@ class pxssh (spawn):
 
     def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
                     logfile=None, cwd=None, env=None, ignore_sighup=True, echo=True,
-                    options={}, encoding=None, codec_errors='strict',
-                       password_regex='(?i)(?:password:)|(?:passphrase for key)',
-                       disable_original_sync=False):
+                    options={}, encoding=None, codec_errors='strict'):
 
         spawn.__init__(self, None, timeout=timeout, maxread=maxread,
                        searchwindowsize=searchwindowsize, logfile=logfile,
@@ -118,17 +116,6 @@ class pxssh (spawn):
         # used to match the command-line prompt
         self.UNIQUE_PROMPT = r"\[PEXPECT\][\$\#] "
         self.PROMPT = self.UNIQUE_PROMPT
-
-        # In the case your target SSH server disconnects
-        # due to a custom shell spawned not liking 
-        # the enter key being played with.
-        self.disable_original_sync = disable_original_sync
-
-        # Playing with this regex is like playing in traffic.
-        # Do it at your own risk, don't expect everything you write
-        # to match the first time.
-        self.password_regex = password_regex
-
 
         # used to set shell command-line prompt to UNIQUE_PROMPT.
         self.PROMPT_SET_SH = r"PS1='[PEXPECT]\$ '"
@@ -209,9 +196,6 @@ class pxssh (spawn):
         with a low sync_multiplier. Best case sync time gets worse with a
         high sync multiplier (500 ms with default). '''
         
-        if self.disable_original_sync:
-            return(True)
-        
         # All of these timing pace values are magic.
         # I came up with these based on what seemed reliable for
         # connecting to a heavily loaded machine I have.
@@ -245,8 +229,10 @@ class pxssh (spawn):
     ### TODO: I need to draw a flow chart for this.
     def login (self, server, username, password='', terminal_type='ansi',
                 original_prompt=r"[#$]", login_timeout=10, port=None,
+                password_regex=r'(?i)(?:password:)|(?:passphrase for key)',
                 auto_prompt_reset=True, ssh_key=None, quiet=True,
-                sync_multiplier=1, check_local_ip=True):
+                sync_multiplier=1, check_local_ip=True,
+                sync_original_prompt=True):
         '''This logs the user into the given server.
 
         It uses
@@ -271,9 +257,13 @@ class pxssh (spawn):
         uses a unique prompt in the :meth:`prompt` method. If the original prompt is
         not reset then this will disable the :meth:`prompt` method unless you
         manually set the :attr:`PROMPT` attribute.
+        
+        Set ``password_regex`` if there is a MOTD message with `password` in it.
+        Changing this is like playing in traffic, don't (p)expect it to match straight
+        away.
         '''
         
-        session_regex_array = ["(?i)are you sure you want to continue connecting", original_prompt, self.password_regex, "(?i)permission denied", "(?i)terminal type", TIMEOUT]
+        session_regex_array = ["(?i)are you sure you want to continue connecting", original_prompt, password_regex, "(?i)permission denied", "(?i)terminal type", TIMEOUT]
         session_init_regex_array = []
         session_init_regex_array.extend(session_regex_array)
         session_init_regex_array.extend(["(?i)connection closed by remote host", EOF])
@@ -352,9 +342,10 @@ class pxssh (spawn):
         else: # Unexpected
             self.close()
             raise ExceptionPxssh('unexpected login response')
-        if not self.sync_original_prompt(sync_multiplier):
-            self.close()
-            raise ExceptionPxssh('could not synchronize with original prompt')
+        if sync_original_prompt:
+            if not self.sync_original_prompt(sync_multiplier):
+                self.close()
+                raise ExceptionPxssh('could not synchronize with original prompt')
         # We appear to be in.
         # set shell prompt to something unique.
         if auto_prompt_reset:

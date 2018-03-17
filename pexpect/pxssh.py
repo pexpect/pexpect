@@ -262,6 +262,14 @@ class pxssh (spawn):
         Set ``password_regex`` if there is a MOTD message with `password` in it.
         Changing this is like playing in traffic, don't (p)expect it to match straight
         away.
+        
+        If you require to connect to another ssh server from the your original ssh
+        connection set ``spawn_local_ssh`` to `False` and this will use your current
+        session to do so. Setting this option to `False` and not having an active session
+        will trigger an error.
+        
+        Set ``ssh_key`` to `True` to force passing the current ssh authentication socket to the
+        to the desired ``hostname``.
         '''
         
         session_regex_array = ["(?i)are you sure you want to continue connecting", original_prompt, password_regex, "(?i)permission denied", "(?i)terminal type", TIMEOUT]

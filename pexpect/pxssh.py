@@ -232,6 +232,7 @@ class pxssh (spawn):
                 password_regex=r'(?i)(?:password:)|(?:passphrase for key)',
                 auto_prompt_reset=True, ssh_key=None, quiet=True,
                 sync_multiplier=1, check_local_ip=True,
+                spawn_local_ssh=True,
                 sync_original_prompt=True):
         '''This logs the user into the given server.
 
@@ -278,16 +279,22 @@ class pxssh (spawn):
         if port is not None:
             ssh_options = ssh_options + ' -p %s'%(str(port))
         if ssh_key is not None:
-            try:
-                os.path.isfile(ssh_key)
-            except:
-                raise ExceptionPxssh('private ssh key does not exist')
-            ssh_options = ssh_options + ' -i %s' % (ssh_key)
+            if ssh_key:
+                ssh_options = ssh_options + ' -A'
+            else:
+                try:
+                    os.path.isfile(ssh_key)
+                except:
+                    raise ExceptionPxssh('private ssh key does not exist')
+                ssh_options = ssh_options + ' -i %s' % (ssh_key)
         cmd = "ssh %s -l %s %s" % (ssh_options, username, server)
 
         # This does not distinguish between a remote server 'password' prompt
         # and a local ssh 'passphrase' prompt (for unlocking a private key).
-        spawn._spawn(self, cmd)
+        if spawn_local_ssh:
+            spawn._spawn(self, cmd)
+        else:
+            self.sendline(cmd)
         i = self.expect(session_init_regex_array, timeout=login_timeout)
 
         # First phase

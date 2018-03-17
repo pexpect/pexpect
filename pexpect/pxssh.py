@@ -263,12 +263,12 @@ class pxssh (spawn):
         Changing this is like playing in traffic, don't (p)expect it to match straight
         away.
         
-        If you require to connect to another ssh server from the your original ssh
+        If you require to connect to another SSH server from the your original SSH
         connection set ``spawn_local_ssh`` to `False` and this will use your current
         session to do so. Setting this option to `False` and not having an active session
         will trigger an error.
         
-        Set ``ssh_key`` to `True` to force passing the current ssh authentication socket to the
+        Set ``ssh_key`` to `True` to force passing the current SSH authentication socket to the
         to the desired ``hostname``.
         '''
         
@@ -287,6 +287,7 @@ class pxssh (spawn):
         if port is not None:
             ssh_options = ssh_options + ' -p %s'%(str(port))
         if ssh_key is not None:
+            # Allow forwarding our SSH key to the current session
             if ssh_key:
                 ssh_options = ssh_options + ' -A'
             else:
@@ -297,12 +298,13 @@ class pxssh (spawn):
                 ssh_options = ssh_options + ' -i %s' % (ssh_key)
         cmd = "ssh %s -l %s %s" % (ssh_options, username, server)
 
-        # This does not distinguish between a remote server 'password' prompt
-        # and a local ssh 'passphrase' prompt (for unlocking a private key).
+        # Are we asking for a local ssh command or to spawn one in another session?
         if spawn_local_ssh:
             spawn._spawn(self, cmd)
         else:
             self.sendline(cmd)
+        # This does not distinguish between a remote server 'password' prompt
+        # and a local ssh 'passphrase' prompt (for unlocking a private key).
         i = self.expect(session_init_regex_array, timeout=login_timeout)
 
         # First phase

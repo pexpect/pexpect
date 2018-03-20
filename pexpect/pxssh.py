@@ -306,7 +306,8 @@ class pxssh (spawn):
                 ssh_options = ssh_options + ' -A'
             else:
                 try:
-                    os.path.isfile(ssh_key)
+                    if spawn_local_ssh:
+                        os.path.isfile(ssh_key)
                 except:
                     raise ExceptionPxssh('private ssh key does not exist')
                 ssh_options = ssh_options + ' -i %s' % (ssh_key)
@@ -330,7 +331,9 @@ class pxssh (spawn):
                 if tunnel_type in ssh_tunnels:
                     tunnels = ssh_tunnels[tunnel_type]
                     for tunnel in tunnels:
-                        ssh_options = ssh_options + ' -' + cmd_type + ' ' + quote(tunnel)
+                        if spawn_local_ssh==False:
+                            tunnel = quote(tunnel)
+                        ssh_options = ssh_options + ' -' + cmd_type + ' ' + tunnel
         cmd = "ssh %s -l %s %s" % (ssh_options, username, server)
 
         # Are we asking for a local ssh command or to spawn one in another session?

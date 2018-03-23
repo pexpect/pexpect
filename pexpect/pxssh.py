@@ -229,11 +229,11 @@ class pxssh (spawn):
     ### TODO: I need to draw a flow chart for this.
     def login (self, server, username, password='', terminal_type='ansi',
                 original_prompt=r"[#$]", login_timeout=10, port=None,
-                password_regex=r'(?i)(?:password:)|(?:passphrase for key)',
                 auto_prompt_reset=True, ssh_key=None, quiet=True,
                 sync_multiplier=1, check_local_ip=True,
-                spawn_local_ssh=True,
-                sync_original_prompt=True):
+                sync_original_prompt=True,
+                password_regex=r'(?i)(?:password:)|(?:passphrase for key)',
+                spawn_local_ssh=True):
         '''This logs the user into the given server.
 
         It uses
@@ -288,11 +288,12 @@ class pxssh (spawn):
             ssh_options = ssh_options + ' -p %s'%(str(port))
         if ssh_key is not None:
             # Allow forwarding our SSH key to the current session
-            if ssh_key:
+            if ssh_key==True:
                 ssh_options = ssh_options + ' -A'
             else:
                 try:
-                    os.path.isfile(ssh_key)
+                    if spawn_local_ssh:
+                        os.path.isfile(ssh_key)
                 except:
                     raise ExceptionPxssh('private ssh key does not exist')
                 ssh_options = ssh_options + ' -i %s' % (ssh_key)

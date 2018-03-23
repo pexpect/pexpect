@@ -229,10 +229,11 @@ class pxssh (spawn):
     ### TODO: I need to draw a flow chart for this.
     def login (self, server, username, password='', terminal_type='ansi',
                 original_prompt=r"[#$]", login_timeout=10, port=None,
-                password_regex=r'(?i)(?:password:)|(?:passphrase for key)',
                 auto_prompt_reset=True, ssh_key=None, quiet=True,
                 sync_multiplier=1, check_local_ip=True,
-                sync_original_prompt=True):
+                sync_original_prompt=True,
+                password_regex=r'(?i)(?:password:)|(?:passphrase for key)',
+                spawn_local_ssh=True):
         '''This logs the user into the given server.
 
         It uses
@@ -261,6 +262,14 @@ class pxssh (spawn):
         Set ``password_regex`` if there is a MOTD message with `password` in it.
         Changing this is like playing in traffic, don't (p)expect it to match straight
         away.
+        
+        If you require to connect to another SSH server from the your original SSH
+        connection set ``spawn_local_ssh`` to `False` and this will use your current
+        session to do so. Setting this option to `False` and not having an active session
+        will trigger an error.
+        
+        Set ``ssh_key`` to `True` to force passing the current SSH authentication socket to the
+        to the desired ``hostname``.
         '''
         
         session_regex_array = ["(?i)are you sure you want to continue connecting", original_prompt, password_regex, "(?i)permission denied", "(?i)terminal type", TIMEOUT]
@@ -278,16 +287,25 @@ class pxssh (spawn):
         if port is not None:
             ssh_options = ssh_options + ' -p %s'%(str(port))
         if ssh_key is not None:
-            try:
-                os.path.isfile(ssh_key)
-            except:
-                raise ExceptionPxssh('private ssh key does not exist')
-            ssh_options = ssh_options + ' -i %s' % (ssh_key)
+            # Allow forwarding our SSH key to the current session
+            if ssh_key==True:
+                ssh_options = ssh_options + ' -A'
+            else:
+                try:
+                    if spawn_local_ssh:
+                        os.path.isfile(ssh_key)
+                except:
+                    raise ExceptionPxssh('private ssh key does not exist')
+                ssh_options = ssh_options + ' -i %s' % (ssh_key)
         cmd = "ssh %s -l %s %s" % (ssh_options, username, server)
 
+        # Are we asking for a local ssh command or to spawn one in another session?
+        if spawn_local_ssh:
+            spawn._spawn(self, cmd)
+        else:
+            self.sendline(cmd)
         # This does not distinguish between a remote server 'password' prompt
         # and a local ssh 'passphrase' prompt (for unlocking a private key).
-        spawn._spawn(self, cmd)
         i = self.expect(session_init_regex_array, timeout=login_timeout)
 
         # First phase

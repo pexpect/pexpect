@@ -4,6 +4,14 @@ History
 Releases
 --------
 
+Version 4.5
+```````````
+
+* :class:`~.spawn` now has a ``use_poll`` parameter. This allows the use
+  of select.poll() on fds
+* :class:`~.fdspawn` now has a ``use_poll`` paramneter. This allow the use
+  of select.poll() on fds
+
 Version 4.4
 ```````````
 
@@ -295,4 +303,3 @@ Moves and forks
   to call the new fork Pexpected. Noah Spurrier agreed to let them use
   the name Pexpect, so Pexpect versions 3 and above are based on this
   fork, which now lives `here on Github <https://github.com/pexpect/pexpect>`_.
-

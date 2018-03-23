@@ -34,7 +34,7 @@ for patterns from file descriptors or subprocesses—are also available on
 Windows.
 """
 
-setup (name='pexpect',
+setup(name='pexpect',
     version=version,
     packages=['pexpect'],
     package_data={'pexpect': ['bashrc.sh']},

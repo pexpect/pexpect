@@ -225,7 +225,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         session.expect(pexpect.EOF)
         self.assertEqual(session.before, b'')
 
-    def test_fd_isalive (self):
+    def test_fd_isalive(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.host, self.port))
         session = fdpexpect.fdspawn(sock.fileno(), timeout=10)
@@ -233,10 +233,25 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         sock.close()
         assert not session.isalive(), "Should not be alive after close()"
 
-    def test_fd_isatty (self):
+    def test_fd_isalive_poll(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((self.host, self.port))
+        session = fdpexpect.fdspawn(sock.fileno(), timeout=10, use_poll=True)
+        assert session.isalive()
+        sock.close()
+        assert not session.isalive(), "Should not be alive after close()"
+
+    def test_fd_isatty(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.connect((self.host, self.port))
         session = fdpexpect.fdspawn(sock.fileno(), timeout=10)
+        assert not session.isatty()
+        session.close()
+
+    def test_fd_isatty_poll(self):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((self.host, self.port))
+        session = fdpexpect.fdspawn(sock.fileno(), timeout=10, use_poll=True)
         assert not session.isatty()
         session.close()
 

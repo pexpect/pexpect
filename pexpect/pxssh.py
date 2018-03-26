@@ -241,6 +241,7 @@ class pxssh (spawn):
 
     ### TODO: This is getting messy and I'm pretty sure this isn't perfect.
     ### TODO: I need to draw a flow chart for this.
+    ### TODO: Unit tests for SSH tunnels, remote SSH command exec, disabling original prompt sync
     def login (self, server, username, password='', terminal_type='ansi',
                 original_prompt=r"[#$]", login_timeout=10, port=None,
                 auto_prompt_reset=True, ssh_key=None, quiet=True,
@@ -248,7 +249,6 @@ class pxssh (spawn):
                 password_regex=r'(?i)(?:password:)|(?:passphrase for key)',
                 ssh_tunnels={}, spawn_local_ssh=True,
                 sync_original_prompt=True):
-
         '''This logs the user into the given server.
 
         It uses

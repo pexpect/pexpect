@@ -243,11 +243,12 @@ class pxssh (spawn):
     ### TODO: I need to draw a flow chart for this.
     def login (self, server, username, password='', terminal_type='ansi',
                 original_prompt=r"[#$]", login_timeout=10, port=None,
-                password_regex=r'(?i)(?:password:)|(?:passphrase for key)',
                 auto_prompt_reset=True, ssh_key=None, quiet=True,
                 sync_multiplier=1, check_local_ip=True,
-                spawn_local_ssh=True, ssh_tunnels={},
+                password_regex=r'(?i)(?:password:)|(?:passphrase for key)',
+                ssh_tunnels={}, spawn_local_ssh=True,
                 sync_original_prompt=True):
+
         '''This logs the user into the given server.
 
         It uses

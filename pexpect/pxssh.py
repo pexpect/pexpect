@@ -23,6 +23,7 @@ PEXPECT LICENSE
 from pexpect import ExceptionPexpect, TIMEOUT, EOF, spawn
 import time
 import os
+import re
 
 __all__ = ['ExceptionPxssh', 'pxssh']
 
@@ -30,6 +31,19 @@ __all__ = ['ExceptionPxssh', 'pxssh']
 class ExceptionPxssh(ExceptionPexpect):
     '''Raised for pxssh exceptions.
     '''
+
+_find_unsafe = re.compile(r'[^\w@%+=:,./-]').search
+
+def quote(s):
+    """Return a shell-escaped version of the string *s*."""
+    if not s:
+        return "''"
+    if _find_unsafe(s) is None:
+        return s
+
+    # use single quotes, and put single quotes into double quotes
+    # the string $'b is then quoted as '$'"'"'b'
+    return "'" + s.replace("'", "'\"'\"'") + "'"
 
 class pxssh (spawn):
     '''This class extends pexpect.spawn to specialize setting up SSH
@@ -231,9 +245,10 @@ class pxssh (spawn):
                 original_prompt=r"[#$]", login_timeout=10, port=None,
                 auto_prompt_reset=True, ssh_key=None, quiet=True,
                 sync_multiplier=1, check_local_ip=True,
-                sync_original_prompt=True,
                 password_regex=r'(?i)(?:password:)|(?:passphrase for key)',
-                spawn_local_ssh=True):
+                ssh_tunnels={}, spawn_local_ssh=True,
+                sync_original_prompt=True):
+
         '''This logs the user into the given server.
 
         It uses
@@ -297,6 +312,29 @@ class pxssh (spawn):
                 except:
                     raise ExceptionPxssh('private ssh key does not exist')
                 ssh_options = ssh_options + ' -i %s' % (ssh_key)
+        
+        # SSH tunnels, make sure you know what you're putting into the lists
+        # under each heading. Do not expect these to open 100% of the time,
+        # The port you're requesting might be bound.
+        #
+        # The structure should be like this:
+        # { 'local': ['2424:localhost:22'],  # Local SSH tunnels
+        # 'remote': ['2525:localhost:22'],   # Remote SSH tunnels
+        # 'dynamic': [8888] } # Dynamic/SOCKS tunnels
+        if ssh_tunnels!={} and isinstance({},type(ssh_tunnels)):
+            tunnel_types = {
+                'local':'L',
+                'remote':'R',
+                'dynamic':'D'
+            }
+            for tunnel_type in tunnel_types:
+                cmd_type = tunnel_types[tunnel_type]
+                if tunnel_type in ssh_tunnels:
+                    tunnels = ssh_tunnels[tunnel_type]
+                    for tunnel in tunnels:
+                        if spawn_local_ssh==False:
+                            tunnel = quote(tunnel)
+                        ssh_options = ssh_options + ' -' + cmd_type + ' ' + tunnel
         cmd = "ssh %s -l %s %s" % (ssh_options, username, server)
 
         # Are we asking for a local ssh command or to spawn one in another session?
@@ -304,6 +342,7 @@ class pxssh (spawn):
             spawn._spawn(self, cmd)
         else:
             self.sendline(cmd)
+
         # This does not distinguish between a remote server 'password' prompt
         # and a local ssh 'passphrase' prompt (for unlocking a private key).
         i = self.expect(session_init_regex_array, timeout=login_timeout)

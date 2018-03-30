@@ -32,18 +32,21 @@ class ExceptionPxssh(ExceptionPexpect):
     '''Raised for pxssh exceptions.
     '''
 
-_find_unsafe = re.compile(r'[^\w@%+=:,./-]').search
+if sys.version_info > (3, 0):
+    from shlex import quote
+else:
+    _find_unsafe = re.compile(r'[^\w@%+=:,./-]').search
 
-def quote(s):
-    """Return a shell-escaped version of the string *s*."""
-    if not s:
-        return "''"
-    if _find_unsafe(s) is None:
-        return s
+    def quote(s):
+        """Return a shell-escaped version of the string *s*."""
+        if not s:
+            return "''"
+        if _find_unsafe(s) is None:
+            return s
 
-    # use single quotes, and put single quotes into double quotes
-    # the string $'b is then quoted as '$'"'"'b'
-    return "'" + s.replace("'", "'\"'\"'") + "'"
+        # use single quotes, and put single quotes into double quotes
+        # the string $'b is then quoted as '$'"'"'b'
+        return "'" + s.replace("'", "'\"'\"'") + "'"
 
 class pxssh (spawn):
     '''This class extends pexpect.spawn to specialize setting up SSH

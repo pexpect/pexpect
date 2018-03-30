@@ -61,10 +61,14 @@ class PxsshTestCase(SSHTestBase):
         ssh = pxssh.pxssh(debug_tunnel_command=True)
         tunnels = { 'local': ['2424:localhost:22'],'remote': ['2525:localhost:22'],
             'dynamic': [8888] }
-        confirmation_string = 'ssh  -q -R 2525:localhost:22 -L 2424:localhost:22 -D 8888 -l me server'
+        confirmation_strings = 0
+        confirmation_array = ['-R 2525:localhost:22','-L 2424:localhost:22','-D 8888']
         string = ssh.login('server', 'me', password='s3cret', ssh_tunnels=tunnels)
-        if string!=confirmation_string:
-            print(string)
+        for confirmation in confirmation_array:
+            if confirmation in string:
+                confirmation_strings+=1
+        
+        if confirmation_strings!=3:
             assert False, 'String generated from tunneling is potientally incorrect.'
 
 

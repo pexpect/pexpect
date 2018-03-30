@@ -67,7 +67,7 @@ class PxsshTestCase(SSHTestBase):
         for confirmation in confirmation_array:
             if confirmation in string:
                 confirmation_strings+=1
-        
+
         if confirmation_strings!=len(confirmation_array):
             assert False, 'String generated from tunneling is incorrect.'
 
@@ -81,11 +81,11 @@ class PxsshTestCase(SSHTestBase):
         for confirmation in confirmation_array:
             if confirmation in string:
                 confirmation_strings+=1
-        
+
         if confirmation_strings!=len(confirmation_array):
             assert False, 'String generated from remote tunneling is incorrect.'
 
-    def test_force_ssh_agent_sock_string(self):
+    def test_ssh_key_string(self):
         ssh = pxssh.pxssh(debug_command_string=True)
         confirmation_strings = 0
         confirmation_array = [' -A']
@@ -93,9 +93,19 @@ class PxsshTestCase(SSHTestBase):
         for confirmation in confirmation_array:
             if confirmation in string:
                 confirmation_strings+=1
-        
+
         if confirmation_strings!=len(confirmation_array):
             assert False, 'String generated from forcing the SSH agent sock is incorrect.'
+
+        confirmation_strings = 0
+        confirmation_array = [' -i True']
+        string = ssh.login('server', 'me', password='s3cret', ssh_key='True')
+        for confirmation in confirmation_array:
+            if confirmation in string:
+                confirmation_strings+=1
+        
+        if confirmation_strings!=len(confirmation_array):
+            assert False, 'String generated from adding an SSH key is incorrect.'
 
 
 if __name__ == '__main__':

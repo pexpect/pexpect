@@ -16,6 +16,7 @@ class Expecter(object):
 
         pos = spawn._buffer.tell()
         spawn._buffer.write(data)
+        spawn._before.write(data)
 
         # determine which chunk of data to search; if a windowsize is
         # specified, this is the *new* data + the preceding <windowsize> bytes
@@ -27,11 +28,11 @@ class Expecter(object):
             window = spawn.buffer
         index = searcher.search(window, len(data))
         if index >= 0:
-            value = spawn.buffer
             spawn._buffer = spawn.buffer_type()
-            spawn._buffer.write(value[searcher.end:])
-            spawn.before = value[: searcher.start]
-            spawn.after = value[searcher.start: searcher.end]
+            spawn._buffer.write(window[searcher.end:])
+            spawn.before = spawn._before.getvalue()[0:-(len(window) - searcher.start)]
+            spawn._before = spawn.buffer_type()
+            spawn.after = window[searcher.start: searcher.end]
             spawn.match = searcher.match
             spawn.match_index = index
             # Found a match
@@ -45,6 +46,7 @@ class Expecter(object):
 
         spawn.before = spawn.buffer
         spawn._buffer = spawn.buffer_type()
+        spawn._before = spawn.buffer_type()
         spawn.after = EOF
         index = self.searcher.eof_index
         if index >= 0:
@@ -96,6 +98,7 @@ class Expecter(object):
         try:
             incoming = spawn.buffer
             spawn._buffer = spawn.buffer_type()
+            spawn._before = spawn.buffer_type()
             while True:
                 idx = self.new_data(incoming)
                 # Keep reading until exception or return.

@@ -23,6 +23,7 @@ PEXPECT LICENSE
 from pexpect import ExceptionPexpect, TIMEOUT, EOF, spawn
 import time
 import os
+import sys
 import re
 
 __all__ = ['ExceptionPxssh', 'pxssh']
@@ -32,18 +33,21 @@ class ExceptionPxssh(ExceptionPexpect):
     '''Raised for pxssh exceptions.
     '''
 
-_find_unsafe = re.compile(r'[^\w@%+=:,./-]').search
+if sys.version_info > (3, 0):
+    from shlex import quote
+else:
+    _find_unsafe = re.compile(r'[^\w@%+=:,./-]').search
 
-def quote(s):
-    """Return a shell-escaped version of the string *s*."""
-    if not s:
-        return "''"
-    if _find_unsafe(s) is None:
-        return s
+    def quote(s):
+        """Return a shell-escaped version of the string *s*."""
+        if not s:
+            return "''"
+        if _find_unsafe(s) is None:
+            return s
 
-    # use single quotes, and put single quotes into double quotes
-    # the string $'b is then quoted as '$'"'"'b'
-    return "'" + s.replace("'", "'\"'\"'") + "'"
+        # use single quotes, and put single quotes into double quotes
+        # the string $'b is then quoted as '$'"'"'b'
+        return "'" + s.replace("'", "'\"'\"'") + "'"
 
 class pxssh (spawn):
     '''This class extends pexpect.spawn to specialize setting up SSH
@@ -106,15 +110,15 @@ class pxssh (spawn):
             password = getpass.getpass('password: ')
             s.login (hostname, username, password)
     
-    `debug_tunnel_command` is only for the test suite to confirm that the string
-    generated for SSH tunnelling is correct, using this will not allow you to do
+    `debug_command_string` is only for the test suite to confirm that the string
+    generated for SSH is correct, using this will not allow you to do
     anything other than get a string back from `pxssh.pxssh.login()`.
     '''
 
     def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
                     logfile=None, cwd=None, env=None, ignore_sighup=True, echo=True,
                     options={}, encoding=None, codec_errors='strict',
-                    debug_tunnel_command=False):
+                    debug_command_string=False):
 
         spawn.__init__(self, None, timeout=timeout, maxread=maxread,
                        searchwindowsize=searchwindowsize, logfile=logfile,
@@ -151,7 +155,7 @@ class pxssh (spawn):
         #self.SSH_OPTS = "-x -o'RSAAuthentication=no' -o 'PubkeyAuthentication=no'"
         self.force_password = False
         
-        self.debug_tunnel_command = debug_tunnel_command
+        self.debug_command_string = debug_command_string
 
         # User defined SSH options, eg,
         # ssh.otions = dict(StrictHostKeyChecking="no",UserKnownHostsFile="/dev/null")
@@ -340,10 +344,10 @@ class pxssh (spawn):
                     tunnels = ssh_tunnels[tunnel_type]
                     for tunnel in tunnels:
                         if spawn_local_ssh==False:
-                            tunnel = quote(tunnel)
+                            tunnel = quote(str(tunnel))
                         ssh_options = ssh_options + ' -' + cmd_type + ' ' + str(tunnel)
         cmd = "ssh %s -l %s %s" % (ssh_options, username, server)
-        if self.debug_tunnel_command:
+        if self.debug_command_string:
             return(cmd)
 
         # Are we asking for a local ssh command or to spawn one in another session?

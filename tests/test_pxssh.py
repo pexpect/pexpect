@@ -76,7 +76,7 @@ class PxsshTestCase(SSHTestBase):
         tunnels = { 'local': ['2424:localhost:22'],'remote': ['2525:localhost:22'],
             'dynamic': [8888] }
         confirmation_strings = 0
-        confirmation_array = ['-R \'2525:localhost:22\'','-L \'2424:localhost:22\'','-D \'8888\'']
+        confirmation_array = ['-R 2525:localhost:22','-L 2424:localhost:22','-D 8888']
         string = ssh.login('server', 'me', password='s3cret', ssh_tunnels=tunnels, spawn_local_ssh=False)
         for confirmation in confirmation_array:
             if confirmation in string:

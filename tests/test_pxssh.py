@@ -64,7 +64,7 @@ class PxsshTestCase(SSHTestBase):
         confirmation_string = 'ssh  -q -R 2525:localhost:22 -L 2424:localhost:22 -D 8888 -l me server'
         string = ssh.login('server', 'me', password='s3cret', ssh_tunnels=tunnels)
         if string!=confirmation_string:
-            raise False, 'String generated from tunneling is potientally incorrect.'
+            assert False, 'String generated from tunneling is potientally incorrect.'
 
 
 if __name__ == '__main__':

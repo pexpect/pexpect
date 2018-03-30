@@ -9,6 +9,7 @@ def expect_async(expecter, timeout=None):
     # async stuff.
     previously_read = expecter.spawn.buffer
     expecter.spawn._buffer = expecter.spawn.buffer_type()
+    expecter.spawn._before = expecter.spawn.buffer_type()
     idx = expecter.new_data(previously_read)
     if idx is not None:
         return idx

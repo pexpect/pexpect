@@ -408,6 +408,17 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.buffer = b'Testing'
         p.sendeof ()
 
+    def test_before_across_chunks(self):
+        # https://github.com/pexpect/pexpect/issues/478
+        child = pexpect.spawn(
+            '''/bin/bash -c "openssl rand -base64 {} | head -500 | nl --number-format=rz --number-width=5 2>&1 ; echo 'PATTERN!!!'"'''.format(1024 * 1024 * 2),
+            searchwindowsize=128
+        )
+        child.expect(['PATTERN'])
+        assert len(child.before.splitlines()) == 500
+        assert child.after == b'PATTERN'
+        assert child.buffer == b'!!!\r\n'
+
     def _before_after(self, p):
         p.timeout = 5
 

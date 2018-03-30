@@ -105,11 +105,16 @@ class pxssh (spawn):
             username = raw_input('username: ')
             password = getpass.getpass('password: ')
             s.login (hostname, username, password)
+    
+    `debug_tunnel_command` is only for the test suite to confirm that the string
+    generated for SSH tunnelling is correct, using this will not allow you to do
+    anything other than get a string back from `pxssh.pxssh.login()`.
     '''
 
     def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
                     logfile=None, cwd=None, env=None, ignore_sighup=True, echo=True,
-                    options={}, encoding=None, codec_errors='strict'):
+                    options={}, encoding=None, codec_errors='strict',
+                    debug_tunnel_command=False):
 
         spawn.__init__(self, None, timeout=timeout, maxread=maxread,
                        searchwindowsize=searchwindowsize, logfile=logfile,
@@ -145,6 +150,8 @@ class pxssh (spawn):
         # Unsetting SSH_ASKPASS on the remote side doesn't disable it! Annoying!
         #self.SSH_OPTS = "-x -o'RSAAuthentication=no' -o 'PubkeyAuthentication=no'"
         self.force_password = False
+        
+        self.debug_tunnel_command = debug_tunnel_command
 
         # User defined SSH options, eg,
         # ssh.otions = dict(StrictHostKeyChecking="no",UserKnownHostsFile="/dev/null")
@@ -334,8 +341,10 @@ class pxssh (spawn):
                     for tunnel in tunnels:
                         if spawn_local_ssh==False:
                             tunnel = quote(tunnel)
-                        ssh_options = ssh_options + ' -' + cmd_type + ' ' + tunnel
+                        ssh_options = ssh_options + ' -' + cmd_type + ' ' + str(tunnel)
         cmd = "ssh %s -l %s %s" % (ssh_options, username, server)
+        if self.debug_tunnel_command:
+            return(cmd)
 
         # Are we asking for a local ssh command or to spawn one in another session?
         if spawn_local_ssh:

@@ -344,7 +344,7 @@ class pxssh (spawn):
                     tunnels = ssh_tunnels[tunnel_type]
                     for tunnel in tunnels:
                         if spawn_local_ssh==False:
-                            tunnel = quote(tunnel)
+                            tunnel = quote(str(tunnel))
                         ssh_options = ssh_options + ' -' + cmd_type + ' ' + str(tunnel)
         cmd = "ssh %s -l %s %s" % (ssh_options, username, server)
         if self.debug_command_string:

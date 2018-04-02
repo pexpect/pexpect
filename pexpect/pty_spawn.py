@@ -12,7 +12,8 @@ from ptyprocess.ptyprocess import use_native_pty_fork
 
 from .exceptions import ExceptionPexpect, EOF, TIMEOUT
 from .spawnbase import SpawnBase
-from .utils import which, split_command_line, select_ignore_interrupts
+from .utils import (which, split_command_line, select_ignore_interrupts,
+                    poll_ignore_interrupts)
 
 @contextmanager
 def _wrap_ptyprocess_err():
@@ -439,7 +440,7 @@ class spawn(SpawnBase):
         # If isalive() is false, then I pretend that this is the same as EOF.
         if not self.isalive():
             # timeout of 0 means "poll"
-            r, w, e = select_ignore_interrupts([self.child_fd], [], [], 0)
+            r = poll_ignore_interrupts([self.child_fd], timeout=0)
             if not r:
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Braindead platform.')
@@ -447,12 +448,12 @@ class spawn(SpawnBase):
             # Irix takes a long time before it realizes a child was terminated.
             # FIXME So does this mean Irix systems are forced to always have
             # FIXME a 2 second delay when calling read_nonblocking? That sucks.
-            r, w, e = select_ignore_interrupts([self.child_fd], [], [], 2)
+            r = poll_ignore_interrupts([self.child_fd], timeout=2)
             if not r and not self.isalive():
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Slow platform.')
 
-        r, w, e = select_ignore_interrupts([self.child_fd], [], [], timeout)
+        r = poll_ignore_interrupts([self.child_fd], timeout=timeout)
 
         if not r:
             if not self.isalive():

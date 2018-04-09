@@ -16,7 +16,7 @@ Version 4.5
   the password prompt regex for servers that include ``password:`` somewhere before a
   command line is reached.(:ghpull:`468`)
 * :meth:`pxssh.pxssh.login` now allows for setting up SSH tunnels to be requested once
-  logged in to the rmeote server. This option is ``ssh_tunnels`` (:ghpull:`473`)
+  logged in to the remote server. This option is ``ssh_tunnels`` (:ghpull:`473`)
   The structure should be like this::
 
         { 'local': ['2424:localhost:22'],  # Local SSH tunnels
@@ -25,7 +25,7 @@ Version 4.5
 
 * :meth:`pxssh.pxssh.login` ``spawn_local_ssh`` allows subsequent logins from the remote session and treats
   the session as if it was local. Simply set this to ``False``. (:ghpull:`472`)
-* :meth:`pxssh.pxssh.login` ``sync_original_prompt`` can allow the the prompt to not be set to something unique
+* :meth:`pxssh.pxssh.login` ``sync_original_prompt`` can allow the prompt to not be set to something unique
   incase the remote server is sensetive to new lines at login. Set this to ``False`` to do so. (:ghpull:`468`)
 * :meth:`pxssh.pxssh.login` has had a change with an SSH key option being provided, which is
   if ``ssh_key`` is set to ``True`` then the SSH client forces forwarding the authentication

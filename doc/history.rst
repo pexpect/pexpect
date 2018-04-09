@@ -4,6 +4,14 @@ History
 Releases
 --------
 
+Version 4.5
+```````````
+
+* :class:`~.spawn` + `~.fdspawn` now have an ``use_poll`` parameter.
+  This change allows the use of select.poll() on file descriptors.
+  It allows for > 1024 file descriptors on the system, and, it is not used by
+  default due to compatibility concerns and must be explicitly enabled.
+
 Version 4.4
 ```````````
 
@@ -295,4 +303,3 @@ Moves and forks
   to call the new fork Pexpected. Noah Spurrier agreed to let them use
   the name Pexpect, so Pexpect versions 3 and above are based on this
   fork, which now lives `here on Github <https://github.com/pexpect/pexpect>`_.
-

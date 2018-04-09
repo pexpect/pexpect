@@ -12,7 +12,9 @@ from ptyprocess.ptyprocess import use_native_pty_fork
 
 from .exceptions import ExceptionPexpect, EOF, TIMEOUT
 from .spawnbase import SpawnBase
-from .utils import which, split_command_line, select_ignore_interrupts
+from .utils import (
+    which, split_command_line, select_ignore_interrupts, poll_ignore_interrupts
+)
 
 @contextmanager
 def _wrap_ptyprocess_err():
@@ -34,7 +36,8 @@ class spawn(SpawnBase):
     def __init__(self, command, args=[], timeout=30, maxread=2000,
                  searchwindowsize=None, logfile=None, cwd=None, env=None,
                  ignore_sighup=False, echo=True, preexec_fn=None,
-                 encoding=None, codec_errors='strict', dimensions=None):
+                 encoding=None, codec_errors='strict', dimensions=None,
+                 use_poll=False):
         '''This is the constructor. The command parameter may be a string that
         includes a command and any arguments to the command. For example::
 
@@ -171,7 +174,7 @@ class spawn(SpawnBase):
         using setecho(False) followed by waitnoecho().  However, for some
         platforms such as Solaris, this is not possible, and should be
         disabled immediately on spawn.
-        
+
         If preexec_fn is given, it will be called in the child process before
         launching the given command. This is useful to e.g. reset inherited
         signal handlers.
@@ -179,6 +182,9 @@ class spawn(SpawnBase):
         The dimensions attribute specifies the size of the pseudo-terminal as
         seen by the subprocess, and is specified as a two-entry tuple (rows,
         columns). If this is unspecified, the defaults in ptyprocess will apply.
+
+        The use_poll attribute enables using select.poll() over select.select()
+        for socket handling. This is handy if your system could have > 1024 fds
         '''
         super(spawn, self).__init__(timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize,
                                     logfile=logfile, encoding=encoding, codec_errors=codec_errors)
@@ -196,6 +202,7 @@ class spawn(SpawnBase):
             self.name = '<pexpect factory incomplete>'
         else:
             self._spawn(command, args, preexec_fn, dimensions)
+        self.use_poll = use_poll
 
     def __str__(self):
         '''This returns a human-readable string that represents the state of
@@ -439,7 +446,10 @@ class spawn(SpawnBase):
         # If isalive() is false, then I pretend that this is the same as EOF.
         if not self.isalive():
             # timeout of 0 means "poll"
-            r, w, e = select_ignore_interrupts([self.child_fd], [], [], 0)
+            if self.use_poll:
+                r = poll_ignore_interrupts(self.child_fd, timeout)
+            else:
+                r, w, e = select_ignore_interrupts([self.child_fd], [], [], 0)
             if not r:
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Braindead platform.')
@@ -447,12 +457,19 @@ class spawn(SpawnBase):
             # Irix takes a long time before it realizes a child was terminated.
             # FIXME So does this mean Irix systems are forced to always have
             # FIXME a 2 second delay when calling read_nonblocking? That sucks.
-            r, w, e = select_ignore_interrupts([self.child_fd], [], [], 2)
+            if self.use_poll:
+                r = poll_ignore_interrupts(self.child_fd, timeout)
+            else:
+                r, w, e = select_ignore_interrupts([self.child_fd], [], [], 2)
             if not r and not self.isalive():
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Slow platform.')
-
-        r, w, e = select_ignore_interrupts([self.child_fd], [], [], timeout)
+        if self.use_poll:
+            r = poll_ignore_interrupts(self.child_fd, timeout)
+        else:
+            r, w, e = select_ignore_interrupts(
+                [self.child_fd], [], [], timeout
+            )
 
         if not r:
             if not self.isalive():
@@ -771,7 +788,12 @@ class spawn(SpawnBase):
         '''
 
         while self.isalive():
-            r, w, e = select_ignore_interrupts([self.child_fd, self.STDIN_FILENO], [], [])
+            if self.use_poll:
+                r = poll_ignore_interrupts(self.child_fd)
+            else:
+                r, w, e = select_ignore_interrupts(
+                    [self.child_fd, self.STDIN_FILENO], [], []
+                )
             if self.child_fd in r:
                 try:
                     data = self.__interact_read(self.child_fd)

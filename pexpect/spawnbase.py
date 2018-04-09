@@ -262,7 +262,7 @@ class SpawnBase(object):
             # the input is 'foobar'
             index = p.expect(['foobar', 'foo'])
             # returns 0('foobar') if all input is available at once,
-            # but returs 1('foo') if parts of the final 'bar' arrive late
+            # but returns 1('foo') if parts of the final 'bar' arrive late
 
         When a match is found for the given pattern, the class instance
         attribute *match* becomes an re.MatchObject result.  Should an EOF

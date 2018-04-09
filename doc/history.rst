@@ -27,9 +27,9 @@ Version 4.5
   the session as if it was local. Simply set this to ``False``. (:ghpull:`472`)
 * :meth:`pxssh.pxssh.login` ``sync_original_prompt`` can allow the prompt to not be set to something unique
   incase the remote server is sensetive to new lines at login. Set this to ``False`` to do so. (:ghpull:`468`)
-* :meth:`pxssh.pxssh.login` has had a change with an SSH key option being provided, which is
+* :meth:`pxssh.pxssh.login` has had a change with the SSH key option, which is
   if ``ssh_key`` is set to ``True`` then the SSH client forces forwarding the authentication
-  agent to the remote server. (:ghpull:`473`)
+  agent to the remote server instead of providing a key. (:ghpull:`473`)
 
 Version 4.4
 ```````````

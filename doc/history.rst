@@ -7,10 +7,10 @@ Releases
 Version 4.5
 ```````````
 
-* :class:`~.spawn` now has a ``use_poll`` parameter. This allows the use
-  of select.poll() on fds
-* :class:`~.fdspawn` now has a ``use_poll`` paramneter. This allow the use
-  of select.poll() on fds
+* :class:`~.spawn` + `~.fdspawn` now have an ``use_poll`` parameter.
+  This change allows the use of select.poll() on file descriptors.
+  It allows for > 1024 file descriptors on the system, and, it is not used by
+  default due to compatibility concerns and must be explicitly enabled.
 
 Version 4.4
 ```````````

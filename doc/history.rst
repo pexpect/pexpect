@@ -19,9 +19,9 @@ Version 4.5
   logged in to the rmeote server. (:ghpull:`473`)
   The structure should be like this:
 
-   { 'local': ['2424:localhost:22'],  # Local SSH tunnels
-   'remote': ['2525:localhost:22'],   # Remote SSH tunnels
-   'dynamic': [8888] } # Dynamic/SOCKS tunnels
+        { 'local': ['2424:localhost:22'],  # Local SSH tunnels
+        'remote': ['2525:localhost:22'],   # Remote SSH tunnels
+        'dynamic': [8888] } # Dynamic/SOCKS tunnels
 
 * :meth:`pxssh.pxssh.login` allows subsequent logins from the remote session and treats
   the session as if it was local. (:ghpull:`472`)

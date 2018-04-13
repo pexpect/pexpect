@@ -156,15 +156,17 @@ def select_ignore_interrupts(iwtd, owtd, ewtd, timeout=None):
                 raise
 
 
-def poll_ignore_interrupts(fd, timeout=None):
-    '''Simple wrapper around poll to register a file descriptor and
+def poll_ignore_interrupts(fds, timeout=None):
+    '''Simple wrapper around poll to register file descriptors and
     ignore signals.'''
 
     if timeout is not None:
         end_time = time.time() + timeout
 
     poller = select.poll()
-    poller.register(fd)
+    for fd in fds:
+        poller.register(fd)
+
     while True:
         try:
             timeout_ms = None if timeout is None else timeout * 1000

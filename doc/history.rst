@@ -7,29 +7,32 @@ Releases
 Version 4.5
 ```````````
 
-* :class:`~.spawn` + :class:`~.fdspawn` now have an ``use_poll`` parameter.
-  This change allows the use of select.poll() on file descriptors.
-  It allows for > 1024 file descriptors on the system, and, it is not used by
-  default due to compatibility concerns and must be explicitly enabled.
-* :mod:`pexpect.pxssh` now has several new options in :meth:`pxssh.pxssh.login`.
-* :meth:`pxssh.pxssh.login` has the option ``password_regex`` which allows changing
-  the password prompt regex for servers that include ``password:`` somewhere before a
-  command line is reached.(:ghpull:`468`)
-* :meth:`pxssh.pxssh.login` now allows for setting up SSH tunnels to be requested once
-  logged in to the remote server. This option is ``ssh_tunnels`` (:ghpull:`473`)
-  The structure should be like this::
+* :class:`~.spawn` and :class:`~.fdspawn` now have a ``use_poll`` parameter.
+  If this is True, they will use :func:`select.poll` instead of :func:`select.select`.
+  ``poll()`` allows file descriptors above 1024, but it must be explicitly
+  enabled due to compatibility concerns (:ghpull:`474`).
+* The :meth:`.pxssh.login` method has several new and changed options:
 
-        { 'local': ['2424:localhost:22'],  # Local SSH tunnels
-        'remote': ['2525:localhost:22'],   # Remote SSH tunnels
-        'dynamic': [8888] } # Dynamic/SOCKS tunnels
+  * The option ``password_regex`` allows changing
+    the password prompt regex, for servers that include ``password:`` in a banner
+    before reaching a prompt (:ghpull:`468`).
+  * :meth:`~.pxssh.login` now allows for setting up SSH tunnels to be requested once
+    logged in to the remote server. This option is ``ssh_tunnels`` (:ghpull:`473`).
+    The structure should be like this::
 
-* :meth:`pxssh.pxssh.login` ``spawn_local_ssh`` allows subsequent logins from the remote session and treats
-  the session as if it was local. Simply set this to ``False``. (:ghpull:`472`)
-* :meth:`pxssh.pxssh.login` ``sync_original_prompt`` can allow the prompt to not be set to something unique
-  incase the remote server is sensetive to new lines at login. Set this to ``False`` to do so. (:ghpull:`468`)
-* :meth:`pxssh.pxssh.login` has had a change with the SSH key option, which is
-  if ``ssh_key`` is set to ``True`` then the SSH client forces forwarding the authentication
-  agent to the remote server instead of providing a key. (:ghpull:`473`)
+          {
+            'local': ['2424:localhost:22'],   # Local SSH tunnels
+            'remote': ['2525:localhost:22'],  # Remote SSH tunnels
+            'dynamic': [8888],                # Dynamic/SOCKS tunnels
+          }
+
+  * The option ``spawn_local_ssh=False`` allows subsequent logins from the
+    remote session and treats the session as if it was local (:ghpull:`472`).
+  * Setting ``sync_original_prompt=False`` will prevent changing the prompt to
+    something unique, in case the remote server is sensitive to new lines at login
+    (:ghpull:`468`).
+  * If ``ssh_key=True`` is passed, the SSH client forces forwarding the authentication
+    agent to the remote server instead of providing a key (:ghpull:`473`).
 
 Version 4.4
 ```````````

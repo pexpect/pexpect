@@ -447,7 +447,7 @@ class spawn(SpawnBase):
         if not self.isalive():
             # timeout of 0 means "poll"
             if self.use_poll:
-                r = poll_ignore_interrupts(self.child_fd, timeout)
+                r = poll_ignore_interrupts([self.child_fd], timeout)
             else:
                 r, w, e = select_ignore_interrupts([self.child_fd], [], [], 0)
             if not r:
@@ -458,14 +458,14 @@ class spawn(SpawnBase):
             # FIXME So does this mean Irix systems are forced to always have
             # FIXME a 2 second delay when calling read_nonblocking? That sucks.
             if self.use_poll:
-                r = poll_ignore_interrupts(self.child_fd, timeout)
+                r = poll_ignore_interrupts([self.child_fd], timeout)
             else:
                 r, w, e = select_ignore_interrupts([self.child_fd], [], [], 2)
             if not r and not self.isalive():
                 self.flag_eof = True
                 raise EOF('End Of File (EOF). Slow platform.')
         if self.use_poll:
-            r = poll_ignore_interrupts(self.child_fd, timeout)
+            r = poll_ignore_interrupts([self.child_fd], timeout)
         else:
             r, w, e = select_ignore_interrupts(
                 [self.child_fd], [], [], timeout
@@ -781,15 +781,16 @@ class spawn(SpawnBase):
 
         return os.read(fd, 1000)
 
-    def __interact_copy(self, escape_character=None,
-            input_filter=None, output_filter=None):
+    def __interact_copy(
+        self, escape_character=None, input_filter=None, output_filter=None
+    ):
 
         '''This is used by the interact() method.
         '''
 
         while self.isalive():
             if self.use_poll:
-                r = poll_ignore_interrupts(self.child_fd)
+                r = poll_ignore_interrupts([self.child_fd, self.STDIN_FILENO])
             else:
                 r, w, e = select_ignore_interrupts(
                     [self.child_fd, self.STDIN_FILENO], [], []

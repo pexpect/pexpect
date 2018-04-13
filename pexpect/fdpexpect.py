@@ -138,7 +138,7 @@ class fdspawn(SpawnBase):
             wlist = []
             xlist = []
             if self.use_poll:
-                rlist = poll_ignore_interrupts(rlist[0], timeout)
+                rlist = poll_ignore_interrupts(rlist, timeout)
             else:
                 rlist, wlist, xlist = select_ignore_interrupts(
                     rlist, wlist, xlist, timeout

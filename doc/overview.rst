@@ -261,7 +261,6 @@ When run by ``PopenSpawn``, they may behave differently.
 
 .. seealso::
 
-   `winpexpect <https://pypi.python.org/pypi/winpexpect>`__ and
-   `wexpect <https://gist.github.com/anthonyeden/8488763>`__
+   `winpexpect <https://pypi.python.org/pypi/winpexpect>`__ and `wexpect <https://gist.github.com/anthonyeden/8488763>`__
      Two unmaintained pexpect-like modules for Windows, which work with a
      hidden console.

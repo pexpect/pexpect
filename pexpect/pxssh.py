@@ -318,13 +318,12 @@ class pxssh (spawn):
         if self.force_password:
             ssh_options = ssh_options + ' ' + self.SSH_OPTS
         if ssh_config is not None:
-            if spawn_local_ssh:
-                try:
-                    if spawn_local_ssh:
-                        os.path.isfile(ssh_config)
-                except:
-                    raise ExceptionPxssh('SSH config does not exist')
-                ssh_options = ssh_options + '-F ' + ssh_config
+            try:
+                if spawn_local_ssh:
+                    os.path.isfile(ssh_config)
+            except:
+                raise ExceptionPxssh('SSH config does not exist')
+            ssh_options = ssh_options + '-F ' + ssh_config
         if port is not None:
             ssh_options = ssh_options + ' -p %s'%(str(port))
         if ssh_key is not None:

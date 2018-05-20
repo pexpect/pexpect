@@ -294,7 +294,9 @@ class pxssh (spawn):
         session to do so. Setting this option to `False` and not having an active session
         will trigger an error.
         
-        Set ``ssh_key`` to `True` to force passing the current SSH authentication socket to the
+        Set ``ssh_key`` to a string that is a file path to an SSH private key. Doing so
+        will use that SSH key for the session authentication.
+        Set ``ssh_key`` to `True` to force passing the current SSH authentication socket
         to the desired ``hostname``.
         '''
         

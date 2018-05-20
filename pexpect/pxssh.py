@@ -259,7 +259,7 @@ class pxssh (spawn):
                 sync_multiplier=1, check_local_ip=True,
                 password_regex=r'(?i)(?:password:)|(?:passphrase for key)',
                 ssh_tunnels={}, spawn_local_ssh=True,
-                sync_original_prompt=True):
+                sync_original_prompt=True, ssh_config=None):
         '''This logs the user into the given server.
 
         It uses
@@ -312,6 +312,14 @@ class pxssh (spawn):
             ssh_options = ssh_options + " -o'NoHostAuthenticationForLocalhost=yes'"
         if self.force_password:
             ssh_options = ssh_options + ' ' + self.SSH_OPTS
+        if ssh_config is not None:
+            if spawn_local_ssh:
+                try:
+                    if spawn_local_ssh:
+                        os.path.isfile(ssh_config)
+                except:
+                    raise ExceptionPxssh('SSH config does not exist')
+                ssh_options = ssh_options + ssh_config
         if port is not None:
             ssh_options = ssh_options + ' -p %s'%(str(port))
         if ssh_key is not None:

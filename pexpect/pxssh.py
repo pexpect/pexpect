@@ -299,7 +299,7 @@ class pxssh (spawn):
         Set ``ssh_key`` to `True` to force passing the current SSH authentication socket
         to the desired ``hostname``.
         
-        Setting ``ssh_config`` to a file path of an SSH client config file will pass that
+        Setting ``ssh_config`` to a file path string of an SSH client config file will pass that
         file to the client to handle itself. You may set any options you wish in here, however
         doing so will require you to post extra information that you may not want to if you
         run into issues.

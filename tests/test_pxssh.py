@@ -85,6 +85,13 @@ class PxsshTestCase(SSHTestBase):
         if confirmation_strings!=len(confirmation_array):
             assert False, 'String generated from remote tunneling is incorrect.'
 
+    def test_ssh_config_passing_string(self):
+        ssh = pxssh.pxssh(debug_command_string=True)
+        config_path = '/fakepath/fake/config_file'
+        string = ssh.login('server', 'me', password='s3cret', spawn_local_ssh=False, ssh_config=config_path)
+        if not '-F '+config_path in string:
+            assert False, 'String generated from SSH config passing is incorrect.'
+
     def test_ssh_key_string(self):
         ssh = pxssh.pxssh(debug_command_string=True)
         confirmation_strings = 0

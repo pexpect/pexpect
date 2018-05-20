@@ -324,7 +324,7 @@ class pxssh (spawn):
                         os.path.isfile(ssh_config)
                 except:
                     raise ExceptionPxssh('SSH config does not exist')
-                ssh_options = ssh_options + ssh_config
+                ssh_options = ssh_options + '-F ' + ssh_config
         if port is not None:
             ssh_options = ssh_options + ' -p %s'%(str(port))
         if ssh_key is not None:

@@ -125,6 +125,14 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.expect_exact('def')
         p.expect(pexpect.EOF)
 
+    def test_crlf(self):
+        p = PopenSpawn('echo alpha beta')
+        assert p.read() == b'alpha beta' + p.crlf
+
+    def test_crlf_encoding(self):
+        p = PopenSpawn('echo alpha beta', encoding='utf-8')
+        assert p.read() == 'alpha beta' + p.crlf
+
 if __name__ == '__main__':
     unittest.main()
 

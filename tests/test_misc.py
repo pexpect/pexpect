@@ -87,6 +87,12 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
         remaining = child.read().replace(_CAT_EOF, b'')
         self.assertEqual(remaining, b'abc\r\n')
 
+    def test_read_poll_timeout(self):
+        " Test use_poll properly times out "
+        child = pexpect.spawn('sleep 5', use_poll=True)
+        with self.assertRaises(pexpect.TIMEOUT):
+            child.expect(pexpect.EOF, timeout=1)
+
     def test_readline_bin_echo(self):
         " Test spawn('echo'). "
         # given,

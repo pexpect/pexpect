@@ -105,8 +105,8 @@ class PxsshTestCase(SSHTestBase):
             assert False, 'String generated from forcing the SSH agent sock is incorrect.'
 
         confirmation_strings = 0
-        confirmation_array = [' -i True']
         (temp_file,ssh_key) = tempfile.mkstemp()
+        confirmation_array = [' -i '+ssh_key]
         string = ssh.login('server', 'me', password='s3cret', ssh_key=ssh_key)
         for confirmation in confirmation_array:
             if confirmation in string:

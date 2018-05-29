@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os
-
+import tempfile
 import unittest
 
 from pexpect import pxssh
@@ -87,7 +87,7 @@ class PxsshTestCase(SSHTestBase):
 
     def test_ssh_config_passing_string(self):
         ssh = pxssh.pxssh(debug_command_string=True)
-        config_path = '/fakepath/fake/config_file'
+        (temp_file,config_path) = tempfile.mkstemp()
         string = ssh.login('server', 'me', password='s3cret', spawn_local_ssh=False, ssh_config=config_path)
         if not '-F '+config_path in string:
             assert False, 'String generated from SSH config passing is incorrect.'
@@ -106,7 +106,8 @@ class PxsshTestCase(SSHTestBase):
 
         confirmation_strings = 0
         confirmation_array = [' -i True']
-        string = ssh.login('server', 'me', password='s3cret', ssh_key='True')
+        (temp_file,ssh_key) = tempfile.mkstemp()
+        string = ssh.login('server', 'me', password='s3cret', ssh_key=ssh_key)
         for confirmation in confirmation_array:
             if confirmation in string:
                 confirmation_strings+=1

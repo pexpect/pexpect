@@ -294,12 +294,12 @@ class pxssh (spawn):
         session to do so. Setting this option to `False` and not having an active session
         will trigger an error.
         
-        Setting ``ssh_key`` to a file path to an SSH private key will use that SSH key
+        Set ``ssh_key`` to a file path to an SSH private key will use that SSH key
         for the session authentication.
         Set ``ssh_key`` to `True` to force passing the current SSH authentication socket
         to the desired ``hostname``.
         
-        Setting ``ssh_config`` to a file path string of an SSH client config file will pass that
+        Set ``ssh_config`` to a file path string of an SSH client config file will pass that
         file to the client to handle itself. You may set any options you wish in here, however
         doing so will require you to post extra information that you may not want to if you
         run into issues.
@@ -318,11 +318,8 @@ class pxssh (spawn):
         if self.force_password:
             ssh_options = ssh_options + ' ' + self.SSH_OPTS
         if ssh_config is not None:
-            try:
-                if spawn_local_ssh:
-                    os.path.isfile(ssh_config)
-            except:
-                raise ExceptionPxssh('SSH config does not exist')
+            if spawn_local_ssh and not os.path.isfile(ssh_config):
+                raise ExceptionPxssh('SSH config does not exist or is not a file.')
             ssh_options = ssh_options + '-F ' + ssh_config
         if port is not None:
             ssh_options = ssh_options + ' -p %s'%(str(port))
@@ -331,11 +328,8 @@ class pxssh (spawn):
             if ssh_key==True:
                 ssh_options = ssh_options + ' -A'
             else:
-                try:
-                    if spawn_local_ssh:
-                        os.path.isfile(ssh_key)
-                except:
-                    raise ExceptionPxssh('private ssh key does not exist')
+                if spawn_local_ssh and not os.path.isfile(ssh_key):
+                    raise ExceptionPxssh('private ssh key does not exist or is not a file.')
                 ssh_options = ssh_options + ' -i %s' % (ssh_key)
         
         # SSH tunnels, make sure you know what you're putting into the lists

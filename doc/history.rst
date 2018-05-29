@@ -4,6 +4,17 @@ History
 Releases
 --------
 
+Version 4.6
+```````````
+
+* The :meth:`.pxssh.login` method now supports an ``ssh_config`` parameter,
+  which can be used to specify a file path to an SSH config file
+  (:ghpull:`490`).
+* Improved compatability for the ``crlf`` parameter of :class:`~.PopenSpawn`
+  (:ghpull:`493`)
+* Fixed an issue in read timeout handling when using :class:`~.spawn` and
+  :class:`~.fdspawn` with the ``use_poll`` parameter (:ghpull:`492`).
+
 Version 4.5
 ```````````
 

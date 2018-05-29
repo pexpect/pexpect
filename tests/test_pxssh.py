@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os
-
+import tempfile
 import unittest
 
 from pexpect import pxssh
@@ -85,6 +85,13 @@ class PxsshTestCase(SSHTestBase):
         if confirmation_strings!=len(confirmation_array):
             assert False, 'String generated from remote tunneling is incorrect.'
 
+    def test_ssh_config_passing_string(self):
+        ssh = pxssh.pxssh(debug_command_string=True)
+        (temp_file,config_path) = tempfile.mkstemp()
+        string = ssh.login('server', 'me', password='s3cret', spawn_local_ssh=False, ssh_config=config_path)
+        if not '-F '+config_path in string:
+            assert False, 'String generated from SSH config passing is incorrect.'
+
     def test_ssh_key_string(self):
         ssh = pxssh.pxssh(debug_command_string=True)
         confirmation_strings = 0
@@ -98,8 +105,9 @@ class PxsshTestCase(SSHTestBase):
             assert False, 'String generated from forcing the SSH agent sock is incorrect.'
 
         confirmation_strings = 0
-        confirmation_array = [' -i True']
-        string = ssh.login('server', 'me', password='s3cret', ssh_key='True')
+        (temp_file,ssh_key) = tempfile.mkstemp()
+        confirmation_array = [' -i '+ssh_key]
+        string = ssh.login('server', 'me', password='s3cret', ssh_key=ssh_key)
         for confirmation in confirmation_array:
             if confirmation in string:
                 confirmation_strings+=1

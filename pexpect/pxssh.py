@@ -294,12 +294,12 @@ class pxssh (spawn):
         session to do so. Setting this option to `False` and not having an active session
         will trigger an error.
         
-        Set ``ssh_key`` to a file path to an SSH private key will use that SSH key
+        Set ``ssh_key`` to a file path to an SSH private key to use that SSH key
         for the session authentication.
         Set ``ssh_key`` to `True` to force passing the current SSH authentication socket
         to the desired ``hostname``.
         
-        Set ``ssh_config`` to a file path string of an SSH client config file will pass that
+        Set ``ssh_config`` to a file path string of an SSH client config file to pass that
         file to the client to handle itself. You may set any options you wish in here, however
         doing so will require you to post extra information that you may not want to if you
         run into issues.

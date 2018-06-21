@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os
+import subprocess
 import tempfile
 import unittest
 
@@ -111,9 +112,16 @@ class PxsshTestCase(SSHTestBase):
         for confirmation in confirmation_array:
             if confirmation in string:
                 confirmation_strings+=1
-        
+
         if confirmation_strings!=len(confirmation_array):
             assert False, 'String generated from adding an SSH key is incorrect.'
+
+    def test_overridding_ssh_command(self):
+        ssh = pxssh.pxssh(overridden_ssh_cmd='/usr/bin/ssh')
+        self.assertEqual(ssh.SSH_COMMAND, '/usr/bin/ssh')
+
+    def test_overridding_with_bad_ssh_command(self):
+        self.assertRaises(pxssh.ExceptionPxssh, pxssh.pxssh, overridden_ssh_cmd='/does/not/exist')
 
 
 if __name__ == '__main__':

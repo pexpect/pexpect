@@ -118,7 +118,7 @@ class pxssh (spawn):
     def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
                     logfile=None, cwd=None, env=None, ignore_sighup=True, echo=True,
                     options={}, encoding=None, codec_errors='strict',
-                    debug_command_string=False):
+                    debug_command_string=False, overridden_ssh_cmd=None):
 
         spawn.__init__(self, None, timeout=timeout, maxread=maxread,
                        searchwindowsize=searchwindowsize, logfile=logfile,
@@ -145,6 +145,7 @@ class pxssh (spawn):
         self.PROMPT_SET_CSH = r"set prompt='[PEXPECT]\$ '"
         self.SSH_OPTS = ("-o'RSAAuthentication=no'"
                 + " -o 'PubkeyAuthentication=no'")
+
 # Disabling host key checking, makes you vulnerable to MITM attacks.
 #                + " -o 'StrictHostKeyChecking=no'"
 #                + " -o 'UserKnownHostsFile /dev/null' ")
@@ -154,12 +155,18 @@ class pxssh (spawn):
         # Unsetting SSH_ASKPASS on the remote side doesn't disable it! Annoying!
         #self.SSH_OPTS = "-x -o'RSAAuthentication=no' -o 'PubkeyAuthentication=no'"
         self.force_password = False
-        
+
         self.debug_command_string = debug_command_string
 
         # User defined SSH options, eg,
         # ssh.otions = dict(StrictHostKeyChecking="no",UserKnownHostsFile="/dev/null")
         self.options = options
+
+        self.SSH_COMMAND = 'ssh'
+        if overridden_ssh_cmd:
+            self.SSH_COMMAND = os.path.expanduser(overridden_ssh_cmd)
+            if not os.path.exists(self.SSH_COMMAND):
+                raise ExceptionPxssh('overridden ssh executable %s not found' % overridden_ssh_cmd)
 
     def levenshtein_distance(self, a, b):
         '''This calculates the Levenshtein distance between a and b.
@@ -354,7 +361,7 @@ class pxssh (spawn):
                         if spawn_local_ssh==False:
                             tunnel = quote(str(tunnel))
                         ssh_options = ssh_options + ' -' + cmd_type + ' ' + str(tunnel)
-        cmd = "ssh %s -l %s %s" % (ssh_options, username, server)
+        cmd = "%s %s -l %s %s" % (self.SSH_COMMAND, ssh_options, username, server)
         if self.debug_command_string:
             return(cmd)
 

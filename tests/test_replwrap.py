@@ -24,8 +24,8 @@ class REPLWrapTestCase(unittest.TestCase):
 
     def test_bash(self):
         bash = replwrap.bash()
-        res = bash.run_command("time")
-        assert 'real' in res, res
+        res = bash.run_command("alias")
+        assert 'alias' in res, res
 
         try:
             bash.run_command('')

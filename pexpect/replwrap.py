@@ -108,7 +108,10 @@ class REPLWrapper(object):
             self._expect_prompt(timeout=1)
             raise ValueError("Continuation prompt found - input was incomplete:\n"
                              + "{}".format(command))
-        return u''.join(res + [self.child.before])
+
+        res = res + [self.child.before]
+        sep = u'' if isinstance(res[0], str) else b''
+        return sep.join(res)
 
 def python(command="python"):
     """Start a Python shell and return a :class:`REPLWrapper` object."""

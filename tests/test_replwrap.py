@@ -117,5 +117,22 @@ class REPLWrapTestCase(unittest.TestCase):
         res = py.run_command("for a in range(3): print(a)\n")
         assert res.strip().splitlines() == ['0', '1', '2']
 
+    def test_run_command_bytes(self):
+        bash = replwrap.bash()
+        res = bash.run_command(b"echo '1 2\n3 4'")
+        self.assertEqual(res.strip().splitlines(), [b'1 2', b'3 4'])
+
+        # Should raise ValueError if input is incomplete
+        try:
+            bash.run_command(b"echo '5 6")
+        except ValueError:
+            pass
+        else:
+            assert False, "Didn't raise ValueError for incomplete input"
+
+        # Check that the REPL was reset (SIGINT) after the incomplete input
+        res = bash.run_command(b"echo '1 2\n3 4'")
+        self.assertEqual(res.strip().splitlines(), [b'1 2', b'3 4'])
+
 if __name__ == '__main__':
     unittest.main()

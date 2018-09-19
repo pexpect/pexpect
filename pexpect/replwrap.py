@@ -83,8 +83,10 @@ class REPLWrapper(object):
         # Split up multiline commands and feed them in bit-by-bit
         cmdlines = command.splitlines()
         # splitlines ignores trailing newlines - add it back in manually
-        if command.endswith('\n'):
+        if isinstance(command, str) and command.endswith('\n'):
             cmdlines.append('')
+        elif isinstance(command, bytes) and command.endswith(b'\n'):
+            cmdlines.append(b'')
         if not cmdlines:
             raise ValueError("No command was given")
 
@@ -105,8 +107,11 @@ class REPLWrapper(object):
             self.child.kill(signal.SIGINT)
             self._expect_prompt(timeout=1)
             raise ValueError("Continuation prompt found - input was incomplete:\n"
-                             + command)
-        return u''.join(res + [self.child.before])
+                             + "{}".format(command))
+
+        res = res + [self.child.before]
+        sep = u'' if isinstance(res[0], str) else b''
+        return sep.join(res)
 
 def python(command="python"):
     """Start a Python shell and return a :class:`REPLWrapper` object."""

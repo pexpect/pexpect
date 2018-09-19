@@ -117,5 +117,16 @@ class REPLWrapTestCase(unittest.TestCase):
         res = py.run_command("for a in range(3): print(a)\n")
         assert res.strip().splitlines() == ['0', '1', '2']
 
+    def test_run_command_bytes(self):
+        if platform.python_implementation() == 'PyPy':
+            raise unittest.SkipTest(skip_pypy)
+
+        child = pexpect.spawn('python', echo=False, timeout=5, encoding=None)
+        py = replwrap.REPLWrapper(child, ">>> ", prompt_change=None,
+                                  continuation_prompt=u"... ")
+
+        res = py.run_command(b'\x34\x2b\x37\n')
+        assert res.strip() == b'11'
+
 if __name__ == '__main__':
     unittest.main()

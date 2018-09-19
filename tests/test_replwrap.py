@@ -125,7 +125,7 @@ class REPLWrapTestCase(unittest.TestCase):
         py = replwrap.REPLWrapper(child, ">>> ", prompt_change=None,
                                   continuation_prompt=u"... ")
 
-        res = py.run_command(b'\x34\x2b\x37')
+        res = py.run_command(b'\x34\x2b\x37\n')
         assert res.strip() == b'11'
 
 if __name__ == '__main__':

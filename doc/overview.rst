@@ -209,6 +209,9 @@ following will turn on logging and send output to stdout (the screen)::
     child = pexpect.spawn(foo)
     child.logfile = sys.stdout
 
+You will need to pass an encoding to spawn in the above code if you are using
+Python 3, or use sys.stdout.buffer.
+
 Exceptions
 ----------
 

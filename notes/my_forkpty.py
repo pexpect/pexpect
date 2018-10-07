@@ -1,6 +1,9 @@
 import os, fcntl, termios
 import time
 
+from pexpect import ExceptionPexpect
+
+
 def my_forkpty():
 
     (master_fd, slave_fd) = os.openpty()
@@ -86,4 +89,3 @@ else:
     time.sleep(1) # Give the child a chance to print.
     print 'Robots always say:', os.read(fd,100)
     os.close(fd)
-

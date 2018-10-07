@@ -31,5 +31,5 @@ while 1:
 		break
 os.close(fd_in)
 d = os.read(fd_in, 1) # fd_in should be closed now...
-if s == '':
+if d == '':
 	print 'd is empty. good.'

@@ -1,8 +1,10 @@
 #!/usr/bin/env python
-import signal
 import os
+import signal
+import sys
 import time
 import pty
+
 
 def signal_handler (signum, frame):
     print 'Signal handler called with signal:', signum
@@ -74,4 +76,3 @@ try:
     print 'Child is alive. This is ambiguous because it may be a Zombie.'
 except OSError as e:
     print 'Child appears to be dead.'
-

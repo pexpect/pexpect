@@ -223,7 +223,8 @@ def main():
     index = child.expect([pexpect.EOF, "(?i)there are stopped jobs"])
     if index==1:
         child.sendline("exit")
-        child.expect(EOF)
+        child.expect(pexpect.EOF)
+
 
 if __name__ == "__main__":
     main()

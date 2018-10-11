@@ -92,7 +92,11 @@ class SpawnBase(object):
             self.string_type = bytes
             self.buffer_type = BytesIO
             self.crlf = b'\r\n'
-            if PY3:
+            try:               # Python 2
+                self.allowed_string_types = (basestring, )
+                self.linesep = os.linesep
+                self.write_to_stdout = sys.stdout.write
+            except NameError:  # Python 3
                 self.allowed_string_types = (bytes, str)
                 self.linesep = os.linesep.encode('ascii')
                 def write_to_stdout(b):
@@ -102,10 +106,7 @@ class SpawnBase(object):
                         # If stdout has been replaced, it may not have .buffer
                         return sys.stdout.write(b.decode('ascii', 'replace'))
                 self.write_to_stdout = write_to_stdout
-            else:
-                self.allowed_string_types = (basestring,)  # analysis:ignore
-                self.linesep = os.linesep
-                self.write_to_stdout = sys.stdout.write
+
         else:
             # unicode mode
             self._encoder = codecs.getincrementalencoder(encoding)(codec_errors)

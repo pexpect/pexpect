@@ -145,4 +145,7 @@ while not done:
     white.do_move (move_black)
     print('tail of loop')
 
-g.quit()
+try:
+    g.quit()
+except NameError:
+    pass

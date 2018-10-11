@@ -216,7 +216,7 @@ def login (args, cli_username=None, cli_password=None):
     for hostname in host_names:
         print('connecting to', hostname)
         try:
-            fout = file("log_"+hostname, "w")
+            fout = open("log_"+hostname, "w")
             hive[hostname] = pxssh.pxssh()
             # Disable host key checking.
             hive[hostname].SSH_OPTS = (hive[hostname].SSH_OPTS

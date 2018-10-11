@@ -1,3 +1,6 @@
+# flake8: noqa This file is Python 3-only and async yield is a Py2 syntax error
+# TODO: Remove these two lines when support for legacy Python is dropped.
+
 import asyncio
 import errno
 import signal

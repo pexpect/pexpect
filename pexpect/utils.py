@@ -11,10 +11,10 @@ except NameError:
     # Alias Python2 exception to Python3
     InterruptedError = select.error
 
-if sys.version_info[0] >= 3:
-    string_types = (str,)
-else:
+try:
     string_types = (unicode, str)
+except NameError:
+    string_types = (str,)
 
 
 def is_executable_file(path):

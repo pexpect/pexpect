@@ -267,7 +267,7 @@ def main():
 
     # load the stats from the last run.
     try:
-        last_stats = pickle.load(file(TOPIP_LAST_RUN_STATS))
+        last_stats = pickle.load(open(TOPIP_LAST_RUN_STATS))
     except:
         last_stats = {'maxip':None}
 
@@ -280,7 +280,7 @@ def main():
                     % hostname, alert_addr_from, alert_addr_to)
         if log_flag:
             if verbose: print('LOGGING THIS EVENT')
-            fout = file(TOPIP_LOG_FILE,'a')
+            fout = open(TOPIP_LOG_FILE,'a')
             #dts = time.strftime('%Y:%m:%d:%H:%M:%S', time.localtime())
             dts = time.asctime()
             fout.write ('%s - %d connections from %s\n'
@@ -289,7 +289,7 @@ def main():
 
     # save state to TOPIP_LAST_RUN_STATS
     try:
-        pickle.dump(s, file(TOPIP_LAST_RUN_STATS,'w'))
+        pickle.dump(s, open(TOPIP_LAST_RUN_STATS,'w'))
         os.chmod (TOPIP_LAST_RUN_STATS, 0o664)
     except:
         pass

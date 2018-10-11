@@ -45,7 +45,7 @@ SSH_NEWKEY = r'Are you sure you want to continue connecting \(yes/no\)\?'
 def login(host, user, password):
 
     child = pexpect.spawn('ssh -l %s %s'%(user, host))
-    fout = file ("LOG.TXT","wb")
+    fout = open("LOG.TXT","wb")
     child.logfile_read = fout #use child.logfile to also log writes (passwords!)
 
     i = child.expect([pexpect.TIMEOUT, SSH_NEWKEY, '[Pp]assword: '])

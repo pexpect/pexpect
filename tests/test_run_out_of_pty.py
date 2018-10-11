@@ -19,6 +19,7 @@ PEXPECT LICENSE
 
 '''
 import pexpect
+import sys
 import unittest
 from . import PexpectTestCase
 

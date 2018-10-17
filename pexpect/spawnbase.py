@@ -122,6 +122,8 @@ class SpawnBase(object):
         self._buffer = self.buffer_type()
 
     def _log(self, s, direction):
+        if PY3 and not isinstance(s, str):
+            s = s.decode('utf8')
         if self.logfile is not None:
             self.logfile.write(s)
             self.logfile.flush()

@@ -37,7 +37,7 @@ class spawn(SpawnBase):
                  searchwindowsize=None, logfile=None, cwd=None, env=None,
                  ignore_sighup=False, echo=True, preexec_fn=None,
                  encoding=None, codec_errors='strict', dimensions=None,
-                 use_poll=False):
+                 use_poll=False, pass_fds=()):
         '''This is the constructor. The command parameter may be a string that
         includes a command and any arguments to the command. For example::
 
@@ -185,6 +185,10 @@ class spawn(SpawnBase):
 
         The use_poll attribute enables using select.poll() over select.select()
         for socket handling. This is handy if your system could have > 1024 fds
+
+        By default, all file descriptors except 0, 1 and 2 are closed. This
+        behavior can be overridden with pass_fds attribute, a list of file
+        descriptors to keep open between the parent and the child.
         '''
         super(spawn, self).__init__(timeout=timeout, maxread=maxread, searchwindowsize=searchwindowsize,
                                     logfile=logfile, encoding=encoding, codec_errors=codec_errors)
@@ -201,7 +205,7 @@ class spawn(SpawnBase):
             self.args = None
             self.name = '<pexpect factory incomplete>'
         else:
-            self._spawn(command, args, preexec_fn, dimensions)
+            self._spawn(command, args, preexec_fn, dimensions, pass_fds)
         self.use_poll = use_poll
 
     def __str__(self):
@@ -236,7 +240,8 @@ class spawn(SpawnBase):
         s.append('delayafterterminate: ' + str(self.delayafterterminate))
         return '\n'.join(s)
 
-    def _spawn(self, command, args=[], preexec_fn=None, dimensions=None):
+    def _spawn(self, command, args=[], preexec_fn=None, dimensions=None,
+               pass_fds=()):
         '''This starts the given command in a child process. This does all the
         fork/exec type of stuff for a pty. This is called by __init__. If args
         is empty then command will be parsed (split on spaces) and args will be
@@ -282,7 +287,8 @@ class spawn(SpawnBase):
         assert self.pid is None, 'The pid member must be None.'
         assert self.command is not None, 'The command member must not be None.'
 
-        kwargs = {'echo': self.echo, 'preexec_fn': preexec_fn}
+        kwargs = {'echo': self.echo, 'preexec_fn': preexec_fn,
+                  'pass_fds': pass_fds}
         if self.ignore_sighup:
             def preexec_wrapper():
                 "Set SIGHUP to be ignored, then call the real preexec_fn"

@@ -207,7 +207,10 @@ It is also useful to log the child's input and out to a file or the screen. The
 following will turn on logging and send output to stdout (the screen)::
 
     child = pexpect.spawn(foo)
-    child.logfile = sys.stdout
+    child.logfile = sys.stdout.buffer
+
+The `sys.stdout.buffer` object is available since Python 3. With Python 2, one
+has to assign just `sys.stdout` instead.
 
 Exceptions
 ----------

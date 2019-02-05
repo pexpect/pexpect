@@ -127,6 +127,8 @@ class SpawnBase(object):
             self.logfile.flush()
         second_log = self.logfile_send if (direction=='send') else self.logfile_read
         if second_log is not None:
+            if PY3 and isinstance(s, bytes):
+                s = s.decode('ISO8859-1')
             second_log.write(s)
             second_log.flush()
 

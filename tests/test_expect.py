@@ -151,6 +151,30 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self.assertIsInstance(c.pattern, expected_type)
         p.expect (pexpect.EOF)
 
+    def test_expect_regex_enc_none (self):
+        '''This test that bytes mode spawn objects (encoding=None)
+        parses correctly regex patterns compiled from non-bytes type objects
+        '''
+        p = pexpect.spawn('cat', echo=False, timeout=5)
+        p.sendline ('We are the Knights who say "Ni!"')
+        index = p.expect ([re.compile('We are the Knights who say "Ni!"'),
+                           pexpect.EOF, pexpect.TIMEOUT])
+        self.assertEqual(index, 0)
+        p.sendeof ()
+        p.expect_exact (pexpect.EOF)
+
+    def test_expect_regex_enc_utf8 (self):
+        '''This test that non-bytes mode spawn objects (encoding='utf-8')
+        parses correctly regex patterns compiled from bytes type objects
+        '''
+        p = pexpect.spawn('cat', echo=False, timeout=5, encoding='utf-8')
+        p.sendline ('We are the Knights who say "Ni!"')
+        index = p.expect ([re.compile(b'We are the Knights who say "Ni!"'),
+                           pexpect.EOF, pexpect.TIMEOUT])
+        self.assertEqual(index, 0)
+        p.sendeof ()
+        p.expect_exact (pexpect.EOF)
+
     def test_expect_order (self):
         '''This tests that patterns are matched in the same order as given in the pattern_list.
 

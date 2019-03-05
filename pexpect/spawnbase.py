@@ -143,6 +143,9 @@ class SpawnBase(object):
         p = r.pattern
         if self.encoding is None and not isinstance(p, bytes):
             return re.compile(p.encode('utf-8'))
+        # And vice-versa
+        elif self.encoding is not None and isinstance(p, bytes):
+            return re.compile(p.decode('utf-8'))
         return r
 
     def _coerce_send_string(self, s):

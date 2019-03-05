@@ -121,6 +121,36 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
                 expected_type = unicode
         return re.compile(expect_string), expected_type
 
+    def test_coerce_expect_re_enc_none (self):
+        '''This test that compiled regex patterns will always be bytes type
+        when spawn objects have no encoding or encoding=None
+        '''
+        r, expected_type = self._select_types()
+        p = pexpect.spawn('true')
+        c = pexpect.spawnbase.SpawnBase._coerce_expect_re(p, r)
+        self.assertIsInstance(c.pattern, expected_type)
+        p.expect (pexpect.EOF)
+
+    def test_coerce_expect_re_enc_ascii (self):
+        '''This test that compiled regex patterns won't ever be bytes type
+        when spawn objects have ascii encoding
+        '''
+        r, expected_type = self._select_types('ascii')
+        p = pexpect.spawn('true', encoding='ascii')
+        c = pexpect.spawnbase.SpawnBase._coerce_expect_re(p, r)
+        self.assertIsInstance(c.pattern, expected_type)
+        p.expect (pexpect.EOF)
+
+    def test_coerce_expect_re_enc_utf8 (self):
+        '''This test that compiled regex patterns won't ever be bytes type
+        when spawn objects have utf-8 encoding
+        '''
+        r, expected_type = self._select_types('utf-8')
+        p = pexpect.spawn('true', encoding='utf-8')
+        c = pexpect.spawnbase.SpawnBase._coerce_expect_re(p, r)
+        self.assertIsInstance(c.pattern, expected_type)
+        p.expect (pexpect.EOF)
+
     def test_expect_order (self):
         '''This tests that patterns are matched in the same order as given in the pattern_list.
 

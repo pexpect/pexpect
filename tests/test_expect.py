@@ -25,10 +25,13 @@ import time
 import signal
 import sys
 import os
+import re
 
 import pexpect
 from . import PexpectTestCase
 from .utils import no_coverage_env
+
+PY3 = bool(sys.version_info.major >= 3)
 
 # Many of these test cases blindly assume that sequential directory
 # listings of the /bin directory will yield the same results.
@@ -100,6 +103,23 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.expect (b'THERE')
         p.sendeof ()
         p.expect (pexpect.EOF)
+
+    def _select_types(self, encoding=None):
+        if encoding is None:
+            if PY3:
+                expect_string = 'String'
+                expected_type = bytes
+            else:
+                expect_string = u'String'
+                expected_type = str
+        else:
+            if PY3:
+                expect_string = b'String'
+                expected_type = str
+            else:
+                expect_string = 'String'
+                expected_type = unicode
+        return re.compile(expect_string), expected_type
 
     def test_expect_order (self):
         '''This tests that patterns are matched in the same order as given in the pattern_list.

@@ -87,10 +87,81 @@ class PxsshTestCase(SSHTestBase):
 
     def test_ssh_config_passing_string(self):
         ssh = pxssh.pxssh(debug_command_string=True)
-        (temp_file,config_path) = tempfile.mkstemp()
+        temp_file = tempfile.NamedTemporaryFile()
+        config_path = temp_file.name
         string = ssh.login('server', 'me', password='s3cret', spawn_local_ssh=False, ssh_config=config_path)
         if not '-F '+config_path in string:
             assert False, 'String generated from SSH config passing is incorrect.'
+
+    def test_username_or_ssh_config(self):
+        try:
+            ssh = pxssh.pxssh(debug_command_string=True)
+            temp_file = tempfile.NamedTemporaryFile()
+            config_path = temp_file.name
+            string = ssh.login('server')
+            raise AssertionError('Should have failed due to missing username and missing ssh_config.')
+        except TypeError:
+            pass
+
+    def test_ssh_config_user(self):
+        ssh = pxssh.pxssh(debug_command_string=True)
+        temp_file = tempfile.NamedTemporaryFile()
+        config_path = temp_file.name
+        temp_file.write(b'HosT server\n'
+                        b'UsEr me\n'
+                        b'hOSt not-server\n')
+        temp_file.seek(0)
+        string = ssh.login('server', ssh_config=config_path)
+
+    def test_ssh_config_no_username_empty_config(self):
+        ssh = pxssh.pxssh(debug_command_string=True)
+        temp_file = tempfile.NamedTemporaryFile()
+        config_path = temp_file.name
+        try:
+            string = ssh.login('server', ssh_config=config_path)
+            raise AssertionError('Should have failed due to no Host.')
+        except TypeError:
+            pass
+
+    def test_ssh_config_wrong_Host(self):
+        ssh = pxssh.pxssh(debug_command_string=True)
+        temp_file = tempfile.NamedTemporaryFile()
+        config_path = temp_file.name
+        temp_file.write(b'Host not-server\n'
+                        b'Host also-not-server\n')
+        temp_file.seek(0)
+        try:
+            string = ssh.login('server', ssh_config=config_path)
+            raise AssertionError('Should have failed due to no matching Host.')
+        except TypeError:
+            pass
+
+    def test_ssh_config_no_user(self):
+        ssh = pxssh.pxssh(debug_command_string=True)
+        temp_file = tempfile.NamedTemporaryFile()
+        config_path = temp_file.name
+        temp_file.write(b'Host server\n'
+                        b'Host not-server\n')
+        temp_file.seek(0)
+        try:
+            string = ssh.login('server', ssh_config=config_path)
+            raise AssertionError('Should have failed due to no user.')
+        except TypeError:
+            pass
+
+    def test_ssh_config_empty_user(self):
+        ssh = pxssh.pxssh(debug_command_string=True)
+        temp_file = tempfile.NamedTemporaryFile()
+        config_path = temp_file.name
+        temp_file.write(b'Host server\n'
+                        b'user   \n'
+                        b'Host not-server\n')
+        temp_file.seek(0)
+        try:
+            string = ssh.login('server', ssh_config=config_path)
+            raise AssertionError('Should have failed due to empty user.')
+        except TypeError:
+            pass
 
     def test_ssh_key_string(self):
         ssh = pxssh.pxssh(debug_command_string=True)
@@ -105,7 +176,8 @@ class PxsshTestCase(SSHTestBase):
             assert False, 'String generated from forcing the SSH agent sock is incorrect.'
 
         confirmation_strings = 0
-        (temp_file,ssh_key) = tempfile.mkstemp()
+        temp_file = tempfile.NamedTemporaryFile()
+        ssh_key = temp_file.name
         confirmation_array = [' -i '+ssh_key]
         string = ssh.login('server', 'me', password='s3cret', ssh_key=ssh_key)
         for confirmation in confirmation_array:

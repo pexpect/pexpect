@@ -259,7 +259,7 @@ class pxssh (spawn):
                 sync_multiplier=1, check_local_ip=True,
                 password_regex=r'(?i)(?:password:)|(?:passphrase for key)',
                 ssh_tunnels={}, spawn_local_ssh=True,
-                sync_original_prompt=True, ssh_config=None):
+                sync_original_prompt=True, ssh_config=None, cmd='ssh'):
         '''This logs the user into the given server.
 
         It uses
@@ -354,7 +354,7 @@ class pxssh (spawn):
                         if spawn_local_ssh==False:
                             tunnel = quote(str(tunnel))
                         ssh_options = ssh_options + ' -' + cmd_type + ' ' + str(tunnel)
-        cmd = "ssh %s -l %s %s" % (ssh_options, username, server)
+        cmd += " %s -l %s %s" % (ssh_options, username, server)
         if self.debug_command_string:
             return(cmd)
 

@@ -3,13 +3,52 @@ from __future__ import print_function
 
 import getpass
 import sys
+import getopt
 PY3 = (sys.version_info[0] >= 3)
 if not PY3:
     input = raw_input
 
-server = sys.argv[-1]
-if server == 'noserver':
-    print('No route to host')
+ssh_usage = "usage: ssh [-2qV] [-c cipher_spec] [-l login_name]\r\n" \
+          + "           hostname"
+
+cipher_valid_list = ['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'arcfour256', 'arcfour128', \
+    'aes128-cbc','3des-cbc','blowfish-cbc','cast128-cbc','aes192-cbc', \
+    'aes256-cbc','arcfour']
+
+try:
+    server = sys.argv[-1]
+    if server == 'noserver':
+        print('No route to host')
+        sys.exit(1)
+
+    elif len(sys.argv) < 2:
+        print(ssh_usage)
+        sys.exit(1)
+
+    cipher = ''
+    cipher_list = []
+    fullCmdArguments = sys.argv
+    argumentList = fullCmdArguments[1:]
+    unixOptions = "2qVc:l"
+    arguments, values = getopt.getopt(argumentList, unixOptions)
+    for currentArgument, currentValue in arguments:
+        if currentArgument in ("-2"):
+            pass
+        elif currentArgument in ("-V"):
+            print("Mock SSH client version 0.2")
+            sys.exit(1)
+        elif currentArgument in ("-c"):
+            cipher = currentValue
+            cipher_list = cipher.split(",")
+            for cipher_item in cipher_list:
+                if cipher_item not in cipher_valid_list:
+                    print("Unknown cipher type '" + str(cipher_item) + "'")
+                    sys.exit(1)
+
+
+except Exception as e:
+    print(ssh_usage)
+    print('error = ' + str(e))
     sys.exit(1)
 
 print("Mock SSH client for tests. Do not enter real security info.")
@@ -31,4 +70,5 @@ while True:
     elif cmd == 'echo $?':
         print(0)
     elif cmd in ('exit', 'logout'):
+        print('Closed connection')
         break

@@ -253,7 +253,7 @@ class pxssh (spawn):
     ### TODO: This is getting messy and I'm pretty sure this isn't perfect.
     ### TODO: I need to draw a flow chart for this.
     ### TODO: Unit tests for SSH tunnels, remote SSH command exec, disabling original prompt sync
-    def login (self, server, username, password='', terminal_type='ansi',
+    def login (self, server, username=None, password='', terminal_type='ansi',
                 original_prompt=r"[#$]", login_timeout=10, port=None,
                 auto_prompt_reset=True, ssh_key=None, quiet=True,
                 sync_multiplier=1, check_local_ip=True,
@@ -358,7 +358,42 @@ class pxssh (spawn):
                         if spawn_local_ssh==False:
                             tunnel = quote(str(tunnel))
                         ssh_options = ssh_options + ' -' + cmd_type + ' ' + str(tunnel)
-        cmd += " %s -l %s %s" % (ssh_options, username, server)
+        
+        if username is not None:
+            ssh_options = ssh_options + ' -l ' + username
+        elif ssh_config is None:
+            raise TypeError('login() needs either a username or an ssh_config')
+        else:  # make sure ssh_config has an entry for the server with a username
+            with open(ssh_config, 'rt') as f:
+                lines = [l.strip() for l in f.readlines()]
+
+            server_regex = r'^Host\s+%s\s*$' % server
+            user_regex = r'^User\s+\w+\s*$'
+            config_has_server = False
+            server_has_username = False
+            for line in lines:
+                if not config_has_server and re.match(server_regex, line, re.IGNORECASE):
+                    config_has_server = True
+                elif config_has_server and 'hostname' in line.lower():
+                    pass
+                elif config_has_server and 'host' in line.lower():
+                    server_has_username = False  # insurance
+                    break  # we have left the relevant section
+                elif config_has_server and re.match(user_regex, line, re.IGNORECASE):
+                    server_has_username = True
+                    break
+
+            if lines:
+                del line
+
+            del lines
+
+            if not config_has_server:
+                raise TypeError('login() ssh_config has no Host entry for %s' % server)
+            elif not server_has_username:
+                raise TypeError('login() ssh_config has no user entry for %s' % server)
+
+        cmd += " %s %s" % (ssh_options, server)
         if self.debug_command_string:
             return(cmd)
 

@@ -187,6 +187,86 @@ class PxsshTestCase(SSHTestBase):
         if confirmation_strings!=len(confirmation_array):
             assert False, 'String generated from adding an SSH key is incorrect.'
 
+    def test_custom_ssh_cmd_debug(self):
+        ssh = pxssh.pxssh(debug_command_string=True)
+        cipher_string = '-c aes128-ctr,aes192-ctr,aes256-ctr,arcfour256,arcfour128,' \
+            + 'aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,aes192-cbc,' \
+            + 'aes256-cbc,arcfour'
+        confirmation_strings = 0
+        confirmation_array = [cipher_string, '-2']
+        string = ssh.login('server', 'me', password='s3cret', cmd='ssh ' + cipher_string + ' -2')
+        for confirmation in confirmation_array:
+            if confirmation in string:
+                confirmation_strings+=1
+
+        if confirmation_strings!=len(confirmation_array):
+            assert False, 'String generated for custom ssh client command is incorrect.'
+
+    def test_custom_ssh_cmd_debug(self):
+        ssh = pxssh.pxssh(debug_command_string=True)
+        cipher_string = '-c aes128-ctr,aes192-ctr,aes256-ctr,arcfour256,arcfour128,' \
+            + 'aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,aes192-cbc,' \
+            + 'aes256-cbc,arcfour'
+        confirmation_strings = 0
+        confirmation_array = [cipher_string, '-2']
+        string = ssh.login('server', 'me', password='s3cret', cmd='ssh ' + cipher_string + ' -2')
+        for confirmation in confirmation_array:
+            if confirmation in string:
+                confirmation_strings+=1
+
+        if confirmation_strings!=len(confirmation_array):
+            assert False, 'String generated for custom ssh client command is incorrect.'
+
+    def test_failed_custom_ssh_cmd_debug(self):
+        ssh = pxssh.pxssh(debug_command_string=True)
+        cipher_string = '-c invalid_cipher'
+        confirmation_strings = 0
+        confirmation_array = [cipher_string, '-2']
+        string = ssh.login('server', 'me', password='s3cret', cmd='ssh ' + cipher_string + ' -2')
+        for confirmation in confirmation_array:
+            if confirmation in string:
+                confirmation_strings+=1
+
+        if confirmation_strings!=len(confirmation_array):
+            assert False, 'String generated for custom ssh client command is incorrect.'
+
+    def test_custom_ssh_cmd(self):
+        try:
+            ssh = pxssh.pxssh()
+            cipher_string = '-c aes128-ctr,aes192-ctr,aes256-ctr,arcfour256,arcfour128,' \
+                + 'aes128-cbc,3des-cbc,blowfish-cbc,cast128-cbc,aes192-cbc,' \
+                + 'aes256-cbc,arcfour'
+            result = ssh.login('server', 'me', password='s3cret', cmd='ssh ' + cipher_string + ' -2')
+
+            ssh.PROMPT = r'Closed connection'
+            ssh.sendline('exit')
+            ssh.prompt(timeout=5)
+            string = str(ssh.before) + str(ssh.after)
+    
+            if 'Closed connection' not in string:
+                assert False, 'should have logged into Mock SSH client and exited'
+        except pxssh.ExceptionPxssh as e:
+            assert False, 'should not have raised exception, pxssh.ExceptionPxssh'
+        else:
+            pass
+
+    def test_failed_custom_ssh_cmd(self):
+        try:
+            ssh = pxssh.pxssh()
+            cipher_string = '-c invalid_cipher'
+            result = ssh.login('server', 'me', password='s3cret', cmd='ssh ' + cipher_string + ' -2')
+
+            ssh.PROMPT = r'Closed connection'
+            ssh.sendline('exit')
+            ssh.prompt(timeout=5)
+            string = str(ssh.before) + str(ssh.after)
+    
+            if 'Closed connection' not in string:
+                assert False, 'should not have completed logging into Mock SSH client and exited'
+        except pxssh.ExceptionPxssh as e:
+            pass
+        else:
+            assert False, 'should have raised exception, pxssh.ExceptionPxssh'
 
 if __name__ == '__main__':
     unittest.main()

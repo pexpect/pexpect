@@ -259,7 +259,7 @@ class pxssh (spawn):
                 sync_multiplier=1, check_local_ip=True,
                 password_regex=r'(?i)(?:password:)|(?:passphrase for key)',
                 ssh_tunnels={}, spawn_local_ssh=True,
-                sync_original_prompt=True, ssh_config=None):
+                sync_original_prompt=True, ssh_config=None, cmd='ssh'):
         '''This logs the user into the given server.
 
         It uses
@@ -303,6 +303,10 @@ class pxssh (spawn):
         file to the client to handle itself. You may set any options you wish in here, however
         doing so will require you to post extra information that you may not want to if you
         run into issues.
+
+        Alter the ``cmd`` to change the ssh client used, or to prepend it with network
+        namespaces. For example ```cmd="ip netns exec vlan2 ssh"``` to execute the ssh in 
+        network namespace named ```vlan```.
         '''
         
         session_regex_array = ["(?i)are you sure you want to continue connecting", original_prompt, password_regex, "(?i)permission denied", "(?i)terminal type", TIMEOUT]

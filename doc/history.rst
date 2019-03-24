@@ -4,6 +4,16 @@ History
 Releases
 --------
 
+Version 4.7
+```````````
+
+* The :meth:`.pxssh.login` method now no longer requires a username if an ssh
+  config is provided and will raise an error if neither are provided.
+  (:ghpull:`562`).
+* The :meth:`.pxssh.login` method now supports providing your own ``ssh``
+  command via the ``cmd`` option.
+  (:ghpull:`528`) (:ghpull:`563`)
+
 Version 4.6
 ```````````
 

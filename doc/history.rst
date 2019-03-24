@@ -11,8 +11,16 @@ Version 4.7
   config is provided and will raise an error if neither are provided.
   (:ghpull:`562`).
 * The :meth:`.pxssh.login` method now supports providing your own ``ssh``
-  command via the ``cmd`` option.
-  (:ghpull:`528`) (:ghpull:`563`)
+  command via the ``cmd`` parameter.
+  (:ghpull:`528`) (:ghpull:`563`).
+* :class:`.pxssh` now supports the ``use_poll`` parameter which is passed into :meth:`.pexpect.spawn`
+  (:ghpull:`542`).
+* Minor bug fix with ``ssh_config``.
+  (:ghpull:`498`).
+* :meth:`.replwrap.run_command` now has async support via an ``async_`` parameter.
+  (:ghpull:`501`).
+* :meth:`.pexpect.spawn` will now read additional bytes if able up to a buffer limit.
+  (:ghpull:`304`).
 
 Version 4.6
 ```````````

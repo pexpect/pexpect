@@ -752,10 +752,14 @@ class spawn(SpawnBase):
         child process in interact mode is duplicated to the given log.
 
         You may pass in optional input and output filter functions. These
-        functions should take a string and return a string. The output_filter
-        will be passed all the output from the child process. The input_filter
-        will be passed all the keyboard input from the user. The input_filter
-        is run BEFORE the check for the escape_character.
+        functions should take bytes array and return bytes array too. Even
+        with ``encoding='utf-8'`` support, meth:`interact` will always pass
+        input_filter and output_filter bytes. You may need to wrap your
+        function to decode and encode back to UTF-8.
+
+        The output_filter will be passed all the output from the child process.
+        The input_filter will be passed all the keyboard input from the user.
+        The input_filter is run BEFORE the check for the escape_character.
 
         Note that if you change the window size of the parent the SIGWINCH
         signal will not be passed through to the child. If you want the child
@@ -775,7 +779,7 @@ class spawn(SpawnBase):
             signal.signal(signal.SIGWINCH, sigwinch_passthrough)
             p.interact()
         '''
-
+        
         # Flush the buffer.
         self.write_to_stdout(self.buffer)
         self.stdout.flush()

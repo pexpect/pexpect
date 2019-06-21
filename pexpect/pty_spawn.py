@@ -1,20 +1,24 @@
-import os
-import sys
-import time
-import pty
-import tty
-import errno
-import signal
-from contextlib import contextmanager
+try:
+    import os
+    import sys
+    import time
+    import pty
+    import tty
+    import errno
+    import signal
+    from contextlib import contextmanager
 
-import ptyprocess
-from ptyprocess.ptyprocess import use_native_pty_fork
+    import ptyprocess
+    from ptyprocess.ptyprocess import use_native_pty_fork
 
-from .exceptions import ExceptionPexpect, EOF, TIMEOUT
-from .spawnbase import SpawnBase
-from .utils import (
-    which, split_command_line, select_ignore_interrupts, poll_ignore_interrupts
-)
+    from .exceptions import ExceptionPexpect, EOF, TIMEOUT
+    from .spawnbase import SpawnBase
+    from .utils import (
+        which, split_command_line, select_ignore_interrupts, poll_ignore_interrupts
+    )
+except ModuleNotFoundError as e:
+    print('Check POXIS dependent module')
+    exit(-1)
 
 @contextmanager
 def _wrap_ptyprocess_err():

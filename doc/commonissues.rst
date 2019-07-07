@@ -41,10 +41,10 @@ back to the TTY. I would call this an SSH bug.
 
 Pexpect now automatically adds a short delay before sending data to a child
 process. This more closely mimics what happens in the usual human-to-app
-interaction. The delay can be tuned with the ``delaybeforesend`` attribute of the
-spawn class. In general, this fixes the problem for everyone and so this should
-not be an issue for most users. For some applications you might with to turn it
-off::
+interaction. The delay can be tuned with the ``delaybeforesend`` attribute of
+objects of the spawn class. In general, this fixes the problem for everyone and so
+this should not be an issue for most users. For some applications you might with
+to turn it off::
 
     child = pexpect.spawn ("ssh user@example.com")
     child.delaybeforesend = None

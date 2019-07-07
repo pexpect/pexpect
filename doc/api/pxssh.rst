@@ -1,6 +1,14 @@
 pxssh - control an SSH session
 ==============================
 
+.. note::
+
+   *pxssh* is a screen-scraping wrapper around the SSH command on your system.
+   In many cases, you should consider using
+   `Paramiko <https://github.com/paramiko/paramiko>`_ instead.
+   Paramiko is a Python module which speaks the SSH protocol directly, so it
+   doesn't have the extra complexity of running a local subprocess.
+
 .. automodule:: pexpect.pxssh
 
 .. autoclass:: ExceptionPxssh

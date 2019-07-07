@@ -8,6 +8,7 @@ import sys
 import unittest
 
 import pexpect
+from pexpect import replwrap
 from .PexpectTestCase import PexpectTestCase
 
 def run(coro):
@@ -27,7 +28,7 @@ class AsyncTests(PexpectTestCase):
         coro = p.expect('foo', timeout=1, async_=True)
         with self.assertRaises(pexpect.TIMEOUT):
             run(coro)
-        
+
         p = pexpect.spawn('cat')
         coro = p.expect(['foo', pexpect.TIMEOUT], timeout=1, async_=True)
         assert run(coro) == 1
@@ -68,3 +69,29 @@ class AsyncTests(PexpectTestCase):
         assert run(p.expect_exact(u'1', async_=True)) == 0
         assert p.expect_exact(u'2') == 0
         assert run(p.expect_exact(u'3', async_=True)) == 0
+
+    def test_async_replwrap(self):
+        bash = replwrap.bash()
+        coro = bash.run_command("time", async_=True)
+        res = run(coro)
+        assert 'real' in res, res
+
+    def test_async_replwrap_multiline(self):
+        bash = replwrap.bash()
+        coro = bash.run_command("echo '1 2\n3 4'", async_=True)
+        res = run(coro)
+        self.assertEqual(res.strip().splitlines(), ['1 2', '3 4'])
+
+        # Should raise ValueError if input is incomplete
+        coro = bash.run_command("echo '5 6", async_=True)
+        try:
+            run(coro)
+        except ValueError:
+            pass
+        else:
+            assert False, "Didn't raise ValueError for incomplete input"
+
+        # Check that the REPL was reset (SIGINT) after the incomplete input
+        coro = bash.run_command("echo '1 2\n3 4'", async_=True)
+        res = run(coro)
+        self.assertEqual(res.strip().splitlines(), ['1 2', '3 4'])

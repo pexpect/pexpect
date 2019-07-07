@@ -2,7 +2,6 @@ language: python
 
 python:
   - 2.7
-  - 3.3
   - 3.4
   - 3.5
   - 3.6
@@ -10,6 +9,10 @@ python:
   - nightly
 
 matrix:
+  include:
+  - python: 3.7
+    dist: xenial    # required for Python 3.7 (travis-ci/travis-ci#9069)
+    sudo: required  # required for Python 3.7 (travis-ci/travis-ci#9069)
   allow_failures:
     # PyPy on Travis is currently incompatible with Cryptography.
     - python: pypy

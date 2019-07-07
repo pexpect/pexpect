@@ -24,8 +24,15 @@ class REPLWrapTestCase(unittest.TestCase):
 
     def test_bash(self):
         bash = replwrap.bash()
-        res = bash.run_command("time")
-        assert 'real' in res, res
+        res = bash.run_command("alias")
+        assert 'alias' in res, res
+
+        try:
+            bash.run_command('')
+        except ValueError:
+            pass
+        else:
+            assert False, "Didn't raise ValueError for empty input"
 
     def test_pager_as_cat(self):
         " PAGER is set to cat, to prevent timeout in ``man sleep``. "
@@ -78,7 +85,7 @@ class REPLWrapTestCase(unittest.TestCase):
         self.assertEqual(res.strip().splitlines(), ['1 2', '3 4'])
 
     def test_existing_spawn(self):
-        child = pexpect.spawn("bash", timeout=5, echo=False, encoding='utf-8')
+        child = pexpect.spawn("bash", timeout=5, encoding='utf-8')
         repl = replwrap.REPLWrapper(child, re.compile('[$#]'),
                                     "PS1='{0}' PS2='{1}' "
                                     "PROMPT_COMMAND=''")

@@ -13,8 +13,8 @@ pxssh - control an SSH session
    into an SSH session all done via python with all the SSH protocol in C,
    addtionally it is written for communicating to SSH servers that are not just
    linux machines. Meaning that it is extremely fast in comparison to Paramiko
-   and already has the expect enviroment that you expect to have. In most cases
-   RedExpect and pxssh code should be fairly interchangable.
+   and already has the familiar expect API. In most cases RedExpect and pxssh
+   code should be fairly interchangable.
 
 .. automodule:: pexpect.pxssh
 

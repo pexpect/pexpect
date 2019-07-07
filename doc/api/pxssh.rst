@@ -5,9 +5,16 @@ pxssh - control an SSH session
 
    *pxssh* is a screen-scraping wrapper around the SSH command on your system.
    In many cases, you should consider using
-   `Paramiko <https://github.com/paramiko/paramiko>`_ instead.
+   `Paramiko <https://github.com/paramiko/paramiko>`_ or
+   `RedExpect <https://github.com/Red-M/RedExpect>`_ instead.
    Paramiko is a Python module which speaks the SSH protocol directly, so it
    doesn't have the extra complexity of running a local subprocess.
+   RedExpect is very similar to pxssh except that it reads and writes directly
+   into an SSH session all done via python with all the SSH protocol in C,
+   addtionally it is written for communicating to SSH servers that are not just
+   linux machines. Meaning that it is extremely fast in comparison to Paramiko
+   and already has the expect enviroment that you expect to have. In most cases
+   RedExpect and pxssh code should be fairly interchangable.
 
 .. automodule:: pexpect.pxssh
 

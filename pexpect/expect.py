@@ -32,19 +32,20 @@ class Expecter(object):
             spawn._buffer.write(window[searcher.end:])
             spawn.before = spawn._before.getvalue()[0:-(len(window) - searcher.start)]
             spawn._before = spawn.buffer_type()
-            spawn.after = window[searcher.start: searcher.end]
+            spawn._before.write(window[searcher.end:])
+            spawn.after = window[searcher.start:searcher.end]
             spawn.match = searcher.match
             spawn.match_index = index
             # Found a match
             return index
         elif self.searchwindowsize:
             spawn._buffer = spawn.buffer_type()
-            spawn._buffer.write(window)
+            spawn._buffer.write(window[-self.searchwindowsize:])
 
     def eof(self, err=None):
         spawn = self.spawn
 
-        spawn.before = spawn.buffer
+        spawn.before = spawn._before.getvalue()
         spawn._buffer = spawn.buffer_type()
         spawn._before = spawn.buffer_type()
         spawn.after = EOF
@@ -65,7 +66,7 @@ class Expecter(object):
     def timeout(self, err=None):
         spawn = self.spawn
 
-        spawn.before = spawn.buffer
+        spawn.before = spawn._before.getvalue()
         spawn.after = TIMEOUT
         index = self.searcher.timeout_index
         if index >= 0:
@@ -83,7 +84,7 @@ class Expecter(object):
 
     def errored(self):
         spawn = self.spawn
-        spawn.before = spawn.buffer
+        spawn.before = spawn._before.getvalue()
         spawn.after = None
         spawn.match = None
         spawn.match_index = None
@@ -96,7 +97,10 @@ class Expecter(object):
             end_time = time.time() + timeout
 
         try:
-            incoming = spawn.buffer
+            if hasattr(spawn, '_before'):
+                incoming = spawn._before.getvalue()
+            else:
+                incoming = spawn.buffer
             spawn._buffer = spawn.buffer_type()
             spawn._before = spawn.buffer_type()
             while True:

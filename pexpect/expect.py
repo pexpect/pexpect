@@ -6,6 +6,8 @@ class Expecter(object):
     def __init__(self, spawn, searcher, searchwindowsize=-1):
         self.spawn = spawn
         self.searcher = searcher
+        # A value of -1 means to use the figure from spawn, which should
+        # be None or a positive number.
         if searchwindowsize == -1:
             searchwindowsize = spawn.searchwindowsize
         self.searchwindowsize = searchwindowsize
@@ -30,7 +32,8 @@ class Expecter(object):
                     spawn._buffer.write(spawn._before.getvalue())
                 elif buf_len < self.searchwindowsize:
                     spawn._buffer = spawn.buffer_type()
-                    spawn._before.seek(max(0, pos - self.searchwindowsize))
+                    spawn._before.seek(
+                        max(0, before_len - self.searchwindowsize))
                     window = spawn._before.read()
                     spawn._buffer.write(window)
                 else:
@@ -66,13 +69,15 @@ class Expecter(object):
                   new_len = spawn._buffer.tell()
                   spawn._buffer.seek(max(0, new_len - self.searchwindowsize))
                   window = spawn._buffer.read()
+                
         if freshlen > len(window):
             freshlen = len(window)
         index = searcher.search(window, freshlen, self.searchwindowsize)
         if index >= 0:
             spawn._buffer = spawn.buffer_type()
             spawn._buffer.write(window[searcher.end:])
-            spawn.before = spawn._before.getvalue()[0:-(len(window) - searcher.start)]
+            spawn.before = spawn._before.getvalue()[
+                0:-(len(window) - searcher.start)]
             spawn._before = spawn.buffer_type()
             spawn._before.write(window[searcher.end:])
             spawn.after = window[searcher.start:searcher.end]

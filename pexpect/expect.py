@@ -17,10 +17,6 @@ class Expecter(object):
         spawn = self.spawn
         searcher = self.searcher
 
-        pos = spawn._buffer.tell()
-        spawn._buffer.write(data)
-        spawn._before.write(data)
-
         if data is None:
             # First call from a new call to expect_loop.
             # self.searchwindowsize may have changed.

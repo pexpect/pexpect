@@ -57,13 +57,13 @@ class Expecter(object):
                   spawn._buffer.write(data)
                   window = spawn.buffer
           else:
-              if len(data) >= self.searchwindowsize or not self._buffer.tell():
+              if len(data) >= self.searchwindowsize or not spawn._buffer.tell():
                   window = data[-self.searchwindowsize:]
                   spawn._buffer = spawn.buffer_type()
                   spawn._buffer.write(window[-self.searchwindowsize:])
               else:
                   spawn._buffer.write(data)
-                  new_len = self._buffer.tell()
+                  new_len = spawn._buffer.tell()
                   spawn._buffer.seek(max(0, new_len - self.searchwindowsize))
                   window = spawn._buffer.read()
         if freshlen > len(window):

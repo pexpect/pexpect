@@ -47,19 +47,19 @@ class AsyncTests(PexpectTestCase):
             run(coro)
 
     def test_expect_exact(self):
-        p = pexpect.spawn('%s list100.py' % sys.executable)
+        p = pexpect.spawn('%s list100.py' % self.PYTHONBIN)
         assert run(p.expect_exact(b'5', async_=True)) == 0
         assert run(p.expect_exact(['wpeok', b'11'], async_=True)) == 1
         assert run(p.expect_exact([b'foo', pexpect.EOF], async_=True)) == 1
 
     def test_async_utf8(self):
-        p = pexpect.spawn('%s list100.py' % sys.executable, encoding='utf8')
+        p = pexpect.spawn('%s list100.py' % self.PYTHONBIN, encoding='utf8')
         assert run(p.expect_exact(u'5', async_=True)) == 0
         assert run(p.expect_exact([u'wpeok', u'11'], async_=True)) == 1
         assert run(p.expect_exact([u'foo', pexpect.EOF], async_=True)) == 1
 
     def test_async_and_gc(self):
-        p = pexpect.spawn('%s sleep_for.py 1' % sys.executable, encoding='utf8')
+        p = pexpect.spawn('%s sleep_for.py 1' % self.PYTHONBIN, encoding='utf8')
         assert run(p.expect_exact(u'READY', async_=True)) == 0
         gc.collect()
         assert run(p.expect_exact(u'END', async_=True)) == 0

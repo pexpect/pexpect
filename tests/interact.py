@@ -31,7 +31,12 @@ import sys
 
 
 def main():
-    p = pexpect.spawn('{sys.executable} getch.py'.format(sys=sys),
+    if len(sys.argv) > 1 and '--pythonbin' in sys.argv:
+        pythonbin = sys.argv[sys.argv.index('--pythonbin') + 1]
+    else:
+        pythonbin = sys.executable
+        
+    p = pexpect.spawn('{pythonbin} getch.py'.format(pythonbin=pythonbin),
                       env=no_coverage_env())
 
     # defaults matches api

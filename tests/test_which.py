@@ -42,7 +42,7 @@ class TestCaseWhich(PexpectTestCase.PexpectTestCase):
         " which() finds an executable in $PATH and returns its abspath. "
 
         bin_dir = tempfile.mkdtemp()
-        if sys.getfilesystemencoding() == 'ascii':
+        if sys.getfilesystemencoding() in ('ascii', 'ANSI_X3.4-1968'):
             prefix = 'ascii-'
         else:
             prefix = u'ǝpoɔıun-'

@@ -42,8 +42,6 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
             env['PYTHONPATH'] = self.project_dir
 
         self.interact_py = ('{self.PYTHONBIN} interact.py'.format(self=self))
-        if self.PYTHONBIN != sys.executable:
-            self.interact_py += ' --pythonbin {self.PYTHONBIN}'.format(self=self)
 
     def test_interact_escape(self):
         " Ensure `escape_character' value exits interactive mode. "

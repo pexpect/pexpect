@@ -36,11 +36,14 @@ else:
     byte = chr
 
 class TestCtrlChars(PexpectTestCase.PexpectTestCase):
+    def setUp(self):
+        super(TestCtrlChars, self).setUp()
+        self.getch_cmd = self.PYTHONBIN + ' getch.py'
 
     def test_control_chars(self):
         '''This tests that we can send all 256 8-bit characters to a child
         process.'''
-        child = pexpect.spawn('python getch.py', echo=False, timeout=5)
+        child = pexpect.spawn(self.getch_cmd, echo=False, timeout=5)
         child.expect('READY')
         for i in range(1, 256):
             child.send(byte(i))
@@ -54,7 +57,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         assert child.exitstatus == 0
 
     def test_sendintr (self):
-        child = pexpect.spawn('python getch.py', echo=False, timeout=5)
+        child = pexpect.spawn(self.getch_cmd, echo=False, timeout=5)
         child.expect('READY')
         child.sendintr()
         child.expect(str(ord(ptyprocess._INTR)) + '<STOP>')
@@ -66,7 +69,7 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
         assert child.exitstatus == 0
 
     def test_sendeof(self):
-        child = pexpect.spawn('python getch.py', echo=False, timeout=5)
+        child = pexpect.spawn(self.getch_cmd, echo=False, timeout=5)
         child.expect('READY')
         child.sendeof()
         child.expect(str(ord(ptyprocess._EOF)) + '<STOP>')
@@ -80,14 +83,14 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
     def test_bad_sendcontrol_chars (self):
         '''This tests that sendcontrol will return 0 for an unknown char. '''
 
-        child = pexpect.spawn('python getch.py', echo=False, timeout=5)
+        child = pexpect.spawn(self.getch_cmd, echo=False, timeout=5)
         child.expect('READY')
         assert 0 == child.sendcontrol('1')
 
     def test_sendcontrol(self):
         '''This tests that we can send all special control codes by name.
         '''
-        child = pexpect.spawn('python getch.py', echo=False, timeout=5)
+        child = pexpect.spawn(self.getch_cmd, echo=False, timeout=5)
         child.expect('READY')
         for ctrl in 'abcdefghijklmnopqrstuvwxyz':
             assert child.sendcontrol(ctrl) == 1

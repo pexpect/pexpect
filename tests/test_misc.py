@@ -171,7 +171,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
 
     def test_with(self):
         "spawn can be used as a context manager"
-        with pexpect.spawn(sys.executable + ' echo_w_prompt.py') as p:
+        with pexpect.spawn(self.PYTHONBIN + ' echo_w_prompt.py') as p:
             p.expect('<in >')
             p.sendline(b'alpha')
             p.expect(b'<out>alpha')
@@ -187,7 +187,7 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
 
     def test_sighup(self):
         " validate argument `ignore_sighup=True` and `ignore_sighup=False`. "
-        getch = sys.executable + ' getch.py'
+        getch = self.PYTHONBIN + ' getch.py'
         child = pexpect.spawn(getch, ignore_sighup=True)
         child.expect('READY')
         child.kill(signal.SIGHUP)

@@ -21,7 +21,10 @@ PEXPECT LICENSE
 from pexpect import ANSI
 import unittest
 from . import PexpectTestCase
+import os
+import shutil
 import sys
+import tempfile
 
 PY3 = (sys.version_info[0] >= 3)
 
@@ -120,8 +123,17 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
         s = ANSI.ANSI (24,80)
         with open('torturet.vt') as f:
             sample_text = f.read()
-        for c in sample_text:
-            s.process (c)
+        # This causes ANSI.py's DoLog to write in the cwd.  Make sure we're in a
+        # writeable directory.
+        d = tempfile.mkdtemp()
+        old_cwd = os.getcwd()
+        os.chdir(d)
+        try:
+            for c in sample_text:
+                 s.process (c)
+        finally:
+            os.chdir(old_cwd)
+            shutil.rmtree(d)
         assert s.pretty() == torture_target, 'processed: \n' + s.pretty() + '\nexpected:\n' + torture_target
 
     def test_tetris (self):

@@ -57,7 +57,7 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
         '''Test calling wait with a process terminated by a signal.'''
         if not hasattr(signal, 'SIGALRM'):
             return 'SKIP'
-        p = pexpect.spawn(sys.executable, ['alarm_die.py'])
+        p = pexpect.spawn(self.PYTHONBIN, ['alarm_die.py'])
         p.wait()
         assert p.exitstatus is None
         self.assertEqual(p.signalstatus, signal.SIGALRM)
@@ -99,7 +99,7 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
         assert not p.isalive()
 
     def test_forced_terminate(self):
-        p = pexpect.spawn(sys.executable, ['needs_kill.py'])
+        p = pexpect.spawn(self.PYTHONBIN, ['needs_kill.py'])
         p.expect('READY')
         assert p.terminate(force=True) == True
         p.expect(pexpect.EOF)

@@ -1,18 +1,24 @@
 #!/usr/bin/env python
 import os
+import shutil
 import tempfile
 import unittest
 
 from pexpect import pxssh
+from .PexpectTestCase import PexpectTestCase
 
-class SSHTestBase(unittest.TestCase):
+class SSHTestBase(PexpectTestCase):
     def setUp(self):
+        super(SSHTestBase, self).setUp()
+        self.tempdir = tempfile.mkdtemp()
         self.orig_path = os.environ.get('PATH')
+        os.symlink(self.PYTHONBIN, os.path.join(self.tempdir, 'python'))
         fakessh_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'fakessh'))
-        os.environ['PATH'] = fakessh_dir + \
+        os.environ['PATH'] = self.tempdir + os.pathsep + fakessh_dir + \
                     ((os.pathsep + self.orig_path) if self.orig_path else '')
 
     def tearDown(self):
+        shutil.rmtree(self.tempdir)
         if self.orig_path:
             os.environ['PATH'] = self.orig_path
         else:

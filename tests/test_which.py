@@ -2,6 +2,7 @@
 import subprocess
 import tempfile
 import shutil
+import sys
 import errno
 import os
 
@@ -41,8 +42,12 @@ class TestCaseWhich(PexpectTestCase.PexpectTestCase):
         " which() finds an executable in $PATH and returns its abspath. "
 
         bin_dir = tempfile.mkdtemp()
+        if sys.getfilesystemencoding() in ('ascii', 'ANSI_X3.4-1968'):
+            prefix = 'ascii-'
+        else:
+            prefix = u'ǝpoɔıun-'
         temp_obj = tempfile.NamedTemporaryFile(
-            suffix=u'.sh', prefix=u'ǝpoɔıun-',
+            suffix=u'.sh', prefix=prefix,
             dir=bin_dir, delete=False)
         bin_path = temp_obj.name
         fname = os.path.basename(temp_obj.name)

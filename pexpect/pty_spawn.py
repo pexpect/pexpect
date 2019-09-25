@@ -442,10 +442,10 @@ class spawn(SpawnBase):
             raise ValueError('I/O operation on closed file.')
 
         if self.use_poll:
-            def select(timeout):
+            def _select(timeout):
                 return poll_ignore_interrupts([self.child_fd], timeout)
         else:
-            def select(timeout):
+            def _select(timeout):
                 return select_ignore_interrupts([self.child_fd], [], [], timeout)[0]
 
         # If there is data available to read right now, read as much as
@@ -454,14 +454,14 @@ class spawn(SpawnBase):
         # often. See also:
         # * https://github.com/pexpect/pexpect/pull/304
         # * http://trac.sagemath.org/ticket/10295
-        if select(0):
+        if _select(0):
             try:
                 incoming = super(spawn, self).read_nonblocking(size)
             except EOF:
                 # Maybe the child is dead: update some attributes in that case
                 self.isalive()
                 raise
-            while len(incoming) < size and select(0):
+            while len(incoming) < size and _select(0):
                 try:
                     incoming += super(spawn, self).read_nonblocking(size - len(incoming))
                 except EOF:
@@ -481,7 +481,7 @@ class spawn(SpawnBase):
             # still try to read from the child_fd -- it will block
             # forever or until TIMEOUT. For that reason, it's important
             # to do this check before calling select() with timeout.
-            if select(0):
+            if _select(0):
                 return super(spawn, self).read_nonblocking(size)
             self.flag_eof = True
             raise EOF('End Of File (EOF). Braindead platform.')
@@ -496,7 +496,7 @@ class spawn(SpawnBase):
         # Because of the select(0) check above, we know that no data
         # is available right now. But if a non-zero timeout is given
         # (possibly timeout=None), we call select() with a timeout.
-        if (timeout != 0) and select(timeout):
+        if (timeout != 0) and _select(timeout):
             return super(spawn, self).read_nonblocking(size)
 
         if not self.isalive():

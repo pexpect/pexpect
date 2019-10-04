@@ -313,6 +313,7 @@ class pxssh (spawn):
         session_init_regex_array.extend(session_regex_array)
         session_init_regex_array.extend(["(?i)connection closed by remote host", EOF])
 
+        self.options['CommandTimeout'] = login_timeout - 1 # Set the timeout option on the ssh command as well, and make sure it fires first
         ssh_options = ''.join([" -o '%s=%s'" % (o, v) for (o, v) in self.options.items()])
         if quiet:
             ssh_options = ssh_options + ' -q'

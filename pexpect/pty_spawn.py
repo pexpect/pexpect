@@ -191,6 +191,7 @@ class spawn(SpawnBase):
         self.STDIN_FILENO = pty.STDIN_FILENO
         self.STDOUT_FILENO = pty.STDOUT_FILENO
         self.STDERR_FILENO = pty.STDERR_FILENO
+        self.str_last_chars = 100
         self.cwd = cwd
         self.env = env
         self.echo = echo
@@ -212,8 +213,8 @@ class spawn(SpawnBase):
         s.append(repr(self))
         s.append('command: ' + str(self.command))
         s.append('args: %r' % (self.args,))
-        s.append('buffer (last 100 chars): %r' % self.buffer[-100:])
-        s.append('before (last 100 chars): %r' % self.before[-100:] if self.before else '')
+        s.append('buffer (last %s chars): %r' % self.str_last_chars,self.buffer[-self.str_last_chars:])
+        s.append('before (last %s chars): %r' % self.str_last_chars,self.before[-self.str_last_chars:] if self.before else '')
         s.append('after: %r' % (self.after,))
         s.append('match: %r' % (self.match,))
         s.append('match_index: ' + str(self.match_index))
@@ -779,7 +780,7 @@ class spawn(SpawnBase):
             signal.signal(signal.SIGWINCH, sigwinch_passthrough)
             p.interact()
         '''
-        
+
         # Flush the buffer.
         self.write_to_stdout(self.buffer)
         self.stdout.flush()

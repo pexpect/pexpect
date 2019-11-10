@@ -94,7 +94,7 @@ import readline
 import atexit
 try:
     import pexpect
-    import pxssh
+    from pexpect import pxssh
 except ImportError:
     sys.stderr.write("You do not have 'pexpect' installed.\n")
     sys.stderr.write("On Ubuntu you need the 'python-pexpect' package.\n")

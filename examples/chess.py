@@ -27,7 +27,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import pexpect
-import ANSI
+from pexpect import ANSI
 
 REGEX_MOVE = r'(?:[a-z]|\x1b\[C)(?:[0-9]|\x1b\[C)(?:[a-z]|\x1b\[C)(?:[0-9]|\x1b\[C)'
 REGEX_MOVE_PART = r'(?:[0-9]|\x1b\[C)(?:[a-z]|\x1b\[C)(?:[0-9]|\x1b\[C)'

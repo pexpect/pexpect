@@ -27,7 +27,7 @@ from __future__ import print_function
 from __future__ import absolute_import
 
 import pexpect
-import ANSI
+from pexpect import ANSI
 import sys
 import time
 

@@ -38,7 +38,7 @@ import os
 import sys
 import getopt
 import getpass
-import pxssh
+from pexpect import pxssh
 
 
 try:

@@ -60,7 +60,10 @@ class Expecter(object):
             msg += '\nsearcher: %s' % self.searcher
             if err is not None:
                 msg = str(err) + '\n' + msg
-            raise EOF(msg)
+
+            exc = EOF(msg)
+            exc.__cause__ = None # in Python 3.x we can use "raise exc from None"
+            raise exc
     
     def timeout(self, err=None):
         spawn = self.spawn
@@ -79,7 +82,10 @@ class Expecter(object):
             msg += '\nsearcher: %s' % self.searcher
             if err is not None:
                 msg = str(err) + '\n' + msg
-            raise TIMEOUT(msg)
+
+            exc = TIMEOUT(msg)
+            exc.__cause__ = None    # in Python 3.x we can use "raise exc from None"
+            raise exc
 
     def errored(self):
         spawn = self.spawn

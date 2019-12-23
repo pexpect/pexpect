@@ -5,16 +5,28 @@ python:
   - 3.4
   - 3.5
   - 3.6
-  - pypy
-  - nightly
-
+arch:
+  - amd64
+  - arm64
 matrix:
   include:
   - python: 3.7
     dist: xenial    # required for Python 3.7 (travis-ci/travis-ci#9069)
     sudo: required  # required for Python 3.7 (travis-ci/travis-ci#9069)
+  - python: 3.7
+    dist: xenial    # required for Python 3.7 (travis-ci/travis-ci#9069)
+    arch: arm64
+    sudo: required  # required for Python 3.7 (travis-ci/travis-ci#9069)
+  - python: nightly
+    dist: bionic
+  - python: nightly
+    dist: bionic
+    arch: arm64
+  - python: pypy
+    dist: xenial    
   allow_failures:
     # PyPy on Travis is currently incompatible with Cryptography.
+    # PyPy has ARM64 support - but it isn't released yet.
     - python: pypy
 
 install:
@@ -22,6 +34,7 @@ install:
   - pip install coveralls pytest-cov ptyprocess
 
 script:
+    - sudo apt-get update && sudo apt-get install man
     - ./tools/display-sighandlers.py
     - ./tools/display-terminalinfo.py
     - py.test --cov pexpect --cov-config .coveragerc

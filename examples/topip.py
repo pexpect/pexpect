@@ -70,7 +70,7 @@ from __future__ import unicode_literals
 
 # See http://pexpect.sourceforge.net/
 import pexpect
-import pxssh
+from pexpect import pxssh
 import os
 import sys
 import time

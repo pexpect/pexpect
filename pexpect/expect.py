@@ -15,61 +15,9 @@ class Expecter(object):
         if hasattr(searcher, 'longest_string'):
             self.lookback = searcher.longest_string
 
-    def new_data(self, data):
+    def do_search(self, window, freshlen):
         spawn = self.spawn
         searcher = self.searcher
-
-        if data is None:
-            # First call from a new call to expect_loop.
-            # self.searchwindowsize may have changed.
-            before_len = spawn._before.tell()
-            buf_len = spawn._buffer.tell()
-            freshlen = before_len
-            if before_len > buf_len:
-                if not self.searchwindowsize:
-                    spawn._buffer = spawn.buffer_type()
-                    window = spawn._before.getvalue()
-                    spawn._buffer.write(spawn._before.getvalue())
-                elif buf_len < self.searchwindowsize:
-                    spawn._buffer = spawn.buffer_type()
-                    spawn._before.seek(
-                        max(0, before_len - self.searchwindowsize))
-                    window = spawn._before.read()
-                    spawn._buffer.write(window)
-                else:
-                    spawn._buffer.seek(max(0, buf_len - self.searchwindowsize))
-                    window = spawn._buffer.read()
-            else:
-                if self.searchwindowsize:
-                    spawn._buffer.seek(max(0, buf_len - self.searchwindowsize))
-                    window = spawn._buffer.read()
-                else:
-                    window = spawn._buffer.getvalue()
-        else:
-          freshlen = len(data)
-          spawn._before.write(data)
-          if not self.searchwindowsize:
-              if self.lookback:
-                  # search lookback + new data.
-                  old_len = spawn._buffer.tell()
-                  spawn._buffer.write(data)
-                  spawn._buffer.seek(max(0, old_len - self.lookback))
-                  window = spawn._buffer.read()
-              else:
-                  # copy the whole buffer (really slow for large datasets).
-                  spawn._buffer.write(data)
-                  window = spawn.buffer
-          else:
-              if len(data) >= self.searchwindowsize or not spawn._buffer.tell():
-                  window = data[-self.searchwindowsize:]
-                  spawn._buffer = spawn.buffer_type()
-                  spawn._buffer.write(window[-self.searchwindowsize:])
-              else:
-                  spawn._buffer.write(data)
-                  new_len = spawn._buffer.tell()
-                  spawn._buffer.seek(max(0, new_len - self.searchwindowsize))
-                  window = spawn._buffer.read()
-                
         if freshlen > len(window):
             freshlen = len(window)
         index = searcher.search(window, freshlen, self.searchwindowsize)
@@ -90,6 +38,64 @@ class Expecter(object):
             if spawn._buffer.tell() > maintain:
                 spawn._buffer = spawn.buffer_type()
                 spawn._buffer.write(window[-maintain:])
+
+    def existing_data(self):
+        # First call from a new call to expect_loop or expect_async.
+        # self.searchwindowsize may have changed.
+        # Treat all data as fresh.
+        spawn = self.spawn
+        before_len = spawn._before.tell()
+        buf_len = spawn._buffer.tell()
+        freshlen = before_len
+        if before_len > buf_len:
+            if not self.searchwindowsize:
+                spawn._buffer = spawn.buffer_type()
+                window = spawn._before.getvalue()
+                spawn._buffer.write(spawn._before.getvalue())
+            elif buf_len < self.searchwindowsize:
+                spawn._buffer = spawn.buffer_type()
+                spawn._before.seek(
+                    max(0, before_len - self.searchwindowsize))
+                window = spawn._before.read()
+                spawn._buffer.write(window)
+            else:
+                spawn._buffer.seek(max(0, buf_len - self.searchwindowsize))
+                window = spawn._buffer.read()
+        else:
+            if self.searchwindowsize:
+                spawn._buffer.seek(max(0, buf_len - self.searchwindowsize))
+                window = spawn._buffer.read()
+            else:
+                window = spawn._buffer.getvalue()
+        return self.do_search(window, freshlen)
+
+    def new_data(self, data):
+        # A subsequent call, after a call to existing_data.
+        spawn = self.spawn
+        freshlen = len(data)
+        spawn._before.write(data)
+        if not self.searchwindowsize:
+            if self.lookback:
+                # search lookback + new data.
+                old_len = spawn._buffer.tell()
+                spawn._buffer.write(data)
+                spawn._buffer.seek(max(0, old_len - self.lookback))
+                window = spawn._buffer.read()
+            else:
+                # copy the whole buffer (really slow for large datasets).
+                spawn._buffer.write(data)
+                window = spawn.buffer
+        else:
+            if len(data) >= self.searchwindowsize or not spawn._buffer.tell():
+                window = data[-self.searchwindowsize:]
+                spawn._buffer = spawn.buffer_type()
+                spawn._buffer.write(window[-self.searchwindowsize:])
+            else:
+                spawn._buffer.write(data)
+                new_len = spawn._buffer.tell()
+                spawn._buffer.seek(max(0, new_len - self.searchwindowsize))
+                window = spawn._buffer.read()
+        return self.do_search(window, freshlen)
 
     def eof(self, err=None):
         spawn = self.spawn

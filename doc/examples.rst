@@ -48,7 +48,7 @@ Examples.
 
 `python.py <https://github.com/pexpect/pexpect/blob/master/examples/python.py>`_
   This starts the python interpreter and prints the greeting message
-  backwards. It then gives the user iteractive control of Python. It's
+  backwards. It then gives the user interactive control of Python. It's
   pretty useless!
 
 `ssh_tunnel.py <https://github.com/pexpect/pexpect/blob/master/examples/ssh_tunnel.py>`_

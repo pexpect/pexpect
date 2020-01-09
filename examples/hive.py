@@ -94,7 +94,7 @@ import readline
 import atexit
 try:
     import pexpect
-    import pxssh
+    from pexpect import pxssh
 except ImportError:
     sys.stderr.write("You do not have 'pexpect' installed.\n")
     sys.stderr.write("On Ubuntu you need the 'python-pexpect' package.\n")
@@ -436,7 +436,7 @@ def resync (hive, hive_names, timeout=2, max_attempts=5):
 def parse_host_connect_string (hcs):
 
     '''This parses a host connection string in the form
-    username:password@hostname:port. All fields are options expcet hostname. A
+    username:password@hostname:port. All fields are optional except hostname. A
     dictionary is returned with all four keys. Keys that were not included are
     set to empty strings ''. Note that if your password has the '@' character
     then you must backslash escape it. '''

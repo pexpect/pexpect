@@ -158,12 +158,10 @@ class Expecter(object):
             end_time = time.time() + timeout
 
         try:
-            incoming = None
+            idx = self.existing_data()
+            if idx is not None:
+                return idx
             while True:
-                idx = self.new_data(incoming)
-                # Keep reading until exception or return.
-                if idx is not None:
-                    return idx
                 # No match at this point
                 if (timeout is not None) and (timeout < 0):
                     return self.timeout()
@@ -171,6 +169,10 @@ class Expecter(object):
                 incoming = spawn.read_nonblocking(spawn.maxread, timeout)
                 if self.spawn.delayafterread is not None:
                     time.sleep(self.spawn.delayafterread)
+                idx = self.new_data(incoming)
+                # Keep reading until exception or return.
+                if idx is not None:
+                    return idx
                 if timeout is not None:
                     timeout = end_time - time.time()
         except EOF as e:

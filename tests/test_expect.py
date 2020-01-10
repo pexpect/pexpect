@@ -463,7 +463,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         e = child.expect(['xyzzy', pexpect.TIMEOUT],
                          searchwindowsize=10, timeout=30)
         self.assertEqual(e, 0)
-        self.assertEqual(child.before[0:5], 'BEGIN')
+        self.assertEqual(child.before[0:5], b'BEGIN')
         child.sendeof()
         child.expect(pexpect.EOF)
 

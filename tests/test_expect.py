@@ -441,7 +441,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         '''
         p = pexpect.spawn('%s -Wi list100.py' % self.PYTHONBIN, env=no_coverage_env())
         self._before_after(p)
-
+        
     def test_before_after_exact(self):
         '''This tests some simple before/after things, for
         expect_exact(). (Grahn broke it at one point.)
@@ -450,6 +450,22 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         # mangle the spawn so we test expect_exact() instead
         p.expect = p.expect_exact
         self._before_after(p)
+
+    def test_before_after_timeout(self):
+        child = pexpect.spawn('cat', echo=False)
+        child.sendline('BEGIN')
+        for i in range(100):
+            child.sendline('foo' * 100)
+        e = child.expect(['xyzzy', pexpect.TIMEOUT],
+                         searchwindowsize=10, timeout=0.001)
+        self.assertEqual(e, 1)
+        child.sendline('xyzzy')
+        e = child.expect(['xyzzy', pexpect.TIMEOUT],
+                         searchwindowsize=10, timeout=30)
+        self.assertEqual(e, 0)
+        self.assertEqual(child.before[0:5], 'BEGIN')
+        child.sendeof()
+        child.expect(pexpect.EOF)
 
     def _ordering(self, p):
         p.timeout = 20

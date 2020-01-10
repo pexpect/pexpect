@@ -441,7 +441,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         '''
         p = pexpect.spawn('%s -Wi list100.py' % self.PYTHONBIN, env=no_coverage_env())
         self._before_after(p)
-        
+
     def test_before_after_exact(self):
         '''This tests some simple before/after things, for
         expect_exact(). (Grahn broke it at one point.)

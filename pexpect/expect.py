@@ -120,7 +120,7 @@ class Expecter(object):
             exc = EOF(msg)
             exc.__cause__ = None # in Python 3.x we can use "raise exc from None"
             raise exc
-    
+
     def timeout(self, err=None):
         spawn = self.spawn
 
@@ -149,7 +149,7 @@ class Expecter(object):
         spawn.after = None
         spawn.match = None
         spawn.match_index = None
-    
+
     def expect_loop(self, timeout=-1):
         """Blocking expect"""
         spawn = self.spawn

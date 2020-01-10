@@ -486,6 +486,12 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         child.sendeof()
         child.expect(pexpect.EOF)
 
+    def test_searchwindowsize(self):
+        '''Tests that we don't match outside the window, a bug in 4.7.'''
+        p = pexpect.spawn('echo foobarbazbop')
+        e = p.expect([b'bar', b'bop'], searchwindowsize=6)
+        self.assertEqual(e, 1)
+
     def _ordering(self, p):
         p.timeout = 20
         p.expect(b'>>> ')

@@ -452,18 +452,37 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self._before_after(p)
 
     def test_before_after_timeout(self):
+        '''Tests that before is not truncated after a timeout, a bug in 4.7.'''
         child = pexpect.spawn('cat', echo=False)
         child.sendline('BEGIN')
         for i in range(100):
             child.sendline('foo' * 100)
-        e = child.expect(['xyzzy', pexpect.TIMEOUT],
+        e = child.expect([b'xyzzy', pexpect.TIMEOUT],
                          searchwindowsize=10, timeout=0.001)
         self.assertEqual(e, 1)
         child.sendline('xyzzy')
-        e = child.expect(['xyzzy', pexpect.TIMEOUT],
+        e = child.expect([b'xyzzy', pexpect.TIMEOUT],
                          searchwindowsize=10, timeout=30)
         self.assertEqual(e, 0)
         self.assertEqual(child.before[0:5], b'BEGIN')
+        child.sendeof()
+        child.expect(pexpect.EOF)
+
+    def test_increasing_searchwindowsize(self):
+        '''Tests that the search window can be expanded, a bug in 4.7.'''
+        child = pexpect.spawn('cat', echo=False)
+        child.sendline('BEGIN')
+        for i in range(100):
+            child.sendline('foo' * 100)
+        e = child.expect([b'xyzzy', pexpect.TIMEOUT],
+                         searchwindowsize=10, timeout=0.5)
+        self.assertEqual(e, 1)
+        e = child.expect([b'BEGIN', pexpect.TIMEOUT],
+                         searchwindowsize=10, timeout=0.5)
+        self.assertEqual(e, 1)
+        e = child.expect([b'BEGIN', pexpect.TIMEOUT],
+                         searchwindowsize=40000, timeout=30.0)
+        self.assertEqual(e, 0)
         child.sendeof()
         child.expect(pexpect.EOF)
 

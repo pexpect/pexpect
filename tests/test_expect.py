@@ -452,7 +452,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self._before_after(p)
 
     def test_before_after_timeout(self):
-        '''Tests that before is not truncated after a timeout, a bug in 4.7.'''
+        '''Tests that timeouts do not truncate before, a bug in 4.4-4.7.'''
         child = pexpect.spawn('cat', echo=False)
         child.sendline('BEGIN')
         for i in range(100):
@@ -469,7 +469,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         child.expect(pexpect.EOF)
 
     def test_increasing_searchwindowsize(self):
-        '''Tests that the search window can be expanded, a bug in 4.7.'''
+        '''Tests that the search window can be expanded, a bug in 4.4-4.7.'''
         child = pexpect.spawn('cat', echo=False)
         child.sendline('BEGIN')
         for i in range(100):
@@ -487,7 +487,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         child.expect(pexpect.EOF)
 
     def test_searchwindowsize(self):
-        '''Tests that we don't match outside the window, a bug in 4.7.'''
+        '''Tests that we don't match outside the window, a bug in 4.4-4.7.'''
         p = pexpect.spawn('echo foobarbazbop')
         e = p.expect([b'bar', b'bop'], searchwindowsize=6)
         self.assertEqual(e, 1)

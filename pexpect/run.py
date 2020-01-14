@@ -49,7 +49,7 @@ def run(command, timeout=30, withexitstatus=False, events=None,
         (command_output, exitstatus) = run('ls -l /bin', withexitstatus=1)
 
     The following will run SSH and execute 'ls -l' on the remote machine. The
-    password 'secret' will be sent if the '(?i)password' pattern is ever seen:
+    password 'secret' will be sent if the '(?i)password' pattern is ever seen::
 
         run("ssh username@machine.example.com 'ls -l'",
             events={'(?i)password':'secret\\n'})

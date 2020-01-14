@@ -51,7 +51,7 @@ class Expecter(object):
             if not self.searchwindowsize:
                 spawn._buffer = spawn.buffer_type()
                 window = spawn._before.getvalue()
-                spawn._buffer.write(spawn._before.getvalue())
+                spawn._buffer.write(window)
             elif buf_len < self.searchwindowsize:
                 spawn._buffer = spawn.buffer_type()
                 spawn._before.seek(

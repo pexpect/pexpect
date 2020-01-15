@@ -71,6 +71,7 @@ class PatternWaiter(asyncio.Protocol):
         spawn._log(s, 'read')
 
         if self.fut.done():
+            spawn._before.write(s)
             spawn._buffer.write(s)
             return
 

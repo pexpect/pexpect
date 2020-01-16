@@ -11,8 +11,8 @@ pxssh - control an SSH session
    doesn't have the extra complexity of running a local subprocess.
    RedExpect is very similar to pxssh except that it reads and writes directly
    into an SSH session all done via python with all the SSH protocol in C,
-   addtionally it is written for communicating to SSH servers that are not just
-   linux machines. Meaning that it is extremely fast in comparison to Paramiko
+   additionally it is written for communicating to SSH servers that are not just
+   Linux machines. Meaning that it is extremely fast in comparison to Paramiko
    and already has the familiar expect API. In most cases RedExpect and pxssh
    code should be fairly interchangable.
 

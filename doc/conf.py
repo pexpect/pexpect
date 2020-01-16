@@ -52,7 +52,7 @@ copyright = u'2013, Noah Spurrier and contributors'
 # built documents.
 #
 # The short X.Y version.
-version = '4.7'
+version = '4.8'
 # The full version, including alpha/beta/rc tags.
 release = version
 

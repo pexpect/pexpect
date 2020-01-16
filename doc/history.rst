@@ -17,6 +17,8 @@ Version 4.8
 * Disable chaining of timeout and EOF exceptions (:gphull:`606`).
 * Allow traceback included snippet length to be configured via
   ``str_last_chars`` rather than always 100 (:ghpull:`598`).
+* Python 3 warning added to interact.py (:ghpull:`537`).
+* Several doc updates.
 
 Version 4.7
 ```````````

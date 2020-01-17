@@ -10,11 +10,11 @@ pxssh - control an SSH session
    Paramiko is a Python module which speaks the SSH protocol directly, so it
    doesn't have the extra complexity of running a local subprocess.
    RedExpect is very similar to pxssh except that it reads and writes directly
-   into an SSH session all done via python with all the SSH protocol in C,
+   into an SSH session all done via Python with all the SSH protocol in C,
    additionally it is written for communicating to SSH servers that are not just
    Linux machines. Meaning that it is extremely fast in comparison to Paramiko
    and already has the familiar expect API. In most cases RedExpect and pxssh
-   code should be fairly interchangable.
+   code should be fairly interchangeable.
 
 .. automodule:: pexpect.pxssh
 
@@ -34,7 +34,7 @@ pxssh class
 
    .. attribute:: force_password
 
-      If this is set to True, public key authentication is disabled, forcing the
+      If this is set to ``True``, public key authentication is disabled, forcing the
       server to ask for a password. Note that the sysadmin can disable password
       logins, in which case this won't work.
 

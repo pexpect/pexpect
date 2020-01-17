@@ -4,6 +4,22 @@ History
 Releases
 --------
 
+Version 4.8
+```````````
+
+* Returned behavior of searchwindowsize to that in 4.3 and earlier (searches
+  are only done within the search window) (:ghpull:`579`).
+* Fixed a bug truncating ``before`` attribute after a timeout (:ghpull:`579`).
+* Fixed a bug where a search could be less than ``searchwindowsize`` if it
+  was increased between calls (:ghpull:`579`).
+* Minor test cleanups to improve portability (:ghpull:`580`) (:ghpull:`581`)
+  (:ghpull:`582`) (:ghpull:`583`) (:ghpull:`584`) (:ghpull:`585`).
+* Disable chaining of timeout and EOF exceptions (:gphull:`606`).
+* Allow traceback included snippet length to be configured via
+  ``str_last_chars`` rather than always 100 (:ghpull:`598`).
+* Python 3 warning added to interact.py (:ghpull:`537`).
+* Several doc updates.
+
 Version 4.7
 ```````````
 

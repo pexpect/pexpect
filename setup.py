@@ -43,6 +43,11 @@ setup(name='pexpect',
     author='Noah Spurrier; Thomas Kluyver; Jeff Quast',
     author_email='noah@noah.org, thomas@kluyver.me.uk, contact@jeffquast.com',
     url='https://pexpect.readthedocs.io/',
+    project_urls={
+        "Bug Tracker": "https://github.com/pexpect/pexpect/issues",
+        "Documentation": "https://pexpect.readthedocs.io/",
+        "Source Code": "https://github.com/pexpect/pexpect",
+    },
     license='ISC license',
     platforms='UNIX',
     classifiers = [

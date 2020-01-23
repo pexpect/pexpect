@@ -375,7 +375,7 @@ class pxssh (spawn):
                     config_has_server = True
                 elif config_has_server and 'hostname' in line.lower():
                     pass
-                elif config_has_server and 'host' in line.lower():
+                elif config_has_server and re.match(server_regex, line, re.IGNORECASE):
                     server_has_username = False  # insurance
                     break  # we have left the relevant section
                 elif config_has_server and re.match(user_regex, line, re.IGNORECASE):

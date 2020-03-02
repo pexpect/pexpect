@@ -14,7 +14,7 @@ Version 4.8
   was increased between calls (:ghpull:`579`).
 * Minor test cleanups to improve portability (:ghpull:`580`) (:ghpull:`581`)
   (:ghpull:`582`) (:ghpull:`583`) (:ghpull:`584`) (:ghpull:`585`).
-* Disable chaining of timeout and EOF exceptions (:gphull:`606`).
+* Disable chaining of timeout and EOF exceptions (:ghpull:`606`).
 * Allow traceback included snippet length to be configured via
   ``str_last_chars`` rather than always 100 (:ghpull:`598`).
 * Python 3 warning added to interact.py (:ghpull:`537`).

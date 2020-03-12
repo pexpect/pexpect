@@ -108,7 +108,7 @@ class REPLWrapper(object):
                              + command)
         return u''.join(res + [self.child.before])
 
-def python(command="python"):
+def python(command=sys.executable):
     """Start a Python shell and return a :class:`REPLWrapper` object."""
     return REPLWrapper(command, u">>> ", u"import sys; sys.ps1={0!r}; sys.ps2={1!r}")
 

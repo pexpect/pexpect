@@ -69,7 +69,7 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
         super(RunFuncTestCase, self).tearDown()
 
     def test_run_exit(self):
-        (data, exitstatus) = self.runfunc('python exit1.py', withexitstatus=1)
+        (data, exitstatus) = self.runfunc(sys.executable + ' exit1.py', withexitstatus=1)
         assert exitstatus == 1, "Exit status of 'python exit1.py' should be 1."
 
     def test_run(self):

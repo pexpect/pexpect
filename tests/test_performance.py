@@ -45,7 +45,7 @@ class PerformanceTestCase (PexpectTestCase.PexpectTestCase):
             return 'for n in range(1, %d+1): print(n)' % n
 
     def plain_range(self, n):
-        e = pexpect.spawn('python', timeout=100)
+        e = pexpect.spawn(sys.executable, timeout=100)
         self.assertEqual(e.expect(b'>>>'), 0)
         e.sendline(self._iter_n(n))
         self.assertEqual(e.expect(br'\.{3}'), 0)
@@ -53,7 +53,7 @@ class PerformanceTestCase (PexpectTestCase.PexpectTestCase):
         self.assertEqual(e.expect([b'inquisition', '%d' % n]), 1)
 
     def window_range(self, n):
-        e = pexpect.spawn('python', timeout=100)
+        e = pexpect.spawn(sys.executable, timeout=100)
         self.assertEqual(e.expect(b'>>>'), 0)
         e.sendline(self._iter_n(n))
         self.assertEqual(e.expect(r'\.{3}'), 0)
@@ -61,7 +61,7 @@ class PerformanceTestCase (PexpectTestCase.PexpectTestCase):
         self.assertEqual(e.expect([b'inquisition', '%d' % n], searchwindowsize=20), 1)
 
     def exact_range(self, n):
-        e = pexpect.spawn('python', timeout=100)
+        e = pexpect.spawn(sys.executable, timeout=100)
         self.assertEqual(e.expect_exact([b'>>>']), 0)
         e.sendline(self._iter_n(n))
         self.assertEqual(e.expect_exact([b'...']), 0)
@@ -69,7 +69,7 @@ class PerformanceTestCase (PexpectTestCase.PexpectTestCase):
         self.assertEqual(e.expect_exact([b'inquisition', '%d' % n],timeout=520), 1)
 
     def ewin_range(self, n):
-        e = pexpect.spawn('python', timeout=100)
+        e = pexpect.spawn(sys.executable, timeout=100)
         self.assertEqual(e.expect_exact([b'>>>']), 0)
         e.sendline(self._iter_n(n))
         self.assertEqual(e.expect_exact([b'...']), 0)
@@ -77,7 +77,7 @@ class PerformanceTestCase (PexpectTestCase.PexpectTestCase):
         self.assertEqual(e.expect_exact([b'inquisition', '%d' % n], searchwindowsize=20), 1)
 
     def faster_range(self, n):
-        e = pexpect.spawn('python', timeout=100)
+        e = pexpect.spawn(sys.executable, timeout=100)
         self.assertEqual(e.expect(b'>>>'), 0)
         e.sendline(('list(range(1, %d+1))' % n).encode('ascii'))
         self.assertEqual(e.expect([b'inquisition', '%d' % n]), 1)

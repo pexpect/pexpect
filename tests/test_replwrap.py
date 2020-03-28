@@ -45,6 +45,7 @@ class REPLWrapTestCase(unittest.TestCase):
         """env, which displays PS1=..., should not mess up finding the prompt.
         """
         bash = replwrap.bash()
+        res = bash.run_command("export PS1")
         res = bash.run_command("env")
         self.assertIn('PS1', res)
         res = bash.run_command("echo $HOME")

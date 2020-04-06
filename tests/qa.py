@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 PEXPECT LICENSE
 
     This license is approved by the OSI and FSF as GPL-compatible.
@@ -17,10 +17,9 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
+"""
 import commands
 import signal
 
 signal.signal(signal.SIGCHLD, signal.SIG_IGN)
-print(commands.getoutput('/bin/ls -l'))
-
+print(commands.getoutput("/bin/ls -l"))

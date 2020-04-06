@@ -1,5 +1,4 @@
-
-'''
+"""
 PEXPECT LICENSE
 
     This license is approved by the OSI and FSF as GPL-compatible.
@@ -17,7 +16,7 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
+"""
 from __future__ import print_function
 
 import contextlib
@@ -43,10 +42,10 @@ class PexpectTestCase(unittest.TestCase):
         # storing our pid and asserting equality on tearDown.
         self.pid = os.getpid()
 
-        coverage_rc = os.path.join(project_dir, '.coveragerc')
-        os.environ['COVERAGE_PROCESS_START'] = coverage_rc
-        os.environ['COVERAGE_FILE'] = os.path.join(project_dir, '.coverage')
-        print('\n', self.id(), end=' ')
+        coverage_rc = os.path.join(project_dir, ".coveragerc")
+        os.environ["COVERAGE_PROCESS_START"] = coverage_rc
+        os.environ["COVERAGE_FILE"] = os.path.join(project_dir, ".coverage")
+        print("\n", self.id(), end=" ")
         sys.stdout.flush()
 
         # some build agents will ignore SIGHUP and SIGINT, which python
@@ -57,8 +56,10 @@ class PexpectTestCase(unittest.TestCase):
         # I'm not entirely convinced they need to be restored, only our
         # test runner is affected.
         self.restore_ignored_signals = [
-            value for value in (signal.SIGHUP, signal.SIGINT,)
-            if signal.getsignal(value) == signal.SIG_IGN]
+            value
+            for value in (signal.SIGHUP, signal.SIGINT,)
+            if signal.getsignal(value) == signal.SIG_IGN
+        ]
         if signal.SIGHUP in self.restore_ignored_signals:
             # sighup should be set to default handler
             signal.signal(signal.SIGHUP, signal.SIG_DFL)
@@ -73,10 +74,12 @@ class PexpectTestCase(unittest.TestCase):
 
         if self.pid != os.getpid():
             # The build server pattern-matches phrase 'Test runner has forked!'
-            print("Test runner has forked! This means a child process raised "
-                  "an exception before exec() in a test case, the error is "
-                  "more than likely found above this line in stderr.",
-                  file=sys.stderr)
+            print(
+                "Test runner has forked! This means a child process raised "
+                "an exception before exec() in a test case, the error is "
+                "more than likely found above this line in stderr.",
+                file=sys.stderr,
+            )
             exit(1)
 
         # restore signal handlers
@@ -99,6 +102,7 @@ class PexpectTestCase(unittest.TestCase):
         @contextlib.contextmanager
         def assertRaisesRegexp(self, excClass, pattern):
             import re
+
             try:
                 yield
             except Exception as e:

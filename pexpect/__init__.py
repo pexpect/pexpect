@@ -1,4 +1,4 @@
-'''Pexpect is a Python module for spawning child applications and controlling
+"""Pexpect is a Python module for spawning child applications and controlling
 them automatically. Pexpect can be used for automating interactive applications
 such as ssh, ftp, passwd, telnet, etc. It can be used to a automate setup
 scripts for duplicating software package installations on different servers. It
@@ -61,25 +61,36 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
+"""
 
 import sys
-PY3 = (sys.version_info[0] >= 3)
+
+PY3 = sys.version_info[0] >= 3
 
 from .exceptions import ExceptionPexpect, EOF, TIMEOUT
 from .utils import split_command_line, which, is_executable_file
 from .expect import Expecter, searcher_re, searcher_string
 
-if sys.platform != 'win32':
+if sys.platform != "win32":
     # On Unix, these are available at the top level for backwards compatibility
     from .pty_spawn import spawn, spawnu
     from .run import run, runu
 
-__version__ = '4.8.0'
-__revision__ = ''
-__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'spawnu', 'run', 'runu',
-           'which', 'split_command_line', '__version__', '__revision__']
-
+__version__ = "4.8.0"
+__revision__ = ""
+__all__ = [
+    "ExceptionPexpect",
+    "EOF",
+    "TIMEOUT",
+    "spawn",
+    "spawnu",
+    "run",
+    "runu",
+    "which",
+    "split_command_line",
+    "__version__",
+    "__revision__",
+]
 
 
 # vim: set shiftround expandtab tabstop=4 shiftwidth=4 ft=python autoindent :

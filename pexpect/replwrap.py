@@ -6,13 +6,14 @@ import sys
 
 import pexpect
 
-PY3 = (sys.version_info[0] >= 3)
+PY3 = sys.version_info[0] >= 3
 
 if PY3:
     basestring = str
 
-PEXPECT_PROMPT = u'[PEXPECT_PROMPT>'
-PEXPECT_CONTINUATION_PROMPT = u'[PEXPECT_PROMPT+'
+PEXPECT_PROMPT = u"[PEXPECT_PROMPT>"
+PEXPECT_CONTINUATION_PROMPT = u"[PEXPECT_PROMPT+"
+
 
 class REPLWrapper(object):
     """Wrapper for a REPL.
@@ -30,12 +31,18 @@ class REPLWrapper(object):
     :param str extra_init_cmd: Commands to do extra initialisation, such as
       disabling pagers.
     """
-    def __init__(self, cmd_or_spawn, orig_prompt, prompt_change,
-                 new_prompt=PEXPECT_PROMPT,
-                 continuation_prompt=PEXPECT_CONTINUATION_PROMPT,
-                 extra_init_cmd=None):
+
+    def __init__(
+        self,
+        cmd_or_spawn,
+        orig_prompt,
+        prompt_change,
+        new_prompt=PEXPECT_PROMPT,
+        continuation_prompt=PEXPECT_CONTINUATION_PROMPT,
+        extra_init_cmd=None,
+    ):
         if isinstance(cmd_or_spawn, basestring):
-            self.child = pexpect.spawn(cmd_or_spawn, echo=False, encoding='utf-8')
+            self.child = pexpect.spawn(cmd_or_spawn, echo=False, encoding="utf-8")
         else:
             self.child = cmd_or_spawn
         if self.child.echo:
@@ -47,8 +54,9 @@ class REPLWrapper(object):
         if prompt_change is None:
             self.prompt = orig_prompt
         else:
-            self.set_prompt(orig_prompt,
-                        prompt_change.format(new_prompt, continuation_prompt))
+            self.set_prompt(
+                orig_prompt, prompt_change.format(new_prompt, continuation_prompt)
+            )
             self.prompt = new_prompt
         self.continuation_prompt = continuation_prompt
 
@@ -62,8 +70,9 @@ class REPLWrapper(object):
         self.child.sendline(prompt_change)
 
     def _expect_prompt(self, timeout=-1, async_=False):
-        return self.child.expect_exact([self.prompt, self.continuation_prompt],
-                                       timeout=timeout, async_=async_)
+        return self.child.expect_exact(
+            [self.prompt, self.continuation_prompt], timeout=timeout, async_=async_
+        )
 
     def run_command(self, command, timeout=-1, async_=False):
         """Send a command to the REPL, wait for and return output.
@@ -83,13 +92,14 @@ class REPLWrapper(object):
         # Split up multiline commands and feed them in bit-by-bit
         cmdlines = command.splitlines()
         # splitlines ignores trailing newlines - add it back in manually
-        if command.endswith('\n'):
-            cmdlines.append('')
+        if command.endswith("\n"):
+            cmdlines.append("")
         if not cmdlines:
             raise ValueError("No command was given")
 
         if async_:
             from ._async import repl_run_command_async
+
             return repl_run_command_async(self, cmdlines, timeout)
 
         res = []
@@ -104,27 +114,28 @@ class REPLWrapper(object):
             # We got the continuation prompt - command was incomplete
             self.child.kill(signal.SIGINT)
             self._expect_prompt(timeout=1)
-            raise ValueError("Continuation prompt found - input was incomplete:\n"
-                             + command)
-        return u''.join(res + [self.child.before])
+            raise ValueError(
+                "Continuation prompt found - input was incomplete:\n" + command
+            )
+        return u"".join(res + [self.child.before])
+
 
 def python(command=sys.executable):
     """Start a Python shell and return a :class:`REPLWrapper` object."""
     return REPLWrapper(command, u">>> ", u"import sys; sys.ps1={0!r}; sys.ps2={1!r}")
 
+
 def bash(command="bash"):
     """Start a bash shell and return a :class:`REPLWrapper` object."""
-    bashrc = os.path.join(os.path.dirname(__file__), 'bashrc.sh')
-    child = pexpect.spawn(command, ['--rcfile', bashrc], echo=False,
-                          encoding='utf-8')
+    bashrc = os.path.join(os.path.dirname(__file__), "bashrc.sh")
+    child = pexpect.spawn(command, ["--rcfile", bashrc], echo=False, encoding="utf-8")
 
     # If the user runs 'env', the value of PS1 will be in the output. To avoid
     # replwrap seeing that as the next prompt, we'll embed the marker characters
     # for invisible characters in the prompt; these show up when inspecting the
     # environment variable, but not when bash displays the prompt.
-    ps1 = PEXPECT_PROMPT[:5] + u'\\[\\]' + PEXPECT_PROMPT[5:]
-    ps2 = PEXPECT_CONTINUATION_PROMPT[:5] + u'\\[\\]' + PEXPECT_CONTINUATION_PROMPT[5:]
+    ps1 = PEXPECT_PROMPT[:5] + u"\\[\\]" + PEXPECT_PROMPT[5:]
+    ps2 = PEXPECT_CONTINUATION_PROMPT[:5] + u"\\[\\]" + PEXPECT_CONTINUATION_PROMPT[5:]
     prompt_change = u"PS1='{0}' PS2='{1}' PROMPT_COMMAND=''".format(ps1, ps2)
 
-    return REPLWrapper(child, u'\\$', prompt_change,
-                       extra_init_cmd="export PAGER=cat")
+    return REPLWrapper(child, u"\\$", prompt_change, extra_init_cmd="export PAGER=cat")

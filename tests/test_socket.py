@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 PEXPECT LICENSE
 
     This license is approved by the OSI and FSF as GPL-compatible.
@@ -17,7 +17,7 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
+"""
 import pexpect
 from pexpect import fdpexpect
 import unittest
@@ -35,23 +35,23 @@ class SocketServerError(Exception):
 
 
 class ExpectTestCase(PexpectTestCase.PexpectTestCase):
-
     def setUp(self):
         print(self.id())
         PexpectTestCase.PexpectTestCase.setUp(self)
         self.af = socket.AF_INET
-        self.host = '127.0.0.1'
+        self.host = "127.0.0.1"
         try:
             socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         except socket.error:
             try:
                 socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
                 self.af = socket.AF_INET6
-                self.host = '::1'
+                self.host = "::1"
             except socket.error:
                 pass
         self.port = 49152 + 10000
-        self.motd = b"""\
+        self.motd = (
+            b"""\
 ------------------------------------------------------------------------------
 *                  Welcome to the SOCKET UNIT TEST code!                     *
 ------------------------------------------------------------------------------
@@ -77,14 +77,20 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
 * prescriptions. Thus the name: pre (before) script (writing) ion (charged   *
 * particle).                                                                 *
 ------------------------------------------------------------------------------
-""".replace(b'\n', b'\n\r') + b"\r\n"
-        self.prompt1 = b'Press Return to continue:'
-        self.prompt2 = b'Rate this unit test>'
-        self.prompt3 = b'Press X to exit:'
-        self.enter = b'\r\n'
-        self.exit = b'X\r\n'
+""".replace(
+                b"\n", b"\n\r"
+            )
+            + b"\r\n"
+        )
+        self.prompt1 = b"Press Return to continue:"
+        self.prompt2 = b"Rate this unit test>"
+        self.prompt3 = b"Press X to exit:"
+        self.enter = b"\r\n"
+        self.exit = b"X\r\n"
         self.server_up = multiprocessing.Event()
-        self.server_process = multiprocessing.Process(target=self.socket_server, args=(self.server_up,))
+        self.server_process = multiprocessing.Process(
+            target=self.socket_server, args=(self.server_up,)
+        )
         self.server_process.daemon = True
         self.server_process.start()
         counter = 0
@@ -161,7 +167,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         session.expect(self.prompt3)
         session.send(self.exit)
         session.expect(pexpect.EOF)
-        self.assertEqual(session.before, b'')
+        self.assertEqual(session.before, b"")
 
     def test_socket_with_write(self):
         sock = socket.socket(self.af, socket.SOCK_STREAM)
@@ -175,11 +181,11 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         session.expect(self.prompt3)
         session.write(self.exit)
         session.expect(pexpect.EOF)
-        self.assertEqual(session.before, b'')
+        self.assertEqual(session.before, b"")
 
     def test_not_int(self):
         with self.assertRaises(pexpect.ExceptionPexpect):
-            session = fdpexpect.fdspawn('bogus', timeout=10)
+            session = fdpexpect.fdspawn("bogus", timeout=10)
 
     def test_not_file_descriptor(self):
         with self.assertRaises(pexpect.ExceptionPexpect):
@@ -190,12 +196,14 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
             sock = socket.socket(self.af, socket.SOCK_STREAM)
             sock.connect((self.host, self.port))
             session = fdpexpect.fdspawn(sock, timeout=10)
-            session.expect(b'Bogus response')
+            session.expect(b"Bogus response")
 
     def test_interrupt(self):
         timed_out = multiprocessing.Event()
         all_read = multiprocessing.Event()
-        test_proc = multiprocessing.Process(target=self.socket_fn, args=(timed_out, all_read))
+        test_proc = multiprocessing.Process(
+            target=self.socket_fn, args=(timed_out, all_read)
+        )
         test_proc.daemon = True
         test_proc.start()
         while not all_read.is_set():
@@ -209,7 +217,9 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def test_multiple_interrupts(self):
         timed_out = multiprocessing.Event()
         all_read = multiprocessing.Event()
-        test_proc = multiprocessing.Process(target=self.socket_fn, args=(timed_out, all_read))
+        test_proc = multiprocessing.Process(
+            target=self.socket_fn, args=(timed_out, all_read)
+        )
         test_proc.daemon = True
         test_proc.start()
         while not all_read.is_set():
@@ -233,7 +243,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         session.expect(self.prompt3)
         session.send(self.exit)
         session.expect(pexpect.EOF)
-        self.assertEqual(session.before, b'')
+        self.assertEqual(session.before, b"")
 
     def test_fd_isalive(self):
         sock = socket.socket(self.af, socket.SOCK_STREAM)
@@ -268,13 +278,16 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def test_fileobj(self):
         sock = socket.socket(self.af, socket.SOCK_STREAM)
         sock.connect((self.host, self.port))
-        session = fdpexpect.fdspawn(sock, timeout=10) # Should get the fileno from the socket
+        session = fdpexpect.fdspawn(
+            sock, timeout=10
+        )  # Should get the fileno from the socket
         session.expect(self.prompt1)
         session.close()
         assert not session.isalive()
         session.close()  # Smoketest - should be able to call this again
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
 
-suite = unittest.makeSuite(ExpectTestCase, 'test')
+suite = unittest.makeSuite(ExpectTestCase, "test")

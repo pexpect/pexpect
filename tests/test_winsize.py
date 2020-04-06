@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 PEXPECT LICENSE
 
     This license is approved by the OSI and FSF as GPL-compatible.
@@ -17,44 +17,47 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
+"""
 import pexpect
 import unittest
 from . import PexpectTestCase
 import time
 
-class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
 
+class TestCaseWinsize(PexpectTestCase.PexpectTestCase):
     def test_initial_winsize(self):
         """ Assert initial window dimension size (24, 80). """
-        p = pexpect.spawn('{self.PYTHONBIN} sigwinch_report.py'
-                          .format(self=self), timeout=3)
+        p = pexpect.spawn(
+            "{self.PYTHONBIN} sigwinch_report.py".format(self=self), timeout=3
+        )
         # default size by PtyProcess class is 24 rows by 80 columns.
-        p.expect_exact('Initial Size: (24, 80)')
+        p.expect_exact("Initial Size: (24, 80)")
         p.close()
 
     def test_initial_winsize_by_dimension(self):
         """ Assert user-parameter window dimension size is initial. """
-        p = pexpect.spawn('{self.PYTHONBIN} sigwinch_report.py'
-                          .format(self=self), timeout=3,
-                          dimensions=(40, 100))
-        p.expect_exact('Initial Size: (40, 100)')
+        p = pexpect.spawn(
+            "{self.PYTHONBIN} sigwinch_report.py".format(self=self),
+            timeout=3,
+            dimensions=(40, 100),
+        )
+        p.expect_exact("Initial Size: (40, 100)")
         p.close()
 
     def test_setwinsize(self):
         """ Ensure method .setwinsize() sends signal caught by child. """
-        p = pexpect.spawn('{self.PYTHONBIN} sigwinch_report.py'
-                          .format(self=self), timeout=3)
+        p = pexpect.spawn(
+            "{self.PYTHONBIN} sigwinch_report.py".format(self=self), timeout=3
+        )
         # Note that we must await the installation of the child process'
         # signal handler,
-        p.expect_exact('READY')
+        p.expect_exact("READY")
         p.setwinsize(19, 84)
-        p.expect_exact('SIGWINCH: (19, 84)')
+        p.expect_exact("SIGWINCH: (19, 84)")
         p.close()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
 
-suite = unittest.makeSuite(TestCaseWinsize,'test')
-
-
+suite = unittest.makeSuite(TestCaseWinsize, "test")

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 PEXPECT LICENSE
 
     This license is approved by the OSI and FSF as GPL-compatible.
@@ -17,24 +17,26 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
+"""
 import pexpect
 import unittest
 from . import PexpectTestCase
 
+
 class SplitCommandLineTestCase(PexpectTestCase.PexpectTestCase):
     def testSplitSizes(self):
-        assert len(pexpect.split_command_line(r'')) == 0
-        assert len(pexpect.split_command_line(r'one')) == 1
-        assert len(pexpect.split_command_line(r'one two')) == 2
-        assert len(pexpect.split_command_line(r'one  two')) == 2
-        assert len(pexpect.split_command_line(r'one   two')) == 2
-        assert len(pexpect.split_command_line(r'one\ one')) == 1
-        assert len(pexpect.split_command_line('\'one one\'')) == 1
-        assert len(pexpect.split_command_line(r'one\"one')) == 1
-        assert len(pexpect.split_command_line(r'This\' is a\'\ test')) == 3
+        assert len(pexpect.split_command_line(r"")) == 0
+        assert len(pexpect.split_command_line(r"one")) == 1
+        assert len(pexpect.split_command_line(r"one two")) == 2
+        assert len(pexpect.split_command_line(r"one  two")) == 2
+        assert len(pexpect.split_command_line(r"one   two")) == 2
+        assert len(pexpect.split_command_line(r"one\ one")) == 1
+        assert len(pexpect.split_command_line("'one one'")) == 1
+        assert len(pexpect.split_command_line(r"one\"one")) == 1
+        assert len(pexpect.split_command_line(r"This\' is a\'\ test")) == 3
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
 
-suite = unittest.makeSuite(SplitCommandLineTestCase,'test')
+suite = unittest.makeSuite(SplitCommandLineTestCase, "test")

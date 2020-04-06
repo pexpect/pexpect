@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 PEXPECT LICENSE
 
     This license is approved by the OSI and FSF as GPL-compatible.
@@ -17,20 +17,19 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
-from  __future__ import print_function
+"""
+from __future__ import print_function
 
 import pexpect
 import time
 
-p = pexpect.spawn ('./a.out')
+p = pexpect.spawn("./a.out")
 print(p.exitstatus)
-p.expect (pexpect.EOF)
+p.expect(pexpect.EOF)
 print(p.before)
 time.sleep(1)
-print('exitstatus:', p.exitstatus)
-print('isalive',p.isalive())
-print('exitstatus',p.exitstatus)
-print('isalive',p.isalive())
-print('exitstatus',p.exitstatus)
-
+print("exitstatus:", p.exitstatus)
+print("isalive", p.isalive())
+print("exitstatus", p.exitstatus)
+print("isalive", p.isalive())
+print("exitstatus", p.exitstatus)

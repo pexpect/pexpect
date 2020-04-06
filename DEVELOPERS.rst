@@ -10,3 +10,10 @@ filename in this format::
 
 New test case classes may wish to inherit from ``PexpectTestCase.PexpectTestCase``
 in the tests directory, which sets up some convenient functionality.
+
+pexpect is formatted with [black](https://github.com/psf/black). Please run black
+locally before submitting a Pull Request. From the project root:
+
+```
+black .
+```

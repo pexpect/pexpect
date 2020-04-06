@@ -1,4 +1,4 @@
-'''This is like pexpect, but it will work with any file descriptor that you
+"""This is like pexpect, but it will work with any file descriptor that you
 pass it. You are responsible for opening and close the file descriptor.
 This allows you to use Pexpect with sockets and named pipes (FIFOs).
 
@@ -19,48 +19,68 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
+"""
 
 from .spawnbase import SpawnBase
 from .exceptions import ExceptionPexpect, TIMEOUT
 from .utils import select_ignore_interrupts, poll_ignore_interrupts
 import os
 
-__all__ = ['fdspawn']
+__all__ = ["fdspawn"]
+
 
 class fdspawn(SpawnBase):
-    '''This is like pexpect.spawn but allows you to supply your own open file
+    """This is like pexpect.spawn but allows you to supply your own open file
     descriptor. For example, you could use it to read through a file looking
-    for patterns, or to control a modem or serial device. '''
+    for patterns, or to control a modem or serial device. """
 
-    def __init__ (self, fd, args=None, timeout=30, maxread=2000, searchwindowsize=None,
-                  logfile=None, encoding=None, codec_errors='strict', use_poll=False):
-        '''This takes a file descriptor (an int) or an object that support the
+    def __init__(
+        self,
+        fd,
+        args=None,
+        timeout=30,
+        maxread=2000,
+        searchwindowsize=None,
+        logfile=None,
+        encoding=None,
+        codec_errors="strict",
+        use_poll=False,
+    ):
+        """This takes a file descriptor (an int) or an object that support the
         fileno() method (returning an int). All Python file-like objects
-        support fileno(). '''
+        support fileno(). """
 
-        if type(fd) != type(0) and hasattr(fd, 'fileno'):
+        if type(fd) != type(0) and hasattr(fd, "fileno"):
             fd = fd.fileno()
 
         if type(fd) != type(0):
-            raise ExceptionPexpect('The fd argument is not an int. If this is a command string then maybe you want to use pexpect.spawn.')
+            raise ExceptionPexpect(
+                "The fd argument is not an int. If this is a command string then maybe you want to use pexpect.spawn."
+            )
 
-        try: # make sure fd is a valid file descriptor
+        try:  # make sure fd is a valid file descriptor
             os.fstat(fd)
         except OSError:
-            raise ExceptionPexpect('The fd argument is not a valid file descriptor.')
+            raise ExceptionPexpect("The fd argument is not a valid file descriptor.")
 
         self.args = None
         self.command = None
-        SpawnBase.__init__(self, timeout, maxread, searchwindowsize, logfile,
-                           encoding=encoding, codec_errors=codec_errors)
+        SpawnBase.__init__(
+            self,
+            timeout,
+            maxread,
+            searchwindowsize,
+            logfile,
+            encoding=encoding,
+            codec_errors=codec_errors,
+        )
         self.child_fd = fd
         self.own_fd = False
         self.closed = False
-        self.name = '<file descriptor %d>' % fd
+        self.name = "<file descriptor %d>" % fd
         self.use_poll = use_poll
 
-    def close (self):
+    def close(self):
         """Close the file descriptor.
 
         Calling this method a second time does nothing, but if the file
@@ -74,9 +94,9 @@ class fdspawn(SpawnBase):
         self.child_fd = -1
         self.closed = True
 
-    def isalive (self):
-        '''This checks if the file descriptor is still valid. If :func:`os.fstat`
-        does not raise an exception then we assume it is alive. '''
+    def isalive(self):
+        """This checks if the file descriptor is still valid. If :func:`os.fstat`
+        does not raise an exception then we assume it is alive. """
 
         if self.child_fd == -1:
             return False
@@ -86,9 +106,9 @@ class fdspawn(SpawnBase):
         except:
             return False
 
-    def terminate (self, force=False):  # pragma: no cover
-        '''Deprecated and invalid. Just raises an exception.'''
-        raise ExceptionPexpect('This method is not valid for file descriptors.')
+    def terminate(self, force=False):  # pragma: no cover
+        """Deprecated and invalid. Just raises an exception."""
+        raise ExceptionPexpect("This method is not valid for file descriptors.")
 
     # These four methods are left around for backwards compatibility, but not
     # documented as part of fdpexpect. You're encouraged to use os.write
@@ -96,7 +116,7 @@ class fdspawn(SpawnBase):
     def send(self, s):
         "Write to fd, return number of bytes written"
         s = self._coerce_send_string(s)
-        self._log(s, 'send')
+        self._log(s, "send")
 
         b = self._encoder.encode(s, final=False)
         return os.write(self.child_fd, b)
@@ -131,7 +151,7 @@ class fdspawn(SpawnBase):
             ready to read. When -1 (default), use self.timeout. When 0, poll.
         :return: String containing the bytes read
         """
-        if os.name == 'posix':
+        if os.name == "posix":
             if timeout == -1:
                 timeout = self.timeout
             rlist = [self.child_fd]
@@ -144,5 +164,5 @@ class fdspawn(SpawnBase):
                     rlist, wlist, xlist, timeout
                 )
             if self.child_fd not in rlist:
-                raise TIMEOUT('Timeout exceeded.')
+                raise TIMEOUT("Timeout exceeded.")
         return super(fdspawn, self).read_nonblocking(size)

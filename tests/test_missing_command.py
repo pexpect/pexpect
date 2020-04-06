@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 PEXPECT LICENSE
 
     This license is approved by the OSI and FSF as GPL-compatible.
@@ -17,22 +17,23 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
+"""
 import pexpect
 import unittest
 from . import PexpectTestCase
 
-class MissingCommandTestCase (PexpectTestCase.PexpectTestCase):
+
+class MissingCommandTestCase(PexpectTestCase.PexpectTestCase):
     def testMissingCommand(self):
         try:
-            i = pexpect.spawn ('ZXQYQZX')
+            i = pexpect.spawn("ZXQYQZX")
         except Exception:
             pass
         else:
-            self.fail('Expected an Exception.')
+            self.fail("Expected an Exception.")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
 
-suite = unittest.makeSuite(MissingCommandTestCase,'test')
-
+suite = unittest.makeSuite(MissingCommandTestCase, "test")

@@ -8,6 +8,7 @@ class TestCaseDelay(PexpectTestCase.PexpectTestCase):
     """
     Tests for various delay attributes.
     """
+
     def test_delaybeforesend(self):
         """
         Test various values for delaybeforesend.

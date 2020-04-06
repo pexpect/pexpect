@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 PEXPECT LICENSE
 
     This license is approved by the OSI and FSF as GPL-compatible.
@@ -17,12 +17,13 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
+"""
 
-from  __future__ import print_function
+from __future__ import print_function
 
 import time
 import sys
+
 
 def main():
     """
@@ -37,5 +38,6 @@ def main():
     time.sleep(timeout)
     print("END")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

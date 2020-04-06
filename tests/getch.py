@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 PEXPECT LICENSE
 
     This license is approved by the OSI and FSF as GPL-compatible.
@@ -17,29 +17,31 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
+"""
 from __future__ import print_function
 import sys, tty, termios
 
-if hasattr(sys.stdin, 'buffer'):
+if hasattr(sys.stdin, "buffer"):
     # Python 3: we want to read raw bytes
     stdin = sys.stdin.buffer
 else:
     stdin = sys.stdin
 
+
 def main():
-    print('READY', end='\r\n')
+    print("READY", end="\r\n")
     while True:
         try:
             val = ord(stdin.read(1))
         except KeyboardInterrupt:
             val = 3
-        print('%d<STOP>' % (val,), end='\r\n')
+        print("%d<STOP>" % (val,), end="\r\n")
         if val == 0:
             # StopIteration equivalent is ctrl+' ' (\x00, NUL)
             break
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     fd = sys.stdin.fileno()
     old_settings = termios.tcgetattr(fd)
     try:

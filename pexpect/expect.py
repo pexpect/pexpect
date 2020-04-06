@@ -2,6 +2,7 @@ import time
 
 from .exceptions import EOF, TIMEOUT
 
+
 class Expecter(object):
     def __init__(self, spawn, searcher, searchwindowsize=-1):
         self.spawn = spawn
@@ -12,7 +13,7 @@ class Expecter(object):
             searchwindowsize = spawn.searchwindowsize
         self.searchwindowsize = searchwindowsize
         self.lookback = None
-        if hasattr(searcher, 'longest_string'):
+        if hasattr(searcher, "longest_string"):
             self.lookback = searcher.longest_string
 
     def do_search(self, window, freshlen):
@@ -23,12 +24,11 @@ class Expecter(object):
         index = searcher.search(window, freshlen, self.searchwindowsize)
         if index >= 0:
             spawn._buffer = spawn.buffer_type()
-            spawn._buffer.write(window[searcher.end:])
-            spawn.before = spawn._before.getvalue()[
-                0:-(len(window) - searcher.start)]
+            spawn._buffer.write(window[searcher.end :])
+            spawn.before = spawn._before.getvalue()[0 : -(len(window) - searcher.start)]
             spawn._before = spawn.buffer_type()
-            spawn._before.write(window[searcher.end:])
-            spawn.after = window[searcher.start:searcher.end]
+            spawn._before.write(window[searcher.end :])
+            spawn.after = window[searcher.start : searcher.end]
             spawn.match = searcher.match
             spawn.match_index = index
             # Found a match
@@ -54,8 +54,7 @@ class Expecter(object):
                 spawn._buffer.write(window)
             elif buf_len < self.searchwindowsize:
                 spawn._buffer = spawn.buffer_type()
-                spawn._before.seek(
-                    max(0, before_len - self.searchwindowsize))
+                spawn._before.seek(max(0, before_len - self.searchwindowsize))
                 window = spawn._before.read()
                 spawn._buffer.write(window)
             else:
@@ -87,9 +86,9 @@ class Expecter(object):
                 window = spawn.buffer
         else:
             if len(data) >= self.searchwindowsize or not spawn._buffer.tell():
-                window = data[-self.searchwindowsize:]
+                window = data[-self.searchwindowsize :]
                 spawn._buffer = spawn.buffer_type()
-                spawn._buffer.write(window[-self.searchwindowsize:])
+                spawn._buffer.write(window[-self.searchwindowsize :])
             else:
                 spawn._buffer.write(data)
                 new_len = spawn._buffer.tell()
@@ -113,12 +112,12 @@ class Expecter(object):
             spawn.match = None
             spawn.match_index = None
             msg = str(spawn)
-            msg += '\nsearcher: %s' % self.searcher
+            msg += "\nsearcher: %s" % self.searcher
             if err is not None:
-                msg = str(err) + '\n' + msg
+                msg = str(err) + "\n" + msg
 
             exc = EOF(msg)
-            exc.__cause__ = None # in Python 3.x we can use "raise exc from None"
+            exc.__cause__ = None  # in Python 3.x we can use "raise exc from None"
             raise exc
 
     def timeout(self, err=None):
@@ -135,12 +134,12 @@ class Expecter(object):
             spawn.match = None
             spawn.match_index = None
             msg = str(spawn)
-            msg += '\nsearcher: %s' % self.searcher
+            msg += "\nsearcher: %s" % self.searcher
             if err is not None:
-                msg = str(err) + '\n' + msg
+                msg = str(err) + "\n" + msg
 
             exc = TIMEOUT(msg)
-            exc.__cause__ = None    # in Python 3.x we can use "raise exc from None"
+            exc.__cause__ = None  # in Python 3.x we can use "raise exc from None"
             raise exc
 
     def errored(self):
@@ -185,7 +184,7 @@ class Expecter(object):
 
 
 class searcher_string(object):
-    '''This is a plain string search helper for the spawn.expect_any() method.
+    """This is a plain string search helper for the spawn.expect_any() method.
     This helper class is for speed. For more powerful regex patterns
     see the helper class, searcher_re.
 
@@ -201,11 +200,11 @@ class searcher_string(object):
         end   - index into the buffer, first byte after match
         match - the matching string itself
 
-    '''
+    """
 
     def __init__(self, strings):
-        '''This creates an instance of searcher_string. This argument 'strings'
-        may be a list; a sequence of strings; or the EOF or TIMEOUT types. '''
+        """This creates an instance of searcher_string. This argument 'strings'
+        may be a list; a sequence of strings; or the EOF or TIMEOUT types. """
 
         self.eof_index = -1
         self.timeout_index = -1
@@ -223,22 +222,21 @@ class searcher_string(object):
                 self.longest_string = len(s)
 
     def __str__(self):
-        '''This returns a human-readable string that represents the state of
-        the object.'''
+        """This returns a human-readable string that represents the state of
+        the object."""
 
-        ss = [(ns[0], '    %d: %r' % ns) for ns in self._strings]
-        ss.append((-1, 'searcher_string:'))
+        ss = [(ns[0], "    %d: %r" % ns) for ns in self._strings]
+        ss.append((-1, "searcher_string:"))
         if self.eof_index >= 0:
-            ss.append((self.eof_index, '    %d: EOF' % self.eof_index))
+            ss.append((self.eof_index, "    %d: EOF" % self.eof_index))
         if self.timeout_index >= 0:
-            ss.append((self.timeout_index,
-                '    %d: TIMEOUT' % self.timeout_index))
+            ss.append((self.timeout_index, "    %d: TIMEOUT" % self.timeout_index))
         ss.sort()
         ss = list(zip(*ss))[1]
-        return '\n'.join(ss)
+        return "\n".join(ss)
 
     def search(self, buffer, freshlen, searchwindowsize=None):
-        '''This searches 'buffer' for the first occurrence of one of the search
+        """This searches 'buffer' for the first occurrence of one of the search
         strings.  'freshlen' must indicate the number of bytes at the end of
         'buffer' which have not been searched before. It helps to avoid
         searching the same, possibly big, buffer over and over again.
@@ -246,7 +244,7 @@ class searcher_string(object):
         See class spawn for the 'searchwindowsize' argument.
 
         If there is a match this returns the index of that string, and sets
-        'start', 'end' and 'match'. Otherwise, this returns -1. '''
+        'start', 'end' and 'match'. Otherwise, this returns -1. """
 
         first_match = None
 
@@ -283,7 +281,7 @@ class searcher_string(object):
 
 
 class searcher_re(object):
-    '''This is regular expression string search helper for the
+    """This is regular expression string search helper for the
     spawn.expect_any() method. This helper class is for powerful
     pattern matching. For speed, see the helper class, searcher_string.
 
@@ -299,12 +297,12 @@ class searcher_re(object):
         end   - index into the buffer, first byte after match
         match - the re.match object returned by a successful re.search
 
-    '''
+    """
 
     def __init__(self, patterns):
-        '''This creates an instance that searches for 'patterns' Where
+        """This creates an instance that searches for 'patterns' Where
         'patterns' may be a list or other sequence of compiled regular
-        expressions, or the EOF or TIMEOUT types.'''
+        expressions, or the EOF or TIMEOUT types."""
 
         self.eof_index = -1
         self.timeout_index = -1
@@ -319,33 +317,32 @@ class searcher_re(object):
             self._searches.append((n, s))
 
     def __str__(self):
-        '''This returns a human-readable string that represents the state of
-        the object.'''
+        """This returns a human-readable string that represents the state of
+        the object."""
 
-        #ss = [(n, '    %d: re.compile("%s")' %
+        # ss = [(n, '    %d: re.compile("%s")' %
         #    (n, repr(s.pattern))) for n, s in self._searches]
         ss = list()
         for n, s in self._searches:
-            ss.append((n, '    %d: re.compile(%r)' % (n, s.pattern)))
-        ss.append((-1, 'searcher_re:'))
+            ss.append((n, "    %d: re.compile(%r)" % (n, s.pattern)))
+        ss.append((-1, "searcher_re:"))
         if self.eof_index >= 0:
-            ss.append((self.eof_index, '    %d: EOF' % self.eof_index))
+            ss.append((self.eof_index, "    %d: EOF" % self.eof_index))
         if self.timeout_index >= 0:
-            ss.append((self.timeout_index, '    %d: TIMEOUT' %
-                self.timeout_index))
+            ss.append((self.timeout_index, "    %d: TIMEOUT" % self.timeout_index))
         ss.sort()
         ss = list(zip(*ss))[1]
-        return '\n'.join(ss)
+        return "\n".join(ss)
 
     def search(self, buffer, freshlen, searchwindowsize=None):
-        '''This searches 'buffer' for the first occurrence of one of the regular
+        """This searches 'buffer' for the first occurrence of one of the regular
         expressions. 'freshlen' must indicate the number of bytes at the end of
         'buffer' which have not been searched before.
 
         See class spawn for the 'searchwindowsize' argument.
 
         If there is a match this returns the index of that string, and sets
-        'start', 'end' and 'match'. Otherwise, returns -1.'''
+        'start', 'end' and 'match'. Otherwise, returns -1."""
 
         first_match = None
         # 'freshlen' doesn't help here -- we cannot predict the

@@ -7,7 +7,6 @@ signal.signal(signal.SIGINT, signal.SIG_IGN)
 signal.signal(signal.SIGHUP, signal.SIG_IGN)
 signal.signal(signal.SIGCONT, signal.SIG_IGN)
 
-print('READY')
+print("READY")
 while True:
     time.sleep(10)
-    

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 PEXPECT LICENSE
 
     This license is approved by the OSI and FSF as GPL-compatible.
@@ -17,7 +17,7 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
+"""
 import pexpect
 import unittest
 import signal
@@ -31,7 +31,7 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
 
     def test_expect_wait(self):
         """Ensure consistency in wait() and isalive()."""
-        p = pexpect.spawn('sleep 1')
+        p = pexpect.spawn("sleep 1")
         assert p.isalive()
         assert p.wait() == 0
         assert not p.isalive()
@@ -41,7 +41,7 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
 
     def test_expect_wait_after_termination(self):
         """Ensure wait on a process terminated by kill -9."""
-        p = pexpect.spawn('sleep 3')
+        p = pexpect.spawn("sleep 3")
         assert p.isalive()
         p.kill(9)
         time.sleep(1)
@@ -54,24 +54,24 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
         assert not p.isalive()
 
     def test_signal_wait(self):
-        '''Test calling wait with a process terminated by a signal.'''
-        if not hasattr(signal, 'SIGALRM'):
-            return 'SKIP'
-        p = pexpect.spawn(self.PYTHONBIN, ['alarm_die.py'])
+        """Test calling wait with a process terminated by a signal."""
+        if not hasattr(signal, "SIGALRM"):
+            return "SKIP"
+        p = pexpect.spawn(self.PYTHONBIN, ["alarm_die.py"])
         p.wait()
         assert p.exitstatus is None
         self.assertEqual(p.signalstatus, signal.SIGALRM)
 
-    def test_expect_isalive_dead_after_normal_termination (self):
-        p = pexpect.spawn('ls', timeout=15)
+    def test_expect_isalive_dead_after_normal_termination(self):
+        p = pexpect.spawn("ls", timeout=15)
         p.expect(pexpect.EOF)
         assert not p.isalive()
 
     def test_expect_isalive_dead_after_SIGHUP(self):
-        p = pexpect.spawn('cat', timeout=5, ignore_sighup=False)
+        p = pexpect.spawn("cat", timeout=5, ignore_sighup=False)
         assert p.isalive()
         force = False
-        if sys.platform.lower().startswith('sunos'):
+        if sys.platform.lower().startswith("sunos"):
             # On Solaris (SmartOs), and only when executed from cron(1), SIGKILL
             # is required to end the sub-process. This is done using force=True
             force = True
@@ -80,10 +80,10 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
         assert not p.isalive()
 
     def test_expect_isalive_dead_after_SIGINT(self):
-        p = pexpect.spawn('cat', timeout=5)
+        p = pexpect.spawn("cat", timeout=5)
         assert p.isalive()
         force = False
-        if sys.platform.lower().startswith('sunos'):
+        if sys.platform.lower().startswith("sunos"):
             # On Solaris (SmartOs), and only when executed from cron(1), SIGKILL
             # is required to end the sub-process. This is done using force=True
             force = True
@@ -92,25 +92,25 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
         assert not p.isalive()
 
     def test_expect_isalive_dead_after_SIGKILL(self):
-        p = pexpect.spawn('cat', timeout=5)
+        p = pexpect.spawn("cat", timeout=5)
         assert p.isalive()
         p.kill(9)
         p.expect(pexpect.EOF)
         assert not p.isalive()
 
     def test_forced_terminate(self):
-        p = pexpect.spawn(self.PYTHONBIN, ['needs_kill.py'])
-        p.expect('READY')
+        p = pexpect.spawn(self.PYTHONBIN, ["needs_kill.py"])
+        p.expect("READY")
         assert p.terminate(force=True) == True
         p.expect(pexpect.EOF)
         assert not p.isalive()
 
-### Some platforms allow this. Some reset status after call to waitpid.
-### probably not necessary, isalive() returns early when terminate is False.
-    def test_expect_isalive_consistent_multiple_calls (self):
-        '''This tests that multiple calls to isalive() return same value.
-        '''
-        p = pexpect.spawn('cat')
+    ### Some platforms allow this. Some reset status after call to waitpid.
+    ### probably not necessary, isalive() returns early when terminate is False.
+    def test_expect_isalive_consistent_multiple_calls(self):
+        """This tests that multiple calls to isalive() return same value.
+        """
+        p = pexpect.spawn("cat")
         assert p.isalive()
         assert p.isalive()
         p.sendeof()
@@ -118,8 +118,8 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
         assert not p.isalive()
         assert not p.isalive()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
 
-suite = unittest.makeSuite(IsAliveTestCase, 'test')
-
+suite = unittest.makeSuite(IsAliveTestCase, "test")

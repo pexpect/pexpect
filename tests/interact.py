@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 PEXPECT LICENSE
 
     This license is approved by the OSI and FSF as GPL-compatible.
@@ -17,10 +17,11 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
+"""
 try:
     # This allows coverage to measure code run in this process
     import coverage
+
     coverage.process_startup()
 except ImportError:
     pass
@@ -31,22 +32,24 @@ import sys
 
 
 def main():
-    p = pexpect.spawn('{sys.executable} getch.py'.format(sys=sys),
-                      env=no_coverage_env())
+    p = pexpect.spawn(
+        "{sys.executable} getch.py".format(sys=sys), env=no_coverage_env()
+    )
 
     # defaults matches api
     escape_character = chr(29)
     encoding = None
 
-    if len(sys.argv) > 1 and '--no-escape' in sys.argv:
+    if len(sys.argv) > 1 and "--no-escape" in sys.argv:
         escape_character = None
 
-    if len(sys.argv) > 1 and '--utf8' in sys.argv:
-        encoding = 'utf8'
+    if len(sys.argv) > 1 and "--utf8" in sys.argv:
+        encoding = "utf8"
 
     p.interact(escape_character=escape_character)
 
     print("Escaped interact")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

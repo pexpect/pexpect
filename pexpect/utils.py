@@ -31,31 +31,28 @@ def is_executable_file(path):
 
     mode = os.stat(fpath).st_mode
 
-    if (sys.platform.startswith('sunos')
-            and os.getuid() == 0):
+    if sys.platform.startswith("sunos") and os.getuid() == 0:
         # When root on Solaris, os.X_OK is True for *all* files, irregardless
         # of their executability -- instead, any permission bit of any user,
         # group, or other is fine enough.
         #
         # (This may be true for other "Unix98" OS's such as HP-UX and AIX)
-        return bool(mode & (stat.S_IXUSR |
-                            stat.S_IXGRP |
-                            stat.S_IXOTH))
+        return bool(mode & (stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH))
 
     return os.access(fpath, os.X_OK)
 
 
 def which(filename, env=None):
-    '''This takes a given filename; tries to find it in the environment path;
+    """This takes a given filename; tries to find it in the environment path;
     then checks if it is executable. This returns the full path to the filename
-    if found and executable. Otherwise this returns None.'''
+    if found and executable. Otherwise this returns None."""
 
     # Special case where filename contains an explicit path.
-    if os.path.dirname(filename) != '' and is_executable_file(filename):
+    if os.path.dirname(filename) != "" and is_executable_file(filename):
         return filename
     if env is None:
         env = os.environ
-    p = env.get('PATH')
+    p = env.get("PATH")
     if not p:
         p = os.defpath
     pathlist = p.split(os.pathsep)
@@ -68,13 +65,13 @@ def which(filename, env=None):
 
 def split_command_line(command_line):
 
-    '''This splits a command line into a list of arguments. It splits arguments
+    """This splits a command line into a list of arguments. It splits arguments
     on spaces, but handles embedded quotes, doublequotes, and escaped
     characters. It's impossible to do this with a regular expression, so I
-    wrote a little state machine to parse the command line. '''
+    wrote a little state machine to parse the command line. """
 
     arg_list = []
-    arg = ''
+    arg = ""
 
     # Constants to name the states we can be in.
     state_basic = 0
@@ -87,7 +84,7 @@ def split_command_line(command_line):
 
     for c in command_line:
         if state == state_basic or state == state_whitespace:
-            if c == '\\':
+            if c == "\\":
                 # Escape the next character
                 state = state_esc
             elif c == r"'":
@@ -103,7 +100,7 @@ def split_command_line(command_line):
                     None
                 else:
                     arg_list.append(arg)
-                    arg = ''
+                    arg = ""
                     state = state_whitespace
             else:
                 arg = arg + c
@@ -122,17 +119,17 @@ def split_command_line(command_line):
             else:
                 arg = arg + c
 
-    if arg != '':
+    if arg != "":
         arg_list.append(arg)
     return arg_list
 
 
 def select_ignore_interrupts(iwtd, owtd, ewtd, timeout=None):
 
-    '''This is a wrapper around select.select() that ignores signals. If
+    """This is a wrapper around select.select() that ignores signals. If
     select.select raises a select.error exception and errno is an EINTR
     error then it is ignored. Mainly this is used to ignore sigwinch
-    (terminal resize). '''
+    (terminal resize). """
 
     # if select() is interrupted by a signal (errno==EINTR) then
     # we loop back and enter the select() again.
@@ -149,7 +146,7 @@ def select_ignore_interrupts(iwtd, owtd, ewtd, timeout=None):
                 if timeout is not None:
                     timeout = end_time - time.time()
                     if timeout < 0:
-                        return([], [], [])
+                        return ([], [], [])
             else:
                 # something else caused the select.error, so
                 # this actually is an exception.
@@ -157,15 +154,17 @@ def select_ignore_interrupts(iwtd, owtd, ewtd, timeout=None):
 
 
 def poll_ignore_interrupts(fds, timeout=None):
-    '''Simple wrapper around poll to register file descriptors and
-    ignore signals.'''
+    """Simple wrapper around poll to register file descriptors and
+    ignore signals."""
 
     if timeout is not None:
         end_time = time.time() + timeout
 
     poller = select.poll()
     for fd in fds:
-        poller.register(fd, select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR)
+        poller.register(
+            fd, select.POLLIN | select.POLLPRI | select.POLLHUP | select.POLLERR
+        )
 
     while True:
         try:

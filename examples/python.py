@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-'''This starts the python interpreter; captures the startup message; then gives
+"""This starts the python interpreter; captures the startup message; then gives
 the user interactive control over the session. Why? For fun...
 
 PEXPECT LICENSE
@@ -20,7 +20,7 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
+"""
 
 from __future__ import absolute_import
 from __future__ import print_function
@@ -34,16 +34,15 @@ import pexpect
 # Note that, for Python 3 compatibility reasons, we are using spawnu and
 # importing unicode_literals (above). spawnu accepts Unicode input and
 # unicode_literals makes all string literals in this script Unicode by default.
-c = pexpect.spawnu('/usr/bin/env python')
+c = pexpect.spawnu("/usr/bin/env python")
 
-c.expect('>>>')
-print('And now for something completely different...')
-print(''.join(reversed((c.before))))
-print('Yes, it\'s python, but it\'s backwards.')
+c.expect(">>>")
+print("And now for something completely different...")
+print("".join(reversed((c.before))))
+print("Yes, it's python, but it's backwards.")
 print()
-print('Escape character is \'^]\'.')
-print(c.after, end=' ')
+print("Escape character is '^]'.")
+print(c.after, end=" ")
 c.interact()
 c.kill(1)
-print('is alive:', c.isalive())
-
+print("is alive:", c.isalive())

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 PEXPECT LICENSE
 
     This license is approved by the OSI and FSF as GPL-compatible.
@@ -17,45 +17,47 @@ PEXPECT LICENSE
     ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-'''
+"""
 import pexpect
 import unittest
 import PexpectTestCase
 import os
+
 
 class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def setUp(self):
         print(self.id())
         PexpectTestCase.PexpectTestCase.setUp(self)
 
-    def test_fd (self):
-        fd = os.open ('TESTDATA.txt', os.O_RDONLY)
-        s = pexpect.spawn (fd)
-        s.expect ('This is the end of test data:')
-        s.expect (pexpect.EOF)
-        assert s.before == ' END\n'
+    def test_fd(self):
+        fd = os.open("TESTDATA.txt", os.O_RDONLY)
+        s = pexpect.spawn(fd)
+        s.expect("This is the end of test data:")
+        s.expect(pexpect.EOF)
+        assert s.before == " END\n"
 
-    def test_maxread (self):
-        fd = os.open ('TESTDATA.txt', os.O_RDONLY)
-        s = pexpect.spawn (fd)
+    def test_maxread(self):
+        fd = os.open("TESTDATA.txt", os.O_RDONLY)
+        s = pexpect.spawn(fd)
         s.maxread = 100
-        s.expect('2')
-        s.expect ('This is the end of test data:')
-        s.expect (pexpect.EOF)
-        assert s.before == ' END\n'
+        s.expect("2")
+        s.expect("This is the end of test data:")
+        s.expect(pexpect.EOF)
+        assert s.before == " END\n"
 
-    def test_fd_isalive (self):
-        fd = os.open ('TESTDATA.txt', os.O_RDONLY)
-        s = pexpect.spawn (fd)
+    def test_fd_isalive(self):
+        fd = os.open("TESTDATA.txt", os.O_RDONLY)
+        s = pexpect.spawn(fd)
         assert s.isalive()
-        os.close (fd)
+        os.close(fd)
         assert not s.isalive()
 
-    def test_fd_isatty (self):
-        fd = os.open ('TESTDATA.txt', os.O_RDONLY)
-        s = pexpect.spawn (fd)
+    def test_fd_isatty(self):
+        fd = os.open("TESTDATA.txt", os.O_RDONLY)
+        s = pexpect.spawn(fd)
         assert not s.isatty()
         os.close(fd)
+
 
 ###    def test_close_does_not_close_fd (self):
 ###        '''Calling close() on a pexpect.spawn object should not
@@ -69,14 +71,14 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
 ###        except pexpect.ExceptionPexpect, e:
 ###            pass
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
 
-suite = unittest.makeSuite(ExpectTestCase, 'test')
+suite = unittest.makeSuite(ExpectTestCase, "test")
 
-#fout = open('delete_me_1','wb')
-#fout.write(the_old_way)
-#fout.close
-#fout = open('delete_me_2', 'wb')
-#fout.write(the_new_way)
-#fout.close
+# fout = open('delete_me_1','wb')
+# fout.write(the_old_way)
+# fout.close
+# fout = open('delete_me_2', 'wb')
+# fout.write(the_new_way)
+# fout.close

@@ -4,6 +4,7 @@ import signal
 
 from pexpect import EOF
 
+
 @asyncio.coroutine
 def expect_async(expecter, timeout=None):
     # First process data that was previously read - if it maches, we don't need
@@ -14,8 +15,9 @@ def expect_async(expecter, timeout=None):
     if not expecter.spawn.async_pw_transport:
         pw = PatternWaiter()
         pw.set_expecter(expecter)
-        transport, pw = yield from asyncio.get_event_loop()\
-            .connect_read_pipe(lambda: pw, expecter.spawn)
+        transport, pw = yield from asyncio.get_event_loop().connect_read_pipe(
+            lambda: pw, expecter.spawn
+        )
         expecter.spawn.async_pw_transport = pw, transport
     else:
         pw, transport = expecter.spawn.async_pw_transport
@@ -26,6 +28,7 @@ def expect_async(expecter, timeout=None):
     except asyncio.TimeoutError as e:
         transport.pause_reading()
         return expecter.timeout(e)
+
 
 @asyncio.coroutine
 def repl_run_command_async(repl, cmdlines, timeout=-1):
@@ -43,7 +46,8 @@ def repl_run_command_async(repl, cmdlines, timeout=-1):
         repl.child.kill(signal.SIGINT)
         yield from repl._expect_prompt(timeout=1, async_=True)
         raise ValueError("Continuation prompt found - input was incomplete:")
-    return u''.join(res + [repl.child.before])
+    return u"".join(res + [repl.child.before])
+
 
 class PatternWaiter(asyncio.Protocol):
     transport = None
@@ -68,7 +72,7 @@ class PatternWaiter(asyncio.Protocol):
     def data_received(self, data):
         spawn = self.expecter.spawn
         s = spawn._decoder.decode(data)
-        spawn._log(s, 'read')
+        spawn._log(s, "read")
 
         if self.fut.done():
             spawn._before.write(s)

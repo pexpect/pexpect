@@ -8,8 +8,8 @@ except NameError:
 
 while True:
     try:
-        a = raw_input('<in >')
+        a = raw_input("<in >")
     except EOFError:
-        print('<eof>')
+        print("<eof>")
         break
-    print('<out>', a, sep='')
+    print("<out>", a, sep="")

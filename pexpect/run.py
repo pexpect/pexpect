@@ -4,10 +4,20 @@ import types
 from .exceptions import EOF, TIMEOUT
 from .pty_spawn import spawn
 
-def run(command, timeout=30, withexitstatus=False, events=None,
-        extra_args=None, logfile=None, cwd=None, env=None, **kwargs):
 
-    '''
+def run(
+    command,
+    timeout=30,
+    withexitstatus=False,
+    events=None,
+    extra_args=None,
+    logfile=None,
+    cwd=None,
+    env=None,
+    **kwargs
+):
+
+    """
     This function runs the given command; waits for it to finish; then
     returns all output as a string. STDERR is included in output. If the full
     path to the command is not given then the path is searched.
@@ -91,16 +101,24 @@ def run(command, timeout=30, withexitstatus=False, events=None,
     Like :class:`spawn`, passing *encoding* will make it work with unicode
     instead of bytes. You can pass *codec_errors* to control how errors in
     encoding and decoding are handled.
-    '''
+    """
     if timeout == -1:
-        child = spawn(command, maxread=2000, logfile=logfile, cwd=cwd, env=env,
-                        **kwargs)
+        child = spawn(
+            command, maxread=2000, logfile=logfile, cwd=cwd, env=env, **kwargs
+        )
     else:
-        child = spawn(command, timeout=timeout, maxread=2000, logfile=logfile,
-                cwd=cwd, env=env, **kwargs)
+        child = spawn(
+            command,
+            timeout=timeout,
+            maxread=2000,
+            logfile=logfile,
+            cwd=cwd,
+            env=env,
+            **kwargs
+        )
     if isinstance(events, list):
-        patterns= [x for x,y in events]
-        responses = [y for x,y in events]
+        patterns = [x for x, y in events]
+        responses = [y for x, y in events]
     elif isinstance(events, dict):
         patterns = list(events.keys())
         responses = list(events.values())
@@ -121,8 +139,9 @@ def run(command, timeout=30, withexitstatus=False, events=None,
                 child_result_list.append(child.before)
             if isinstance(responses[index], child.allowed_string_types):
                 child.send(responses[index])
-            elif (isinstance(responses[index], types.FunctionType) or
-                  isinstance(responses[index], types.MethodType)):
+            elif isinstance(responses[index], types.FunctionType) or isinstance(
+                responses[index], types.MethodType
+            ):
                 callback_result = responses[index](locals())
                 sys.stdout.flush()
                 if isinstance(callback_result, child.allowed_string_types):
@@ -130,9 +149,12 @@ def run(command, timeout=30, withexitstatus=False, events=None,
                 elif callback_result:
                     break
             else:
-                raise TypeError("parameter `event' at index {index} must be "
-                                "a string, method, or function: {value!r}"
-                                .format(index=index, value=responses[index]))
+                raise TypeError(
+                    "parameter `event' at index {index} must be "
+                    "a string, method, or function: {value!r}".format(
+                        index=index, value=responses[index]
+                    )
+                )
             event_count = event_count + 1
         except TIMEOUT:
             child_result_list.append(child.before)
@@ -147,11 +169,29 @@ def run(command, timeout=30, withexitstatus=False, events=None,
     else:
         return child_result
 
-def runu(command, timeout=30, withexitstatus=False, events=None,
-        extra_args=None, logfile=None, cwd=None, env=None, **kwargs):
+
+def runu(
+    command,
+    timeout=30,
+    withexitstatus=False,
+    events=None,
+    extra_args=None,
+    logfile=None,
+    cwd=None,
+    env=None,
+    **kwargs
+):
     """Deprecated: pass encoding to run() instead.
     """
-    kwargs.setdefault('encoding', 'utf-8')
-    return run(command, timeout=timeout, withexitstatus=withexitstatus,
-                events=events, extra_args=extra_args, logfile=logfile, cwd=cwd,
-                env=env, **kwargs)
+    kwargs.setdefault("encoding", "utf-8")
+    return run(
+        command,
+        timeout=timeout,
+        withexitstatus=withexitstatus,
+        events=events,
+        extra_args=extra_args,
+        logfile=logfile,
+        cwd=cwd,
+        env=env,
+        **kwargs
+    )

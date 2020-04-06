@@ -17,13 +17,29 @@ from .spawnbase import SpawnBase, PY3
 from .exceptions import EOF
 from .utils import string_types
 
+
 class PopenSpawn(SpawnBase):
-    def __init__(self, cmd, timeout=30, maxread=2000, searchwindowsize=None,
-                 logfile=None, cwd=None, env=None, encoding=None,
-                 codec_errors='strict', preexec_fn=None):
-        super(PopenSpawn, self).__init__(timeout=timeout, maxread=maxread,
-                searchwindowsize=searchwindowsize, logfile=logfile,
-                encoding=encoding, codec_errors=codec_errors)
+    def __init__(
+        self,
+        cmd,
+        timeout=30,
+        maxread=2000,
+        searchwindowsize=None,
+        logfile=None,
+        cwd=None,
+        env=None,
+        encoding=None,
+        codec_errors="strict",
+        preexec_fn=None,
+    ):
+        super(PopenSpawn, self).__init__(
+            timeout=timeout,
+            maxread=maxread,
+            searchwindowsize=searchwindowsize,
+            logfile=logfile,
+            encoding=encoding,
+            codec_errors=codec_errors,
+        )
 
         # Note that `SpawnBase` initializes `self.crlf` to `\r\n`
         # because the default behaviour for a PTY is to convert
@@ -33,22 +49,28 @@ class PopenSpawn(SpawnBase):
         # application outputs by default and `popen` doesn't translate
         # anything.
         if encoding is None:
-            self.crlf = os.linesep.encode ("ascii")
+            self.crlf = os.linesep.encode("ascii")
         else:
-            self.crlf = self.string_type (os.linesep)
+            self.crlf = self.string_type(os.linesep)
 
-        kwargs = dict(bufsize=0, stdin=subprocess.PIPE,
-                      stderr=subprocess.STDOUT, stdout=subprocess.PIPE,
-                      cwd=cwd, preexec_fn=preexec_fn, env=env)
+        kwargs = dict(
+            bufsize=0,
+            stdin=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            stdout=subprocess.PIPE,
+            cwd=cwd,
+            preexec_fn=preexec_fn,
+            env=env,
+        )
 
-        if sys.platform == 'win32':
+        if sys.platform == "win32":
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-            kwargs['startupinfo'] = startupinfo
-            kwargs['creationflags'] = subprocess.CREATE_NEW_PROCESS_GROUP
+            kwargs["startupinfo"] = startupinfo
+            kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
 
-        if isinstance(cmd, string_types) and sys.platform != 'win32':
-            cmd = shlex.split(cmd, posix=os.name == 'posix')
+        if isinstance(cmd, string_types) and sys.platform != "win32":
+            cmd = shlex.split(cmd, posix=os.name == "posix")
 
         self.proc = subprocess.Popen(cmd, **kwargs)
         self.pid = self.proc.pid
@@ -72,7 +94,7 @@ class PopenSpawn(SpawnBase):
                 return buf[:size]
             else:
                 self.flag_eof = True
-                raise EOF('End Of File (EOF).')
+                raise EOF("End Of File (EOF).")
 
         if timeout == -1:
             timeout = self.timeout
@@ -94,18 +116,18 @@ class PopenSpawn(SpawnBase):
 
         r, self._buf = buf[:size], buf[size:]
 
-        self._log(r, 'read')
+        self._log(r, "read")
         return r
 
     def _read_incoming(self):
         """Run in a thread to move output from a pipe to a queue."""
         fileno = self.proc.stdout.fileno()
         while 1:
-            buf = b''
+            buf = b""
             try:
                 buf = os.read(fileno, 1024)
             except OSError as e:
-                self._log(e, 'read')
+                self._log(e, "read")
 
             if not buf:
                 # This indicates we have reached EOF
@@ -115,27 +137,27 @@ class PopenSpawn(SpawnBase):
             self._read_queue.put(buf)
 
     def write(self, s):
-        '''This is similar to send() except that there is no return value.
-        '''
+        """This is similar to send() except that there is no return value.
+        """
         self.send(s)
 
     def writelines(self, sequence):
-        '''This calls write() for each element in the sequence.
+        """This calls write() for each element in the sequence.
 
         The sequence can be any iterable object producing strings, typically a
         list of strings. This does not add line separators. There is no return
         value.
-        '''
+        """
         for s in sequence:
             self.send(s)
 
     def send(self, s):
-        '''Send data to the subprocess' stdin.
+        """Send data to the subprocess' stdin.
 
         Returns the number of bytes written.
-        '''
+        """
         s = self._coerce_send_string(s)
-        self._log(s, 'send')
+        self._log(s, "send")
 
         b = self._encoder.encode(s, final=False)
         if PY3:
@@ -146,18 +168,18 @@ class PopenSpawn(SpawnBase):
             self.proc.stdin.write(b)
             return len(b)
 
-    def sendline(self, s=''):
-        '''Wraps send(), sending string ``s`` to child process, with os.linesep
-        automatically appended. Returns number of bytes written. '''
+    def sendline(self, s=""):
+        """Wraps send(), sending string ``s`` to child process, with os.linesep
+        automatically appended. Returns number of bytes written. """
 
         n = self.send(s)
         return n + self.send(self.linesep)
 
     def wait(self):
-        '''Wait for the subprocess to finish.
+        """Wait for the subprocess to finish.
 
         Returns the exit code.
-        '''
+        """
         status = self.proc.wait()
         if status >= 0:
             self.exitstatus = status
@@ -169,11 +191,11 @@ class PopenSpawn(SpawnBase):
         return status
 
     def kill(self, sig):
-        '''Sends a Unix signal to the subprocess.
+        """Sends a Unix signal to the subprocess.
 
         Use constants from the :mod:`signal` module to specify which signal.
-        '''
-        if sys.platform == 'win32':
+        """
+        if sys.platform == "win32":
             if sig in [signal.SIGINT, signal.CTRL_C_EVENT]:
                 sig = signal.CTRL_C_EVENT
             elif sig in [signal.SIGBREAK, signal.CTRL_BREAK_EVENT]:
@@ -184,5 +206,5 @@ class PopenSpawn(SpawnBase):
         os.kill(self.proc.pid, sig)
 
     def sendeof(self):
-        '''Closes the stdin pipe from the writing end.'''
+        """Closes the stdin pipe from the writing end."""
         self.proc.stdin.close()

@@ -16,6 +16,9 @@ with open(os.path.join(os.path.dirname(__file__), "pexpect", "__init__.py"), "r"
     else:
         raise Exception("couldn't find version number")
 
+with open("requirements.txt") as requirements:
+    required = requirements.read().splitlines()
+
 long_description = """
 Pexpect is a pure Python module for spawning child applications; controlling
 them; and responding to expected patterns in their output. Pexpect works like
@@ -73,5 +76,5 @@ setup(
         "Topic :: System :: Software Distribution",
         "Topic :: Terminals",
     ],
-    install_requires=["ptyprocess>=0.5"],
+    install_requires=required,
 )

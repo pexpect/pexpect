@@ -7,15 +7,14 @@ python:
   - 3.6
   - 3.7
   - pypy
+  - pypy3
   - nightly
 
 install:
   - export PYTHONIOENCODING=UTF8
   - pip install -r requirements-testing.txt
-  - pip3 install black
 
 script:
-    - black --check .
     - ./tools/display-sighandlers.py
     - ./tools/display-terminalinfo.py
     - py.test --cov pexpect --cov-config .coveragerc

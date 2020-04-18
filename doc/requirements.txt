@@ -1,1 +1,3 @@
 ptyprocess
+sphinx
+sphinxcontrib_github_alt

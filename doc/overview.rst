@@ -162,7 +162,7 @@ to perform a regular expression match on a stream. Regular expressions need to
 look ahead. With a stream it is hard to look ahead because the process
 generating the stream may not be finished. There is no way to know if the
 process has paused momentarily or is finished and waiting for you. Pexpect must
-implicitly always do a NON greedy match (minimal) at the end of a input.
+implicitly always do a NON greedy match (minimal) at the end of input.
 
 Pexpect compiles all regular expressions with the :data:`re.DOTALL` flag.
 With the :data:`~re.DOTALL` flag, a ``"."`` will match a newline.

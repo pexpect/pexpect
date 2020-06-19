@@ -20,7 +20,7 @@ from .utils import string_types
 class PopenSpawn(SpawnBase):
     def __init__(self, cmd, timeout=30, maxread=2000, searchwindowsize=None,
                  logfile=None, cwd=None, env=None, encoding=None,
-                 codec_errors='strict', preexec_fn=None):
+                 codec_errors='strict', preexec_fn=None, stderr=subprocess.STDOUT):
         super(PopenSpawn, self).__init__(timeout=timeout, maxread=maxread,
                 searchwindowsize=searchwindowsize, logfile=logfile,
                 encoding=encoding, codec_errors=codec_errors)
@@ -38,7 +38,7 @@ class PopenSpawn(SpawnBase):
             self.crlf = self.string_type (os.linesep)
 
         kwargs = dict(bufsize=0, stdin=subprocess.PIPE,
-                      stderr=subprocess.STDOUT, stdout=subprocess.PIPE,
+                      stderr=stderr, stdout=subprocess.PIPE,
                       cwd=cwd, preexec_fn=preexec_fn, env=env)
 
         if sys.platform == 'win32':

@@ -39,7 +39,7 @@ class REPLWrapTestCase(unittest.TestCase):
         " PAGER is set to cat, to prevent timeout in ``man sleep``. "
         bash = replwrap.bash()
         res = bash.run_command('man sleep', timeout=5)
-        assert 'NAME' in res, res
+        assert 'SLEEP' in res.upper(), res
 
     def test_bash_env(self):
         """env, which displays PS1=..., should not mess up finding the prompt.

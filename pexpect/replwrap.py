@@ -65,6 +65,10 @@ class REPLWrapper(object):
         return self.child.expect_exact([self.prompt, self.continuation_prompt],
                                        timeout=timeout, async_=async_)
 
+    def _strip_bracketed_paste(self, text):
+        """https://github.com/pexpect/pexpect/issues/669"""
+        return text.replace(u"\x1b[?2004l\r", u"").replace(u"\x1b[?2004h", u"")
+
     def run_command(self, command, timeout=-1, async_=False):
         """Send a command to the REPL, wait for and return output.
 
@@ -106,7 +110,7 @@ class REPLWrapper(object):
             self._expect_prompt(timeout=1)
             raise ValueError("Continuation prompt found - input was incomplete:\n"
                              + command)
-        return u''.join(res + [self.child.before])
+        return self._strip_bracketed_paste(u''.join(res + [self.child.before]))
 
 def python(command=sys.executable):
     """Start a Python shell and return a :class:`REPLWrapper` object."""

@@ -43,7 +43,7 @@ def repl_run_command_async(repl, cmdlines, timeout=-1):
         repl.child.kill(signal.SIGINT)
         yield from repl._expect_prompt(timeout=1, async_=True)
         raise ValueError("Continuation prompt found - input was incomplete:")
-    return u''.join(res + [repl.child.before])
+    return repl._strip_bracketed_paste(u''.join(res + [repl.child.before]))
 
 class PatternWaiter(asyncio.Protocol):
     transport = None

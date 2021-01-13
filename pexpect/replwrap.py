@@ -127,4 +127,4 @@ def bash(command="bash"):
     prompt_change = u"PS1='{0}' PS2='{1}' PROMPT_COMMAND=''".format(ps1, ps2)
 
     return REPLWrapper(child, u'\\$', prompt_change,
-                       extra_init_cmd="export PAGER=cat")
+                       extra_init_cmd="set enable-bracketed-paste off; export PAGER=cat")

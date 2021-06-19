@@ -12,7 +12,7 @@ from pexpect import replwrap
 from .PexpectTestCase import PexpectTestCase
 
 def run(coro):
-    return asyncio.get_event_loop().run_until_complete(coro)
+    return asyncio.get_running_loop().run_until_complete(coro)
 
 @unittest.skipIf(asyncio is None, "Requires asyncio")
 class AsyncTests(PexpectTestCase):

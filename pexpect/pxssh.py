@@ -360,9 +360,8 @@ class pxssh (spawn):
 
         if username is not None:
             ssh_options = ssh_options + ' -l ' + username
-        elif ssh_config is None:
-            raise TypeError('login() needs either a username or an ssh_config')
-        else:  # make sure ssh_config has an entry for the server with a username
+        # If ssh_config was provided, make sure it has an entry for the server with a username.
+        elif ssh_config is not None:
             with open(ssh_config, 'rt') as f:
                 lines = [l.strip() for l in f.readlines()]
 

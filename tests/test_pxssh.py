@@ -99,16 +99,6 @@ class PxsshTestCase(SSHTestBase):
         if not '-F '+config_path in string:
             assert False, 'String generated from SSH config passing is incorrect.'
 
-    def test_username_or_ssh_config(self):
-        try:
-            ssh = pxssh.pxssh(debug_command_string=True)
-            temp_file = tempfile.NamedTemporaryFile()
-            config_path = temp_file.name
-            string = ssh.login('server')
-            raise AssertionError('Should have failed due to missing username and missing ssh_config.')
-        except TypeError:
-            pass
-
     def test_ssh_config_user(self):
         ssh = pxssh.pxssh(debug_command_string=True)
         temp_file = tempfile.NamedTemporaryFile()

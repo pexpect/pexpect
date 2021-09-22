@@ -456,7 +456,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat', echo=False)
         child.sendline('BEGIN')
         for i in range(100):
-            child.sendline('foo' * 100)
+            child.sendline('foo' * 10)
         e = child.expect([b'xyzzy', pexpect.TIMEOUT],
                          searchwindowsize=10, timeout=0.001)
         self.assertEqual(e, 1)
@@ -473,7 +473,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat', echo=False)
         child.sendline('BEGIN')
         for i in range(100):
-            child.sendline('foo' * 100)
+            child.sendline('foo' * 10)
         e = child.expect([b'xyzzy', pexpect.TIMEOUT],
                          searchwindowsize=10, timeout=0.5)
         self.assertEqual(e, 1)

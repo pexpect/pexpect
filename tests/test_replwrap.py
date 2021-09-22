@@ -25,7 +25,7 @@ class REPLWrapTestCase(unittest.TestCase):
 
     def test_bash(self):
         bash = replwrap.bash()
-        res = bash.run_command("alias")
+        res = bash.run_command("alias xyzzy=true; alias")
         assert 'alias' in res, res
 
         try:
@@ -92,7 +92,9 @@ class REPLWrapTestCase(unittest.TestCase):
                                     "PS1='{0}' PS2='{1}' "
                                     "PROMPT_COMMAND=''")
 
+        print(repl)
         res = repl.run_command("echo $HOME")
+        print(res)
         assert res.startswith('/'), res
 
     def test_python(self):

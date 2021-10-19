@@ -14,8 +14,10 @@ from .expect import Expecter, searcher_string, searcher_re
 PY3 = (sys.version_info[0] >= 3)
 text_type = str if PY3 else unicode
 
+
 class _NullCoder(object):
     """Pass bytes through unchanged."""
+
     @staticmethod
     def encode(b, final=False):
         return b
@@ -23,6 +25,7 @@ class _NullCoder(object):
     @staticmethod
     def decode(b, final=False):
         return b
+
 
 class SpawnBase(object):
     """A base class providing the backwards-compatible spawn API for Pexpect.
@@ -95,12 +98,14 @@ class SpawnBase(object):
             if PY3:
                 self.allowed_string_types = (bytes, str)
                 self.linesep = os.linesep.encode('ascii')
+
                 def write_to_stdout(b):
                     try:
                         return sys.stdout.buffer.write(b)
                     except AttributeError:
                         # If stdout has been replaced, it may not have .buffer
                         return sys.stdout.write(b.decode('ascii', 'replace'))
+
                 self.write_to_stdout = write_to_stdout
             else:
                 self.allowed_string_types = (basestring,)  # analysis:ignore
@@ -113,7 +118,7 @@ class SpawnBase(object):
             self.string_type = text_type
             self.buffer_type = StringIO
             self.crlf = u'\r\n'
-            self.allowed_string_types = (text_type, )
+            self.allowed_string_types = (text_type,)
             if PY3:
                 self.linesep = os.linesep
             else:
@@ -136,7 +141,7 @@ class SpawnBase(object):
         if self.logfile is not None:
             self.logfile.write(s)
             self.logfile.flush()
-        second_log = self.logfile_send if (direction=='send') else self.logfile_read
+        second_log = self.logfile_send if (direction == 'send') else self.logfile_read
         if second_log is not None:
             second_log.write(s)
             second_log.flush()
@@ -161,8 +166,8 @@ class SpawnBase(object):
         self._buffer = self.buffer_type()
         self._buffer.write(value)
 
-
-    def __select(self, iwtd, owtd, ewtd, timeout=None):
+    @staticmethod
+    def __select(iwtd, owtd, ewtd, timeout=None):
 
         """This is a wrapper around select.select() that ignores signals. If
         select.select raises a select.error exception and errno is an EINTR
@@ -183,7 +188,7 @@ class SpawnBase(object):
                     if timeout is not None:
                         timeout = end_time - time.time()
                         if timeout < 0:
-                            return([], [], [])
+                            return [], [], []
                 else:
                     # something else caused the select.error, so
                     # this actually is an exception.
@@ -215,6 +220,7 @@ class SpawnBase(object):
                     self.__interact_written(self.child_fd, data)
                     break
                 self.__interact_written(self.child_fd, data)
+
     # This property is provided for backwards compatability (self.buffer used
     # to be a string/bytes object)
     buffer = property(_get_buffer, _set_buffer)
@@ -402,7 +408,7 @@ class SpawnBase(object):
 
         compiled_pattern_list = self.compile_pattern_list(pattern)
         return self.expect_list(compiled_pattern_list,
-                timeout, searchwindowsize, async_)
+                                timeout, searchwindowsize, async_)
 
     def expect_list(self, pattern_list, timeout=-1, searchwindowsize=-1,
                     async_=False, **kw):
@@ -516,7 +522,7 @@ class SpawnBase(object):
         # delimiter default is EOF
         index = self.expect([cre, self.delimiter])
         if index == 0:
-            ### FIXME self.before should be ''. Should I assert this?
+            # FIXME self.before should be ''. Should I assert this?
             return self.after
         return self.before
 
@@ -546,7 +552,7 @@ class SpawnBase(object):
         """
         return iter(self.readline, self.string_type())
 
-    def readlines(self, sizehint=-1):
+    def readlines(self):
         """This reads until EOF using readline() and returns a list containing
         the lines thus read. The optional 'sizehint' argument is ignored.
         Remember, because this reads until EOF that means the child
@@ -586,7 +592,7 @@ class SpawnBase(object):
         self.close()
 
     def interact(self, escape_character=chr(29),
-             input_filter=None, output_filter=None):
+                 input_filter=None, output_filter=None):
         """This gives control of the child process to the interactive user (the
         human at the keyboard). Keystrokes are sent to the child process, and
         the stdout and stderr output of the child process is printed. This
@@ -629,7 +635,6 @@ class SpawnBase(object):
             self.__interact_copy(escape_character, input_filter, output_filter)
         finally:
             tty.tcsetattr(self.STDIN_FILENO, tty.TCSAFLUSH, mode)
-
 
     def __interact_written(self, fd, data):
 

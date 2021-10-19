@@ -4,7 +4,11 @@ import os
 import sys
 import re
 import errno
-from .exceptions import ExceptionPexpect, EOF, TIMEOUT
+import tty
+import pty
+import select
+import time
+from .exceptions import EOF, TIMEOUT
 from .expect import Expecter, searcher_string, searcher_re
 
 PY3 = (sys.version_info[0] >= 3)
@@ -124,6 +128,10 @@ class SpawnBase(object):
         # untrimmed buffer, used to create the before attribute.
         self._before = self.buffer_type()
 
+        self.STDIN_FILENO = pty.STDIN_FILENO
+        self.STDOUT_FILENO = pty.STDOUT_FILENO
+        self.STDERR_FILENO = pty.STDERR_FILENO
+
     def _log(self, s, direction):
         if self.logfile is not None:
             self.logfile.write(s)
@@ -153,7 +161,61 @@ class SpawnBase(object):
         self._buffer = self.buffer_type()
         self._buffer.write(value)
 
-    # This property is provided for backwards compatibility (self.buffer used
+
+    def __select(self, iwtd, owtd, ewtd, timeout=None):
+
+        """This is a wrapper around select.select() that ignores signals. If
+        select.select raises a select.error exception and errno is an EINTR
+        error then it is ignored. Mainly this is used to ignore sigwinch
+        (terminal resize). """
+
+        # if select() is interrupted by a signal (errno==EINTR) then
+        # we loop back and enter the select() again.
+        if timeout is not None:
+            end_time = time.time() + timeout
+        while True:
+            try:
+                return select.select(iwtd, owtd, ewtd, timeout)
+            except select.error as e:
+                if e[0] == errno.EINTR:
+                    # if we loop back we have to subtract the
+                    # amount of time we already waited.
+                    if timeout is not None:
+                        timeout = end_time - time.time()
+                        if timeout < 0:
+                            return([], [], [])
+                else:
+                    # something else caused the select.error, so
+                    # this actually is an exception.
+                    raise
+
+    def __interact_copy(self, escape_character=None,
+                        input_filter=None, output_filter=None):
+
+        """This is used by the interact() method.
+        """
+
+        while self.isalive():
+            r, w, e = self.__select([self.child_fd, self.STDIN_FILENO], [], [])
+            if self.child_fd in r:
+                data = self.__interact_read(self.child_fd)
+                if output_filter:
+                    data = output_filter(data)
+                if self.logfile is not None:
+                    self.logfile.write(data)
+                    self.logfile.flush()
+                os.write(self.STDOUT_FILENO, data)
+            if self.STDIN_FILENO in r:
+                data = self.__interact_read(self.STDIN_FILENO)
+                if input_filter:
+                    data = input_filter(data)
+                i = data.rfind(escape_character)
+                if i != -1:
+                    data = data[:i]
+                    self.__interact_written(self.child_fd, data)
+                    break
+                self.__interact_written(self.child_fd, data)
+    # This property is provided for backwards compatability (self.buffer used
     # to be a string/bytes object)
     buffer = property(_get_buffer, _set_buffer)
 
@@ -184,16 +246,15 @@ class SpawnBase(object):
 
     def _pattern_type_err(self, pattern):
         raise TypeError('got {badtype} ({badobj!r}) as pattern, must be one'
-                        ' of: {goodtypes}, pexpect.EOF, pexpect.TIMEOUT'\
+                        ' of: {goodtypes}, pexpect.EOF, pexpect.TIMEOUT'
                         .format(badtype=type(pattern),
                                 badobj=pattern,
-                                goodtypes=', '.join([str(ast)\
-                                    for ast in self.allowed_string_types])
+                                goodtypes=', '.join([str(ast) for ast in self.allowed_string_types])
                                 )
                         )
 
     def compile_pattern_list(self, patterns):
-        '''This compiles a pattern-string or a list of pattern-strings.
+        """This compiles a pattern-string or a list of pattern-strings.
         Patterns must be a StringType, EOF, TIMEOUT, SRE_Pattern, or a list of
         those. Patterns may also be None which results in an empty list (you
         might do this if waiting for an EOF or TIMEOUT condition without
@@ -214,7 +275,7 @@ class SpawnBase(object):
                 ...
                 i = self.expect_list(cpl, timeout)
                 ...
-        '''
+        """
 
         if patterns is None:
             return []
@@ -241,7 +302,7 @@ class SpawnBase(object):
         return compiled_pattern_list
 
     def expect(self, pattern, timeout=-1, searchwindowsize=-1, async_=False, **kw):
-        '''This seeks through the stream until a pattern is matched. The
+        """This seeks through the stream until a pattern is matched. The
         pattern is overloaded and may take several types. The pattern can be a
         StringType, EOF, a compiled re, or a list of any of those types.
         Strings will be compiled to re types. This returns the index into the
@@ -333,7 +394,7 @@ class SpawnBase(object):
         With this non-blocking form::
 
             index = yield from p.expect(patterns, async_=True)
-        '''
+        """
         if 'async' in kw:
             async_ = kw.pop('async')
         if kw:
@@ -345,7 +406,7 @@ class SpawnBase(object):
 
     def expect_list(self, pattern_list, timeout=-1, searchwindowsize=-1,
                     async_=False, **kw):
-        '''This takes a list of compiled regular expressions and returns the
+        """This takes a list of compiled regular expressions and returns the
         index into the pattern_list that matched the child output. The list may
         also contain EOF or TIMEOUT(which are not compiled regular
         expressions). This method is similar to the expect() method except that
@@ -356,7 +417,7 @@ class SpawnBase(object):
 
         Like :meth:`expect`, passing ``async_=True`` will make this return an
         asyncio coroutine.
-        '''
+        """
         if timeout == -1:
             timeout = self.timeout
         if 'async' in kw:
@@ -374,7 +435,7 @@ class SpawnBase(object):
     def expect_exact(self, pattern_list, timeout=-1, searchwindowsize=-1,
                      async_=False, **kw):
 
-        '''This is similar to expect(), but uses plain string matching instead
+        """This is similar to expect(), but uses plain string matching instead
         of compiled regular expressions in 'pattern_list'. The 'pattern_list'
         may be a string; a list or other sequence of strings; or TIMEOUT and
         EOF.
@@ -388,7 +449,7 @@ class SpawnBase(object):
 
         Like :meth:`expect`, passing ``async_=True`` will make this return an
         asyncio coroutine.
-        '''
+        """
         if timeout == -1:
             timeout = self.timeout
         if 'async' in kw:
@@ -421,21 +482,21 @@ class SpawnBase(object):
             return exp.expect_loop(timeout)
 
     def expect_loop(self, searcher, timeout=-1, searchwindowsize=-1):
-        '''This is the common loop used inside expect. The 'searcher' should be
+        """This is the common loop used inside expect. The 'searcher' should be
         an instance of searcher_re or searcher_string, which describes how and
         what to search for in the input.
 
-        See expect() for other arguments, return value and exceptions. '''
+        See expect() for other arguments, return value and exceptions. """
 
         exp = Expecter(self, searcher, searchwindowsize)
         return exp.expect_loop(timeout)
 
     def read(self, size=-1):
-        '''This reads at most "size" bytes from the file (less if the read hits
+        """This reads at most "size" bytes from the file (less if the read hits
         EOF before obtaining size bytes). If the size argument is negative or
         omitted, read all data until EOF is reached. The bytes are returned as
         a string object. An empty string is returned when EOF is encountered
-        immediately. '''
+        immediately. """
 
         if size == 0:
             return self.string_type()
@@ -460,7 +521,7 @@ class SpawnBase(object):
         return self.before
 
     def readline(self, size=-1):
-        '''This reads and returns one entire line. The newline at the end of
+        """This reads and returns one entire line. The newline at the end of
         line is returned as part of the string, unless the file ends without a
         newline. An empty string is returned if EOF is encountered immediately.
         This looks for a newline as a CR/LF pair (\\r\\n) even on UNIX because
@@ -469,7 +530,7 @@ class SpawnBase(object):
 
         If the size argument is 0 then an empty string is returned. In all
         other cases the size argument is ignored, which is not standard
-        behavior for a file-like object. '''
+        behavior for a file-like object. """
 
         if size == 0:
             return self.string_type()
@@ -481,17 +542,17 @@ class SpawnBase(object):
             return self.before
 
     def __iter__(self):
-        '''This is to support iterators over a file-like object.
-        '''
+        """This is to support iterators over a file-like object.
+        """
         return iter(self.readline, self.string_type())
 
     def readlines(self, sizehint=-1):
-        '''This reads until EOF using readline() and returns a list containing
+        """This reads until EOF using readline() and returns a list containing
         the lines thus read. The optional 'sizehint' argument is ignored.
         Remember, because this reads until EOF that means the child
         process should have closed its stdout. If you run this method on
         a child that is still running with its stdout open then this
-        method will block until it timesout.'''
+        method will block until it timesout."""
 
         lines = []
         while True:
@@ -502,13 +563,13 @@ class SpawnBase(object):
         return lines
 
     def fileno(self):
-        '''Expose file descriptor for a file-like interface
-        '''
+        """Expose file descriptor for a file-like interface
+        """
         return self.child_fd
 
     def flush(self):
-        '''This does nothing. It is here to support the interface for a
-        File-like object. '''
+        """This does nothing. It is here to support the interface for a
+        File-like object. """
         pass
 
     def isatty(self):
@@ -523,3 +584,65 @@ class SpawnBase(object):
         # We rely on subclasses to implement close(). If they don't, it's not
         # clear what a context manager should do.
         self.close()
+
+    def interact(self, escape_character=chr(29),
+             input_filter=None, output_filter=None):
+        """This gives control of the child process to the interactive user (the
+        human at the keyboard). Keystrokes are sent to the child process, and
+        the stdout and stderr output of the child process is printed. This
+        simply echos the child stdout and child stderr to the real stdout and
+        it echos the real stdin to the child stdin. When the user types the
+        escape_character this method will stop. The default for
+        escape_character is ^]. This should not be confused with ASCII 27 --
+        the ESC character. ASCII 29 was chosen for historical merit because
+        this is the character used by 'telnet' as the escape character. The
+        escape_character will not be sent to the child process.
+        You may pass in optional input and output filter functions. These
+        functions should take a string and return a string. The output_filter
+        will be passed all the output from the child process. The input_filter
+        will be passed all the keyboard input from the user. The input_filter
+        is run BEFORE the check for the escape_character.
+        Note that if you change the window size of the parent the SIGWINCH
+        signal will not be passed through to the child. If you want the child
+        window size to change when the parent's window size changes then do
+        something like the following example::
+            import pexpect, struct, fcntl, termios, signal, sys
+            def sigwinch_passthrough (sig, data):
+                s = struct.pack("HHHH", 0, 0, 0, 0)
+                a = struct.unpack('hhhh', fcntl.ioctl(sys.stdout.fileno(),
+                    termios.TIOCGWINSZ , s))
+                global p
+                p.setwinsize(a[0],a[1])
+            # Note this 'p' global and used in sigwinch_passthrough.
+            p = pexpect.spawn('/bin/bash')
+            signal.signal(signal.SIGWINCH, sigwinch_passthrough)
+            p.interact()
+        """
+
+        # Flush the buffer.
+        self.stdout.write(str(self.buffer))
+        self.stdout.flush()
+        self.buffer = (0).to_bytes(16, byteorder='big')
+        mode = tty.tcgetattr(self.STDIN_FILENO)
+        tty.setraw(self.STDIN_FILENO)
+        try:
+            self.__interact_copy(escape_character, input_filter, output_filter)
+        finally:
+            tty.tcsetattr(self.STDIN_FILENO, tty.TCSAFLUSH, mode)
+
+
+    def __interact_written(self, fd, data):
+
+        """This is used by the interact() method.
+        """
+
+        while data != '' and self.isalive():
+            n = os.write(fd, data)
+            data = data[n:]
+
+    def __interact_read(self, fd):
+
+        """This is used by the interact() method.
+        """
+
+        return os.read(fd, 1000)

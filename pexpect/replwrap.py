@@ -89,9 +89,12 @@ class REPLWrapper(object):
             raise ValueError("No command was given")
 
         if async_:
-            from ._async import repl_run_command_async
-            return repl_run_command_async(self, cmdlines, timeout)
+            from ._async import REPLWrapper__run_command_async
+            return REPLWrapper__run_command_async(self, command, cmdlines, timeout)
+        else:
+            return self._run_command(command, cmdlines, timeout)
 
+    def _run_command(self, command, cmdlines, timeout):
         res = []
         self.child.sendline(cmdlines[0])
         for line in cmdlines[1:]:

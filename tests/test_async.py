@@ -18,7 +18,7 @@ def run(coro):
 class AsyncTests(PexpectTestCase):
     def test_simple_expect(self):
         p = pexpect.spawn('cat')
-        p.sendline('Hello asyncio')
+        run(p.sendline('Hello asyncio' , async_=True))
         coro = p.expect(['Hello', pexpect.EOF] , async_=True)
         assert run(coro) == 0
         print('Done')
@@ -35,7 +35,7 @@ class AsyncTests(PexpectTestCase):
 
     def test_eof(self):
         p = pexpect.spawn('cat')
-        p.sendline('Hi')
+        run(p.sendline('Hi' , async_=True))
         coro = p.expect(pexpect.EOF, async_=True)
         p.sendeof()
         assert run(coro) == 0

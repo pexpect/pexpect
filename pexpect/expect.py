@@ -40,7 +40,7 @@ class Expecter(object):
                 spawn._buffer.write(window[-maintain:])
 
     def existing_data(self):
-        # First call from a new call to expect_loop or expect_async.
+        # First call from a new call to expect_loop or Expecter_expect_loop_async.
         # self.searchwindowsize may have changed.
         # Treat all data as fresh.
         spawn = self.spawn

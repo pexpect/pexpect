@@ -366,8 +366,8 @@ class SpawnBase(object):
 
         exp = Expecter(self, searcher_re(pattern_list), searchwindowsize)
         if async_:
-            from ._async import expect_async
-            return expect_async(exp, timeout)
+            from ._async import Expecter_expect_loop_async
+            return Expecter_expect_loop_async(exp, timeout)
         else:
             return exp.expect_loop(timeout)
 
@@ -415,8 +415,8 @@ class SpawnBase(object):
 
         exp = Expecter(self, searcher_string(pattern_list), searchwindowsize)
         if async_:
-            from ._async import expect_async
-            return expect_async(exp, timeout)
+            from ._async import Expecter_expect_loop_async
+            return Expecter_expect_loop_async(exp, timeout)
         else:
             return exp.expect_loop(timeout)
 

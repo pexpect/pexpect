@@ -141,6 +141,16 @@ class SpawnBase(object):
             return s.encode('ascii')
         return s
 
+    # In bytes mode, regex patterns should also be of bytes type
+    def _coerce_expect_re(self, r):
+        p = r.pattern
+        if self.encoding is None and not isinstance(p, bytes):
+            return re.compile(p.encode('utf-8'))
+        # And vice-versa
+        elif self.encoding is not None and isinstance(p, bytes):
+            return re.compile(p.decode('utf-8'))
+        return r
+
     def _coerce_send_string(self, s):
         if self.encoding is None and not isinstance(s, bytes):
             return s.encode('utf-8')
@@ -235,6 +245,7 @@ class SpawnBase(object):
             elif p is TIMEOUT:
                 compiled_pattern_list.append(TIMEOUT)
             elif isinstance(p, type(re.compile(''))):
+                p = self._coerce_expect_re(p)
                 compiled_pattern_list.append(p)
             else:
                 self._pattern_type_err(p)

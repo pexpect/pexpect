@@ -25,10 +25,13 @@ import time
 import signal
 import sys
 import os
+import re
 
 import pexpect
 from . import PexpectTestCase
 from .utils import no_coverage_env
+
+PY3 = bool(sys.version_info.major >= 3)
 
 # Many of these test cases blindly assume that sequential directory
 # listings of the /bin directory will yield the same results.
@@ -100,6 +103,77 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.expect (b'THERE')
         p.sendeof ()
         p.expect (pexpect.EOF)
+
+    def _select_types(self, encoding=None):
+        if encoding is None:
+            if PY3:
+                expect_string = 'String'
+                expected_type = bytes
+            else:
+                expect_string = u'String'
+                expected_type = str
+        else:
+            if PY3:
+                expect_string = b'String'
+                expected_type = str
+            else:
+                expect_string = 'String'
+                expected_type = unicode
+        return re.compile(expect_string), expected_type
+
+    def test_coerce_expect_re_enc_none (self):
+        '''This test that compiled regex patterns will always be bytes type
+        when spawn objects have no encoding or encoding=None
+        '''
+        r, expected_type = self._select_types()
+        p = pexpect.spawn('true')
+        c = pexpect.spawnbase.SpawnBase._coerce_expect_re(p, r)
+        self.assertIsInstance(c.pattern, expected_type)
+        p.expect (pexpect.EOF)
+
+    def test_coerce_expect_re_enc_ascii (self):
+        '''This test that compiled regex patterns won't ever be bytes type
+        when spawn objects have ascii encoding
+        '''
+        r, expected_type = self._select_types('ascii')
+        p = pexpect.spawn('true', encoding='ascii')
+        c = pexpect.spawnbase.SpawnBase._coerce_expect_re(p, r)
+        self.assertIsInstance(c.pattern, expected_type)
+        p.expect (pexpect.EOF)
+
+    def test_coerce_expect_re_enc_utf8 (self):
+        '''This test that compiled regex patterns won't ever be bytes type
+        when spawn objects have utf-8 encoding
+        '''
+        r, expected_type = self._select_types('utf-8')
+        p = pexpect.spawn('true', encoding='utf-8')
+        c = pexpect.spawnbase.SpawnBase._coerce_expect_re(p, r)
+        self.assertIsInstance(c.pattern, expected_type)
+        p.expect (pexpect.EOF)
+
+    def test_expect_regex_enc_none (self):
+        '''This test that bytes mode spawn objects (encoding=None)
+        parses correctly regex patterns compiled from non-bytes type objects
+        '''
+        p = pexpect.spawn('cat', echo=False, timeout=5)
+        p.sendline ('We are the Knights who say "Ni!"')
+        index = p.expect ([re.compile('We are the Knights who say "Ni!"'),
+                           pexpect.EOF, pexpect.TIMEOUT])
+        self.assertEqual(index, 0)
+        p.sendeof ()
+        p.expect_exact (pexpect.EOF)
+
+    def test_expect_regex_enc_utf8 (self):
+        '''This test that non-bytes mode spawn objects (encoding='utf-8')
+        parses correctly regex patterns compiled from bytes type objects
+        '''
+        p = pexpect.spawn('cat', echo=False, timeout=5, encoding='utf-8')
+        p.sendline ('We are the Knights who say "Ni!"')
+        index = p.expect ([re.compile(b'We are the Knights who say "Ni!"'),
+                           pexpect.EOF, pexpect.TIMEOUT])
+        self.assertEqual(index, 0)
+        p.sendeof ()
+        p.expect_exact (pexpect.EOF)
 
     def test_expect_order (self):
         '''This tests that patterns are matched in the same order as given in the pattern_list.

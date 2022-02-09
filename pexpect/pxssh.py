@@ -143,7 +143,7 @@ class pxssh (spawn):
         # used to set shell command-line prompt to UNIQUE_PROMPT.
         self.PROMPT_SET_SH = r"PS1='[PEXPECT]\$ '"
         self.PROMPT_SET_CSH = r"set prompt='[PEXPECT]\$ '"
-        self.PROMPT_SET_ZSH = r"PS1='[PEXPECT]%(!.#.$) '"
+        self.PROMPT_SET_ZSH = "prompt restore;\nPS1='[PEXPECT]%(!.#.$) '"
         self.SSH_OPTS = ("-o'RSAAuthentication=no'"
                 + " -o 'PubkeyAuthentication=no'")
 # Disabling host key checking, makes you vulnerable to MITM attacks.

@@ -143,6 +143,7 @@ class pxssh (spawn):
         # used to set shell command-line prompt to UNIQUE_PROMPT.
         self.PROMPT_SET_SH = r"PS1='[PEXPECT]\$ '"
         self.PROMPT_SET_CSH = r"set prompt='[PEXPECT]\$ '"
+        self.PROMPT_SET_ZSH = r"PS1='[PEXPECT]%(!.#.$) '"
         self.SSH_OPTS = ("-o'RSAAuthentication=no'"
                 + " -o 'PubkeyAuthentication=no'")
 # Disabling host key checking, makes you vulnerable to MITM attacks.
@@ -527,11 +528,14 @@ class pxssh (spawn):
         self.sendline("unset PROMPT_COMMAND")
         self.sendline(self.PROMPT_SET_SH) # sh-style
         i = self.expect ([TIMEOUT, self.PROMPT], timeout=10)
-        if i == 0: # csh-style
-            self.sendline(self.PROMPT_SET_CSH)
+        if i == 0: # zsh-style
+            self.sendline(self.PROMPT_SET_ZSH)
             i = self.expect([TIMEOUT, self.PROMPT], timeout=10)
-            if i == 0:
-                return False
+            if i == 0: # csh-style
+                self.sendline(self.PROMPT_SET_CSH)
+                i = self.expect([TIMEOUT, self.PROMPT], timeout=10)
+                if i == 0:
+                    return False
         return True
 
 # vi:ts=4:sw=4:expandtab:ft=python:

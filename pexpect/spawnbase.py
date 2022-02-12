@@ -525,12 +525,3 @@ class SpawnBase(object):
     def isatty(self):
         """Overridden in subclass using tty"""
         return False
-
-    # For 'with spawn(...) as child:'
-    def __enter__(self):
-        return self
-
-    def __exit__(self, etype, evalue, tb):
-        # We rely on subclasses to implement close(). If they don't, it's not
-        # clear what a context manager should do.
-        self.close()

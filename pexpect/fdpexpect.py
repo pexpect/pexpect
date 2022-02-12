@@ -60,7 +60,7 @@ class fdspawn(SpawnBase):
         self.name = '<file descriptor %d>' % fd
         self.use_poll = use_poll
 
-    def close (self):
+    def close(self):
         """Close the file descriptor.
 
         Calling this method a second time does nothing, but if the file
@@ -74,7 +74,7 @@ class fdspawn(SpawnBase):
         self.child_fd = -1
         self.closed = True
 
-    def isalive (self):
+    def isalive(self):
         '''This checks if the file descriptor is still valid. If :func:`os.fstat`
         does not raise an exception then we assume it is alive. '''
 
@@ -146,3 +146,10 @@ class fdspawn(SpawnBase):
             if self.child_fd not in rlist:
                 raise TIMEOUT('Timeout exceeded.')
         return super(fdspawn, self).read_nonblocking(size)
+
+    # For 'with spawn(...) as child:'
+    def __enter__(self):
+        return self
+
+    def __exit__(self, etype, evalue, tb):
+        self.close()

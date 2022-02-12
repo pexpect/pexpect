@@ -853,6 +853,12 @@ class spawn(SpawnBase):
                 self._log(data, 'send')
                 self.__interact_writen(self.child_fd, data)
 
+    # For 'with spawn(...) as child:'
+    def __enter__(self):
+        return self
+
+    def __exit__(self, etype, evalue, tb):
+        self.close()
 
 def spawnu(*args, **kwargs):
     """Deprecated: pass encoding to spawn() instead."""

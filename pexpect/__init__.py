@@ -29,6 +29,12 @@ For example::
     child.expect('Password:')
     child.sendline(mypassword)
 
+Context manager can be used for the spawn() function::
+
+    with pexpect.spawn('scp foo user@example.com:.') as child:
+        child.expect('Password:')
+        child.sendline(mypassword)
+
 This works even for commands that ask for passwords or other input outside of
 the normal stdio streams. For example, ssh reads input directly from the TTY
 device which bypasses stdin.

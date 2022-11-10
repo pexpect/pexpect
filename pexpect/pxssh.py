@@ -528,11 +528,11 @@ class pxssh (spawn):
         self.sendline("unset PROMPT_COMMAND")
         self.sendline(self.PROMPT_SET_SH) # sh-style
         i = self.expect ([TIMEOUT, self.PROMPT], timeout=10)
-        if i == 0: # zsh-style
-            self.sendline(self.PROMPT_SET_ZSH)
+        if i == 0: # csh-style
+            self.sendline(self.PROMPT_SET_CSH)
             i = self.expect([TIMEOUT, self.PROMPT], timeout=10)
-            if i == 0: # csh-style
-                self.sendline(self.PROMPT_SET_CSH)
+            if i == 0: # zsh-style
+                self.sendline(self.PROMPT_SET_ZSH)
                 i = self.expect([TIMEOUT, self.PROMPT], timeout=10)
                 if i == 0:
                     return False

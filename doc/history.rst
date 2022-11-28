@@ -104,7 +104,7 @@ Version 4.3
 ```````````
 
 * The ``async=`` parameter to integrate with asyncio has become ``async_=``
-  (:ghpull:`431`), as *async* is becoming a Python keyword from Python 3.6.
+  (:ghpull:`431`), as *async* is a keyword from Python 3.7.
   Pexpect will still recognise ``async`` as an alternative spelling.
 * Similarly, the module ``pexpect.async`` became ``pexpect._async``
   (:ghpull:`450`). This module is not part of the public API.

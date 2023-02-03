@@ -184,4 +184,4 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(UnicodeTests, 'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(UnicodeTests)

@@ -370,4 +370,4 @@ class TestCaseMisc(PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(TestCaseMisc,'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(TestCaseMisc)

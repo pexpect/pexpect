@@ -34,5 +34,5 @@ class MissingCommandTestCase (PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(MissingCommandTestCase,'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(MissingCommandTestCase)
 

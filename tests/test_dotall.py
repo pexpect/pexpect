@@ -39,5 +39,5 @@ class TestCaseDotall(PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(TestCaseDotall,'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(TestCaseDotall)
 

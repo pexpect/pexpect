@@ -110,4 +110,4 @@ class PerformanceTestCase (PexpectTestCase.PexpectTestCase):
 if __name__ == "__main__":
     unittest.main()
 
-suite = unittest.makeSuite(PerformanceTestCase,'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(PerformanceTestCase)

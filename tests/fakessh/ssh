@@ -62,7 +62,7 @@ prompt = "$"
 while True:
     cmd = input(prompt)
     if cmd.startswith('PS1='):
-        prompt = eval(cmd[4:]).replace('\$', '$')
+        prompt = eval(cmd[4:]).replace(r'\$', '$')
     elif cmd == 'ping':
         print('pong')
     elif cmd.startswith('ls'):

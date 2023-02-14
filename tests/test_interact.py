@@ -62,8 +62,8 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         p.sendcontrol(']')
         p.expect('29<STOP>')
         p.send('\x00')
-        if not os.environ.get('TRAVIS', None):
-            # on Travis-CI, we sometimes miss trailing stdout from the
+        if not os.environ.get('CI', None):
+            # on CI platforms, we sometimes miss trailing stdout from the
             # chain of child processes, not entirely sure why. So this
             # is skipped on such systems.
             p.expect('0<STOP>')
@@ -84,8 +84,8 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
         p.expect('206<STOP>')    # [206, 146]
         p.expect('146<STOP>')
         p.send('\x00')
-        if not os.environ.get('TRAVIS', None):
-            # on Travis-CI, we sometimes miss trailing stdout from the
+        if not os.environ.get('CI', None):
+            # on CI platforms, we sometimes miss trailing stdout from the
             # chain of child processes, not entirely sure why. So this
             # is skipped on such systems.
             p.expect('0<STOP>')
@@ -97,5 +97,5 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(InteractTestCase, 'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(InteractTestCase)
 

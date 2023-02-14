@@ -72,7 +72,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(ExpectTestCase, 'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(ExpectTestCase)
 
 #fout = open('delete_me_1','wb')
 #fout.write(the_old_way)

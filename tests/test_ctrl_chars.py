@@ -124,5 +124,5 @@ class TestCtrlChars(PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(TestCtrlChars,'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(TestCtrlChars)
 

@@ -80,5 +80,5 @@ class TestCaseDestructor(PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(TestCaseDestructor,'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(TestCaseDestructor)
 

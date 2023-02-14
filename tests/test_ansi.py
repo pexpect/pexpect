@@ -236,5 +236,5 @@ class ansiTestCase (PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(ansiTestCase,'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(ansiTestCase)
 

@@ -37,4 +37,4 @@ class SplitCommandLineTestCase(PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(SplitCommandLineTestCase,'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(SplitCommandLineTestCase)

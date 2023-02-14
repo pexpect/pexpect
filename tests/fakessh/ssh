@@ -66,12 +66,12 @@ while True:
     cmd = input(prompt)
     if cmd.startswith('PS1='):
         if shell == 'bash':
-            prompt = eval(cmd[4:]).replace('\$', '$')
+            prompt = eval(cmd[4:]).replace(r'\$', '$')
         elif shell == 'zsh':
             prompt = eval(cmd[4:]).replace('%(!.#.$)', '$')
     elif cmd.startswith('set prompt='):
         if shell.endswith('csh'):
-            prompt = eval(cmd[11:]).replace('\$', '$')
+            prompt = eval(cmd[11:]).replace(r'\$', '$')
     elif cmd == 'ping':
         print('pong')
     elif cmd.startswith('ls'):

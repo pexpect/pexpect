@@ -97,5 +97,5 @@ class InteractTestCase (PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(InteractTestCase, 'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(InteractTestCase)
 

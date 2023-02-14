@@ -136,4 +136,4 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(ExpectTestCase, 'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(ExpectTestCase)

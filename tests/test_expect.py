@@ -643,13 +643,13 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
 
     def test_bad_arg(self):
         p = pexpect.spawn('cat')
-        with self.assertRaisesRegexp(TypeError, '.*must be one of'):
+        with self.assertRaisesRegex(TypeError, '.*must be one of'):
             p.expect(1)
-        with self.assertRaisesRegexp(TypeError, '.*must be one of'):
+        with self.assertRaisesRegex(TypeError, '.*must be one of'):
             p.expect([1, b'2'])
-        with self.assertRaisesRegexp(TypeError, '.*must be one of'):
+        with self.assertRaisesRegex(TypeError, '.*must be one of'):
             p.expect_exact(1)
-        with self.assertRaisesRegexp(TypeError, '.*must be one of'):
+        with self.assertRaisesRegex(TypeError, '.*must be one of'):
             p.expect_exact([1, b'2'])
 
     def test_timeout_none(self):

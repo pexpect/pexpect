@@ -49,22 +49,25 @@ class PexpectTestCase(unittest.TestCase):
         print('\n', self.id(), end=' ')
         sys.stdout.flush()
 
-        # some build agents will ignore SIGHUP and SIGINT, which python
-        # inherits.  This causes some of the tests related to terminate()
-        # to fail.  We set them to the default handlers that they should
-        # be, and restore them back to their SIG_IGN value on tearDown.
-        #
-        # I'm not entirely convinced they need to be restored, only our
-        # test runner is affected.
-        self.restore_ignored_signals = [
-            value for value in (signal.SIGHUP, signal.SIGINT,)
-            if signal.getsignal(value) == signal.SIG_IGN]
-        if signal.SIGHUP in self.restore_ignored_signals:
-            # sighup should be set to default handler
-            signal.signal(signal.SIGHUP, signal.SIG_DFL)
-        if signal.SIGINT in self.restore_ignored_signals:
-            # SIGINT should be set to signal.default_int_handler
-            signal.signal(signal.SIGINT, signal.default_int_handler)
+        if sys.platform != 'win32':
+            # some build agents will ignore SIGHUP and SIGINT, which python
+            # inherits.  This causes some of the tests related to terminate()
+            # to fail.  We set them to the default handlers that they should
+            # be, and restore them back to their SIG_IGN value on tearDown.
+            #
+            # I'm not entirely convinced they need to be restored, only our
+            # test runner is affected.
+            self.restore_ignored_signals = [
+                value for value in (signal.SIGHUP, signal.SIGINT,)
+                if signal.getsignal(value) == signal.SIG_IGN]
+            if signal.SIGHUP in self.restore_ignored_signals:
+                # sighup should be set to default handler
+                signal.signal(signal.SIGHUP, signal.SIG_DFL)
+            if signal.SIGINT in self.restore_ignored_signals:
+                # SIGINT should be set to signal.default_int_handler
+                signal.signal(signal.SIGINT, signal.default_int_handler)
+        else:
+            self.restore_ignored_signals = []
         unittest.TestCase.setUp(self)
 
     def tearDown(self):

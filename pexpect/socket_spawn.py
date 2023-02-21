@@ -20,12 +20,11 @@ PEXPECT LICENSE
 
 """
 
-import os
 import socket
 from contextlib import contextmanager
 
-from exceptions import TIMEOUT
-from spawnbase import SpawnBase
+from .exceptions import TIMEOUT, EOF
+from .spawnbase import SpawnBase
 
 __all__ = ["SocketSpawn"]
 
@@ -82,16 +81,8 @@ class SocketSpawn(SpawnBase):
         self.closed = True
 
     def isalive(self):
-        """This checks if the socket is still valid. If :func:`os.fstat`
-        does not raise an exception then we assume it is alive."""
-
-        if self.child_fd == -1:
-            return False
-        try:
-            os.fstat(self.child_fd)
-            return True
-        except OSError:
-            return False
+        """ Alive if the fileno is valid """
+        return self.socket.fileno() >= 0
 
     def send(self, s) -> int:
         """Write to socket, return number of bytes written"""
@@ -145,6 +136,10 @@ class SocketSpawn(SpawnBase):
             timeout = self.timeout
         try:
             with self._timeout(timeout):
-                return self.socket.recv(size)
+                s = self.socket.recv(size)
+                if s == b'':
+                    self.flag_eof = True
+                    raise EOF("Socket closed")
+                return s
         except socket.timeout:
             raise TIMEOUT("Timeout exceeded.")

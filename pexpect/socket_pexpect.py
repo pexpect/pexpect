@@ -1,5 +1,5 @@
-"""This is like pexpect, but it will work with any socket that you
-pass it. You are responsible for opening and close the socket.
+"""This is like :mod:`pexpect`, but it will work with any socket that you
+pass it. You are responsible for opening and closing the socket.
 
 PEXPECT LICENSE
 
@@ -30,7 +30,7 @@ __all__ = ["SocketSpawn"]
 
 
 class SocketSpawn(SpawnBase):
-    """This is like pexpect.fdspawn but uses the cross-platform python socket api,
+    """This is like :mod:`pexpect.fdpexpect` but uses the cross-platform python socket api,
     rather than the unix-specific file descriptor api. Thus, it works with
     remote connections on both unix and windows."""
 

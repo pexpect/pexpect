@@ -26,8 +26,9 @@ from . import PexpectTestCase
 import time
 import sys
 
-from ptyprocess import ptyprocess
-ptyprocess._make_eof_intr()
+if sys.platform != 'win32':
+    from ptyprocess import ptyprocess
+    ptyprocess._make_eof_intr()
 
 if sys.version_info[0] >= 3:
     def byte(i):

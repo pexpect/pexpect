@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+import sys
 import os
 import shutil
 import tempfile
 import unittest
 
-from pexpect import pxssh
+if sys.platform != 'win32':
+    from pexpect import pxssh
 from .PexpectTestCase import PexpectTestCase
 
 class SSHTestBase(PexpectTestCase):

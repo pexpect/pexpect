@@ -2,6 +2,8 @@
 pass it. You are responsible for opening and close the file descriptor.
 This allows you to use Pexpect with sockets and named pipes (FIFOs).
 
+..note:: socket.fileno() does not work on windows. Use `pexpect.socket_pexpect` for cross-platform socket support
+
 PEXPECT LICENSE
 
     This license is approved by the OSI and FSF as GPL-compatible.

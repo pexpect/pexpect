@@ -19,7 +19,7 @@ PEXPECT LICENSE
 
 '''
 import pexpect
-from pexpect import fdpexpect
+from pexpect import socket_pexpect
 import unittest
 from . import PexpectTestCase
 import multiprocessing
@@ -133,12 +133,16 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
                 pass
         exit(0)
 
+    def spawn(self, socket, timeout=30, use_poll=False):
+        """override me with other ways of spawning on a socket"""
+        return socket_pexpect.SocketSpawn(socket, timeout=timeout, use_poll=use_poll)
+
     def socket_fn(self, timed_out, all_read):
         result = 0
         try:
             sock = socket.socket(self.af, socket.SOCK_STREAM)
             sock.connect((self.host, self.port))
-            session = fdpexpect.fdspawn(sock, timeout=10)
+            session = self.spawn(sock, timeout=10)
             # Get all data from server
             session.read_nonblocking(size=4096)
             all_read.set()
@@ -152,7 +156,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def test_socket(self):
         sock = socket.socket(self.af, socket.SOCK_STREAM)
         sock.connect((self.host, self.port))
-        session = fdpexpect.fdspawn(sock.fileno(), timeout=10)
+        session = self.spawn(sock, timeout=10)
         session.expect(self.prompt1)
         self.assertEqual(session.before, self.motd)
         session.send(self.enter)
@@ -166,7 +170,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def test_socket_with_write(self):
         sock = socket.socket(self.af, socket.SOCK_STREAM)
         sock.connect((self.host, self.port))
-        session = fdpexpect.fdspawn(sock.fileno(), timeout=10)
+        session = self.spawn(sock, timeout=10)
         session.expect(self.prompt1)
         self.assertEqual(session.before, self.motd)
         session.write(self.enter)
@@ -177,19 +181,11 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         session.expect(pexpect.EOF)
         self.assertEqual(session.before, b'')
 
-    def test_not_int(self):
-        with self.assertRaises(pexpect.ExceptionPexpect):
-            session = fdpexpect.fdspawn('bogus', timeout=10)
-
-    def test_not_file_descriptor(self):
-        with self.assertRaises(pexpect.ExceptionPexpect):
-            session = fdpexpect.fdspawn(-1, timeout=10)
-
     def test_timeout(self):
         with self.assertRaises(pexpect.TIMEOUT):
             sock = socket.socket(self.af, socket.SOCK_STREAM)
             sock.connect((self.host, self.port))
-            session = fdpexpect.fdspawn(sock, timeout=10)
+            session = self.spawn(sock, timeout=10)
             session.expect(b'Bogus response')
 
     def test_interrupt(self):
@@ -223,7 +219,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def test_maxread(self):
         sock = socket.socket(self.af, socket.SOCK_STREAM)
         sock.connect((self.host, self.port))
-        session = fdpexpect.fdspawn(sock.fileno(), timeout=10)
+        session = self.spawn(sock, timeout=10)
         session.maxread = 1100
         session.expect(self.prompt1)
         self.assertEqual(session.before, self.motd)
@@ -238,7 +234,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def test_fd_isalive(self):
         sock = socket.socket(self.af, socket.SOCK_STREAM)
         sock.connect((self.host, self.port))
-        session = fdpexpect.fdspawn(sock.fileno(), timeout=10)
+        session = self.spawn(sock, timeout=10)
         assert session.isalive()
         sock.close()
         assert not session.isalive(), "Should not be alive after close()"
@@ -246,7 +242,7 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def test_fd_isalive_poll(self):
         sock = socket.socket(self.af, socket.SOCK_STREAM)
         sock.connect((self.host, self.port))
-        session = fdpexpect.fdspawn(sock.fileno(), timeout=10, use_poll=True)
+        session = self.spawn(sock, timeout=10, use_poll=True)
         assert session.isalive()
         sock.close()
         assert not session.isalive(), "Should not be alive after close()"
@@ -254,25 +250,17 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
     def test_fd_isatty(self):
         sock = socket.socket(self.af, socket.SOCK_STREAM)
         sock.connect((self.host, self.port))
-        session = fdpexpect.fdspawn(sock.fileno(), timeout=10)
+        session = self.spawn(sock, timeout=10)
         assert not session.isatty()
         session.close()
 
     def test_fd_isatty_poll(self):
         sock = socket.socket(self.af, socket.SOCK_STREAM)
         sock.connect((self.host, self.port))
-        session = fdpexpect.fdspawn(sock.fileno(), timeout=10, use_poll=True)
+        session = self.spawn(sock, timeout=10, use_poll=True)
         assert not session.isatty()
         session.close()
 
-    def test_fileobj(self):
-        sock = socket.socket(self.af, socket.SOCK_STREAM)
-        sock.connect((self.host, self.port))
-        session = fdpexpect.fdspawn(sock, timeout=10) # Should get the fileno from the socket
-        session.expect(self.prompt1)
-        session.close()
-        assert not session.isalive()
-        session.close()  # Smoketest - should be able to call this again
 
 if __name__ == '__main__':
     unittest.main()

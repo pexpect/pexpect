@@ -44,5 +44,5 @@ class TestCaseConstructor(PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(TestCaseConstructor,'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(TestCaseConstructor)
 

@@ -121,5 +121,5 @@ class IsAliveTestCase(PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(IsAliveTestCase, 'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(IsAliveTestCase)
 

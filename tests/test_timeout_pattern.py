@@ -89,4 +89,4 @@ class Exp_TimeoutTestCase(PexpectTestCase.PexpectTestCase):
 if __name__ == '__main__':
     unittest.main()
 
-suite = unittest.makeSuite(Exp_TimeoutTestCase,'test')
+suite = unittest.TestLoader().loadTestsFromTestCase(Exp_TimeoutTestCase)

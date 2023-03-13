@@ -52,7 +52,8 @@ def function_events_callback(values):
 
 
 class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
-    runfunc = staticmethod(pexpect.run)
+    if sys.platform != 'win32':
+        runfunc = staticmethod(pexpect.run)
     cr = b'\r'
     empty = b''
     prep_subprocess_out = staticmethod(lambda x: x)
@@ -160,7 +161,8 @@ class RunFuncTestCase(PexpectTestCase.PexpectTestCase):
 
 
 class RunUnicodeFuncTestCase(RunFuncTestCase):
-    runfunc = staticmethod(pexpect.runu)
+    if sys.platform != 'win32':
+        runfunc = staticmethod(pexpect.runu)
     cr = b'\r'.decode('ascii')
     empty = b''.decode('ascii')
     prep_subprocess_out = staticmethod(lambda x: x.decode('utf-8', 'replace'))

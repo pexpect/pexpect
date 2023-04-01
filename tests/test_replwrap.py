@@ -95,6 +95,18 @@ class REPLWrapTestCase(unittest.TestCase):
         res = repl.run_command("echo $HOME")
         assert res.startswith('/'), res
 
+    def test_zsh(self):
+        zsh = replwrap.zsh()
+        res = zsh.run_command("env")
+        assert 'PAGER' in res, res
+
+        try:
+            zsh.run_command('')
+        except ValueError:
+            pass
+        else:
+            assert False, "Didn't raise ValueError for empty input"
+
     def test_python(self):
         if platform.python_implementation() == 'PyPy':
             raise unittest.SkipTest(skip_pypy)

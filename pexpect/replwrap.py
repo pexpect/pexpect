@@ -133,4 +133,4 @@ def bash(command="bash"):
 
 def zsh(command="zsh"):
     """Start a zsh shell and return a :class:`REPLWrapper` object."""
-    return _repl_sh(command, ['--no-rcs'], non_printable_insert='%G')
+    return _repl_sh(command, ['--no-rcs', '-V', '+Z'], non_printable_insert='%G')

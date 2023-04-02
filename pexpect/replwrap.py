@@ -131,6 +131,6 @@ def bash(command="bash"):
     bashrc = os.path.join(os.path.dirname(__file__), 'bashrc.sh')
     return _repl_sh(command, ['--rcfile', bashrc], non_printable_insert='\\[\\]')
 
-def zsh(command="zsh"):
+def zsh(command="zsh", args=("--no-rcs", "-V", "+Z")):
     """Start a zsh shell and return a :class:`REPLWrapper` object."""
-    return _repl_sh(command, ['--no-rcs', '-V', '+Z'], non_printable_insert='%G')
+    return _repl_sh(command, list(args), non_printable_insert='%G')

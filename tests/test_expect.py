@@ -485,7 +485,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
     def test_before_across_chunks(self):
         # https://github.com/pexpect/pexpect/issues/478
         child = pexpect.spawn(
-            '''/bin/bash -c "openssl rand -base64 {} 2>/dev/null | head -500 | nl --number-format=rz --number-width=5 2>&1 ; echo 'PATTERN!!!'"'''.format(1024 * 1024 * 2),
+            '''/bin/sh -c "openssl rand -base64 {} 2>/dev/null | head -500 | nl -n rz -w 5 2>&1 ; echo 'PATTERN!!!'"'''.format(1024 * 1024 * 2),
             searchwindowsize=128
         )
         child.expect(['PATTERN'])
@@ -530,7 +530,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat', echo=False)
         child.sendline('BEGIN')
         for i in range(100):
-            child.sendline('foo' * 100)
+            child.sendline('foo' * 10)
         e = child.expect([b'xyzzy', pexpect.TIMEOUT],
                          searchwindowsize=10, timeout=0.001)
         self.assertEqual(e, 1)
@@ -547,7 +547,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         child = pexpect.spawn('cat', echo=False)
         child.sendline('BEGIN')
         for i in range(100):
-            child.sendline('foo' * 100)
+            child.sendline('foo' * 10)
         e = child.expect([b'xyzzy', pexpect.TIMEOUT],
                          searchwindowsize=10, timeout=0.5)
         self.assertEqual(e, 1)

@@ -26,6 +26,11 @@ import signal
 import sys
 import os
 
+try:
+    from unittest import IsolatedAsyncioTestCase
+except ImportError:
+    from aiounittest import AsyncTestCase as IsolatedAsyncioTestCase
+
 
 class _PexpectTestCaseBase:
     def setUp(self):
@@ -115,5 +120,5 @@ class PexpectTestCase(_PexpectTestCaseBase, unittest.TestCase):
     pass
 
 
-class AsyncPexpectTestCase(_PexpectTestCaseBase, unittest.IsolatedAsyncioTestCase):
+class AsyncPexpectTestCase(_PexpectTestCaseBase, IsolatedAsyncioTestCase):
     pass

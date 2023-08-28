@@ -27,7 +27,7 @@ import sys
 import os
 
 
-class PexpectTestCase(unittest.TestCase):
+class _PexpectTestCaseBase:
     def setUp(self):
         self.PYTHONBIN = sys.executable
         self.original_path = os.getcwd()
@@ -109,3 +109,11 @@ class PexpectTestCase(unittest.TestCase):
                 assert re.match(pattern, str(e))
             else:
                 raise AssertionError("%s was not raised" % excClass)
+
+
+class PexpectTestCase(_PexpectTestCaseBase, unittest.TestCase):
+    pass
+
+
+class AsyncPexpectTestCase(_PexpectTestCaseBase, unittest.IsolatedAsyncioTestCase):
+    pass

@@ -38,6 +38,7 @@ jobs:
         pytest --cov pexpect --cov-config .coveragerc
 
     - name: Check coverage
+      if: github.repository_owner == 'pexpect'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |

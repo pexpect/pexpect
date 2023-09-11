@@ -35,7 +35,7 @@ jobs:
       run: |
         ./tools/display-sighandlers.py
         ./tools/display-terminalinfo.py
-        py.test --cov pexpect --cov-config .coveragerc
+        pytest --cov pexpect --cov-config .coveragerc
 
     - name: Check coverage
       env:

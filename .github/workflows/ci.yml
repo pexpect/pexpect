@@ -25,7 +25,7 @@ jobs:
     - name: Install packages
       run: |
         export PYTHONIOENCODING=UTF8
-        pip install coveralls pytest-cov ptyprocess
+        pip install -r requirements-testing.txt
 
     - name: Run tests
       run: |

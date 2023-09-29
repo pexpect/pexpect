@@ -11,11 +11,19 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-22.04
+    name: Test Python ${{ matrix.python-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        os: ["ubuntu-22.04"]
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "pypy3.9"]
+        include:
+          # Python < 3.7 is not available on ubuntu-22.04
+          - os: "ubuntu-20.04"
+            python-version: "3.5"
+          - os: "ubuntu-20.04"
+            python-version: "3.6"
 
     steps:
     - uses: actions/checkout@v4
@@ -28,6 +36,7 @@ jobs:
 
     - name: Install packages
       run: |
+        sudo apt-get install --yes zsh
         export PYTHONIOENCODING=UTF8
         pip install -r requirements-testing.txt
 

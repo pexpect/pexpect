@@ -276,5 +276,29 @@ class PxsshTestCase(SSHTestBase):
         else:
             assert False, 'should have raised exception, pxssh.ExceptionPxssh'
 
+    def test_login_bash(self):
+        ssh = pxssh.pxssh()
+        result = ssh.login('server bash', 'me', password='s3cret')
+        ssh.sendline('ping')
+        ssh.expect('pong', timeout=10)
+        assert ssh.prompt(timeout=10)
+        ssh.logout()
+
+    def test_login_zsh(self):
+        ssh = pxssh.pxssh()
+        result = ssh.login('server zsh', 'me', password='s3cret')
+        ssh.sendline('ping')
+        ssh.expect('pong', timeout=10)
+        assert ssh.prompt(timeout=10)
+        ssh.logout()
+
+    def test_login_tcsh(self):
+        ssh = pxssh.pxssh()
+        result = ssh.login('server tcsh', 'me', password='s3cret')
+        ssh.sendline('ping')
+        ssh.expect('pong', timeout=10)
+        assert ssh.prompt(timeout=10)
+        ssh.logout()
+
 if __name__ == '__main__':
     unittest.main()

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import os
 import platform
 import tempfile
 import sys
@@ -124,11 +125,13 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         # ensure the 'send' log is correct,
         with open(filename_send, 'r', encoding='utf-8') as f:
             self.assertEqual(f.read(), msg + '\n\x04')
+        os.unlink(filename_send)
 
         # ensure the 'read' log is correct,
         with open(filename_read, 'r', encoding='utf-8', newline='') as f:
             output = f.read().replace(_CAT_EOF, '')
             self.assertEqual(output, (msg + '\r\n')*2 )
+        os.unlink(filename_read)
 
 
     def test_spawn_expect_ascii_unicode(self):

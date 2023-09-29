@@ -24,6 +24,7 @@ jobs:
 
     - name: Install packages
       run: |
+        sudo apt-get install --yes zsh
         export PYTHONIOENCODING=UTF8
         pip install -r requirements-testing.txt
 

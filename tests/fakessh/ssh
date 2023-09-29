@@ -9,19 +9,14 @@ if not PY3:
     input = raw_input
 
 ssh_usage = "usage: ssh [-2qV] [-c cipher_spec] [-l login_name]\r\n" \
-          + "           hostname"
+          + "           hostname [shell]"
 
 cipher_valid_list = ['aes128-ctr', 'aes192-ctr', 'aes256-ctr', 'arcfour256', 'arcfour128', \
     'aes128-cbc','3des-cbc','blowfish-cbc','cast128-cbc','aes192-cbc', \
     'aes256-cbc','arcfour']
 
 try:
-    server = sys.argv[-1]
-    if server == 'noserver':
-        print('No route to host')
-        sys.exit(1)
-
-    elif len(sys.argv) < 2:
+    if len(sys.argv) < 2:
         print(ssh_usage)
         sys.exit(1)
 
@@ -29,7 +24,7 @@ try:
     cipher_list = []
     fullCmdArguments = sys.argv
     argumentList = fullCmdArguments[1:]
-    unixOptions = "2qVc:l"
+    unixOptions = "2qVc:l:"
     arguments, values = getopt.getopt(argumentList, unixOptions)
     for currentArgument, currentValue in arguments:
         if currentArgument in ("-2"):
@@ -45,6 +40,14 @@ try:
                     print("Unknown cipher type '" + str(cipher_item) + "'")
                     sys.exit(1)
 
+    server = values[0]
+    if server == 'noserver':
+        print('No route to host')
+        sys.exit(1)
+
+    shell = 'bash'
+    if len(values) > 1:
+        shell = values[1]
 
 except Exception as e:
     print(ssh_usage)
@@ -62,7 +65,13 @@ prompt = "$"
 while True:
     cmd = input(prompt)
     if cmd.startswith('PS1='):
-        prompt = eval(cmd[4:]).replace(r'\$', '$')
+        if shell == 'bash':
+            prompt = eval(cmd[4:]).replace(r'\$', '$')
+        elif shell == 'zsh':
+            prompt = eval(cmd[4:]).replace('%(!.#.$)', '$')
+    elif cmd.startswith('set prompt='):
+        if shell.endswith('csh'):
+            prompt = eval(cmd[11:]).replace(r'\$', '$')
     elif cmd == 'ping':
         print('pong')
     elif cmd.startswith('ls'):

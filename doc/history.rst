@@ -4,6 +4,31 @@ History
 Releases
 --------
 
+Version 4.9
+```````````
+* Add support for Python 3.12 (:ghpull:`769`).
+* Clean up temporary files after UnicodeTests (:ghpull:`753`).
+* Add Python 3.5, 3.6 and 3.12.0-rc.1 to test matrix (:ghpull:`763`).
+* Set prompt correctly for zsh (:ghpull:`712`).
+* Add zsh convenience function to replwrap module (:ghpull:`751`).
+* Rework async unittests to rely on unittest.IsolatedAsyncioTestCase (:ghpull:`764`).
+* Make test_expect.py work on POSIX systems that are not Linux based (:ghpull:`698`).
+* Add support for ``socket``, which allows sockets to be used crossplatform (:ghpull:`745`).
+* Update async to work on newer versions of python (:ghpull:`732`).
+* Remove deprecated RSAAuthentication option (SSHv1) (:ghpull:`744`).
+* Multiple CI fixes (:ghpull:`743`) (:ghpull:`737`) (:ghpull:`742`) (:ghpull:`739`) (:ghpull:`722`).
+* Use Github Actions for CI (:ghpull:`734`).
+* Remove pytest-capturelog from testing requirements (:ghpull:`730`).
+* Fix usage for Solaris (:ghpull:`663`) (:ghpull:`604`) (:ghpull:`560`).
+* Fix threading for new versions of python (:ghpull:`684`).
+* Fix documentation builds for use with Sphinx 3 (:ghpull:`638`).
+* Use ``sys.executable`` for tests and wrapper, allowing the calling python executable to be used instead (:ghpull:`623`).
+* Update documentation about Wexpect (:ghpull:`623`).
+* Added project urls to ``setup.py`` (:ghpull:`620`).
+* Provide examples for how to use Pexpect and Pyte (:ghpull:`587`).
+* Coerce compiled regex patterns type according to spawn encoding (:ghpull:`560`).
+* Several doc updates (:ghpull:`626`) (:ghpull:`635`) (:ghpull:`643`) (:ghpull:`644`) (:ghpull:`728`).
+
 Version 4.8
 ```````````
 

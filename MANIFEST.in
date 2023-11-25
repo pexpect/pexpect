@@ -4,3 +4,4 @@ recursive-include examples *
 include .coveragerc README.rst LICENSE pexpect/bashrc.sh
 recursive-include tests *
 global-exclude __pycache__ *.pyc *~
+include requirements-testing.txt

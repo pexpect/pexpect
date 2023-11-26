@@ -52,3 +52,29 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         coveralls --service=github
+
+  test-legacy:
+    name: Test Python ${{ matrix.python-version }} using Docker
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - '3.4'
+          - '2.7'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build Python ${{ matrix.python-version }} Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          build-args: PYTHON=${{ matrix.python-version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          load: true
+          tags: pexpect
+      - name: Run tests
+        run: docker run pexpect

@@ -52,9 +52,9 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         p.expect_exact(pexpect.EOF)
 
     def test_expect(self):
-        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
+        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin', '--color=never'],
                                        stdout=subprocess.PIPE).communicate()[0].rstrip()
-        p = PopenSpawn('ls -l /bin')
+        p = PopenSpawn('ls -l /bin --color=never')
         the_new_way = b''
         while 1:
             i = p.expect([b'\n', pexpect.EOF])
@@ -66,9 +66,9 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         assert the_old_way == the_new_way, len(the_old_way) - len(the_new_way)
 
     def test_expect_exact(self):
-        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
+        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin', '--color=never'],
                                        stdout=subprocess.PIPE).communicate()[0].rstrip()
-        p = PopenSpawn('ls -l /bin')
+        p = PopenSpawn('ls -l /bin --color=never')
         the_new_way = b''
         while 1:
             i = p.expect_exact([b'\n', pexpect.EOF])
@@ -85,9 +85,9 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self.assertEqual(p.after, b'.?')
 
     def test_expect_eof(self):
-        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
+        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin', '--color=never'],
                                        stdout=subprocess.PIPE).communicate()[0].rstrip()
-        p = PopenSpawn('ls -l /bin')
+        p = PopenSpawn('ls -l /bin --color=never')
         # This basically tells it to read everything. Same as pexpect.run()
         # function.
         p.expect(pexpect.EOF)

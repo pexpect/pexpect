@@ -17,7 +17,7 @@ from . import PexpectTestCase
 class AsyncTests(PexpectTestCase.AsyncPexpectTestCase):
     async def test_simple_expect(self):
         p = pexpect.spawn("cat")
-        p.sendline("Hello asyncio")
+        await p.sendline("Hello asyncio", async_=True)
         assert await p.expect(["Hello", pexpect.EOF], async_=True) == 0
         print("Done")
 
@@ -31,7 +31,7 @@ class AsyncTests(PexpectTestCase.AsyncPexpectTestCase):
 
     async def test_eof(self):
         p = pexpect.spawn("cat")
-        p.sendline("Hi")
+        await p.sendline("Hi", async_=True)
         p.sendeof()
         assert await p.expect(pexpect.EOF, async_=True) == 0
 

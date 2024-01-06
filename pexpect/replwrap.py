@@ -90,7 +90,7 @@ class REPLWrapper(object):
 
         if async_:
             from ._async import repl_run_command_async
-            return repl_run_command_async(self, cmdlines, timeout)
+            return repl_run_command_async(self, command, cmdlines, timeout)
 
         res = []
         self.child.sendline(cmdlines[0])

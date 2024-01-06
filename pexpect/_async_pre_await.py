@@ -5,6 +5,7 @@
 import asyncio
 import errno
 import signal
+import os
 
 from pexpect import EOF
 
@@ -35,13 +36,13 @@ def expect_async(expecter, timeout=None):
 
 
 @asyncio.coroutine
-def repl_run_command_async(repl, cmdlines, timeout=-1):
+def repl_run_command_async(repl, command, cmdlines, timeout=-1):
     res = []
-    repl.child.sendline(cmdlines[0])
+    yield from repl.child.sendline(cmdlines[0], async_=True)
     for line in cmdlines[1:]:
         yield from repl._expect_prompt(timeout=timeout, async_=True)
         res.append(repl.child.before)
-        repl.child.sendline(line)
+        yield from repl.child.sendline(line, async_=True)
 
     # Command was fully submitted, now wait for the next prompt
     prompt_idx = yield from repl._expect_prompt(timeout=timeout, async_=True)
@@ -49,9 +50,31 @@ def repl_run_command_async(repl, cmdlines, timeout=-1):
         # We got the continuation prompt - command was incomplete
         repl.child.kill(signal.SIGINT)
         yield from repl._expect_prompt(timeout=1, async_=True)
-        raise ValueError("Continuation prompt found - input was incomplete:")
+        raise ValueError("Continuation prompt found - input was incomplete\n"
+                             + command)
     return "".join(res + [repl.child.before])
 
+@asyncio.coroutine
+def spawn__waitnoecho_async(spawn, timeout, end_time):
+    while True:
+        if not spawn.getecho():
+            return True
+        if timeout < 0 and timeout is not None:
+            return False
+        if timeout is not None:
+            timeout = end_time - time.time()
+        yield from asyncio.sleep(0.1)
+
+@asyncio.coroutine
+def spawn__send_async(spawn, s):
+    if spawn.delaybeforesend is not None:
+        yield from asyncio.sleep(spawn.delaybeforesend)
+
+    s = spawn._coerce_send_string(s)
+    spawn._log(s, 'send')
+
+    b = spawn._encoder.encode(s, final=False)
+    return os.write(spawn.child_fd, b)
 
 class PatternWaiter(asyncio.Protocol):
     transport = None

@@ -19,10 +19,14 @@ if py_version_info >= (3, 6):
         PatternWaiter,
         expect_async,
         repl_run_command_async,
+        spawn__waitnoecho_async,
+        spawn__send_async
     )
 else:
     from pexpect._async_pre_await import (
         PatternWaiter,
         expect_async,
         repl_run_command_async,
+        spawn__waitnoecho_async,
+        spawn__send_async
     )

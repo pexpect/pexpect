@@ -341,7 +341,7 @@ class spawn(SpawnBase):
 
         return os.isatty(self.child_fd)
 
-    def waitnoecho(self, timeout=-1):
+    def waitnoecho(self, timeout=-1, async_=False):
         '''This waits until the terminal ECHO flag is set False. This returns
         True if the echo mode is off. This returns False if the ECHO flag was
         not set False before the timeout. This can be used to detect when the
@@ -356,12 +356,24 @@ class spawn(SpawnBase):
 
         If timeout==-1 then this method will use the value in self.timeout.
         If timeout==None then this method to block until ECHO flag is False.
+
+        Like :meth:`expect`, passing ``async_=True`` will make this return an
+        asyncio coroutine.
+
+            p = pexpect.spawn('ssh user@example.com')
+            yield from p.waitnoecho(async_=True)
+            yield from p.sendline(mypassword, async_=True)
         '''
 
         if timeout == -1:
             timeout = self.timeout
         if timeout is not None:
             end_time = time.time() + timeout
+
+        if async_:
+            from ._async import spawn__waitnoecho_async
+            return spawn__waitnoecho_async(self, timeout, end_time)
+
         while True:
             if not self.getecho():
                 return True
@@ -524,7 +536,7 @@ class spawn(SpawnBase):
         for s in sequence:
             self.write(s)
 
-    def send(self, s):
+    def send(self, s, async_=False):
         '''Sends string ``s`` to the child process, returning the number of
         bytes written. If a logfile is specified, a copy is written to that
         log.
@@ -557,7 +569,14 @@ class spawn(SpawnBase):
             >>> bash.sendline('stty -icanon')
             >>> bash.sendline('base64')
             >>> bash.sendline('x' * 5000)
+
+        Like :meth:`expect`, passing ``async_=True`` will make this return an
+        asyncio coroutine.
         '''
+
+        if async_:
+            from ._async import spawn__send_async
+            return spawn__send_async(self, s)
 
         if self.delaybeforesend is not None:
             time.sleep(self.delaybeforesend)
@@ -568,14 +587,17 @@ class spawn(SpawnBase):
         b = self._encoder.encode(s, final=False)
         return os.write(self.child_fd, b)
 
-    def sendline(self, s=''):
+    def sendline(self, s='', async_=False):
         '''Wraps send(), sending string ``s`` to child process, with
         ``os.linesep`` automatically appended. Returns number of bytes
         written.  Only a limited number of bytes may be sent for each
         line in the default terminal mode, see docstring of :meth:`send`.
+
+        Like :meth:`expect`, passing ``async_=True`` will make this return an
+        asyncio coroutine.
         '''
         s = self._coerce_send_string(s)
-        return self.send(s + self.linesep)
+        return self.send(s + self.linesep, async_=async_)
 
     def _log_control(self, s):
         """Write control characters to the appropriate log files"""

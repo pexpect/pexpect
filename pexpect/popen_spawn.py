@@ -53,6 +53,7 @@ class PopenSpawn(SpawnBase):
         self.proc = subprocess.Popen(cmd, **kwargs)
         self.pid = self.proc.pid
         self.closed = False
+        self.has_eof = False
         self._buf = self.string_type()
 
         self._read_queue = Queue()

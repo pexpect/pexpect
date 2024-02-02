@@ -224,6 +224,7 @@ class spawn(SpawnBase):
         s.append('pid: ' + str(self.pid))
         s.append('child_fd: ' + str(self.child_fd))
         s.append('closed: ' + str(self.closed))
+        s.append('has_eof: ' + str(self.has_eof))
         s.append('timeout: ' + str(self.timeout))
         s.append('delimiter: ' + str(self.delimiter))
         s.append('logfile: ' + str(self.logfile))
@@ -306,9 +307,9 @@ class spawn(SpawnBase):
         self.pid = self.ptyproc.pid
         self.child_fd = self.ptyproc.fd
 
-
         self.terminated = False
         self.closed = False
+        self.has_eof = False
 
     def _spawnpty(self, args, **kwargs):
         '''Spawn a pty and return an instance of PtyProcess.'''
@@ -341,7 +342,7 @@ class spawn(SpawnBase):
 
         return os.isatty(self.child_fd)
 
-    def waitnoecho(self, timeout=-1, async_=False):
+    def waitnoecho(self, timeout=-1, async_=False, **kw):
         '''This waits until the terminal ECHO flag is set False. This returns
         True if the echo mode is off. This returns False if the ECHO flag was
         not set False before the timeout. This can be used to detect when the
@@ -369,6 +370,11 @@ class spawn(SpawnBase):
             timeout = self.timeout
         if timeout is not None:
             end_time = time.time() + timeout
+
+        if 'async' in kw:
+            async_ = kw.pop('async')
+        if kw:
+            raise TypeError("Unknown keyword arguments: {}".format(kw))
 
         if async_:
             from ._async import spawn__waitnoecho_async
@@ -521,22 +527,40 @@ class spawn(SpawnBase):
         else:
             raise TIMEOUT('Timeout exceeded.')
 
-    def write(self, s):
+    def write(self, s, async_=False, **kw):
         '''This is similar to send() except that there is no return value.
         '''
 
+        if 'async' in kw:
+            async_ = kw.pop('async')
+        if kw:
+            raise TypeError("Unknown keyword arguments: {}".format(kw))
+
+        if async_:
+            from ._async import spawn__write_async
+            return spawn__write_async(self, s)
+
         self.send(s)
 
-    def writelines(self, sequence):
+    def writelines(self, sequence, async_=False, **kw):
         '''This calls write() for each element in the sequence. The sequence
         can be any iterable object producing strings, typically a list of
         strings. This does not add line separators. There is no return value.
         '''
 
+        if 'async' in kw:
+            async_ = kw.pop('async')
+        if kw:
+            raise TypeError("Unknown keyword arguments: {}".format(kw))
+
+        if async_:
+            from ._async import spawn__writelines_async
+            return spawn__writelines_async(self, sequence)
+
         for s in sequence:
             self.write(s)
 
-    def send(self, s, async_=False):
+    def send(self, s, async_=False, **kw):
         '''Sends string ``s`` to the child process, returning the number of
         bytes written. If a logfile is specified, a copy is written to that
         log.
@@ -574,6 +598,11 @@ class spawn(SpawnBase):
         asyncio coroutine.
         '''
 
+        if 'async' in kw:
+            async_ = kw.pop('async')
+        if kw:
+            raise TypeError("Unknown keyword arguments: {}".format(kw))
+
         if async_:
             from ._async import spawn__send_async
             return spawn__send_async(self, s)
@@ -587,7 +616,7 @@ class spawn(SpawnBase):
         b = self._encoder.encode(s, final=False)
         return os.write(self.child_fd, b)
 
-    def sendline(self, s='', async_=False):
+    def sendline(self, s='', async_=False, **kw):
         '''Wraps send(), sending string ``s`` to child process, with
         ``os.linesep`` automatically appended. Returns number of bytes
         written.  Only a limited number of bytes may be sent for each
@@ -596,6 +625,12 @@ class spawn(SpawnBase):
         Like :meth:`expect`, passing ``async_=True`` will make this return an
         asyncio coroutine.
         '''
+
+        if 'async' in kw:
+            async_ = kw.pop('async')
+        if kw:
+            raise TypeError("Unknown keyword arguments: {}".format(kw))
+
         s = self._coerce_send_string(s)
         return self.send(s + self.linesep, async_=async_)
 
@@ -651,11 +686,20 @@ class spawn(SpawnBase):
         '''
         return self.flag_eof
 
-    def terminate(self, force=False):
+    def terminate(self, force=False, async_=False, **kw):
         '''This forces a child process to terminate. It starts nicely with
         SIGHUP and SIGINT. If "force" is True then moves onto SIGKILL. This
         returns True if the child was terminated. This returns False if the
         child could not be terminated. '''
+
+        if 'async' in kw:
+            async_ = kw.pop('async')
+        if kw:
+            raise TypeError("Unknown keyword arguments: {}".format(kw))
+
+        if async_:
+            from ._async import spawn__terminate_async
+            return spawn__terminate_async(self, force=force)
 
         if not self.isalive():
             return True

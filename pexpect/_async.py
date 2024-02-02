@@ -20,7 +20,13 @@ if py_version_info >= (3, 6):
         expect_async,
         repl_run_command_async,
         spawn__waitnoecho_async,
-        spawn__send_async
+        spawn__send_async,
+        spawn__write_async,
+        spawn__writelines_async,
+        spawn__terminate_async,
+        spawnbase__read_async,
+        spawnbase__readline_async,
+        spawnbase__readlines_async
     )
 else:
     from pexpect._async_pre_await import (
@@ -28,5 +34,11 @@ else:
         expect_async,
         repl_run_command_async,
         spawn__waitnoecho_async,
-        spawn__send_async
+        spawn__send_async,
+        spawn__write_async,
+        spawn__writelines_async,
+        spawn__terminate_async,
+        spawnbase__read_async,
+        spawnbase__readline_async,
+        spawnbase__readlines_async
     )

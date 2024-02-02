@@ -25,6 +25,10 @@ async def expect_async(expecter, timeout=None):
     idx = expecter.existing_data()
     if idx is not None:
         return idx
+
+    if expecter.spawn.has_eof:
+        return expecter.eof()
+
     if not expecter.spawn.async_pw_transport:
         pattern_waiter = PatternWaiter()
         pattern_waiter.set_expecter(expecter)
@@ -37,7 +41,7 @@ async def expect_async(expecter, timeout=None):
         pattern_waiter.set_expecter(expecter)
         transport.resume_reading()
     try:
-        return await asyncio.wait_for(pattern_waiter.fut, timeout)
+        return (await asyncio.wait_for(pattern_waiter.fut, timeout))
     except asyncio.TimeoutError as exc:
         transport.pause_reading()
         return expecter.timeout(exc)
@@ -71,6 +75,13 @@ async def spawn__waitnoecho_async(spawn, timeout, end_time):
             timeout = end_time - time.time()
         await asyncio.sleep(0.1)
 
+async def spawn__write_async(spawn, s):
+    await spawn.send(s, async_=True)
+
+async def spawn__writelines_async(spawn, sequence):
+    for s in sequence:
+        await spawn.write(s, async_=True)
+
 async def spawn__send_async(spawn, s):
     if spawn.delaybeforesend is not None:
         await asyncio.sleep(spawn.delaybeforesend)
@@ -81,6 +92,102 @@ async def spawn__send_async(spawn, s):
     b = spawn._encoder.encode(s, final=False)
     return os.write(spawn.child_fd, b)
 
+async def spawn__terminate_async(spawn, force=False):
+    if not spawn.isalive():
+        return True
+
+    try:
+        spawn.kill(signal.SIGHUP)
+        await asyncio.sleep(spawn.delayafterterminate)
+        if not spawn.isalive():
+            return True
+        spawn.kill(signal.SIGCONT)
+        await asyncio.sleep(spawn.delayafterterminate)
+        if not spawn.isalive():
+            return True
+        spawn.kill(signal.SIGINT)
+        await asyncio.sleep(spawn.delayafterterminate)
+        if not spawn.isalive():
+            return True
+        if force:
+            spawn.kill(signal.SIGKILL)
+            await asyncio.sleep(spawn.delayafterterminate)
+            if not spawn.isalive():
+                return True
+            else:
+                return False
+        return False
+    except OSError:
+        # I think there are kernel timing issues that sometimes cause
+        # this to happen. I think isalive() reports True, but the
+        # process is dead to the kernel.
+        # Make one last attempt to see if the kernel is up to date.
+        await asyncio.sleep(spawn.delayafterterminate)
+        if not spawn.isalive():
+            return True
+        else:
+            return False
+
+async def spawnbase__read_async(spawn, size):
+
+    if size == 0:
+        return spawn.string_type()
+    if size < 0:
+        # delimiter default is EOF
+        await spawn.expect(spawn.delimiter, async_=True)
+        return spawn.before
+
+    # I could have done this more directly by not using expect(), but
+    # I deliberately decided to couple read() to expect() so that
+    # I would catch any bugs early and ensure consistent behavior.
+    # It's a little less efficient, but there is less for me to
+    # worry about if I have to later modify read() or expect().
+    # Note, it's OK if size==-1 in the regex. That just means it
+    # will never match anything in which case we stop only on EOF.
+    cre = re.compile(spawn._coerce_expect_string('.{%d}' % size), re.DOTALL)
+    # delimiter default is EOF
+    index = await spawn.expect([cre, spawn.delimiter], async_=True)
+    if index == 0:
+        ### FIXME spawn.before should be ''. Should I assert this?
+        return spawn.after
+    return spawn.before
+
+async def spawnbase__readline_async(spawn, size):
+    '''This reads and returns one entire line. The newline at the end of
+    line is returned as part of the string, unless the file ends without a
+    newline. An empty string is returned if EOF is encountered immediately.
+    This looks for a newline as a CR/LF pair (\\r\\n) even on UNIX because
+    this is what the pseudotty device returns. So contrary to what you may
+    expect you will receive newlines as \\r\\n.
+
+    If the size argument is 0 then an empty string is returned. In all
+    other cases the size argument is ignored, which is not standard
+    behavior for a file-like object. '''
+
+    if size == 0:
+        return spawn.string_type()
+    # delimiter default is EOF
+    index = await spawn.expect([spawn.crlf, spawn.delimiter], async_=True)
+    if index == 0:
+        return spawn.before + spawn.crlf
+    else:
+        return spawn.before
+
+async def spawnbase__readlines_async(spawn, sizehint):
+    '''This reads until EOF using readline() and returns a list containing
+    the lines thus read. The optional 'sizehint' argument is ignored.
+    Remember, because this reads until EOF that means the child
+    process should have closed its stdout. If you run this method on
+    a child that is still running with its stdout open then this
+    method will block until it timesout.'''
+
+    lines = []
+    while True:
+        line = await spawn.readline(async_=True)
+        if not line:
+            break
+        lines.append(line)
+    return lines
 
 class PatternWaiter(asyncio.Protocol):
     transport = None
@@ -126,6 +233,7 @@ class PatternWaiter(asyncio.Protocol):
         # for us
         try:
             self.expecter.spawn.flag_eof = True
+            self.expecter.spawn.has_eof = True
             index = self.expecter.eof()
         except EOF as exc:
             self.error(exc)

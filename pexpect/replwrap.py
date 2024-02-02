@@ -65,7 +65,7 @@ class REPLWrapper(object):
         return self.child.expect_exact([self.prompt, self.continuation_prompt],
                                        timeout=timeout, async_=async_)
 
-    def run_command(self, command, timeout=-1, async_=False):
+    def run_command(self, command, timeout=-1, async_=False, **kw):
         """Send a command to the REPL, wait for and return output.
 
         :param str command: The command to send. Trailing newlines are not needed.
@@ -80,6 +80,12 @@ class REPLWrapper(object):
           :mod:`asyncio` Future, which you can yield from to get the same
           result that this method would normally give directly.
         """
+
+        if 'async' in kw:
+            async_ = kw.pop('async')
+        if kw:
+            raise TypeError("Unknown keyword arguments: {}".format(kw))
+
         # Split up multiline commands and feed them in bit-by-bit
         cmdlines = command.splitlines()
         # splitlines ignores trailing newlines - add it back in manually
@@ -90,7 +96,7 @@ class REPLWrapper(object):
 
         if async_:
             from ._async import repl_run_command_async
-            return repl_run_command_async(self, cmdlines, timeout)
+            return repl_run_command_async(self, command, cmdlines, timeout)
 
         res = []
         self.child.sendline(cmdlines[0])

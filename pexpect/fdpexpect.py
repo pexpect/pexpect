@@ -61,6 +61,7 @@ class fdspawn(SpawnBase):
         self.child_fd = fd
         self.own_fd = False
         self.closed = False
+        self.has_eof = False
         self.name = '<file descriptor %d>' % fd
         self.use_poll = use_poll
 

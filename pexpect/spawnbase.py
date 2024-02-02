@@ -78,6 +78,7 @@ class SpawnBase(object):
         self.softspace = False
         self.name = '<' + repr(self) + '>'
         self.closed = True
+        self.has_eof = False
 
         # Unicode interface
         self.encoding = encoding
@@ -441,12 +442,21 @@ class SpawnBase(object):
         exp = Expecter(self, searcher, searchwindowsize)
         return exp.expect_loop(timeout)
 
-    def read(self, size=-1):
+    def read(self, size=-1, async_=False, **kw):
         '''This reads at most "size" bytes from the file (less if the read hits
         EOF before obtaining size bytes). If the size argument is negative or
         omitted, read all data until EOF is reached. The bytes are returned as
         a string object. An empty string is returned when EOF is encountered
         immediately. '''
+
+        if 'async' in kw:
+            async_ = kw.pop('async')
+        if kw:
+            raise TypeError("Unknown keyword arguments: {}".format(kw))
+
+        if async_:
+            from ._async import spawnbase__read_async
+            return spawnbase__read_async(self, size)
 
         if size == 0:
             return self.string_type()
@@ -470,7 +480,7 @@ class SpawnBase(object):
             return self.after
         return self.before
 
-    def readline(self, size=-1):
+    def readline(self, size=-1, async_=False, **kw):
         '''This reads and returns one entire line. The newline at the end of
         line is returned as part of the string, unless the file ends without a
         newline. An empty string is returned if EOF is encountered immediately.
@@ -481,6 +491,15 @@ class SpawnBase(object):
         If the size argument is 0 then an empty string is returned. In all
         other cases the size argument is ignored, which is not standard
         behavior for a file-like object. '''
+
+        if 'async' in kw:
+            async_ = kw.pop('async')
+        if kw:
+            raise TypeError("Unknown keyword arguments: {}".format(kw))
+
+        if async_:
+            from ._async import spawnbase__readline_async
+            return spawnbase__readline_async(self, size)
 
         if size == 0:
             return self.string_type()
@@ -496,13 +515,22 @@ class SpawnBase(object):
         '''
         return iter(self.readline, self.string_type())
 
-    def readlines(self, sizehint=-1):
+    def readlines(self, sizehint=-1, async_=False, **kw):
         '''This reads until EOF using readline() and returns a list containing
         the lines thus read. The optional 'sizehint' argument is ignored.
         Remember, because this reads until EOF that means the child
         process should have closed its stdout. If you run this method on
         a child that is still running with its stdout open then this
         method will block until it timesout.'''
+
+        if 'async' in kw:
+            async_ = kw.pop('async')
+        if kw:
+            raise TypeError("Unknown keyword arguments: {}".format(kw))
+
+        if async_:
+            from ._async import spawnbase__readlines_async
+            return spawnbase__readlines_async(self, sizehint)
 
         lines = []
         while True:
@@ -525,6 +553,11 @@ class SpawnBase(object):
     def isatty(self):
         """Overridden in subclass using tty"""
         return False
+
+    def close(self):
+        self.flush()
+        self.child_fd = -1
+        self.closed = True
 
     # For 'with spawn(...) as child:'
     def __enter__(self):

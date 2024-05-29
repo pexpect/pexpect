@@ -35,7 +35,7 @@ class REPLWrapper(object):
                  continuation_prompt=PEXPECT_CONTINUATION_PROMPT,
                  extra_init_cmd=None):
         if isinstance(cmd_or_spawn, basestring):
-            self.child = pexpect.spawn(cmd_or_spawn, echo=False, encoding='utf-8')
+            self.child = pexpect.spawn(cmd_or_spawn, echo=False, encoding='utf-8', env={'NO_COLOR': '1'})
         else:
             self.child = cmd_or_spawn
         if self.child.echo:

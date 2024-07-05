@@ -20,13 +20,21 @@ PEXPECT LICENSE
 
 '''
 
-from pexpect import ExceptionPexpect, TIMEOUT, EOF, spawn
+from pexpect import ExceptionPexpect, TIMEOUT, EOF
 import time
 import os
 import sys
 import re
 
 __all__ = ['ExceptionPxssh', 'pxssh']
+
+# Conditional import for spawn
+if sys.platform != 'win32':
+    from pexpect import spawn
+else:
+    class spawn:
+        def __init__(self, *args, **kwargs):
+            raise NotImplementedError("The 'spawn' function is not implemented on Windows.")
 
 # Exception classes used by this module.
 class ExceptionPxssh(ExceptionPexpect):
@@ -120,7 +128,7 @@ class pxssh (spawn):
                     options={}, encoding=None, codec_errors='strict',
                     debug_command_string=False, use_poll=False):
 
-        spawn.__init__(self, None, timeout=timeout, maxread=maxread,
+        super().__init__(None, timeout=timeout, maxread=maxread,
                        searchwindowsize=searchwindowsize, logfile=logfile,
                        cwd=cwd, env=env, ignore_sighup=ignore_sighup, echo=echo,
                        encoding=encoding, codec_errors=codec_errors, use_poll=use_poll)
@@ -398,7 +406,7 @@ class pxssh (spawn):
 
         # Are we asking for a local ssh command or to spawn one in another session?
         if spawn_local_ssh:
-            spawn._spawn(self, cmd)
+            super()._spawn(self, cmd)
         else:
             self.sendline(cmd)
 

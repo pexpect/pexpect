@@ -124,7 +124,7 @@ class REPLWrapTestCase(unittest.TestCase):
         if platform.python_implementation() == 'PyPy':
             raise unittest.SkipTest(skip_pypy)
 
-        child = pexpect.spawn(sys.executable, echo=False, timeout=5, encoding='utf-8')
+        child = pexpect.spawn(sys.executable, echo=False, timeout=5, encoding='utf-8', env={'NO_COLOR': '1'})
         # prompt_change=None should mean no prompt change
         py = replwrap.REPLWrapper(child, u">>> ", prompt_change=None,
                                   continuation_prompt=u"... ")

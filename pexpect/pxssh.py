@@ -20,7 +20,7 @@ PEXPECT LICENSE
 
 '''
 
-from pexpect import ExceptionPexpect, TIMEOUT, EOF, spawn
+from pexpect import ExceptionPexpect, TIMEOUT, EOF
 import time
 import os
 import sys
@@ -28,10 +28,17 @@ import re
 
 __all__ = ['ExceptionPxssh', 'pxssh']
 
+# Conditional import for spawn
+if sys.platform != 'win32':
+    from pexpect import spawn
+else:
+    class spawn:
+        def __init__(self, *args, **kwargs):
+            raise NotImplementedError("The 'spawn' function is not implemented on Windows.")
+
 # Exception classes used by this module.
 class ExceptionPxssh(ExceptionPexpect):
-    '''Raised for pxssh exceptions.
-    '''
+    '''Raised for pxssh exceptions.'''
 
 if sys.version_info > (3, 0):
     from shlex import quote
@@ -49,7 +56,7 @@ else:
         # the string $'b is then quoted as '$'"'"'b'
         return "'" + s.replace("'", "'\"'\"'") + "'"
 
-class pxssh (spawn):
+class pxssh(spawn):
     '''This class extends pexpect.spawn to specialize setting up SSH
     connections. This adds methods for login, logout, and expecting the shell
     prompt. It does various tricky things to handle many situations in the SSH
@@ -120,7 +127,7 @@ class pxssh (spawn):
                     options={}, encoding=None, codec_errors='strict',
                     debug_command_string=False, use_poll=False):
 
-        spawn.__init__(self, None, timeout=timeout, maxread=maxread,
+        super().__init__(self, None, timeout=timeout, maxread=maxread,
                        searchwindowsize=searchwindowsize, logfile=logfile,
                        cwd=cwd, env=env, ignore_sighup=ignore_sighup, echo=echo,
                        encoding=encoding, codec_errors=codec_errors, use_poll=use_poll)
@@ -398,7 +405,7 @@ class pxssh (spawn):
 
         # Are we asking for a local ssh command or to spawn one in another session?
         if spawn_local_ssh:
-            spawn._spawn(self, cmd)
+            super()._spawn(self, cmd)
         else:
             self.sendline(cmd)
 

@@ -161,6 +161,9 @@ class Expecter(object):
             idx = self.existing_data()
             if idx is not None:
                 return idx
+            if spawn.has_eof:
+                return self.eof()
+
             while True:
                 # No match at this point
                 if (timeout is not None) and (timeout < 0):
@@ -176,7 +179,14 @@ class Expecter(object):
                 if timeout is not None:
                     timeout = end_time - time.time()
         except EOF as e:
-            return self.eof(e)
+            spawn.has_eof = True
+            try:
+                eof_index = self.eof(e)
+            except:
+                spawn.close()
+                raise
+            spawn.close()
+            return eof_index
         except TIMEOUT as e:
             return self.timeout(e)
         except:

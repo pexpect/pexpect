@@ -26,10 +26,13 @@ import signal
 import sys
 import os
 
-try:
-    from unittest import IsolatedAsyncioTestCase
-except ImportError:
-    from aiounittest import AsyncTestCase as IsolatedAsyncioTestCase
+PY3 = (sys.version_info[0] >= 3)
+
+if PY3:
+    try:
+        from unittest import IsolatedAsyncioTestCase
+    except ImportError:
+        from aiounittest import AsyncTestCase as IsolatedAsyncioTestCase
 
 
 class _PexpectTestCaseBase:
@@ -91,34 +94,15 @@ class _PexpectTestCaseBase:
         for signal_value in self.restore_ignored_signals:
             signal.signal(signal_value, signal.SIG_IGN)
 
-    if sys.version_info < (2, 7):
-        # We want to use these methods, which are new/improved in 2.7, but
-        # we are still supporting 2.6 for the moment. This section can be
-        # removed when we drop Python 2.6 support.
-        @contextlib.contextmanager
-        def assertRaises(self, excClass):
-            try:
-                yield
-            except Exception as e:
-                assert isinstance(e, excClass)
-            else:
-                raise AssertionError("%s was not raised" % excClass)
-
-        @contextlib.contextmanager
-        def assertRaisesRegex(self, excClass, pattern):
-            import re
-            try:
-                yield
-            except Exception as e:
-                assert isinstance(e, excClass)
-                assert re.match(pattern, str(e))
-            else:
-                raise AssertionError("%s was not raised" % excClass)
-
 
 class PexpectTestCase(_PexpectTestCaseBase, unittest.TestCase):
     pass
 
 
-class AsyncPexpectTestCase(_PexpectTestCaseBase, IsolatedAsyncioTestCase):
-    pass
+if PY3:
+    class AsyncPexpectTestCase(_PexpectTestCaseBase, IsolatedAsyncioTestCase):
+        pass
+else:
+    class AsyncPexpectTestCase(object):
+        def setUp(self):
+            raise NotImplementedError

@@ -51,6 +51,12 @@ class spawn(SpawnBase):
             child = pexpect.spawn('/usr/bin/ssh', ['user@example.com'])
             child = pexpect.spawn('ls', ['-latr', '/tmp'])
 
+        Spawn objects can also be used with the ``with`` keyword to be
+        automatically closed at the end of the block:
+
+            with pexpect.spawn('/usr/bin/ftp') as child:
+                # child lifetime is limited to this block
+
         After this the child application will be created and will be ready to
         talk to. For normal use, see expect() and send() and sendline().
 

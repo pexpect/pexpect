@@ -33,6 +33,14 @@ from .utils import no_coverage_env
 
 PY3 = bool(sys.version_info.major >= 3)
 
+# Python 3.14 changed the non-macOS POSIX default to forkserver
+# but the code in this module does not work with it
+# See https://github.com/python/cpython/issues/125714
+if multiprocessing.get_start_method() == 'forkserver':
+    mp_context = multiprocessing.get_context(method='fork')
+else:
+    mp_context = multiprocessing.get_context()
+
 # Many of these test cases blindly assume that sequential directory
 # listings of the /bin directory will yield the same results.
 # This may not be true, but seems adequate for testing now.
@@ -682,7 +690,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         '''
         Ensure pexpect continues to operate even when stdin is closed
         '''
-        class Closed_stdin_proc(multiprocessing.Process):
+        class Closed_stdin_proc(mp_context.Process):
             def run(self):
                 sys.__stdin__.close()
                 cat = pexpect.spawn('cat')
@@ -698,7 +706,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         '''
         Ensure pexpect continues to operate even when stdin and stdout is closed
         '''
-        class Closed_stdin_stdout_proc(multiprocessing.Process):
+        class Closed_stdin_stdout_proc(mp_context.Process):
             def run(self):
                 sys.__stdin__.close()
                 sys.__stdout__.close()

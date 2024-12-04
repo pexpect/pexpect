@@ -62,6 +62,7 @@ class SocketSpawn(SpawnBase):
         self.socket = socket
         self.child_fd = socket.fileno()
         self.closed = False
+        self.has_eof = False
         self.name = "<socket %s>" % socket
         self.use_poll = use_poll
 

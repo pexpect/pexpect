@@ -17,7 +17,14 @@ jobs:
       fail-fast: false
       matrix:
         os: ["ubuntu-22.04"]
-        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "pypy3.9"]
+        python-version:
+          - "3.7"
+          - "3.8"
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "pypy3.9"
         include:
           # Python < 3.7 is not available on ubuntu-22.04
           - os: "ubuntu-20.04"

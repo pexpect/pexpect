@@ -21,8 +21,6 @@ jobs:
         include:
           # Python < 3.7 is not available on ubuntu-22.04
           - os: "ubuntu-20.04"
-            python-version: "3.5"
-          - os: "ubuntu-20.04"
             python-version: "3.6"
 
     steps:

@@ -65,6 +65,7 @@ class TestCaseEnv(PexpectTestCase.PexpectTestCase):
             child = pexpect.spawn(script, env=environ)
             out = child.readline()
             child.expect(pexpect.EOF)
+            child.wait()
         self.assertEqual(child.exitstatus, 0)
         self.assertEqual(out.rstrip(), b'pexpect test value')
 

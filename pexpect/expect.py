@@ -155,7 +155,7 @@ class Expecter(object):
         spawn = self.spawn
 
         if timeout is not None:
-            end_time = time.time() + timeout
+            end_time = time.monotonic() + timeout
 
         try:
             idx = self.existing_data()
@@ -174,7 +174,7 @@ class Expecter(object):
                 if idx is not None:
                     return idx
                 if timeout is not None:
-                    timeout = end_time - time.time()
+                    timeout = end_time - time.monotonic()
         except EOF as e:
             return self.eof(e)
         except TIMEOUT as e:

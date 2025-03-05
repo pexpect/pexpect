@@ -21,12 +21,15 @@ PEXPECT LICENSE
 """
 
 import socket
+import sys
 from contextlib import contextmanager
 
 from .exceptions import TIMEOUT, EOF
 from .spawnbase import SpawnBase
 
 __all__ = ["SocketSpawn"]
+
+PY3 = (sys.version_info[0] >= 3)
 
 
 class SocketSpawn(SpawnBase):
@@ -36,7 +39,7 @@ class SocketSpawn(SpawnBase):
 
     def __init__(
         self,
-        socket: socket.socket,
+        socket,  # type: socket.socket
         args=None,
         timeout=30,
         maxread=2000,
@@ -82,9 +85,12 @@ class SocketSpawn(SpawnBase):
 
     def isalive(self):
         """ Alive if the fileno is valid """
-        return self.socket.fileno() >= 0
+        if PY3 or not hasattr(self.socket, '_sock'):
+            return self.socket.fileno() >= 0
+        else:
+            return self.socket._sock.__class__.__name__ != '_closedsocket'
 
-    def send(self, s) -> int:
+    def send(self, s):  # -> int
         """Write to socket, return number of bytes written"""
         s = self._coerce_send_string(s)
         self._log(s, "send")
@@ -93,7 +99,7 @@ class SocketSpawn(SpawnBase):
         self.socket.sendall(b)
         return len(b)
 
-    def sendline(self, s) -> int:
+    def sendline(self, s):  # -> int
         """Write to socket with trailing newline, return number of bytes written"""
         s = self._coerce_send_string(s)
         return self.send(s + self.linesep)

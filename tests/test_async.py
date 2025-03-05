@@ -1,11 +1,4 @@
-try:
-    import asyncio
-except ImportError:
-    asyncio = None
-
 import gc
-import sys
-import unittest
 
 import pexpect
 from pexpect import replwrap
@@ -13,7 +6,6 @@ from pexpect import replwrap
 from . import PexpectTestCase
 
 
-@unittest.skipIf(asyncio is None, "Requires asyncio")
 class AsyncTests(PexpectTestCase.AsyncPexpectTestCase):
     async def test_simple_expect(self):
         p = pexpect.spawn("cat")

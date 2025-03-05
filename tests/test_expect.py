@@ -420,9 +420,9 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         assert index == 5, "index="+str(index) # Expect EOF
 
     def test_expect (self):
-        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
+        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin', '--color=never'],
                 stdout=subprocess.PIPE).communicate()[0].rstrip()
-        p = pexpect.spawn('ls -l /bin')
+        p = pexpect.spawn('ls -l /bin --color=never')
         the_new_way = b''
         while 1:
             i = p.expect ([b'\n', pexpect.EOF])
@@ -437,9 +437,9 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         assert the_old_way == the_new_way, hex_diff(the_old_way, the_new_way)
 
     def test_expect_exact (self):
-        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin'],
+        the_old_way = subprocess.Popen(args=['ls', '-l', '/bin', '--color=never'],
                 stdout=subprocess.PIPE).communicate()[0].rstrip()
-        p = pexpect.spawn('ls -l /bin')
+        p = pexpect.spawn('ls -l /bin --color=never')
         the_new_way = b''
         while 1:
             i = p.expect_exact ([b'\n', pexpect.EOF])
@@ -457,9 +457,9 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         self.assertEqual(p.after, b'.?')
 
     def test_expect_eof (self):
-        the_old_way = subprocess.Popen(args=['/bin/ls', '-l', '/bin'],
+        the_old_way = subprocess.Popen(args=['/bin/ls', '-l', '/bin', '--color=never'],
                 stdout=subprocess.PIPE).communicate()[0].rstrip()
-        p = pexpect.spawn('/bin/ls -l /bin')
+        p = pexpect.spawn('/bin/ls -l /bin --color=never')
         p.expect(pexpect.EOF) # This basically tells it to read everything. Same as pexpect.run() function.
         the_new_way = p.before
         the_new_way = the_new_way.replace(b'\r\n', b'\n'
@@ -493,7 +493,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
     def test_before_across_chunks(self):
         # https://github.com/pexpect/pexpect/issues/478
         child = pexpect.spawn(
-            '''/bin/sh -c "openssl rand -base64 {} 2>/dev/null | head -500 | nl -n rz -w 5 2>&1 ; echo 'PATTERN!!!'"'''.format(1024 * 1024 * 2),
+            '''/bin/sh -c "openssl rand -base64 {} 2>/dev/null | head -500 | nl -w 5 2>&1 ; echo 'PATTERN!!!'"'''.format(1024 * 1024 * 2),
             searchwindowsize=128
         )
         child.expect(['PATTERN'])

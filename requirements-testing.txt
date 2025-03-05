@@ -1,4 +1,4 @@
-aiounittest; python_version < '3.8'
+aiounittest; python_version >= '3.0' and python_version < '3.8'
 coverage
 coveralls
 ptyprocess

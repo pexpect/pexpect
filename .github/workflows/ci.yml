@@ -21,8 +21,6 @@ jobs:
         include:
           # Python < 3.7 is not available on ubuntu-22.04
           - os: "ubuntu-20.04"
-            python-version: "3.5"
-          - os: "ubuntu-20.04"
             python-version: "3.6"
 
     steps:
@@ -46,11 +44,23 @@ jobs:
         ./tools/display-terminalinfo.py
         pytest --cov pexpect --cov-config .coveragerc
 
-    - name: Check coverage
+    - name: Coveralls
       if: github.repository_owner == 'pexpect'
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        COVERALLS_SERVICE_NUMBER: "${{ github.workflow }}-${{ github.run_number }}"
-      run: |
-        coveralls --finish
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        flag-name: ${{matrix.os}}-node-${{ matrix.node }}
+        parallel: true
+
+
+  finish:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Coveralls Finished
+        if: github.repository_owner == 'pexpect'
+        uses: coverallsapp/github-action@master
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          parallel-finished: true
 

@@ -50,5 +50,7 @@ jobs:
       if: github.repository_owner == 'pexpect'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_SERVICE_NUMBER: "${{ github.workflow }}-${{ github.run_number }}"
       run: |
-        coveralls --service=github
+        coveralls --finish
+

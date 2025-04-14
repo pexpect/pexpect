@@ -140,6 +140,7 @@ class SocketSpawn(SpawnBase):
                 if s == b'':
                     self.flag_eof = True
                     raise EOF("Socket closed")
+                self._log(s, 'read')
                 return s
         except socket.timeout:
             raise TIMEOUT("Timeout exceeded.")

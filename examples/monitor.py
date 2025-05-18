@@ -104,7 +104,7 @@ def main():
     #
     # Login via SSH
     #
-    child = pexpect.spawn('ssh -l %s %s'%(user, host))
+    child = pexpect.spawnu('ssh -l %s %s'%(user, host))
     i = child.expect([pexpect.TIMEOUT, SSH_NEWKEY, COMMAND_PROMPT, '(?i)password'])
     if i == 0: # Timeout
         print('ERROR! could not login with SSH. Here is what SSH said:')

@@ -22,6 +22,7 @@ import pexpect
 from pexpect import socket_pexpect
 import unittest
 from . import PexpectTestCase
+import io
 import multiprocessing
 import os
 import signal
@@ -267,6 +268,24 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         sock.connect((self.host, self.port))
         session = self.spawn(sock, timeout=10, use_poll=True)
         assert not session.isatty()
+        session.close()
+
+    def test_logfile_write(self):
+        sock = socket.socket(self.af, socket.SOCK_STREAM)
+        sock.connect((self.host, self.port))
+        session = self.spawn(sock, timeout=10, use_poll=True)
+        prompt = 'SOCKET UNIT TEST'
+        user_input = '\nUser-provided input\n'
+        session.logfile = io.BytesIO()
+        session.logfile_read = io.BytesIO()
+        session.expect_exact(prompt, timeout=10)
+        session.send(user_input)
+        log_full = session.logfile.getvalue().decode()
+        log_read = session.logfile_read.getvalue().decode()
+        assert prompt in log_read
+        assert prompt in log_full
+        assert user_input not in log_read
+        assert user_input in log_full
         session.close()
 
 

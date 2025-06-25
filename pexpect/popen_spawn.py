@@ -69,6 +69,7 @@ class PopenSpawn(SpawnBase):
             # then raise EOF
             if buf:
                 self._buf = buf[size:]
+                self._log(buf[:size], 'read')
                 return buf[:size]
             else:
                 self.flag_eof = True

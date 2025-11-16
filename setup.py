@@ -73,5 +73,5 @@ setup(name='pexpect',
         'Topic :: System :: Software Distribution',
         'Topic :: Terminals',
     ],
-    install_requires=['ptyprocess>=0.5'],
+    install_requires=['ptyprocess>=0.5.1'],
 )

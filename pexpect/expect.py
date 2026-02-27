@@ -179,7 +179,7 @@ class Expecter(object):
             return self.eof(e)
         except TIMEOUT as e:
             return self.timeout(e)
-        except:
+        except Exception:
             self.errored()
             raise
 

@@ -87,7 +87,7 @@ class fdspawn(SpawnBase):
         try:
             os.fstat(self.child_fd)
             return True
-        except:
+        except Exception:
             return False
 
     def terminate (self, force=False):  # pragma: no cover

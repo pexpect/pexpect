@@ -53,7 +53,7 @@ def sig_test (sig_handler_type, fork_type, child_output):
 	#print 'Entering to sleep...'
 	try:
 		time.sleep(2)
-	except:
+	except Exception:
 		pass
 	try:
 		os.kill(pid, 0)

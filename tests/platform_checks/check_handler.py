@@ -43,7 +43,7 @@ def main ():
 	print 'Entering to sleep...'
 	try:
 		time.sleep(2)
-	except:
+	except Exception:
 		print 'Sleep interrupted'
 	try:
 		os.kill(pid, 0)

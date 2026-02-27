@@ -233,7 +233,7 @@ def main():
                 ip_list[k] = ip_list[k] + 1
             else:
                 ip_list[k] = 1
-    except:
+    except Exception:
         pass
 
     # remove a few common, uninteresting addresses from the dictionary.
@@ -268,7 +268,7 @@ def main():
     # load the stats from the last run.
     try:
         last_stats = pickle.load(file(TOPIP_LAST_RUN_STATS))
-    except:
+    except Exception:
         last_stats = {'maxip':None}
 
     if ( s['maxip'][1] > (s['stddev'] * stddev_trigger)
@@ -291,7 +291,7 @@ def main():
     try:
         pickle.dump(s, file(TOPIP_LAST_RUN_STATS,'w'))
         os.chmod (TOPIP_LAST_RUN_STATS, 0o664)
-    except:
+    except Exception:
         pass
     # p.logout()
 

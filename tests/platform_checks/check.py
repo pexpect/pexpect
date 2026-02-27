@@ -33,7 +33,7 @@ os.kill (pid, signal.SIGKILL)
 print 'Entering sleep...'
 try:
     time.sleep(10)
-except:
+except Exception:
     print 'sleep was interrupted by signal.'
 
 # Just for fun let's see if the process is alive.
@@ -65,7 +65,7 @@ os.kill (pid, signal.SIGKILL)
 print 'Entering sleep...'
 try:
     time.sleep(10)
-except:
+except Exception:
     print 'sleep was interrupted by signal.'
 
 # Just for fun let's see if the process is alive.

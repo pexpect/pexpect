@@ -26,7 +26,7 @@ os.kill (pid, signal.SIGKILL)
 interrupted = 0
 try:
 	time.sleep(10)
-except:
+except Exception:
 	print 'sleep was interrupted by signal.'
 	interrupted = 1
 

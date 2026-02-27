@@ -20,7 +20,7 @@ def my_forkpty():
         #        OpenBSD says that this is obsolete, but doesn't hurt.
             try:
                 fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
-            except:
+            except Exception:
                 pass
             else: #if fd >= 0:
                 fcntl.ioctl(fd, termios.TIOCNOTTY, 0)
@@ -37,7 +37,7 @@ def my_forkpty():
             fd = os.open("/dev/tty", os.O_RDWR | os.O_NOCTTY)
             os.close(fd)
             raise ExceptionPexpect("Forkpty failed")
-        except:
+        except Exception:
             pass
         if 'TIOCSCTTY' in dir(termios):
             # Make the pseudo terminal the controlling terminal for this process

@@ -837,6 +837,21 @@ class spawn(SpawnBase):
                     data = output_filter(data)
                 self._log(data, 'read')
                 os.write(self.STDOUT_FILENO, data)
+        # Drain any remaining data after process exits (GH#120)
+        if self.use_poll:
+            r = poll_ignore_interrupts([self.child_fd])
+        else:
+            r, w, e = select_ignore_interrupts([self.child_fd], [], [], 0)
+        if self.child_fd in r:
+            try:
+                data = self.__interact_read(self.child_fd)
+            except OSError:
+                pass
+            else:
+                if output_filter:
+                    data = output_filter(data)
+                self._log(data, 'read')
+                os.write(self.STDOUT_FILENO, data)
             if self.STDIN_FILENO in r:
                 data = self.__interact_read(self.STDIN_FILENO)
                 if input_filter:

@@ -326,7 +326,7 @@ def main():
     print('Use the = sign to evaluate and print the expression.')
     print('For example: ')
     print('    167 3 2 2 * * * 1 - =')
-    inputstr = (input if PY3 else raw_input)('> ')  # analysis:ignore
+    inputstr = input('> ')  # analysis:ignore
     f.process_list(inputstr)
 
 

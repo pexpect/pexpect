@@ -234,7 +234,7 @@ class pxssh (spawn):
             pass
 
         self.sendline()
-        x = self.try_read_prompt(sync_multiplier)
+        self.try_read_prompt(sync_multiplier)
 
         self.sendline()
         a = self.try_read_prompt(sync_multiplier)

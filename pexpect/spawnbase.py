@@ -8,7 +8,7 @@ from .exceptions import ExceptionPexpect, EOF, TIMEOUT
 from .expect import Expecter, searcher_string, searcher_re
 
 PY3 = (sys.version_info[0] >= 3)
-text_type = str if PY3 else unicode
+text_type = str
 
 class _NullCoder(object):
     """Pass bytes through unchanged."""
@@ -99,7 +99,7 @@ class SpawnBase(object):
                         return sys.stdout.write(b.decode('ascii', 'replace'))
                 self.write_to_stdout = write_to_stdout
             else:
-                self.allowed_string_types = (basestring,)  # analysis:ignore
+                self.allowed_string_types = (str,)  # analysis:ignore
                 self.linesep = os.linesep
                 self.write_to_stdout = sys.stdout.write
         else:

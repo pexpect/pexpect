@@ -167,9 +167,7 @@ def DoScrollRegion (fsm):
 
 def DoMode (fsm):
 
-    screen = fsm.memory[0]
-    mode = fsm.memory.pop() # Should be 4
-    # screen.setReplaceMode ()
+    fsm.memory.pop() # Should be 4
 
 def DoLog (fsm):
 

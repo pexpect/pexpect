@@ -852,21 +852,6 @@ class spawn(SpawnBase):
                     data = output_filter(data)
                 self._log(data, 'read')
                 os.write(self.STDOUT_FILENO, data)
-            if self.STDIN_FILENO in r:
-                data = self.__interact_read(self.STDIN_FILENO)
-                if input_filter:
-                    data = input_filter(data)
-                i = -1
-                if escape_character is not None:
-                    i = data.rfind(escape_character)
-                if i != -1:
-                    data = data[:i]
-                    if data:
-                        self._log(data, 'send')
-                    self.__interact_writen(self.child_fd, data)
-                    break
-                self._log(data, 'send')
-                self.__interact_writen(self.child_fd, data)
 
 
 def spawnu(*args, **kwargs):

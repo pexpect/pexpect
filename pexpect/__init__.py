@@ -83,7 +83,7 @@ if sys.platform != 'win32':
 
 __version__ = '4.9.0'
 __revision__ = ''
-__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'spawn', 'spawnu', 'run', 'runu',
+__all__ = ['ExceptionPexpect', 'EOF', 'TIMEOUT', 'is_executable_file', 'spawn', 'spawnu', 'run', 'runu',
            'which', 'split_command_line', '__version__', '__revision__']
 
 

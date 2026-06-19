@@ -1,3 +1,4 @@
+import sys
 import time
 
 from .exceptions import EOF, TIMEOUT
@@ -234,7 +235,10 @@ class searcher_string(object):
             ss.append((self.timeout_index,
                 '    %d: TIMEOUT' % self.timeout_index))
         ss.sort()
-        ss = list(zip(*ss))[1]
+        if sys.version_info >= (3, 10):
+            ss = list(zip(*ss, strict=False))[1]
+        else:
+            ss = list(zip(*ss))[1]
         return '\n'.join(ss)
 
     def search(self, buffer, freshlen, searchwindowsize=None):
@@ -334,7 +338,10 @@ class searcher_re(object):
             ss.append((self.timeout_index, '    %d: TIMEOUT' %
                 self.timeout_index))
         ss.sort()
-        ss = list(zip(*ss))[1]
+        if sys.version_info >= (3, 10):
+            ss = list(zip(*ss, strict=False))[1]
+        else:
+            ss = list(zip(*ss))[1]
         return '\n'.join(ss)
 
     def search(self, buffer, freshlen, searchwindowsize=None):

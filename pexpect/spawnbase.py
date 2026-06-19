@@ -4,7 +4,7 @@ import os
 import sys
 import re
 import errno
-from .exceptions import ExceptionPexpect, EOF, TIMEOUT
+from .exceptions import EOF, TIMEOUT
 from .expect import Expecter, searcher_string, searcher_re
 
 PY3 = (sys.version_info[0] >= 3)

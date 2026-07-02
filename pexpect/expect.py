@@ -121,7 +121,7 @@ class Expecter(object):
             exc.__cause__ = None # in Python 3.x we can use "raise exc from None"
             raise exc
 
-    def timeout(self, err=None):
+    def timeout(self, err=None, timeout=None):
         spawn = self.spawn
 
         spawn.before = spawn._before.getvalue()
@@ -138,6 +138,8 @@ class Expecter(object):
             msg += '\nsearcher: %s' % self.searcher
             if err is not None:
                 msg = str(err) + '\n' + msg
+            if timeout is not None:
+                msg = 'Timeout exceeded (waited {:.1f}s)\n'.format(timeout) + msg
 
             exc = TIMEOUT(msg)
             exc.__cause__ = None    # in Python 3.x we can use "raise exc from None"
@@ -153,6 +155,7 @@ class Expecter(object):
     def expect_loop(self, timeout=-1):
         """Blocking expect"""
         spawn = self.spawn
+        original_timeout = timeout
 
         if timeout is not None:
             end_time = time.time() + timeout
@@ -164,7 +167,7 @@ class Expecter(object):
             while True:
                 # No match at this point
                 if (timeout is not None) and (timeout < 0):
-                    return self.timeout()
+                    return self.timeout(timeout=original_timeout)
                 # Still have time left, so read more data
                 incoming = spawn.read_nonblocking(spawn.maxread, timeout)
                 if self.spawn.delayafterread is not None:
@@ -178,7 +181,7 @@ class Expecter(object):
         except EOF as e:
             return self.eof(e)
         except TIMEOUT as e:
-            return self.timeout(e)
+            return self.timeout(e, timeout=original_timeout)
         except:
             self.errored()
             raise

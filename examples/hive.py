@@ -170,7 +170,7 @@ CMD_HELP='''Hive commands are preceded by a colon : (just think of vi).
 
 :send my text
 
-    This will send the 'my text' wihtout a line feed to the targeted hosts.
+    This will send the 'my text' without a line feed to the targeted hosts.
     This output of the hosts is not automatically synchronized.
 
 :control X

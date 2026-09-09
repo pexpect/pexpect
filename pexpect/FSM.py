@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 '''This module implements a Finite State Machine (FSM). In addition to state
 this FSM also maintains a user defined "memory". So this FSM can be used as a

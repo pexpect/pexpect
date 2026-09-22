@@ -88,6 +88,7 @@ class PopenSpawn(SpawnBase):
             else:
                 if incoming is None:
                     self._read_reached_eof = True
+                    buf += self._decoder.decode(b'', final=True)
                     break
 
                 buf += self._decoder.decode(incoming, final=False)

@@ -145,10 +145,12 @@ class SpawnBase(object):
     def _coerce_expect_re(self, r):
         p = r.pattern
         if self.encoding is None and not isinstance(p, bytes):
-            return re.compile(p.encode('utf-8'))
+            # UNICODE is implicit for text patterns, but invalid for bytes.
+            return re.compile(p.encode('utf-8'), r.flags & ~re.UNICODE)
         # And vice-versa
         elif self.encoding is not None and isinstance(p, bytes):
-            return re.compile(p.decode('utf-8'))
+            # LOCALE is only valid for bytes patterns.
+            return re.compile(p.decode('utf-8'), r.flags & ~re.LOCALE)
         return r
 
     def _coerce_send_string(self, s):

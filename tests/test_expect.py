@@ -28,10 +28,46 @@ import os
 import re
 
 import pexpect
+import pytest
 from . import PexpectTestCase
 from .utils import no_coverage_env
 
 PY3 = bool(sys.version_info.major >= 3)
+
+
+@pytest.mark.parametrize('encoding', [None, 'utf-8'])
+@pytest.mark.parametrize('pattern, flags, output', [
+    ('hello', re.IGNORECASE, 'HELLO'),
+    ('hello.*world', re.DOTALL, 'hello\nworld'),
+    ('^world', re.MULTILINE, 'hello\nworld'),
+    ('hello world', re.VERBOSE, 'helloworld'),
+    ('^hello .* world', re.IGNORECASE | re.MULTILINE | re.DOTALL | re.VERBOSE,
+     'prefix\nHELLO\nWORLD'),
+    ('hello', 0, 'hello'),
+])
+def test_expect_converted_regex_flags(encoding, pattern, flags, output):
+    if encoding is not None:
+        pattern = pattern.encode('utf-8')
+    compiled = re.compile(pattern, flags)
+    with pexpect.spawn('printf', [output], encoding=encoding) as child:
+        assert child.expect([compiled, pexpect.EOF]) == 0
+        assert child.match.group() == child.after
+
+
+def test_expect_converted_regex_locale():
+    compiled = re.compile(b'hello', re.IGNORECASE | re.LOCALE)
+    with pexpect.spawn('printf', ['HELLO'], encoding='utf-8') as child:
+        assert child.expect([compiled, pexpect.EOF]) == 0
+
+
+@pytest.mark.parametrize('encoding', [None, 'utf-8'])
+def test_expect_matching_regex_type_is_unchanged(encoding):
+    pattern = b'hello' if encoding is None else u'hello'
+    compiled = re.compile(pattern, re.IGNORECASE)
+    with pexpect.spawn('printf', ['HELLO'], encoding=encoding) as child:
+        assert child.compile_pattern_list(compiled)[0] is compiled
+        assert child.expect([compiled, pexpect.EOF]) == 0
+
 
 # Python 3.14 changed the non-macOS POSIX default to forkserver
 # but the code in this module does not work with it

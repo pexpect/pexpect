@@ -54,6 +54,11 @@ class spawn(SpawnBase):
         After this the child application will be created and will be ready to
         talk to. For normal use, see expect() and send() and sendline().
 
+        If ``env`` is given, it replaces the inherited environment. On Python 3,
+        its keys and values must be strings, bytes, or path-like objects, as
+        accepted by :func:`os.fsencode`. Invalid types raise ``TypeError`` before
+        the child process is created.
+
         Remember that Pexpect does NOT interpret shell meta characters such as
         redirect, pipe, or wild cards (``>``, ``|``, or ``*``). This is a
         common mistake.  If you want to run a command and pipe it through
@@ -261,6 +266,12 @@ class spawn(SpawnBase):
 
         if not isinstance(args, type([])):
             raise TypeError('The argument, args, must be a list.')
+
+        if PY3 and self.env is not None:
+            # Validate before fork: exec errors must not escape in the child.
+            for key, value in self.env.items():
+                os.fsencode(key)
+                os.fsencode(value)
 
         if args == []:
             self.args = split_command_line(command)

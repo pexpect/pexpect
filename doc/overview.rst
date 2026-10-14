@@ -9,19 +9,20 @@ Here is an example of Pexpect in action::
     # This connects to the openbsd ftp site and
     # downloads the recursive directory listing.
     import pexpect
-    child = pexpect.spawn('ftp ftp.openbsd.org')
-    child.expect('Name .*: ')
-    child.sendline('anonymous')
-    child.expect('Password:')
-    child.sendline('noah@example.com')
-    child.expect('ftp> ')
-    child.sendline('lcd /tmp')
-    child.expect('ftp> ')
-    child.sendline('cd pub/OpenBSD')
-    child.expect('ftp> ')
-    child.sendline('get README')
-    child.expect('ftp> ')
-    child.sendline('bye')
+    with pexpect.spawn('ftp ftp.openbsd.org') as child:
+        child.expect('Name .*: ')
+        child.sendline('anonymous')
+        child.expect('Password:')
+        child.sendline('noah@example.com')
+        child.expect('ftp> ')
+        child.sendline('lcd /tmp')
+        child.expect('ftp> ')
+        child.sendline('cd pub/OpenBSD')
+        child.expect('ftp> ')
+        child.sendline('get README')
+        child.expect('ftp> ')
+        child.sendline('bye')
+        child.expect(pexpect.EOF)
 
 Obviously you could write an ftp client using Python's own :mod:`ftplib` module,
 but this is just a demonstration. You can use this technique with any application.
@@ -45,16 +46,33 @@ ftp to login to the OpenBSD site; list files in a directory; and then pass
 interactive control of the ftp session to the human user::
 
     import pexpect
-    child = pexpect.spawn ('ftp ftp.openbsd.org')
-    child.expect ('Name .*: ')
-    child.sendline ('anonymous')
-    child.expect ('Password:')
-    child.sendline ('noah@example.com')
-    child.expect ('ftp> ')
-    child.sendline ('ls /pub/OpenBSD/')
-    child.expect ('ftp> ')
-    print child.before   # Print the result of the ls command.
-    child.interact()     # Give control of the child to the user.
+    with pexpect.spawn('ftp ftp.openbsd.org') as child:
+        child.expect ('Name .*: ')
+        child.sendline ('anonymous')
+        child.expect ('Password:')
+        child.sendline ('noah@example.com')
+        child.expect ('ftp> ')
+        child.sendline ('ls /pub/OpenBSD/')
+        child.expect ('ftp> ')
+        print(child.before)   # Print the result of the ls command.
+        child.interact()     # Give control of the child to the user.
+
+Closing the child connection
+----------------------------
+
+Use :class:`~pexpect.spawn` as a context manager, as in the examples above, to
+call :meth:`~pexpect.spawn.close` when leaving the ``with`` block, including
+when an exception occurs. This closes the pseudo-terminal file descriptor and
+attempts to terminate the child if it is still running. If the application
+should exit normally, send its exit command and read through :class:`~pexpect.EOF`
+before leaving the block, as the first example does.
+
+Calling :meth:`~pexpect.spawn.terminate` or :meth:`~pexpect.spawn.wait` does not
+close the connection's file descriptor. If you manage the child without a
+``with`` block, call :meth:`~pexpect.spawn.close` in a ``finally`` clause so it
+also runs after a timeout or other error. Calling ``close()`` more than once
+is safe. After closing, the child's :attr:`~pexpect.spawn.exitstatus` or
+:attr:`~pexpect.spawn.signalstatus` records how it exited.
 
 Special EOF and TIMEOUT patterns
 --------------------------------

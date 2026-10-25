@@ -130,7 +130,7 @@ class SocketSpawn(SpawnBase):
         :param int size: Read at most *size* bytes.
         :param int timeout: Wait timeout seconds for file descriptor to be
             ready to read. When -1 (default), use self.timeout. When 0, poll.
-        :return: String containing the bytes read
+        :return: Bytes read, or text decoded with the specified encoding
         """
         if timeout == -1:
             timeout = self.timeout
@@ -140,6 +140,7 @@ class SocketSpawn(SpawnBase):
                 if s == b'':
                     self.flag_eof = True
                     raise EOF("Socket closed")
+                s = self._decoder.decode(s, final=False)
                 return s
         except socket.timeout:
             raise TIMEOUT("Timeout exceeded.")

@@ -65,6 +65,41 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         assert not s.isatty()
         s.close()
 
+    def test_close_unconnected_socket(self):
+        with socket.socket() as sock:
+            s = socket_pexpect.SocketSpawn(sock)
+            s.close()
+            self.assertEqual(sock.fileno(), -1)
+            self.assertEqual(s.child_fd, -1)
+            self.assertTrue(s.closed)
+            self.assertFalse(s.isalive())
+
+    def test_close_after_peer_eof_and_close_again(self):
+        read_socket, write_socket = socket.socketpair()
+        with read_socket, write_socket:
+            s = socket_pexpect.SocketSpawn(read_socket)
+            write_socket.close()
+            s.expect(pexpect.EOF)
+            s.close()
+            self.assertEqual(read_socket.fileno(), -1)
+            self.assertEqual(s.child_fd, -1)
+            self.assertTrue(s.closed)
+            self.assertFalse(s.isalive())
+            s.close()
+
+    def test_close_externally_closed_socket_raises(self):
+        with socket.socket() as sock:
+            s = socket_pexpect.SocketSpawn(sock)
+            original_fd = s.child_fd
+            sock.close()
+            with self.assertRaises(OSError) as socket_error:
+                sock.shutdown(socket.SHUT_RDWR)
+            with self.assertRaises(OSError) as error:
+                s.close()
+            self.assertEqual(error.exception.errno, socket_error.exception.errno)
+            self.assertEqual(s.child_fd, original_fd)
+            self.assertFalse(s.closed)
+
 
 if __name__ == '__main__':
     unittest.main()

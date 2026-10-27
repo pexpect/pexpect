@@ -20,6 +20,7 @@ PEXPECT LICENSE
 
 """
 
+import errno
 import socket
 from contextlib import contextmanager
 
@@ -75,7 +76,12 @@ class SocketSpawn(SpawnBase):
             return
 
         self.flush()
-        self.socket.shutdown(socket.SHUT_RDWR)
+        try:
+            self.socket.shutdown(socket.SHUT_RDWR)
+        except OSError as error:
+            # Disconnected sockets still have a local descriptor to close.
+            if error.errno != errno.ENOTCONN:
+                raise
         self.socket.close()
         self.child_fd = -1
         self.closed = True

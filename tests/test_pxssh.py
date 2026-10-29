@@ -36,6 +36,22 @@ class PxsshTestCase(SSHTestBase):
         assert ssh.prompt(timeout=10)
         ssh.logout()
 
+    def test_initial_dimensions(self):
+        ssh = pxssh.pxssh(dimensions=(41, 132))
+        try:
+            ssh.login('server', 'me', password='s3cret')
+            self.assertEqual(ssh.getwinsize(), (41, 132))
+        finally:
+            ssh.close()
+
+    def test_default_dimensions(self):
+        ssh = pxssh.pxssh(dimensions=None)
+        try:
+            ssh.login('server', 'me', password='s3cret')
+            self.assertEqual(ssh.getwinsize(), (24, 80))
+        finally:
+            ssh.close()
+
     def test_wrong_pw(self):
         ssh = pxssh.pxssh()
         try:

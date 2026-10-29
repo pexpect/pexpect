@@ -110,6 +110,12 @@ class pxssh (spawn):
             password = getpass.getpass('password: ')
             s.login (hostname, username, password)
 
+    ``dimensions`` sets the initial size of the local SSH pseudo-terminal as a
+    ``(rows, columns)`` tuple, for example ``pxssh(dimensions=(40, 120))``. The
+    size is applied when :meth:`login` starts the SSH client. If omitted, the
+    defaults from :mod:`ptyprocess` apply. Use :meth:`setwinsize` to resize an
+    existing session.
+
     `debug_command_string` is only for the test suite to confirm that the string
     generated for SSH is correct, using this will not allow you to do
     anything other than get a string back from `pxssh.pxssh.login()`.
@@ -118,7 +124,7 @@ class pxssh (spawn):
     def __init__ (self, timeout=30, maxread=2000, searchwindowsize=None,
                     logfile=None, cwd=None, env=None, ignore_sighup=True, echo=True,
                     options={}, encoding=None, codec_errors='strict',
-                    debug_command_string=False, use_poll=False):
+                    debug_command_string=False, use_poll=False, dimensions=None):
 
         spawn.__init__(self, None, timeout=timeout, maxread=maxread,
                        searchwindowsize=searchwindowsize, logfile=logfile,
@@ -126,6 +132,7 @@ class pxssh (spawn):
                        encoding=encoding, codec_errors=codec_errors, use_poll=use_poll)
 
         self.name = '<pxssh>'
+        self._dimensions = dimensions
 
         #SUBTLE HACK ALERT! Note that the command that SETS the prompt uses a
         #slightly different string than the regular expression to match it. This
@@ -398,7 +405,7 @@ class pxssh (spawn):
 
         # Are we asking for a local ssh command or to spawn one in another session?
         if spawn_local_ssh:
-            spawn._spawn(self, cmd)
+            spawn._spawn(self, cmd, dimensions=self._dimensions)
         else:
             self.sendline(cmd)
 

@@ -254,6 +254,10 @@ Pexpect can be used on Windows to wait for a pattern to be produced by a child
 process, using :class:`pexpect.popen_spawn.PopenSpawn`, or a file descriptor,
 using :class:`pexpect.fdpexpect.fdspawn`.
 
+For an existing socket connection, use
+:class:`pexpect.socket_pexpect.SocketSpawn`. It works on both Windows and Unix;
+see :doc:`api/socket_pexpect` for a complete example.
+
 :class:`pexpect.spawn` and :func:`pexpect.run` are *not* available on Windows,
 as they rely on Unix pseudoterminals (ptys). Cross platform code must not use
 these.

@@ -184,6 +184,13 @@ class UnicodeTests(PexpectTestCase.PexpectTestCase):
         assert not p.isalive()
         assert p.exitstatus == 0
 
+    def test_spawn_utf16_terminal(self):
+        code = "import os, sys; os.write(1, sys.argv[1].encode('utf-16le'))"
+        with pexpect.spawn(sys.executable, ['-c', code, 'hello'],
+                           encoding='utf-16le', timeout=5) as child:
+            child.expect(pexpect.EOF)
+            self.assertEqual(child.before, 'hello')
+
 if __name__ == '__main__':
     unittest.main()
 

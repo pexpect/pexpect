@@ -20,6 +20,7 @@ PEXPECT LICENSE
 '''
 import contextlib
 import os
+import sys
 import tempfile
 import unittest
 
@@ -67,6 +68,22 @@ class TestCaseEnv(PexpectTestCase.PexpectTestCase):
             child.expect(pexpect.EOF)
         self.assertEqual(child.exitstatus, 0)
         self.assertEqual(out.rstrip(), b'pexpect test value')
+
+    def test_spawn_relative_command_in_cwd(self):
+        script_name = 'show-cwd.sh'
+        with example_script(script_name, '$PWD') as script_dir:
+            for cwd in (script_dir, os.path.relpath(script_dir),
+                        script_dir.encode(sys.getfilesystemencoding())):
+                with pexpect.spawn('./' + script_name, cwd=cwd) as child:
+                    child.expect(pexpect.EOF)
+                    self.assertTrue(os.path.samefile(child.before.rstrip(),
+                                                     script_dir))
+
+    def test_spawn_missing_relative_command_in_cwd(self):
+        with example_script('only-on-path.sh') as script_dir:
+            with self.assertRaises(pexpect.ExceptionPexpect):
+                pexpect.spawn('./only-on-path.sh', cwd='.',
+                              env={'PATH': script_dir})
 
     def test_run_uses_env_path(self):
         " pexpect.run uses binary from PATH when given in env argument "

@@ -271,7 +271,12 @@ class spawn(SpawnBase):
             self.args.insert(0, command)
             self.command = command
 
-        command_with_path = which(self.command, env=self.env)
+        lookup_command = self.command
+        if (self.cwd is not None and os.path.dirname(lookup_command)
+                and not os.path.isabs(lookup_command)):
+            cwd = os.fsdecode(self.cwd) if PY3 else self.cwd
+            lookup_command = os.path.join(os.path.realpath(cwd), lookup_command)
+        command_with_path = which(lookup_command, env=self.env)
         if command_with_path is None:
             raise ExceptionPexpect('The command was not found or was not ' +
                     'executable: %s.' % self.command)

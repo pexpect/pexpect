@@ -38,10 +38,6 @@ else:
     mp_context = multiprocessing.get_context()
 
 
-class SocketServerError(Exception):
-    pass
-
-
 class ExpectTestCase(PexpectTestCase.PexpectTestCase):
 
     def setUp(self):
@@ -58,7 +54,6 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
                 self.host = '::1'
             except socket.error:
                 pass
-        self.port = 49152 + 10000
         self.motd = b"""\
 ------------------------------------------------------------------------------
 *                  Welcome to the SOCKET UNIT TEST code!                     *
@@ -91,30 +86,22 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
         self.prompt3 = b'Press X to exit:'
         self.enter = b'\r\n'
         self.exit = b'X\r\n'
-        self.server_up = mp_context.Event()
-        self.server_process = mp_context.Process(target=self.socket_server, args=(self.server_up,))
-        self.server_process.daemon = True
-        self.server_process.start()
-        counter = 0
-        while not self.server_up.is_set():
-            time.sleep(0.250)
-            counter += 1
-            if counter > (10 / 0.250):
-                raise SocketServerError("Could not start socket server")
+        with socket.socket(self.af, socket.SOCK_STREAM) as listener:
+            listener.bind((self.host, 0))
+            listener.listen(5)
+            self.port = listener.getsockname()[1]
+            self.server_process = mp_context.Process(
+                target=self.socket_server, args=(listener,))
+            self.server_process.daemon = True
+            self.server_process.start()
 
     def tearDown(self):
-        os.kill(self.server_process.pid, signal.SIGINT)
+        self.server_process.terminate()
         self.server_process.join(timeout=5.0)
         PexpectTestCase.PexpectTestCase.tearDown(self)
 
-    def socket_server(self, server_up):
-        sock = None
-        try:
-            sock = socket.socket(self.af, socket.SOCK_STREAM)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.bind((self.host, self.port))
-            sock.listen(5)
-            server_up.set()
+    def socket_server(self, sock):
+        with sock:
             while True:
                 (conn, addr) = sock.accept()
                 conn.send(self.motd)
@@ -131,15 +118,6 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
                 if result.startswith(self.exit[0]):
                     conn.shutdown(socket.SHUT_RDWR)
                     conn.close()
-        except KeyboardInterrupt:
-            pass
-        if sock is not None:
-            try:
-                sock.shutdown(socket.SHUT_RDWR)
-                sock.close()
-            except socket.error:
-                pass
-        exit(0)
 
     def spawn(self, socket, timeout=30, use_poll=False):
         """override me with other ways of spawning on a socket"""

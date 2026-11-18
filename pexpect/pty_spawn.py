@@ -26,6 +26,15 @@ def _wrap_ptyprocess_err():
 
 PY3 = (sys.version_info[0] >= 3)
 
+def _encode_argv(arg, encoding):
+    if isinstance(arg, bytes):
+        return arg
+    try:
+        return os.fsencode(arg) if PY3 else arg.encode(sys.getfilesystemencoding())
+    except UnicodeEncodeError:
+        # Preserve Unicode arguments in restrictive locales (see issue #272).
+        return arg.encode(encoding)
+
 class spawn(SpawnBase):
     '''This is the main class interface for Pexpect. Use this class to start
     and control child applications. '''
@@ -296,9 +305,7 @@ class spawn(SpawnBase):
             kwargs['dimensions'] = dimensions
 
         if self.encoding is not None:
-            # Encode command line using the specified encoding
-            self.args = [a if isinstance(a, bytes) else a.encode(self.encoding)
-                         for a in self.args]
+            self.args = [_encode_argv(arg, self.encoding) for arg in self.args]
 
         self.ptyproc = self._spawnpty(self.args, env=self.env,
                                      cwd=self.cwd, **kwargs)

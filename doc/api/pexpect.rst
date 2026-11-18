@@ -75,6 +75,8 @@ parameter to the constructor, it will instead act as a unicode interface:
 strings you send will be encoded using that encoding, and bytes received will
 be decoded before returning them to you. In this mode, patterns for
 :meth:`~spawn.expect` and :meth:`~spawn.expect_exact` should also be unicode.
+Text command-line arguments use the filesystem encoding. An argument that
+cannot be represented in that encoding falls back to *encoding* in unicode mode.
 
 .. versionchanged:: 4.0
 

@@ -129,8 +129,8 @@ class ExpectTestCase(PexpectTestCase.PexpectTestCase):
             sock = socket.socket(self.af, socket.SOCK_STREAM)
             sock.connect((self.host, self.port))
             session = self.spawn(sock, timeout=10)
-            # Get all data from server
-            session.read_nonblocking(size=4096)
+            # The greeting and prompt can arrive in separate reads.
+            session.expect(self.prompt1)
             all_read.set()
             # This read should timeout
             session.read_nonblocking(size=4096)

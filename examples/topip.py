@@ -17,7 +17,7 @@ A script might open over 100 simultaneous connections.
     -s : hostname of the remote server to login to.
     -u : username to user for login.
     -p : password to user for login.
-    -n : print stddev for the the number of the top 'N' ipaddresses.
+    -n : print stddev for the number of the top 'N' ipaddresses.
     -v : verbose - print stats and list of top ipaddresses.
     -a : send alert if stddev goes over 20.
     -l : to log message to /var/log/topip.log
@@ -35,7 +35,7 @@ Example:
         ./topip.py -s www.example.com -u mylogin -p mypassword -n 10 -v
 
     This will send an alert email if the maxip goes over the stddev trigger
-    value and the the current top ip is the same as the last top ip
+    value and the current top ip is the same as the last top ip
     (/tmp/topip.last):
 
         ./topip.py -s www.example.com -u mylogin -p mypassword \\

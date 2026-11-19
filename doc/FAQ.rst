@@ -71,7 +71,7 @@ There are two reasons for this.
   Standard IO Library (anything that uses ``#include <stdio.h>``). One
   of the features of the stdio library is that it buffers all input and
   output. Normally output is line buffered when a program is printing to
-  a TTY (your terminal screen). Everytime the program prints a line-feed
+  a TTY (your terminal screen). Every time the program prints a line-feed
   the currently buffered data will get printed to your screen. The
   problem comes when you connect a pipe. The stdio library is smart and
   can tell that it is printing to a pipe instead of a TTY. In that case

@@ -158,7 +158,7 @@ class pxssh (spawn):
         self.debug_command_string = debug_command_string
 
         # User defined SSH options, eg,
-        # ssh.otions = dict(StrictHostKeyChecking="no",UserKnownHostsFile="/dev/null")
+        # ssh.options = dict(StrictHostKeyChecking="no",UserKnownHostsFile="/dev/null")
         self.options = options
 
     def levenshtein_distance(self, a, b):

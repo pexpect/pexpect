@@ -11,7 +11,7 @@ from pexpect import EOF
 
 @asyncio.coroutine
 def expect_async(expecter, timeout=None):
-    # First process data that was previously read - if it maches, we don't need
+    # First process data that was previously read - if it matches, we don't need
     # async stuff.
     idx = expecter.existing_data()
     if idx is not None:

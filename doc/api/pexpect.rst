@@ -64,6 +64,17 @@ Controlling the child process
 
       The file descriptor used to communicate with the child process.
 
+   .. attribute:: delayafterclose
+
+      Delay in seconds used by :meth:`close` to allow the kernel to update
+      the child process status. Defaults to ``0.1``.
+
+   .. attribute:: delayafterterminate
+
+      Delay in seconds between termination signals in :meth:`terminate` and
+      :meth:`close` when waiting for the child process to exit. Defaults to
+      ``0.1``.
+
 .. _unicode:
 
 Handling unicode

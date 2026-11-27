@@ -3,11 +3,21 @@ import unittest
 import re
 import os
 import sys
+from unittest import mock
 
 import pexpect
 from pexpect import replwrap
 
 skip_pypy = "This test fails on PyPy because of REPL differences"
+
+
+def _strip_overstrike(text):
+    """Remove nroff backspace overstrike sequences such as _\\x08c or c\\x08c."""
+    prev = None
+    while prev != text:
+        prev = text
+        text = re.sub(r'[^\x08]\x08', '', text)
+    return text
 
 
 class REPLWrapTestCase(unittest.TestCase):
@@ -39,7 +49,20 @@ class REPLWrapTestCase(unittest.TestCase):
         " PAGER is set to cat, to prevent timeout in ``man sleep``. "
         bash = replwrap.bash()
         res = bash.run_command('man sleep', timeout=5)
-        assert 'SLEEP' in res.upper(), res
+        assert 'SLEEP' in _strip_overstrike(res).upper(), res
+
+    def test_pager_as_cat_overstrike(self):
+        " PAGER=cat man output may contain nroff backspace overstrikes. "
+        man_output = (
+            "_\x08S_\x08L_\x08E_\x08E_\x08P(1)  User Commands  "
+            "_\x08S_\x08L_\x08E_\x08E_\x08P(1)\r\n\r\n"
+            "N\x08NA\x08AM\x08ME\x08E\r\n"
+            "       s\x08sl\x08le\x08ee\x08ep\x08p - delay for a specified amount of time\r\n"
+        )
+        fake_bash = mock.Mock()
+        fake_bash.run_command.return_value = man_output
+        with mock.patch.object(replwrap, 'bash', return_value=fake_bash):
+            self.test_pager_as_cat()
 
     def test_bash_env(self):
         """env, which displays PS1=..., should not mess up finding the prompt.

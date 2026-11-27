@@ -18,8 +18,11 @@ PEXPECT LICENSE
     OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 '''
+import importlib.util
 import multiprocessing
+import pickle
 import unittest
+from unittest import mock
 import subprocess
 import time
 import signal
@@ -33,13 +36,31 @@ from .utils import no_coverage_env
 
 PY3 = bool(sys.version_info.major >= 3)
 
-# Python 3.14 changed the non-macOS POSIX default to forkserver
-# but the code in this module does not work with it
+# Python 3.14 changed the non-macOS POSIX default to forkserver and Python 3.8+
+# on macOS defaults to spawn, neither of which works with this module's tests.
 # See https://github.com/python/cpython/issues/125714
-if multiprocessing.get_start_method() == 'forkserver':
+if (multiprocessing.get_start_method() != 'fork'
+        and 'fork' in multiprocessing.get_all_start_methods()):
     mp_context = multiprocessing.get_context(method='fork')
 else:
     mp_context = multiprocessing.get_context()
+
+
+class _ClosedStdinProc(mp_context.Process):
+    def run(self):
+        sys.__stdin__.close()
+        cat = pexpect.spawn('cat')
+        cat.sendeof()
+        cat.expect(pexpect.EOF)
+
+
+class _ClosedStdinStdoutProc(mp_context.Process):
+    def run(self):
+        sys.__stdin__.close()
+        sys.__stdout__.close()
+        cat = pexpect.spawn('cat')
+        cat.sendeof()
+        cat.expect(pexpect.EOF)
 
 # Many of these test cases blindly assume that sequential directory
 # listings of the /bin directory will yield the same results.
@@ -690,14 +711,7 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         '''
         Ensure pexpect continues to operate even when stdin is closed
         '''
-        class Closed_stdin_proc(mp_context.Process):
-            def run(self):
-                sys.__stdin__.close()
-                cat = pexpect.spawn('cat')
-                cat.sendeof()
-                cat.expect(pexpect.EOF)
-
-        proc = Closed_stdin_proc()
+        proc = _ClosedStdinProc()
         proc.start()
         proc.join()
         assert proc.exitcode == 0
@@ -706,18 +720,28 @@ class ExpectTestCase (PexpectTestCase.PexpectTestCase):
         '''
         Ensure pexpect continues to operate even when stdin and stdout is closed
         '''
-        class Closed_stdin_stdout_proc(mp_context.Process):
-            def run(self):
-                sys.__stdin__.close()
-                sys.__stdout__.close()
-                cat = pexpect.spawn('cat')
-                cat.sendeof()
-                cat.expect(pexpect.EOF)
-
-        proc = Closed_stdin_stdout_proc()
+        proc = _ClosedStdinStdoutProc()
         proc.start()
         proc.join()
         assert proc.exitcode == 0
+
+    def test_spawn_start_method_uses_fork(self):
+        '''
+        Ensure test_expect and test_socket prefer fork over spawn when fork is available.
+        '''
+        test_dir = os.path.dirname(__file__)
+        default_context = multiprocessing.get_context()
+        for idx, filename in enumerate(('test_expect.py', 'test_socket.py')):
+            path = os.path.join(test_dir, filename)
+            spec = importlib.util.spec_from_file_location('tests._probe_%d' % idx, path)
+            module = importlib.util.module_from_spec(spec)
+            with mock.patch('multiprocessing.get_start_method', return_value='spawn'), \
+                 mock.patch('multiprocessing.get_all_start_methods', return_value=['spawn', 'fork']), \
+                 mock.patch('multiprocessing.get_context', return_value=default_context) as mock_get_context:
+                spec.loader.exec_module(module)
+            mock_get_context.assert_called_with(method='fork')
+        pickle.dumps(_ClosedStdinProc)
+        pickle.dumps(_ClosedStdinStdoutProc)
 
 if __name__ == '__main__':
     unittest.main()

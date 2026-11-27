@@ -21,6 +21,7 @@ PEXPECT LICENSE
 from __future__ import print_function
 
 import unittest, time, sys
+from unittest import mock
 import platform
 import pexpect
 import re
@@ -103,9 +104,23 @@ class PerformanceTestCase (PexpectTestCase.PexpectTestCase):
         print("100000 calls to faster_range:", (time.time() - start_time))
 
     def test_large_stdout_stream(self):
-        e = pexpect.spawn('openssl rand -base64 {}'.format(1024*1024*25), searchwindowsize=1000)
+        e = pexpect.spawn(
+            'openssl rand -base64 {}'.format(1024*1024*25),
+            searchwindowsize=1000,
+            timeout=100,
+        )
         resp = e.expect(['Password:', pexpect.EOF, pexpect.TIMEOUT])
         assert resp == 1  # index 1 == EOF
+
+    def test_large_stdout_stream_timeout(self):
+        fake_child = mock.Mock()
+        fake_child.expect.return_value = 1
+        with mock.patch.object(pexpect, 'spawn', return_value=fake_child, create=True) as mock_spawn:
+            self.test_large_stdout_stream()
+        self.assertEqual(mock_spawn.call_count, 1)
+        timeout = mock_spawn.call_args[1].get('timeout')
+        self.assertIsNotNone(timeout)
+        self.assertGreaterEqual(timeout, 100)
 
 if __name__ == "__main__":
     unittest.main()

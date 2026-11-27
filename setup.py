@@ -1,11 +1,7 @@
 # encoding: utf-8
-from distutils.core import setup
+from setuptools import setup
 import os
 import re
-import sys
-
-if any(a == 'bdist_wheel' for a in sys.argv):
-    from setuptools import setup
 
 with open(os.path.join(os.path.dirname(__file__), 'pexpect', '__init__.py'), 'r') as f:
     for line in f:

@@ -29,10 +29,11 @@ import socket
 import time
 import errno
 
-# Python 3.14 changed the non-macOS POSIX default to forkserver
-# but the code in this module does not work with it
+# Python 3.14 changed the non-macOS POSIX default to forkserver and Python 3.8+
+# on macOS defaults to spawn, neither of which works with this module's tests.
 # See https://github.com/python/cpython/issues/125714
-if multiprocessing.get_start_method() == 'forkserver':
+if (multiprocessing.get_start_method() != 'fork'
+        and 'fork' in multiprocessing.get_all_start_methods()):
     mp_context = multiprocessing.get_context(method='fork')
 else:
     mp_context = multiprocessing.get_context()
